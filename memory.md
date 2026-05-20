@@ -174,13 +174,35 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `Dependencies/Questions_Jessica.docx` | AR + statement questions for Jessica |
 | `Dependencies/Questions_Robert_Mark.docx` | Operations + service questions for Robert & Mark |
 | `Dependencies/Questions_Wyatt.docx` | Statement format questions for Wyatt |
+| `dev_team/TEAM.md` | Dev team overview — roles, model rules, review flow, spawn rules |
+| `dev_team/CODE_STANDARDS.md` | Python coding standards — naming, imports, security, testing rules |
+| `dev_team/PR_CHECKLIST.md` | Pre-merge checklist — all code must pass before Senior Dev review |
+| `dev_team/ONBOARDING.md` | New dev onboarding — get up to speed in <10 minutes |
+| `dev_team/developer_review.md` | Shared dev learnings log — all 3 devs read and append |
+| `dev_team/agents/dev_manager.md` | Manager Dev role card — persona, responsibilities, spawn rules |
+| `dev_team/agents/senior_dev.md` | Senior Dev role card — complex logic, integration, first-pass review |
+| `dev_team/agents/junior_dev.md` | Junior Dev role card — well-defined tasks, self-check before handoff |
+| `qa_team/QA_TEAM.md` | QA team overview — roles, QA flow, spawn rules, entry/exit criteria |
+| `qa_team/QA_CHECKLIST.md` | Master QA checklist — functional, edge cases, security, performance, release gate |
+| `qa_team/DEFINITION_OF_DONE.md` | Explicit DoD — sprint is DONE only when all boxes checked |
+| `qa_team/QA_learning.md` | Shared QA learnings log — all 3 QA agents read and append |
+| `qa_team/agents/qa_manager.md` | Manager QA role card — final sign-off, release gate, spawn rules |
+| `qa_team/agents/senior_qa.md` | Senior QA role card — edge cases, integration, security, test case authoring |
+| `qa_team/agents/junior_qa.md` | Junior QA role card — happy path, basic functional, issue logging |
+| `qa_team/test_cases/sprint_NN_test_cases.md` | Test case template — copy per sprint, written by Senior QA before dev starts |
+| `code/shared/` | Shared infrastructure — `core/`, `config/`, `models/` used by all sprints |
+| `code/sprint_NN_name/` | Per-sprint code folder — isolated agents/, tests/, README.md (13 total) |
+| `code/RELEASE_RUNBOOK.md` | Step-by-step deploy procedure for staging and production |
+| `issues/issue.md` | Issue tracker — all bugs logged here, status flows OPEN→IN DEV→QA→RELEASED |
+| `CHANGELOG.md` | Release log — one entry per sprint, updated after every sprint release |
+| `docs/decisions/ADR_template.md` | Architecture Decision Record template — copy per major tech decision |
 
 ---
 
 ## Build Order (What to Build First — No Blockers)
 
 | # | Task | Blocked By |
-|---|------|-----------|
+|---|------|----------|
 | 1 | GitHub repo + full folder structure | Nothing |
 | 2 | `db/schema.sql` + provision PostgreSQL | Nothing |
 | 3 | All `core/` files (ftf_client, claude_client, fema_client, db, logger) | Nothing |
@@ -200,9 +222,9 @@ Automates 3 workflows that are currently manual and 9-to-5:
 
 ## Rules for AI Working on This Project
 
-1. **Read order every session** — `CLAUDE.md` first → `memory.md` second → `learnings.md` third → then act. All three must be read before starting any task.
+1. **Read order every session** — `CLAUDE.md` first → `memory.md` second → `learnings.md` third → `sprints/index.md` → active sprint file → `issues/issue.md` → then act. All must be read before starting any task.
 2. **Workspace only** — all files, notes, references, and outputs go into this OneDrive folder. Never use local machine space or `.claude/` system folders for project files.
-3. **Git push after every save — NO CONFIRMATION NEEDED** — after creating or updating any workspace file, immediately push via `mcp__github__push_files` for text files. Do not ask. Do not wait. Just push.
+3. **Git push after every save — NO CONFIRMATION NEEDED** — after creating or updating any workspace file, immediately run `git add . && git commit -m "..." && git push`. Do not ask. Do not wait. Just push.
 4. **Model selection** — Haiku for simple/fast tasks (file reads, lookups, minor edits, formatting). Sonnet for complex tasks (multi-step reasoning, code generation, architecture, analysis). NEVER use Opus under any circumstances.
 5. **Sprint dependency check** — before starting any sprint, identify all blocking dependencies. Flag any that could halt work mid-sprint. For each blocker: state what's missing, what it blocks, and whether demo/mock data can substitute. Only proceed once user has acknowledged.
 6. **Sprint tracking** — open `sprints/index.md` to find active sprint file. Update that sprint file's task checkboxes in real time. On sprint complete: fill Completion Brief in the sprint file → add one-liner link to Sprint Briefs below → update `sprints/index.md` status → update `client_progress_tracker.md`.
