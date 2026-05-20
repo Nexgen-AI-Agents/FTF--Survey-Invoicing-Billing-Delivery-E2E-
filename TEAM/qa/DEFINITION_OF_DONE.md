@@ -13,8 +13,8 @@ No exceptions. No partial done.
 - [ ] All unit tests pass with zero errors
 - [ ] No `TODO` or `FIXME` stubs in production code
 - [ ] Sprint `README.md` describes what was built, how to run it, how to test it
-- [ ] `dev_team/developer_review.md` updated if new learnings exist
-- [ ] PR Checklist (`dev_team/PR_CHECKLIST.md`) fully signed off
+- [ ] `TEAM/dev/developer_review.md` updated if new learnings exist
+- [ ] PR Checklist (`TEAM/dev/PR_CHECKLIST.md`) fully signed off
 
 ---
 
@@ -31,9 +31,9 @@ No exceptions. No partial done.
 - [ ] Junior QA passed (happy path, functional)
 - [ ] Senior QA passed (edge cases, integration, security, regression)
 - [ ] Manager QA sign-off given
-- [ ] All test cases in `qa_team/test_cases/sprint_NN_test_cases.md` pass
+- [ ] All test cases in `TEAM/qa/test_cases/sprint_NN_test_cases.md` pass
 - [ ] No BLOCKER or CRITICAL issues open in `issues/issue.md`
-- [ ] `qa_team/QA_learning.md` updated
+- [ ] `TEAM/qa/QA_learning.md` updated
 
 ---
 

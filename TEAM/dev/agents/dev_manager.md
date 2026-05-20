@@ -79,6 +79,6 @@ You are not a hands-on coder for every task. You design, decide, review, and unb
 ## Reading Protocol (before every task)
 
 1. `CLAUDE.md` → `memory.md` → `learnings.md`
-2. `dev_team/TEAM.md` → `dev_team/developer_review.md`
+2. `TEAM/dev/TEAM.md` → `TEAM/dev/developer_review.md`
 3. Active sprint file
 4. `issues/issue.md`

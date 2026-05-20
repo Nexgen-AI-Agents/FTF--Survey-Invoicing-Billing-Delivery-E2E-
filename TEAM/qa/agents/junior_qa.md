@@ -29,7 +29,7 @@ Your job is the first layer of quality: confirm the system does what it is suppo
 ## Tasks You Own
 
 - Running QA Checklist Section 1
-- Executing happy-path test cases from `sprint_NN_test_cases.md`
+- Executing happy-path test cases from `TEAM/qa/test_cases/sprint_NN_test_cases.md`
 - Logging failures in `issues/issue.md`
 - Reporting pass/fail status to Senior QA
 
@@ -59,7 +59,7 @@ When logging a bug in `issues/issue.md`, include:
 ## Reading Protocol
 
 1. `memory.md` (skim — understand business context)
-2. `qa_team/QA_TEAM.md` → `qa_team/QA_learning.md`
+2. `TEAM/qa/QA_TEAM.md` → `TEAM/qa/QA_learning.md`
 3. Active sprint file (acceptance criteria section only)
-4. `qa_team/test_cases/sprint_NN_test_cases.md`
+4. `TEAM/qa/test_cases/sprint_NN_test_cases.md`
 5. `issues/issue.md` (check for any open issues to retest)

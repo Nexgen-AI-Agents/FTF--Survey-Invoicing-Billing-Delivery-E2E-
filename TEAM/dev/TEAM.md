@@ -53,8 +53,8 @@ Read in this order before starting any work:
 1. `CLAUDE.md` — project rules and role
 2. `memory.md` — project brain (context, APIs, decisions)
 3. `learnings.md` — known AI mistakes and confirmed patterns
-4. `dev_team/TEAM.md` — this file (team rules)
-5. `dev_team/developer_review.md` — shared dev learnings
+4. `TEAM/dev/TEAM.md` — this file (team rules)
+5. `TEAM/dev/developer_review.md` — shared dev learnings
 6. Active sprint file (check `sprints/index.md` first)
 7. `issues/issue.md` — open issues affecting current sprint
 
@@ -62,7 +62,7 @@ Read in this order before starting any work:
 
 ## Learnings Protocol
 
-Append to `dev_team/developer_review.md` when:
+Append to `TEAM/dev/developer_review.md` when:
 - A non-obvious bug is found and fixed
 - A coding pattern is confirmed as correct for this project
 - A decision is made that affects future sprints

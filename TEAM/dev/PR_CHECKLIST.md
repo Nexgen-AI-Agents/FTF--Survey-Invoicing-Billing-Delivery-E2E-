@@ -47,6 +47,6 @@ Junior Dev completes self-check. Senior Dev verifies before approving to Manager
 
 ## Before Merge
 
-- [ ] `dev_team/developer_review.md` updated if any new learnings surfaced
+- [ ] `TEAM/dev/developer_review.md` updated if any new learnings surfaced
 - [ ] `issues/issue.md` updated — new issues added, resolved issues closed
 - [ ] Code pushed to correct sprint branch or directly to master (Sprint 0 only)

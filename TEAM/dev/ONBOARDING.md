@@ -9,9 +9,9 @@ Read this file to get up to speed in under 10 minutes. Applies to any new develo
 1. `CLAUDE.md` — your role and the operating rules
 2. `memory.md` — project brain: context, APIs, pricing, decisions, dependencies
 3. `learnings.md` — AI mistake log and confirmed patterns
-4. `dev_team/TEAM.md` — team structure, review flow, spawn rules
-5. `dev_team/CODE_STANDARDS.md` — coding rules (read every line)
-6. `dev_team/developer_review.md` — shared dev learnings to date
+4. `TEAM/dev/TEAM.md` — team structure, review flow, spawn rules
+5. `TEAM/dev/CODE_STANDARDS.md` — coding rules (read every line)
+6. `TEAM/dev/developer_review.md` — shared dev learnings to date
 7. `sprints/index.md` — sprint map and active sprint
 8. `issues/issue.md` — current open issues
 
@@ -64,8 +64,8 @@ All API keys must come from environment variables — never hardcode.
 2. Open active sprint file — read tasks, blockers, status
 3. Check `issues/issue.md` — any open issues for your sprint
 4. Pick a task, mark it `in_progress` in the sprint file
-5. Write code following `CODE_STANDARDS.md`
-6. Self-check against `PR_CHECKLIST.md`
+5. Write code following `TEAM/dev/CODE_STANDARDS.md`
+6. Self-check against `TEAM/dev/PR_CHECKLIST.md`
 7. Hand to Senior Dev for review
 
 ---

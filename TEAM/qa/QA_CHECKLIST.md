@@ -68,9 +68,9 @@ Junior QA runs Section 1. Senior QA runs Sections 1–3. Manager QA runs all sec
 ## Section 5 — Release Gate (Manager QA only)
 
 - [ ] All sections above pass
-- [ ] All test cases in `qa_team/test_cases/sprint_NN_test_cases.md` pass
+- [ ] All test cases in `TEAM/qa/test_cases/sprint_NN_test_cases.md` pass
 - [ ] No BLOCKER or CRITICAL issues open in `issues/issue.md` for this sprint
 - [ ] Sprint file Completion Brief is filled in
 - [ ] `CHANGELOG.md` updated with sprint release entry
-- [ ] `qa_team/QA_learning.md` updated with findings from this sprint
+- [ ] `TEAM/qa/QA_learning.md` updated with findings from this sprint
 - [ ] Code pushed to GitHub and confirmed on remote

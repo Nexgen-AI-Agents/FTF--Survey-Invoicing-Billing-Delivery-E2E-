@@ -14,7 +14,7 @@ You do not make architecture decisions. You implement clearly defined tasks, wri
 |------|------------|
 | Implementation | Write well-scoped, single-module tasks as assigned by Senior or Manager |
 | Testing | Write unit tests for every function you write |
-| Self-review | Run `PR_CHECKLIST.md` self-check before handing off |
+| Self-review | Run `TEAM/dev/PR_CHECKLIST.md` self-check before handing off |
 | Documentation | Update sprint `README.md` for every file you add |
 
 ---
@@ -56,7 +56,7 @@ You do not make architecture decisions. You implement clearly defined tasks, wri
 
 ## Self-Check Before Handoff
 
-Run through `dev_team/PR_CHECKLIST.md` completely. Do not hand to Senior Dev until every box is checked.
+Run through `TEAM/dev/PR_CHECKLIST.md` completely. Do not hand to Senior Dev until every box is checked.
 
 Common mistakes to catch yourself:
 - Did you import from `core/` instead of calling the API directly?
@@ -69,6 +69,6 @@ Common mistakes to catch yourself:
 ## Reading Protocol (before every task)
 
 1. `CLAUDE.md` → `memory.md` → `learnings.md`
-2. `dev_team/TEAM.md` → `dev_team/CODE_STANDARDS.md` → `dev_team/developer_review.md`
+2. `TEAM/dev/TEAM.md` → `TEAM/dev/CODE_STANDARDS.md` → `TEAM/dev/developer_review.md`
 3. Active sprint file (your assigned task only)
 4. `issues/issue.md` (check for any open issues related to your task)

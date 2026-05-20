@@ -50,10 +50,10 @@ No level can be skipped. A failure at any level sends the item back to `IN DEV`.
 ## Reading Protocol (every QA agent, every task)
 
 1. `CLAUDE.md` → `memory.md`
-2. `qa_team/QA_TEAM.md` → `qa_team/QA_CHECKLIST.md` → `qa_team/QA_learning.md`
+2. `TEAM/qa/QA_TEAM.md` → `TEAM/qa/QA_CHECKLIST.md` → `TEAM/qa/QA_learning.md`
 3. Active sprint file (acceptance criteria section)
-4. `dev_team/developer_review.md` (know dev decisions + gotchas)
-5. `qa_team/test_cases/sprint_NN_test_cases.md` (sprint test plan)
+4. `TEAM/dev/developer_review.md` (know dev decisions + gotchas)
+5. `TEAM/qa/test_cases/sprint_NN_test_cases.md` (sprint test plan)
 6. `issues/issue.md` (open issues to retest)
 7. `code/sprint_NN/` — all Python files under test
 8. `code/sprint_NN/tests/` — existing test suite
@@ -65,7 +65,7 @@ No level can be skipped. A failure at any level sends the item back to `IN DEV`.
 - [ ] Dev Manager approval on code (PR_CHECKLIST signed off)
 - [ ] All unit tests pass
 - [ ] Sprint README.md updated
-- [ ] `qa_team/test_cases/sprint_NN_test_cases.md` exists and is populated
+- [ ] `TEAM/qa/test_cases/sprint_NN_test_cases.md` exists and is populated
 
 ---
 
@@ -73,7 +73,7 @@ No level can be skipped. A failure at any level sends the item back to `IN DEV`.
 
 - [ ] All test cases in `sprint_NN_test_cases.md` pass
 - [ ] No BLOCKER or CRITICAL open issues in `issues/issue.md` for this sprint
-- [ ] `qa_team/QA_learning.md` updated with any new findings
+- [ ] `TEAM/qa/QA_learning.md` updated with any new findings
 - [ ] `issues/issue.md` updated — all retested issues resolved or escalated
 - [ ] Manager QA signs off in sprint file's Completion Brief
 
@@ -81,7 +81,7 @@ No level can be skipped. A failure at any level sends the item back to `IN DEV`.
 
 ## Learnings Protocol
 
-Append to `qa_team/QA_learning.md` when:
+Append to `TEAM/qa/QA_learning.md` when:
 - A bug is found that dev missed
 - A test pattern is confirmed as effective
 - A QA approach fails and a better one is found

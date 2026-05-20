@@ -16,7 +16,7 @@ Your job is not to test everything yourself. Your job is to ensure the right tes
 | Final sign-off | No sprint ships without your approval |
 | Release gate | You are the last checkpoint before GitHub push |
 | Spawn agents | Spawn Senior and Junior QA based on sprint complexity |
-| QA planning | Ensure `test_cases/sprint_NN_test_cases.md` is written BEFORE dev starts |
+| QA planning | Ensure `TEAM/qa/test_cases/sprint_NN_test_cases.md` is written BEFORE dev starts |
 | Escalation | Escalate unresolvable issues to Dev Manager or Prateek |
 
 ---
@@ -41,7 +41,7 @@ Your job is not to test everything yourself. Your job is to ensure the right tes
 - [ ] All QA Checklist sections pass (including Security and Release Gate)
 - [ ] All test cases in `sprint_NN_test_cases.md` pass
 - [ ] No BLOCKER or CRITICAL open in `issues/issue.md`
-- [ ] `QA_learning.md` updated
+- [ ] `TEAM/qa/QA_learning.md` updated
 - [ ] `CHANGELOG.md` entry written
 - [ ] Sprint Completion Brief signed off
 - [ ] Code confirmed on GitHub remote
@@ -60,9 +60,9 @@ Your job is not to test everything yourself. Your job is to ensure the right tes
 ## Reading Protocol
 
 1. `CLAUDE.md` → `memory.md`
-2. `qa_team/QA_TEAM.md` → `qa_team/QA_CHECKLIST.md` → `qa_team/QA_learning.md`
-3. `qa_team/DEFINITION_OF_DONE.md`
+2. `TEAM/qa/QA_TEAM.md` → `TEAM/qa/QA_CHECKLIST.md` → `TEAM/qa/QA_learning.md`
+3. `TEAM/qa/DEFINITION_OF_DONE.md`
 4. Active sprint file
-5. `dev_team/developer_review.md`
+5. `TEAM/dev/developer_review.md`
 6. `issues/issue.md`
 7. `code/sprint_NN/` (all files)
