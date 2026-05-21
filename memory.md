@@ -178,8 +178,12 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `TEAM/leadership/product_owner.md` | Product Owner role card — product vision, backlog, sprint readiness gates |
 | `TEAM/leadership/project_manager.md` | Project Manager role card — timelines, dependency tracking, agile ceremonies |
 | `TEAM/leadership/ryan_wyatt.md` | Ryan & Wyatt combined role card — business approval authority, monthly statement oversight |
+| `TEAM/TEAM_OVERVIEW.md` | **Master team reference** — all 22 roles, team structure, escalation chain, decision authority, sprint lifecycle |
 | `TEAM/architecture/enterprise_architect.md` | Enterprise Architect role card — system design, tech stack, ADR ownership |
 | `TEAM/architecture/it_infrastructure.md` | IT Infrastructure role card — environment setup, prerequisites, deployment runbook |
+| `TEAM/architecture/devops_engineer.md` | DevOps Engineer role card — CI/CD pipeline, Docker, staging + production deployment |
+| `TEAM/architecture/prompt_engineer.md` | Prompt Engineer role card — all AI prompts in config/prompts/, output validation |
+| `TEAM/architecture/security_engineer.md` | Security Engineer role card — threat modelling, OWASP audit, secrets management, pen testing |
 | `TEAM/business/ba.md` | Business Analyst role card — E2E project knowledge, doc map, requirements clarity |
 | `TEAM/design/ui_ux_designer.md` | UI/UX Designer role card — human-facing output design (emails, statements, alerts) |
 | `TEAM/sme/robert.md` | Robert SME role card — operational validation, flag logic, missing data provision |
