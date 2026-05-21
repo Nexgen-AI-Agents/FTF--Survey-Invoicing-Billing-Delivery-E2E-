@@ -158,12 +158,13 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `memory.md` | **Read second** — project brain, context, dependencies, build order |
 | `learnings.md` | **Read third** — AI learnings log: mistakes caught, patterns confirmed, non-obvious decisions |
 | `user_learnings.md` | User-facing learnings — bullet points updated on every git push |
-| `feedback_sprint_dependencies.md` | Sprint dependency rule — moved from .claude/ system folder to workspace |
-| `sprint_log.md` | Redirect only — points to `sprints/` folder |
+| `README.md` | GitHub repo readme |
+| `CHANGELOG.md` | Release log — one entry per sprint, updated after every sprint release |
 | `sprints/index.md` | **Sprint master index** — all 13 sprint files, status, dependencies. Read this to find active sprint. |
 | `sprints/sprint_NN_name.md` | Individual sprint files — isolated tasks, tests, blockers, completion brief per sprint |
-| `client_progress_tracker.md` | Client-facing progress table — sprint status, pending actions, sign-offs |
-| `reference_nexgen_surveying_website.md` | NexGen website data — company, services, contacts, geographic coverage |
+| `docs/client_progress_tracker.md` | Client-facing progress table — sprint status, pending actions, sign-offs |
+| `docs/reference_nexgen_surveying_website.md` | NexGen website data — company, services, contacts, geographic coverage |
+| `docs/feedback_sprint_dependencies.md` | Sprint dependency rule — before every sprint, surface all blockers |
 | `Resources/FTF_Agentic_AI_BRD_v2.docx` | Full business requirements document v2 |
 | `Resources/Agentic_AI_Folder_Structure_v2.docx` | Codebase folder structure blueprint |
 | `Resources/FTF_Technical_Architecture.html` | 17-agent system diagram (dev view) |
@@ -179,7 +180,6 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `TEAM/leadership/product_owner.md` | Product Owner role card — product vision, backlog, sprint readiness gates |
 | `TEAM/leadership/project_manager.md` | Project Manager role card — timelines, dependency tracking, agile ceremonies |
 | `TEAM/leadership/ryan_wyatt.md` | Ryan & Wyatt combined role card — business approval authority, monthly statement oversight |
-| `TEAM/TEAM_OVERVIEW.md` | **Master team reference** — all 22 roles, team structure, escalation chain, decision authority, sprint lifecycle |
 | `TEAM/architecture/enterprise_architect.md` | Enterprise Architect role card — system design, tech stack, ADR ownership |
 | `TEAM/architecture/it_infrastructure.md` | IT Infrastructure role card — environment setup, prerequisites, deployment runbook |
 | `TEAM/architecture/devops_engineer.md` | DevOps Engineer role card — CI/CD pipeline, Docker, staging + production deployment |
@@ -245,7 +245,7 @@ Automates 3 workflows that are currently manual and 9-to-5:
 3. **Git push after every save — NO CONFIRMATION NEEDED** — after creating or updating any workspace file, immediately run `git add . && git commit -m "..." && git push`. Do not ask. Do not wait. Just push.
 4. **Model selection** — Haiku for simple/fast tasks (file reads, lookups, minor edits, formatting). Sonnet for complex tasks (multi-step reasoning, code generation, architecture, analysis). NEVER use Opus under any circumstances.
 5. **Sprint dependency check** — before starting any sprint, identify all blocking dependencies. Flag any that could halt work mid-sprint. For each blocker: state what's missing, what it blocks, and whether demo/mock data can substitute. Only proceed once user has acknowledged.
-6. **Sprint tracking** — open `sprints/index.md` to find active sprint file. Update that sprint file's task checkboxes in real time. On sprint complete: fill Completion Brief in the sprint file → add one-liner link to Sprint Briefs below → update `sprints/index.md` status → update `client_progress_tracker.md`.
+6. **Sprint tracking** — open `sprints/index.md` to find active sprint file. Update that sprint file's task checkboxes in real time. On sprint complete: fill Completion Brief in the sprint file → add one-liner link to Sprint Briefs below → update `sprints/index.md` status → update `docs/client_progress_tracker.md`.
 7. **One agent, one job** — each agent `.py` file does exactly one thing.
 8. **No raw calls** — all API, DB, and LLM calls go through `core/`. Never inside agent files.
 9. **No hardcoding** — model names in `config/models.py`, prices via API, prompts in `config/prompts/`, business rules in `config/flag_triggers.py`.
