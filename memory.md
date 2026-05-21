@@ -174,6 +174,17 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `Dependencies/Questions_Jessica.docx` | AR + statement questions for Jessica |
 | `Dependencies/Questions_Robert_Mark.docx` | Operations + service questions for Robert & Mark |
 | `Dependencies/Questions_Wyatt.docx` | Statement format questions for Wyatt |
+| `TEAM/leadership/cto.md` | CTO role card (Prateek) — technical authority, escalation endpoint, ADR approvals |
+| `TEAM/leadership/product_owner.md` | Product Owner role card — product vision, backlog, sprint readiness gates |
+| `TEAM/leadership/project_manager.md` | Project Manager role card — timelines, dependency tracking, agile ceremonies |
+| `TEAM/leadership/ryan_wyatt.md` | Ryan & Wyatt combined role card — business approval authority, monthly statement oversight |
+| `TEAM/architecture/enterprise_architect.md` | Enterprise Architect role card — system design, tech stack, ADR ownership |
+| `TEAM/architecture/it_infrastructure.md` | IT Infrastructure role card — environment setup, prerequisites, deployment runbook |
+| `TEAM/business/ba.md` | Business Analyst role card — E2E project knowledge, doc map, requirements clarity |
+| `TEAM/design/ui_ux_designer.md` | UI/UX Designer role card — human-facing output design (emails, statements, alerts) |
+| `TEAM/sme/robert.md` | Robert SME role card — operational validation, flag logic, missing data provision |
+| `TEAM/sme/mark.md` | Mark SME role card — edge case validation, field/office workflow expertise |
+| `TEAM/ar/ar_specialist.md` | AR Specialist role card — AR loop ownership post-implementation, reminder + escalation |
 | `TEAM/dev/TEAM.md` | Dev team overview — roles, model rules, review flow, spawn rules |
 | `TEAM/dev/CODE_STANDARDS.md` | Python coding standards — naming, imports, security, testing rules |
 | `TEAM/dev/PR_CHECKLIST.md` | Pre-merge checklist — all code must pass before Senior Dev review |
@@ -185,10 +196,12 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `TEAM/qa/QA_TEAM.md` | QA team overview — roles, QA flow, spawn rules, entry/exit criteria |
 | `TEAM/qa/QA_CHECKLIST.md` | Master QA checklist — functional, edge cases, security, performance, release gate |
 | `TEAM/qa/DEFINITION_OF_DONE.md` | Explicit DoD — sprint is DONE only when all boxes checked |
-| `TEAM/qa/QA_learning.md` | Shared QA learnings log — all 3 QA agents read and append |
+| `TEAM/qa/QA_learning.md` | Shared QA learnings log — all QA agents read and append |
 | `TEAM/qa/agents/qa_manager.md` | Manager QA role card — final sign-off, release gate, spawn rules |
 | `TEAM/qa/agents/senior_qa.md` | Senior QA role card — edge cases, integration, security, test case authoring |
 | `TEAM/qa/agents/junior_qa.md` | Junior QA role card — happy path, basic functional, issue logging |
+| `TEAM/qa/agents/qe_manual.md` | QE Manual role card — exploratory testing, UX validation of human-facing outputs |
+| `TEAM/qa/agents/qe_automation.md` | QE Automation role card — automated regression suite, CI/CD coverage, mock management |
 | `TEAM/qa/test_cases/sprint_NN_test_cases.md` | Test case template — copy per sprint, written by Senior QA before dev starts |
 | `code/shared/` | Shared infrastructure — `core/`, `config/`, `models/` used by all sprints |
 | `code/sprint_NN_name/` | Per-sprint code folder — isolated agents/, tests/, README.md (13 total) |
