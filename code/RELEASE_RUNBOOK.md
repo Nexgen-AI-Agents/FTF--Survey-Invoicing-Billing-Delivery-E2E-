@@ -9,7 +9,7 @@ Run these steps in order. No step may be skipped.
 
 ## Pre-Release Gate (QA Manager must confirm before any deploy)
 
-- [ ] All items in `qa_team/DEFINITION_OF_DONE.md` checked
+- [ ] All items in `TEAM/qa/DEFINITION_OF_DONE.md` checked
 - [ ] No BLOCKER or CRITICAL issues open in `issues/issue.md`
 - [ ] All tests pass
 - [ ] Code on GitHub remote (master branch)

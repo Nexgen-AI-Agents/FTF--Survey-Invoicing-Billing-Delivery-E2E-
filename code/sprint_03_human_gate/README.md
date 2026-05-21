@@ -31,4 +31,4 @@ pytest code/sprint_03_human_gate/tests/ -v
 
 ## Sprint Status
 - Sprint file: `sprints/sprint_03_human_gate.md`
-- QA test cases: `qa_team/test_cases/sprint_03_test_cases.md`
+- QA test cases: `TEAM/qa/test_cases/sprint_03_test_cases.md`

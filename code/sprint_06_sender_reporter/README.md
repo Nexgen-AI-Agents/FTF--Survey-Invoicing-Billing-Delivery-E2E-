@@ -29,4 +29,4 @@ pytest code/sprint_06_sender_reporter/tests/ -v
 
 ## Sprint Status
 - Sprint file: `sprints/sprint_06_sender_reporter.md`
-- QA test cases: `qa_team/test_cases/sprint_06_test_cases.md`
+- QA test cases: `TEAM/qa/test_cases/sprint_06_test_cases.md`

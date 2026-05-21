@@ -32,4 +32,4 @@ This sprint CREATES `code/shared/`. All other sprints depend on it.
 
 ## Sprint Status
 - Sprint file: `sprints/sprint_00_foundation.md`
-- QA test cases: `qa_team/test_cases/sprint_00_test_cases.md`
+- QA test cases: `TEAM/qa/test_cases/sprint_00_test_cases.md`

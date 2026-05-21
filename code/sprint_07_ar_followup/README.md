@@ -31,4 +31,4 @@ pytest code/sprint_07_ar_followup/tests/ -v
 
 ## Sprint Status
 - Sprint file: `sprints/sprint_07_ar_followup.md`
-- QA test cases: `qa_team/test_cases/sprint_07_test_cases.md`
+- QA test cases: `TEAM/qa/test_cases/sprint_07_test_cases.md`

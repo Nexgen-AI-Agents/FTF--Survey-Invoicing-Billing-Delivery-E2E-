@@ -28,4 +28,4 @@ pytest code/sprint_02_classifier_pricing/tests/ -v
 
 ## Sprint Status
 - Sprint file: `sprints/sprint_02_classifier_pricing.md`
-- QA test cases: `qa_team/test_cases/sprint_02_test_cases.md`
+- QA test cases: `TEAM/qa/test_cases/sprint_02_test_cases.md`

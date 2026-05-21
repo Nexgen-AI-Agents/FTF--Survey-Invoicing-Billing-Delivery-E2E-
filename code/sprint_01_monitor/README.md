@@ -25,4 +25,4 @@ pytest code/sprint_01_monitor/tests/ -v
 
 ## Sprint Status
 - Sprint file: `sprints/sprint_01_monitor.md`
-- QA test cases: `qa_team/test_cases/sprint_01_test_cases.md`
+- QA test cases: `TEAM/qa/test_cases/sprint_01_test_cases.md`

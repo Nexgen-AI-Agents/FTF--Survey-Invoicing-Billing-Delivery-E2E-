@@ -24,4 +24,4 @@ Full production rollout — all loops active for all orders, 24/7 operation.
 
 ## Sprint Status
 - Sprint file: `sprints/sprint_12_full_production.md`
-- QA test cases: `qa_team/test_cases/sprint_12_test_cases.md`
+- QA test cases: `TEAM/qa/test_cases/sprint_12_test_cases.md`

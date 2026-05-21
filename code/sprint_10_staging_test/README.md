@@ -28,4 +28,4 @@ pytest code/sprint_10_staging_test/tests/ -v
 
 ## Sprint Status
 - Sprint file: `sprints/sprint_10_staging_test.md`
-- QA test cases: `qa_team/test_cases/sprint_10_test_cases.md`
+- QA test cases: `TEAM/qa/test_cases/sprint_10_test_cases.md`

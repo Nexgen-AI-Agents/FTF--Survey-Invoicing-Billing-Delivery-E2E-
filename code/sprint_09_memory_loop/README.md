@@ -24,4 +24,4 @@ pytest code/sprint_09_memory_loop/tests/ -v
 
 ## Sprint Status
 - Sprint file: `sprints/sprint_09_memory_loop.md`
-- QA test cases: `qa_team/test_cases/sprint_09_test_cases.md`
+- QA test cases: `TEAM/qa/test_cases/sprint_09_test_cases.md`

@@ -26,4 +26,4 @@ pytest code/sprint_05_reviewer/tests/ -v
 
 ## Sprint Status
 - Sprint file: `sprints/sprint_05_reviewer.md`
-- QA test cases: `qa_team/test_cases/sprint_05_test_cases.md`
+- QA test cases: `TEAM/qa/test_cases/sprint_05_test_cases.md`
