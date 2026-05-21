@@ -38,10 +38,10 @@
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| 3 new test orders detected within 60 min | 🔲 | Integration test — Sprint 10 |
-| 0 duplicates on 2nd run (same orders) | 🔲 | Integration test — Sprint 10 |
-| `processed_orders` rows created with `status="pending"` | 🔲 | Integration test — Sprint 10 |
-| `agent_decision_log` row written per order | 🔲 | Integration test — Sprint 10 |
+| 3 new test orders detected within 60 min | ✅ | Live: 500 real FTF staging orders detected on first run (2026-05-21) |
+| 0 duplicates on 2nd run (same orders) | ✅ | Live: second run returned 0 new orders — deduplication confirmed |
+| `processed_orders` rows created with `status="pending"` | ✅ | Live: 500 rows in DB, all status=pending |
+| `agent_decision_log` row written per order | ✅ | Live: 503 decision log entries from agent_02_monitor |
 | Unit tests pass (7 scenarios) | ✅ | 42/42 pass (Sprint 0 + Sprint 1 combined) |
 | Empty order list handled without errors | ✅ | UT-01-03 |
 
@@ -56,7 +56,8 @@ _None expected._
 ## Decisions Made
 
 - **`order_exists()` added to `core/db.py`** — Original sprint plan referenced `db.get_pending_order(order_id)` to check if an order exists, but that function takes no arguments. Added `order_exists(order_id: str) -> bool` which queries `SELECT 1 FROM processed_orders WHERE order_id = %s`. This prevents the monitor from resetting already-processed orders back to `pending`.
-- **Order ID cast to `str()`** — FTF API may return numeric order IDs; the monitor casts all IDs to string before DB operations to match the `order_id VARCHAR` column type.
+- **Order ID cast to `str()`** — FTF API returns integer `order_id` (not `id`); the monitor casts to string before DB operations to match the `order_id VARCHAR` column type. Fixed: sprint plan used `order["id"]` — actual key is `order["order_id"]`.
+- **Live integration test result (2026-05-21):** 500 real FTF staging orders detected and saved on first run. Second run: 0 new orders (deduplication confirmed). All rows in `processed_orders` with `status=pending`. Decision log: 503 entries from `agent_02_monitor`.
 
 ---
 

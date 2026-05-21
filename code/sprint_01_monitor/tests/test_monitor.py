@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock, call
 from agents.agent_02_monitor import run, AGENT_NAME
 
 
-_MOCK_ORDERS = [{"id": "O-001"}, {"id": "O-002"}, {"id": "O-003"}]
+_MOCK_ORDERS = [{"order_id": "O-001"}, {"order_id": "O-002"}, {"order_id": "O-003"}]
 
 
 def _patch_all(orders, exists_fn):
@@ -96,7 +96,7 @@ def test_no_llm_call():
 
 # EC-01-03: Numeric order IDs from FTF cast to string correctly
 def test_numeric_order_id_cast_to_string():
-    orders_with_int_ids = [{"id": 101}, {"id": 102}]
+    orders_with_int_ids = [{"order_id": 101}, {"order_id": 102}]
 
     with patch("agents.agent_02_monitor.get_orders", return_value=orders_with_int_ids), \
          patch("agents.agent_02_monitor.order_exists", return_value=False), \

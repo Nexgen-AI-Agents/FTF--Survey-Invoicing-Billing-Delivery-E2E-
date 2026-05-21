@@ -22,7 +22,7 @@ def run() -> list[str]:
     new_order_ids: list[str] = []
 
     for order in orders:
-        order_id = str(order["id"])
+        order_id = str(order["order_id"])
 
         if order_exists(order_id):
             log.debug("skip existing order=%s", order_id)
@@ -41,7 +41,7 @@ def run() -> list[str]:
         log.info("new order detected order=%s", order_id)
         new_order_ids.append(order_id)
 
-    log.info("monitor complete new=%d", len(new_order_ids))
+    log.info("monitor complete new=%s", len(new_order_ids))
     return new_order_ids
 
 
