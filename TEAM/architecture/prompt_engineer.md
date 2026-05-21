@@ -48,7 +48,7 @@ Every estimate email, AR reminder, and monthly statement this system produces is
 
 1. Never ask the AI to invent data — all pricing, names, and dates come from the API or DB
 2. Always include output format constraints — structured outputs prevent hallucination
-3. Always include a "do not include" clause — tell the AI what NOT to write
+3. Always include a “do not include” clause — tell the AI what NOT to write
 4. Test every prompt against edge cases before sprint sign-off
 5. No prompt goes to production without QE Manual validation of at least 5 real outputs
 
