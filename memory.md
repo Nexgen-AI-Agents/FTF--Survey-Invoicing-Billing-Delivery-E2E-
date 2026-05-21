@@ -174,7 +174,7 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `Dependencies/Questions_Jessica.docx` | AR + statement questions for Jessica |
 | `Dependencies/Questions_Robert_Mark.docx` | Operations + service questions for Robert & Mark |
 | `Dependencies/Questions_Wyatt.docx` | Statement format questions for Wyatt |
-| `TEAM/leadership/cto.md` | CTO role card (Prateek) — technical authority, escalation endpoint, ADR approvals |
+| `TEAM/leadership/prateek_cto.md` | Prateek — CTO role card — technical authority, escalation endpoint, ADR approvals |
 | `TEAM/leadership/product_owner.md` | Product Owner role card — product vision, backlog, sprint readiness gates |
 | `TEAM/leadership/project_manager.md` | Project Manager role card — timelines, dependency tracking, agile ceremonies |
 | `TEAM/leadership/ryan_wyatt.md` | Ryan & Wyatt combined role card — business approval authority, monthly statement oversight |
