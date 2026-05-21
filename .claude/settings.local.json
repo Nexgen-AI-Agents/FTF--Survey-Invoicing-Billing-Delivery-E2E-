@@ -1,0 +1,34 @@
+{
+  "autoMemoryEnabled": false,
+  "permissions": {
+    "allow": [
+      "Bash(powershell -NoProfile -Command \"Get-Item 'c:\\\\Users\\\\Prateek Chandra\\\\OneDrive - NexGen Enterprises\\\\Claude\\\\Agentic AI\\\\FTF- Survey Invoicing & Billing Delivery \\(E2E\\)\\\\Resources\\\\FTF_API_Documentation.xlsx' | Select-Object FullName, Exists\")"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"$ws='c:\\\\Users\\\\Prateek Chandra\\\\OneDrive - NexGen Enterprises\\\\Claude\\\\Agentic AI\\\\FTF- Survey Invoicing & Billing Delivery (E2E)\\\\'; $m=Get-Content ($ws+'memory.md') -Raw -EA SilentlyContinue; $l=Get-Content ($ws+'learnings.md') -Raw -EA SilentlyContinue; $ctx='=== MANDATORY SESSION FILES - READ BEFORE ANYTHING ELSE ===\\n\\n--- memory.md ---\\n'+$m+'\\n\\n--- learnings.md ---\\n'+$l; @{hookSpecificOutput=@{hookEventName='SessionStart';additionalContext=$ctx}} | ConvertTo-Json -Compress\"",
+            "shell": "powershell",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"Remove-Item -Recurse -Force 'C:\\\\Users\\\\Prateek Chandra\\\\.claude\\\\projects\\\\c--Users-Prateek-Chandra-OneDrive---NexGen-Enterprises-Claude-Agentic-AI-FTF--Survey-Invoicing---Billing-Delivery--E2E-\\\\memory' -ErrorAction SilentlyContinue\"",
+            "shell": "powershell",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

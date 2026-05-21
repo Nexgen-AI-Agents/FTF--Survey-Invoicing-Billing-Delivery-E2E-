@@ -1,8 +1,8 @@
-# Sprint 12 — Full Production (Milestone ⭐)
+# Sprint 12 — Full Production (Milestone)
 
 ## What This Sprint Does
 
-Full production rollout — all loops active for all orders, 24/7 operation. Transition from limited to full automation.
+Full production rollout — all loops active for all orders, 24/7 operation.
 
 ## Scope
 - All three loops fully active

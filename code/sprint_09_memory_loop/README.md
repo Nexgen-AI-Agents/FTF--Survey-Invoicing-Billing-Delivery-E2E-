@@ -2,7 +2,7 @@
 
 ## What This Sprint Builds
 
-Agent 1: Orchestrator / Memory Loop — the top-level controller that schedules and coordinates all agent loops (estimate, AR, monthly statements). Tracks loop state, handles failures, and restarts loops as needed.
+Agent 1: Orchestrator / Memory Loop — the top-level controller that schedules and coordinates all agent loops. Tracks loop state, handles failures, and restarts loops as needed.
 
 ## Agents Built
 - `agents/agent_01_orchestrator.py`

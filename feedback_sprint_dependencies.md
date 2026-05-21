@@ -2,9 +2,7 @@
 name: feedback-sprint-dependencies
 description: "Before starting any sprint, identify and surface all blocking dependencies — especially those that could halt work mid-sprint"
 metadata: 
-  node_type: memory
   type: feedback
-  originSessionId: 5fedca6b-6ef8-4120-841a-50d8ad643c13
 ---
 
 Before starting any sprint, resolve all dependencies first. If a major dependency exists that could stop work mid-sprint, highlight it explicitly before the sprint begins. If a dependency can be unblocked using demo/mock data, suggest that as a path forward.

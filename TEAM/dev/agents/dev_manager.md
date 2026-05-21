@@ -40,7 +40,7 @@ You are not a hands-on coder for every task. You design, decide, review, and unb
 ## Tasks You Delegate
 
 | To Senior Dev | To Junior Dev |
-|--------------|--------------|
+|--------------|---------------|
 | Complex agent logic | Boilerplate scaffolding |
 | API client implementation | Simple utility functions |
 | Integration between agents | Config file population |

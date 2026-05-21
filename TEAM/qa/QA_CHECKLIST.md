@@ -1,11 +1,11 @@
 # QA Master Checklist — FTF Agentic AI OS
 
 Run this checklist on every sprint before QA Manager sign-off.
-Junior QA runs Section 1. Senior QA runs Sections 1–3. Manager QA runs all sections.
+Junior QA + QE Manual run Section 1. Senior QA + QE Automation run Sections 2–3. Manager QA runs all sections.
 
 ---
 
-## Section 1 — Functional (Junior QA)
+## Section 1 — Functional (Junior QA + QE Manual)
 
 ### Happy Path Tests
 - [ ] All sprint acceptance criteria from sprint file are met
@@ -20,9 +20,15 @@ Junior QA runs Section 1. Senior QA runs Sections 1–3. Manager QA runs all sec
 - [ ] Environment variables load correctly; missing vars raise clear error
 - [ ] No hardcoded credentials, model names, or prices visible in code
 
+### UX / Output Validation (QE Manual)
+- [ ] All human-facing outputs (estimate emails, AR reminders, statements) are clear and professional
+- [ ] AI-generated text is accurate, complete, and on-brand
+- [ ] Alert messages (MS Teams + email) are actionable and unambiguous
+- [ ] AR reminder tone is appropriate for its escalation stage
+
 ---
 
-## Section 2 — Edge Cases & Integration (Senior QA)
+## Section 2 — Edge Cases & Integration (Senior QA + QE Automation)
 
 ### Edge Cases
 - [ ] API timeout / rate limit — agent retries correctly or fails gracefully
@@ -39,9 +45,10 @@ Junior QA runs Section 1. Senior QA runs Sections 1–3. Manager QA runs all sec
 - [ ] Shared `core/` modules behave identically for all agents that call them
 - [ ] DB schema constraints enforced (no duplicate orders, no orphan records)
 
-### Regression
-- [ ] Previously passing tests still pass after this sprint's code is added
+### Regression (QE Automation)
+- [ ] All previously-passing automated tests still pass after this sprint's code is added
 - [ ] No imports from other sprint code folders (only `code/shared/`)
+- [ ] Automated test coverage report reviewed; no unexplained drops
 
 ---
 
@@ -56,12 +63,13 @@ Junior QA runs Section 1. Senior QA runs Sections 1–3. Manager QA runs all sec
 
 ---
 
-## Section 4 — Performance (Senior QA — Sprint 10+)
+## Section 4 — Performance (Senior QA + QE Automation — Sprint 10+)
 
 - [ ] FTF API call rate ≤ 1 per 60 minutes (rate limit respected)
 - [ ] Max 500 orders processed per API call
 - [ ] Estimate send delay is randomized 6–13 minutes (not 0)
 - [ ] No blocking operations in the main loop (async or queue-based)
+- [ ] Automated load/stress test results reviewed (QE Automation — Sprint 11–12)
 
 ---
 
@@ -69,6 +77,8 @@ Junior QA runs Section 1. Senior QA runs Sections 1–3. Manager QA runs all sec
 
 - [ ] All sections above pass
 - [ ] All test cases in `TEAM/qa/test_cases/sprint_NN_test_cases.md` pass
+- [ ] QE Manual sign-off confirmed
+- [ ] QE Automation regression suite passes with no new failures
 - [ ] No BLOCKER or CRITICAL issues open in `issues/issue.md` for this sprint
 - [ ] Sprint file Completion Brief is filled in
 - [ ] `CHANGELOG.md` updated with sprint release entry

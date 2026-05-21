@@ -24,7 +24,7 @@ pytest code/sprint_04_writer/tests/ -v
 - `code/shared/config/knowledge_base/change_order_clause.txt` — change order text
 
 ## Prerequisites
-- Change order clause text must be drafted before this sprint starts (`config/knowledge_base/change_order_clause.txt`)
+- Change order clause text must be drafted before this sprint starts
 
 ## Sprint Status
 - Sprint file: `sprints/sprint_04_writer.md`

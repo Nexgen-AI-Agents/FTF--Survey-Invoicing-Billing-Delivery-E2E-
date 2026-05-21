@@ -12,7 +12,7 @@
 - **Root cause 1:** Claude Code's built-in auto-memory system prompt explicitly instructs saving to `.claude/projects/.../memory/`. That instruction loaded before the workspace rule was read.
 - **Root cause 2:** An existing feedback memory (`feedback_workspace_only.md`) had a soft-exception clause: *".claude/ is fine for AI-internal memory"* — this was wrong and contradicted the stricter workspace rule.
 - **Correct behavior:** ALL project files, including memory-type notes, go into the OneDrive workspace. The only thing that ever lives in `.claude/` is the system's own auto-memory index (which I cannot fully disable), but no project content should go there.
-- **Fix applied:** File moved to workspace. `.claude/MEMORY.md` entry removed. Workspace `memory.md` updated with the rule.
+- **Fix applied:** File moved to workspace. `.claude/MEMORY.md` updated with a hard-stop warning. Workspace `memory.md` updated with the rule.
 
 ---
 

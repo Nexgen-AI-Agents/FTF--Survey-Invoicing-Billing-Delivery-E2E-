@@ -25,7 +25,7 @@
 Automates 3 workflows that are currently manual and 9-to-5:
 
 | Loop | What It Does | Schedule | Agents |
-|------|-------------|----------|--------|
+|------|-------------|----------|---------|
 | Estimate Generation | Monitor FTF CRM → classify → price → write → review → send | Every 60 min | 1–9 |
 | AR Follow-Up | Scan unpaid invoices → schedule reminders → write → send → escalate | Daily | 10–14 |
 | Monthly Statements | Compile B2B orders → generate Excel+PDF → deliver via MS Teams | 1st of month | 15–17 |
@@ -215,7 +215,7 @@ Automates 3 workflows that are currently manual and 9-to-5:
 ## Build Order (What to Build First — No Blockers)
 
 | # | Task | Blocked By |
-|---|------|-----------|
+|---|------|----------|
 | 1 | GitHub repo + full folder structure | Nothing |
 | 2 | `db/schema.sql` + provision PostgreSQL | Nothing |
 | 3 | All `core/` files (ftf_client, claude_client, fema_client, db, logger) | Nothing |

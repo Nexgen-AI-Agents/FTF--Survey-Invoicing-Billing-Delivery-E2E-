@@ -1,4 +1,4 @@
-# Sprint 10 — Staging Test (Milestone ⭐)
+# Sprint 10 — Staging Test (Milestone)
 
 ## What This Sprint Does
 

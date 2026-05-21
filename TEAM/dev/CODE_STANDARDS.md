@@ -23,7 +23,7 @@
 ## Naming Conventions
 
 | Item | Convention | Example |
-|------|-----------|---------|
+|------|-----------|----------|
 | Files | `snake_case.py` | `agent_02_monitor.py` |
 | Agents | `agent_NN_name.py` | `agent_05_pricing.py` |
 | Classes | `PascalCase` | `OrderClassifier` |

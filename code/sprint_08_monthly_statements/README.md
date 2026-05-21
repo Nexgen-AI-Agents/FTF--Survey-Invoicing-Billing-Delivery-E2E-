@@ -24,7 +24,7 @@ pytest code/sprint_08_monthly_statements/tests/ -v
 ## Key Rules
 - Trigger: 1st of every calendar month
 - Format: Excel + PDF
-- Delivery: MS Teams + email to billing contact (master email; fallback to most recent order email)
+- Delivery: MS Teams + email to billing contact
 
 ## Blocked By
 - Wyatt's recording session (statement format confirmation)

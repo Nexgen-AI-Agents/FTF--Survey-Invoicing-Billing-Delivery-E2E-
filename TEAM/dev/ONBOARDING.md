@@ -22,7 +22,7 @@ Read this file to get up to speed in under 10 minutes. Applies to any new develo
 Three automation loops:
 
 | Loop | Agents | Trigger |
-|------|--------|---------|
+|------|--------|----------|
 | Estimate Generation | Agents 2–9 | Every 60 min — monitor CRM → classify → price → write → review → send |
 | AR Follow-Up | Agents 10–14 | Daily — scan unpaid invoices → remind → escalate |
 | Monthly Statements | Agents 15–17 | 1st of month — compile B2B orders → Excel+PDF → deliver |

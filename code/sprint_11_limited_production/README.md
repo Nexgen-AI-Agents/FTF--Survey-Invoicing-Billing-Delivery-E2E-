@@ -1,8 +1,8 @@
-# Sprint 11 — Limited Production (Milestone ⭐)
+# Sprint 11 — Limited Production (Milestone)
 
 ## What This Sprint Does
 
-Limited production rollout — system runs live for a subset of real orders. Monitor for 2 weeks before full production. No new code — operational sprint.
+Limited production rollout — system runs live for a subset of real orders. Monitor for 2 weeks before full production.
 
 ## Scope
 - Live FTF API (production credentials)

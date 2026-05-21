@@ -54,7 +54,7 @@
 ## Results Summary
 
 | Section | Total TCs | Passed | Failed | Blocked |
-|---------|-----------|--------|--------|---------|
+|---------|-----------|--------|--------|----------|
 | Section 1 (Happy Path) | | | | |
 | Section 2 (Edge Cases) | | | | |
 | Section 3 (Security) | | | | |
