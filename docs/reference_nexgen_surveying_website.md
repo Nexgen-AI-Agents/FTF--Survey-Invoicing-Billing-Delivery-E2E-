@@ -27,8 +27,6 @@
 
 ## Services Listed on Website
 
-These are public-facing service names — they do NOT match FTF system names exactly:
-
 | Website Name | Likely FTF Equivalent | In FTF's 24 Services? |
 |---|---|---|
 | Mortgage Surveys | Boundary Survey / Final Survey | Yes (likely) |
@@ -38,32 +36,22 @@ These are public-facing service names — they do NOT match FTF system names exa
 | Hydrographic Survey | Unknown — possibly Wetland Delineation | NO — not in 24 services |
 | Land Subdivisions | Lot Split | Yes — likely |
 
-**NOTE:** Geological Surveying and Hydrographic Survey appear on the website but have no direct match in FTF's 24 service names. Treat as candidates for REVIEW_REQUIRED_SERVICES or NEVER_AUTO_QUOTE until Robert/Mark confirm exact FTF system names.
+**NOTE:** Geological Surveying and Hydrographic Survey have no direct match in FTF's 24 service names. Treat as NEVER_AUTO_QUOTE until Robert/Mark confirm.
 
 ---
 
 ## Key Personnel (from website)
 
-- **John Pellecchia** — Principal/Owner (not previously named in BRD docs)
+- **John Pellecchia** — Principal/Owner
 - **Mike** — Account Representative
 
 ---
 
-## Legal Pages Available
+## Legal Pages
 
 - Privacy Policy: https://nexgensurveying.com/privacy-policy
 - Terms of Use: https://nexgensurveying.com/terms-of-use
 - Refund Policy: https://nexgensurveying.com/refund-policy
-
-**NOTE:** Terms of Use and Refund Policy pages may contain language useful as reference for drafting the Change Order Clause.
-
----
-
-## Other Notes
-
-- Mobile app available (iOS + Android)
-- Emergency/rush service availability mentioned
-- Quick turnaround highlighted (2–3 day examples cited)
 
 ---
 
@@ -72,6 +60,5 @@ These are public-facing service names — they do NOT match FTF system names exa
 | Where | Rule |
 |-------|------|
 | Agent 4 flag_triggers.py | `property_state != "FL"` → flag immediately (Trigger #9) |
-| service_names.json | Geological Surveying + Hydrographic Survey = unmapped → treat as Other Services (flag) until Robert/Mark confirm |
+| service_names.json | Geological + Hydrographic = unmapped → treat as Other Services (flag) until confirmed |
 | Agent 9 Reporter | Use info@nexgensurveying.com and (561) 508-6272 in daily digest footer |
-| Escalation routing | John Pellecchia — confirm with Ryan if he should receive major escalations |
