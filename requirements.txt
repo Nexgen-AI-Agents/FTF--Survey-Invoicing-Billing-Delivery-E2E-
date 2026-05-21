@@ -26,6 +26,9 @@ pydantic>=2.7.0
 # Scheduling (AR daily loop, monthly trigger)
 schedule>=1.2.1
 
+# YAML parsing — workflow validation in test_connections.py
+PyYAML>=6.0.1
+
 # Testing
 pytest>=8.2.0
 pytest-mock>=3.14.0

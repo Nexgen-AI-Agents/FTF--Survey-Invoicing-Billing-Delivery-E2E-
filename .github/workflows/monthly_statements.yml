@@ -1,0 +1,31 @@
+name: Monthly Statements Loop
+
+on:
+  schedule:
+    - cron: "0 8 1 * *"   # 08:00 UTC on the 1st of every month — Sprint 8+ activates
+  workflow_dispatch:
+
+jobs:
+  run-statements-loop:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run monthly statements
+        env:
+          FTF_API_KEY:        ${{ secrets.FTF_API_KEY }}
+          ANTHROPIC_API_KEY:  ${{ secrets.ANTHROPIC_API_KEY }}
+          DATABASE_URL:       ${{ secrets.DATABASE_URL }}
+          TEAMS_WEBHOOK_URL:  ${{ secrets.TEAMS_WEBHOOK_URL }}
+        run: |
+          echo "Stub — statement agents built in Sprint 8"
+          echo "Activate by replacing this step with: python code/sprint_08_monthly_statements/agents/agent_15_statement_compiler.py"

@@ -1,0 +1,30 @@
+name: Estimate Generation Loop
+
+on:
+  schedule:
+    - cron: "0 * * * *"   # every hour — Sprint 9+ activates the full orchestrator
+  workflow_dispatch:
+
+jobs:
+  run-estimate-loop:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run estimate generation
+        env:
+          FTF_API_KEY:       ${{ secrets.FTF_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DATABASE_URL:      ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Stub — orchestrator built in Sprint 9"
+          echo "Activate by replacing this step with: python code/sprint_09_memory_loop/agents/agent_01_orchestrator.py"
