@@ -1,0 +1,49 @@
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
+
+from core.ftf_client import get_orders
+from core.db import order_exists, save_order_state, log_decision
+from core.logger import get_logger
+
+AGENT_NAME = "agent_02_monitor"
+log = get_logger(AGENT_NAME)
+
+
+def run() -> list[str]:
+    """Poll FTF CRM for new orders; persist new ones to state DB.
+
+    Returns list of newly detected order IDs.
+    Orders already in processed_orders (any status) are skipped — never reset.
+    No LLM calls — pure API + DB logic.
+    """
+    orders = get_orders(limit=500)
+    new_order_ids: list[str] = []
+
+    for order in orders:
+        order_id = str(order["id"])
+
+        if order_exists(order_id):
+            log.debug("skip existing order=%s", order_id)
+            continue
+
+        save_order_state(order_id, status="pending")
+        log_decision(
+            AGENT_NAME,
+            decision="new_order_detected",
+            order_id=order_id,
+            reason="Order not previously seen in state DB",
+            input_summary=f"FTF API order id={order_id}",
+            output_summary="Inserted into processed_orders with status=pending",
+            model_used=None,
+        )
+        log.info("new order detected order=%s", order_id)
+        new_order_ids.append(order_id)
+
+    log.info("monitor complete new=%d", len(new_order_ids))
+    return new_order_ids
+
+
+if __name__ == "__main__":
+    run()

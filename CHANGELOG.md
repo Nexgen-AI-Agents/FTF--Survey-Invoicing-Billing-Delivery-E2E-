@@ -49,4 +49,19 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 - FEMA flood zone check — downgraded to WARN (corporate firewall blocks hazards.fema.gov; passes on GitHub Actions)
 - Windows cp1252 encoding — replaced all Unicode symbols with ASCII in test script
 
+## [Sprint 1] — CRM Monitor — 2026-05-21 (In Progress)
+
+### Added
+- `code/sprint_01_monitor/agents/agent_02_monitor.py` — Agent 2: polls FTF API, detects new orders, saves to `processed_orders` with `status="pending"`
+- `code/sprint_01_monitor/tests/conftest.py` — test path setup
+- `code/sprint_01_monitor/tests/test_monitor.py` — 7 unit tests (all pass)
+- `TEAM/qa/test_cases/sprint_01_test_cases.md` — full QA test case suite (unit + integration + edge cases)
+- `docs/decisions/ADR_001` through `ADR_007` — 7 Architecture Decision Records documenting all Sprint 0 foundational decisions
+
+### Fixed (post Sprint 0 review)
+- `code/shared/core/db.py` — added `order_exists(order_id: str) -> bool` (sprint plan had wrong function reference)
+- `code/shared/core/state.py` — replaced deprecated `datetime.utcnow()` with `datetime.now(UTC)` (4 occurrences)
+- `code/sprint_00_foundation/tests/test_ftf_client.py` — fixed `get_pricing()` called without required `service` arg
+- `issues/issue.md` — logged 8 open dependency issues (I-001 through I-008) + 3 closed fixes (I-009 through I-011)
+
 <!-- Sprint entries added here as sprints are completed -->

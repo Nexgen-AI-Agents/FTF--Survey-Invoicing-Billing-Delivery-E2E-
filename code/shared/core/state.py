@@ -9,7 +9,7 @@ def mark_classified(order_id: str, service_type: str, customer_email: str) -> No
         status="classified",
         service_type=service_type,
         customer_email=customer_email,
-        classified_at=datetime.datetime.utcnow(),
+        classified_at=datetime.datetime.now(datetime.UTC),
     )
 
 
@@ -18,7 +18,7 @@ def mark_flagged(order_id: str, reason: str) -> None:
         order_id,
         status="flagged",
         flag_reason=reason,
-        flagged_at=datetime.datetime.utcnow(),
+        flagged_at=datetime.datetime.now(datetime.UTC),
     )
 
 
@@ -28,7 +28,7 @@ def mark_priced(order_id: str, amount: float, is_flood_zone: bool) -> None:
         status="priced",
         estimate_amount=amount,
         is_flood_zone=is_flood_zone,
-        priced_at=datetime.datetime.utcnow(),
+        priced_at=datetime.datetime.now(datetime.UTC),
     )
 
 
@@ -36,5 +36,5 @@ def mark_sent(order_id: str) -> None:
     save_order_state(
         order_id,
         status="sent",
-        sent_at=datetime.datetime.utcnow(),
+        sent_at=datetime.datetime.now(datetime.UTC),
     )

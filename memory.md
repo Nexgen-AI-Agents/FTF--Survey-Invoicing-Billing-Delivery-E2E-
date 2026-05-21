@@ -223,6 +223,17 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `issues/issue.md` | Issue tracker — all bugs logged here, status flows OPEN→IN DEV→QA→RELEASED |
 | `CHANGELOG.md` | Release log — one entry per sprint, updated after every sprint release |
 | `docs/decisions/ADR_template.md` | Architecture Decision Record template — copy per major tech decision |
+| `docs/decisions/ADR_001_postgresql_state_store.md` | ADR-001 — PostgreSQL chosen as primary state store (ACID, concurrent writes, audit trail) |
+| `docs/decisions/ADR_002_python_version.md` | ADR-002 — Python 3.11+ minimum (FEMA TLS regression on 3.14; CI uses 3.11) |
+| `docs/decisions/ADR_003_model_selection_haiku_sonnet.md` | ADR-003 — Haiku for orchestration agents, Sonnet for all reasoning agents; Opus blocked |
+| `docs/decisions/ADR_004_shared_core_architecture.md` | ADR-004 — All external calls go through `code/shared/core/`; never in agent files |
+| `docs/decisions/ADR_005_ftf_api_envelope.md` | ADR-005 — `get_orders()` unwraps `{"count","data"}` envelope; callers always get clean list |
+| `docs/decisions/ADR_006_fema_graceful_degradation.md` | ADR-006 — FEMA unavailable → flag for human review; WARN not FAIL in CI |
+| `docs/decisions/ADR_007_estimate_send_delay.md` | ADR-007 — 6–13 min random delay before sending estimates; confirmed by Ryan |
+| `TEAM/qa/test_cases/sprint_01_test_cases.md` | Sprint 1 QA test cases — 6 unit tests, 5 integration tests, 4 edge cases, acceptance criteria |
+| `code/sprint_01_monitor/agents/agent_02_monitor.py` | Agent 2 — CRM Monitor — polls FTF API, detects new orders, writes to state DB |
+| `code/sprint_01_monitor/tests/conftest.py` | Sprint 1 test path setup — adds shared/ and sprint root to sys.path |
+| `code/sprint_01_monitor/tests/test_monitor.py` | Sprint 1 unit tests — 7 tests covering all monitor scenarios |
 
 ---
 
@@ -271,5 +282,13 @@ _Written here when each sprint is marked ✅ Complete in sprint_log.md._
 - **Tests:** 6/6 PASS — FTF health/orders/pricing, Claude Haiku, PostgreSQL DB, YAML valid. FEMA = WARN (firewall on local; passes on GitHub Actions).
 - **Decisions:** `get_orders()` unwraps `{"count","data"}` envelope; `get_pricing()` is per-service lookup with `?service=X&tier=Y`; FEMA client uses `OP_LEGACY_SERVER_CONNECT`; test script uses ASCII arrows for Windows cp1252 compat.
 - **Carry forward:** FTF pricing is per-service — Pricing Engine calls once per service name. Monitor agent reads from `data` key of orders response.
+- **Post-sprint fixes (2026-05-21):** Added `order_exists()` to `db.py`; fixed `test_get_pricing` missing arg; fixed `state.py` `utcnow()` → `now(UTC)`. 7 ADRs written. 42/42 tests pass.
 - **Full brief:** [sprints/sprint_00_foundation.md](sprints/sprint_00_foundation.md)
+
+### Sprint 1 — CRM Monitor 🔄 (In Progress — 2026-05-21)
+- **Building:** `agent_02_monitor.py` — polls FTF API every 60 min, writes new orders to `processed_orders` with `status="pending"`
+- **Tests so far:** 7/7 unit tests pass (UT-01-01 through UT-01-06 + EC-01-03)
+- **Key decision:** `order_exists(order_id)` used to skip existing orders — no status reset risk
+- **Open blockers:** Competitor list (I-001), never-auto-quote list (I-002), Construction/Permitting FTF names (I-003) — do NOT block Sprint 1; block Sprints 2–3
+- **Full brief:** [sprints/sprint_01_monitor.md](sprints/sprint_01_monitor.md)
 

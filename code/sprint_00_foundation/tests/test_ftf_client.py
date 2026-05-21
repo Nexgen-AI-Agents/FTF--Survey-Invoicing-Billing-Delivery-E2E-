@@ -50,7 +50,7 @@ def test_get_orders_raises_agent_error_on_http_error(mock_get):
 def test_get_pricing_raises_pricing_error_on_failure(mock_get):
     mock_get.side_effect = Exception("timeout")
     with pytest.raises(PricingError):
-        get_pricing()
+        get_pricing("Boundary Survey")
 
 
 @patch("core.ftf_client.httpx.post")

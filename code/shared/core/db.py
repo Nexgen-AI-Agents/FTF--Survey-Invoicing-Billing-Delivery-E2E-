@@ -33,6 +33,16 @@ def _get_cursor():
         conn.close()
 
 
+def order_exists(order_id: str) -> bool:
+    """Return True if any row for this order_id already exists in processed_orders."""
+    with _get_cursor() as cur:
+        cur.execute(
+            "SELECT 1 FROM processed_orders WHERE order_id = %s LIMIT 1",
+            (order_id,),
+        )
+        return cur.fetchone() is not None
+
+
 def get_pending_order() -> Optional[dict]:
     with _get_cursor() as cur:
         cur.execute(
