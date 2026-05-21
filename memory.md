@@ -157,6 +157,7 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `CLAUDE.md` | **Read first** — AI role, main flow, operating rules. DO NOT EDIT. |
 | `memory.md` | **Read second** — project brain, context, dependencies, build order |
 | `learnings.md` | **Read third** — AI learnings log: mistakes caught, patterns confirmed, non-obvious decisions |
+| `clarifications.md` | Q&A log — every clarification Prateek asks, answered and saved in table format for future reference |
 | `user_learnings.md` | User-facing learnings — bullet points updated on every git push |
 | `README.md` | GitHub repo readme |
 | `CHANGELOG.md` | Release log — one entry per sprint, updated after every sprint release |
