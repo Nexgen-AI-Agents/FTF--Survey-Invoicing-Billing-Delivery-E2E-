@@ -29,7 +29,9 @@ No exceptions. No partial done.
 ## QA Complete
 
 - [ ] Junior QA passed (happy path, functional)
+- [ ] QE Manual passed (exploratory testing + UX validation of human-facing outputs)
 - [ ] Senior QA passed (edge cases, integration, security, regression)
+- [ ] QE Automation passed (automated regression suite — Sprint 1+)
 - [ ] Manager QA sign-off given
 - [ ] All test cases in `TEAM/qa/test_cases/sprint_NN_test_cases.md` pass
 - [ ] No BLOCKER or CRITICAL issues open in `issues/issue.md`
