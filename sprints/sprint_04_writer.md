@@ -49,6 +49,17 @@ _Log here as they happen._
 
 ---
 
+## Stakeholder Testing
+
+| Role | Person | What They Test | Required? |
+|------|--------|----------------|-----------|
+| CTO | Prateek | Unit tests, clause present and unmodified, template renders correctly | Yes |
+| Decision Maker | Ryan | Read sample estimates (1 individual, 1 B2B) — confirm tone, professionalism, change order clause wording | Yes — Ryan reviews clause before go-live |
+| Operations SME | Robert / Mark | Confirm estimate content matches what a real FTF estimate should look like | Optional — if Ryan requests |
+| Business Stakeholders | Jessica, Wyatt | Not involved this sprint | No |
+
+---
+
 ## Completion Brief
 
 - **Built:**

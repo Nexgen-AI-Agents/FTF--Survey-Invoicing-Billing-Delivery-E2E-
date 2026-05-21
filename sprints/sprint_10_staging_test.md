@@ -57,6 +57,18 @@ _Log here as they happen._
 
 ---
 
+## Stakeholder Testing
+
+| Role | Person | What They Test | Required? |
+|------|--------|----------------|-----------|
+| CTO | Prateek | All 3 loops running simultaneously, no errors, cost benchmark runs | Yes |
+| Decision Maker | Ryan | Attend full system demo; approve monthly AI cost estimate; sign GO/NO-GO for Sprint 11 | Yes — MILESTONE SIGN-OFF |
+| Operations SME | Robert / Mark | Test all 10+ order types; confirm classification, pricing, and flagging are correct | Yes — MILESTONE |
+| AR Lead | Jessica | Test AR reminders on staging — correct tones, correct timing | Yes — MILESTONE |
+| Oversight | Wyatt | Test monthly statement on staging — confirm format and delivery | Yes — MILESTONE |
+
+---
+
 ## Completion Brief
 
 - **Built:**

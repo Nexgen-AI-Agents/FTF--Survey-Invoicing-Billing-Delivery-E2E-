@@ -50,6 +50,16 @@ _Log here as they happen._
 
 ---
 
+## Stakeholder Testing
+
+| Role | Person | What They Test | Required? |
+|------|--------|----------------|-----------|
+| CTO | Prateek | Unit tests, FEMA integration, pricing accuracy vs. service_names.json | Yes |
+| Operations SME | Robert / Mark | Verify service classification is correct for real FTF order types; confirm pricing amounts match what they expect | Yes |
+| Business Stakeholders | Ryan, Jessica, Wyatt | Not involved this sprint | No |
+
+---
+
 ## Completion Brief
 
 - **Built:**

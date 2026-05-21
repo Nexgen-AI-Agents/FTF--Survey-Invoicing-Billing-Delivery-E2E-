@@ -53,6 +53,17 @@ _Log here as they happen._
 
 ---
 
+## Stakeholder Testing
+
+| Role | Person | What They Test | Required? |
+|------|--------|----------------|-----------|
+| CTO | Prateek | Full chain integration test, delay applied, FTF CRM marked sent | Yes |
+| Decision Maker | Ryan | Open test estimate in inbox — confirm it looks professional, correct, and the change order clause is visible. **Must sign off before Sprint 7.** | Yes — MILESTONE |
+| Operations SME | Robert / Mark | Confirm estimate content and format match FTF standards | Yes |
+| Business Stakeholders | Jessica, Wyatt | Review daily Teams digest format | Optional |
+
+---
+
 ## Completion Brief
 
 - **Built:**

@@ -42,6 +42,15 @@ _Log here as they happen._
 
 ---
 
+## Stakeholder Testing
+
+| Role | Person | What They Test | Required? |
+|------|--------|----------------|-----------|
+| CTO | Prateek | Nightly log written, correction patterns surfaced, reflection.md updated | Yes — sole tester |
+| Business Stakeholders | Ryan, Robert, Mark, Jessica, Wyatt | Not involved — internal AI memory system, no human-facing output | No |
+
+---
+
 ## Completion Brief
 
 - **Built:**

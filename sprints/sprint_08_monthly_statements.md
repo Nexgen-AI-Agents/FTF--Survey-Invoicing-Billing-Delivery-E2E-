@@ -55,6 +55,18 @@ _Log here as they happen._
 
 ---
 
+## Stakeholder Testing
+
+| Role | Person | What They Test | Required? |
+|------|--------|----------------|-----------|
+| CTO | Prateek | Excel opens, PDF opens, all B2B orders present, no duplicates, amounts correct | Yes |
+| AR Lead | Jessica | Confirm statement content matches what she manually prepares today; verify all B2B clients are included | Yes |
+| Oversight | Wyatt | Approve statement format and delivery method (Teams + email); confirm it meets what B2B clients expect | Yes — MILESTONE |
+| Decision Maker | Ryan | Review Teams notification format for statement delivery | Yes |
+| Operations SME | Robert / Mark | Not involved this sprint | No |
+
+---
+
 ## Completion Brief
 
 - **Built:**

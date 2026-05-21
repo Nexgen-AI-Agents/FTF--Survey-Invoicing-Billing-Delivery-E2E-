@@ -55,6 +55,15 @@ _Log here as they happen._
 
 ---
 
+## Stakeholder Testing
+
+| Role | Person | What They Test | Required? |
+|------|--------|----------------|-----------|
+| CTO | Prateek | All 4 validation checks, retry loop behavior, ReviewerFailError escalation | Yes — sole tester |
+| Business Stakeholders | Ryan, Robert, Mark, Jessica, Wyatt | Not involved — internal AI self-correction loop, no human-facing output this sprint | No |
+
+---
+
 ## Completion Brief
 
 - **Built:**

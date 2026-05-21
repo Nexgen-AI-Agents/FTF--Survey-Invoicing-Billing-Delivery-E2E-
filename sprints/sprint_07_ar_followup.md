@@ -61,6 +61,18 @@ _Log here as they happen._
 
 ---
 
+## Stakeholder Testing
+
+| Role | Person | What They Test | Required? |
+|------|--------|----------------|-----------|
+| CTO | Prateek | All 5 reminder tiers fire correctly, exclusion list blocks sends, DB logging | Yes |
+| AR Lead | Jessica | Read all 5 reminder tones — confirm language matches what she currently sends manually; confirm escalation format; approve exclusion list logic | Yes — she owns AR process |
+| Decision Maker | Ryan | Confirm 90-day escalation alert format on Teams | Yes |
+| Operations SME | Robert / Mark | Not involved this sprint | No |
+| Oversight | Wyatt | Not involved this sprint | No |
+
+---
+
 ## Completion Brief
 
 - **Built:**

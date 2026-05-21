@@ -53,6 +53,18 @@ _Log here as they happen._
 
 ---
 
+## Stakeholder Testing
+
+| Role | Person | What They Test | Required? |
+|------|--------|----------------|-----------|
+| CTO | Prateek | Monitor first 5 estimates for errors, confirm system health | Yes |
+| Operations SME | Robert / Mark | Read every one of the first 5 real estimates sent to real customers — confirm accuracy, tone, and professionalism. Report issues to Prateek within 24 hours. | Yes — MILESTONE |
+| Decision Maker | Ryan | Receive Robert/Mark sign-off; issue GO/NO-GO for Sprint 12 | Yes — MILESTONE SIGN-OFF |
+| AR Lead | Jessica | Not involved — AR loop stays on staging this sprint | No |
+| Oversight | Wyatt | Not involved — Statement loop stays on staging this sprint | No |
+
+---
+
 ## Completion Brief
 
 - **Built:**

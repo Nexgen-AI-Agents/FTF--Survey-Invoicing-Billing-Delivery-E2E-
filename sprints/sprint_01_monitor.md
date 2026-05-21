@@ -55,6 +55,16 @@ _Log here as they happen during this sprint._
 
 ---
 
+## Stakeholder Testing
+
+| Role | Person | What They Test | Required? |
+|------|--------|----------------|-----------|
+| CTO | Prateek | Unit tests, integration test, DB rows written correctly | Yes |
+| Operations SME | Robert / Mark | Confirm the correct orders from FTF CRM are detected — no missed orders, no false positives | Yes |
+| Business Stakeholders | Ryan, Jessica, Wyatt | Not involved this sprint | No |
+
+---
+
 ## Completion Brief
 
 _Written here when sprint is marked ✅ Complete. Then add one-liner link to `memory.md` → Sprint Briefs._

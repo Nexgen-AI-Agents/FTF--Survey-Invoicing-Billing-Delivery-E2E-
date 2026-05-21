@@ -163,6 +163,7 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `CHANGELOG.md` | Release log — one entry per sprint, updated after every sprint release |
 | `sprints/index.md` | **Sprint master index** — all 13 sprint files, status, dependencies. Read this to find active sprint. |
 | `sprints/sprint_NN_name.md` | Individual sprint files — isolated tasks, tests, blockers, completion brief per sprint |
+| `docs/stakeholder_testing.md` | **Master stakeholder testing table** — who tests what per sprint, per-person summary, AI team vs. human stakeholders |
 | `docs/client_progress_tracker.md` | Client-facing progress table — sprint status, pending actions, sign-offs |
 | `docs/reference_nexgen_surveying_website.md` | NexGen website data — company, services, contacts, geographic coverage |
 | `docs/feedback_sprint_dependencies.md` | Sprint dependency rule — before every sprint, surface all blockers |
@@ -258,11 +259,10 @@ Automates 3 workflows that are currently manual and 9-to-5:
 
 _Written here when each sprint is marked ✅ Complete in sprint_log.md._
 
-<!-- Template:
-### Sprint N — Name ✅
-- **Built:** list key files
-- **Tests:** pass/fail summary
-- **Decisions:** anything that changed from the plan
-- **Carry forward:** what the next sprint needs to know
--->
+### Sprint 0 — Foundation & Connections ✅
+- **Built:** `core/` (7 files), `config/` (4 files), `db/schema.sql` (5 tables), 3 CI stubs, test_connections.py, conftest.py, 7 unit test files, QA test cases
+- **Tests:** 6/6 PASS — FTF health/orders/pricing, Claude Haiku, PostgreSQL DB, YAML valid. FEMA = WARN (firewall on local; passes on GitHub Actions).
+- **Decisions:** `get_orders()` unwraps `{"count","data"}` envelope; `get_pricing()` is per-service lookup with `?service=X&tier=Y`; FEMA client uses `OP_LEGACY_SERVER_CONNECT`; test script uses ASCII arrows for Windows cp1252 compat.
+- **Carry forward:** FTF pricing is per-service — Pricing Engine calls once per service name. Monitor agent reads from `data` key of orders response.
+- **Full brief:** [sprints/sprint_00_foundation.md](sprints/sprint_00_foundation.md)
 

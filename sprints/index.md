@@ -8,7 +8,7 @@
 
 | File | Sprint | What Gets Built | Depends On | Status | Completion |
 |------|--------|----------------|------------|--------|------------|
-| [sprint_00_foundation.md](sprint_00_foundation.md) | Sprint 0 | Repo, infrastructure, DB, all 5 API connections | — | 🔲 Not Started | — |
+| [sprint_00_foundation.md](sprint_00_foundation.md) | Sprint 0 | Repo, infrastructure, DB, all 5 API connections | — | ✅ Complete | 2026-05-21 |
 | [sprint_01_monitor.md](sprint_01_monitor.md) | Sprint 1 | Agent 2 — Monitor | Sprint 0 ✓ | 🔲 Not Started | — |
 | [sprint_02_classifier_pricing.md](sprint_02_classifier_pricing.md) | Sprint 2 | Agent 3 Classifier + Agent 5 Pricing Engine | Sprint 1 ✓ | 🔲 Not Started | — |
 | [sprint_03_human_gate.md](sprint_03_human_gate.md) | Sprint 3 | Agent 4 Human Gate (9 flag triggers) | Sprint 2 ✓ | 🔲 Not Started | — |

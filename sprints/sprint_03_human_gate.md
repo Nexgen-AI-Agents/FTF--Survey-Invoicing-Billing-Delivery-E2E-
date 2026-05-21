@@ -61,6 +61,17 @@ _Log here as they happen._
 
 ---
 
+## Stakeholder Testing
+
+| Role | Person | What They Test | Required? |
+|------|--------|----------------|-----------|
+| CTO | Prateek | All 9 flag triggers fire correctly, Teams webhook delivers alert | Yes |
+| Operations SME | Robert / Mark | Confirm the right orders are flagged — no false flags on normal orders, no missed flags on ALTA/Other Services/competitor | Yes |
+| Decision Maker | Ryan | Review Teams alert format — confirm it contains all info needed to make a decision | Yes |
+| Business Stakeholders | Jessica, Wyatt | Not involved this sprint | No |
+
+---
+
 ## Completion Brief
 
 - **Built:**

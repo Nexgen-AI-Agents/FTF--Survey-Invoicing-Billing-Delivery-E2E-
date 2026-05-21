@@ -56,6 +56,18 @@ _Log here as they happen._
 
 ---
 
+## Stakeholder Testing
+
+| Role | Person | What They Test | Required? |
+|------|--------|----------------|-----------|
+| CTO | Prateek | All 3 loops live, UptimeRobot configured, 30-day monitoring active | Yes |
+| Decision Maker | Ryan | Monitor daily digest for 30 days; issue final Phase 1 sign-off | Yes — FINAL SIGN-OFF |
+| Oversight | Wyatt | Monitor monthly statement delivery for 30 days | Yes |
+| Operations SME | Robert / Mark | Continue monitoring estimates as normal operations; flag any edge cases | Yes — ongoing |
+| AR Lead | Jessica | Confirm AR reminders are replacing her manual process correctly | Yes — ongoing |
+
+---
+
 ## Completion Brief
 
 - **Built:**
