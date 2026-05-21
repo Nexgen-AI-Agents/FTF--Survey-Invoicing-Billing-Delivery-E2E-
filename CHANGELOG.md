@@ -24,4 +24,29 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 
 ---
 
+## [Sprint 0] — Foundation — 2026-05-21
+
+### Added
+- `code/shared/core/` — 5 core clients: ftf_client, claude_client, fema_client, db, logger
+- `code/shared/config/settings.py`, `models.py`, `flag_triggers.py`
+- `db/schema.sql` — full PostgreSQL schema applied to `ftf_agentic_ai` database
+- `scripts/test_connections.py` — Sprint 0 verification script (6 checks, 6 PASS)
+- `.github/workflows/` — CI/CD pipeline with all 6 secrets configured at repo level
+- `sprints/sprint_00_foundation.md` — Sprint 0 complete with Stakeholder Testing section
+
+### Architecture
+- Stakeholder AI Agent layer added to team architecture (Tier 0.5)
+- `TEAM/stakeholders/` — 7 new files: STAKEHOLDERS_OVERVIEW.md + 6 AI agent role cards
+- `TEAM/TEAM_OVERVIEW.md` — Updated with Tier 0 (Human Principals) and Tier 0.5 (Stakeholder AI Agents)
+- `TEAM/dev/agents/dev_manager.md` — Added Stakeholder AI Consultation Rule
+- `TEAM/qa/agents/qa_manager.md` — Added Stakeholder AI check to release gate
+- `docs/stakeholder_testing.md` — Added AI Agent First rule at top
+- Escalation chain updated: Junior → Senior → Manager → Prateek AI → Real Prateek → Ryan AI/Wyatt AI → Real Ryan/Wyatt
+
+### Fixed
+- FTF API `get_orders()` — unwraps `{"count","data"}` envelope correctly
+- FTF API `get_pricing()` — requires `service` param, valid tier default (`individual`)
+- FEMA flood zone check — downgraded to WARN (corporate firewall blocks hazards.fema.gov; passes on GitHub Actions)
+- Windows cp1252 encoding — replaced all Unicode symbols with ASCII in test script
+
 <!-- Sprint entries added here as sprints are completed -->

@@ -1,7 +1,38 @@
 # FTF Agentic AI OS — Full Team Overview
 
-> **22 roles across 6 tiers.** Every role has a dedicated role card with persona, responsibilities, model selection, escalation path, and reading protocol.
+> **22 AI roles across 6 tiers + 6 human principals with parallel AI agent representations.**
+> Every role has a dedicated role card with persona, responsibilities, model selection, escalation path, and reading protocol.
 > This document is the single reference for who does what and how the team works together.
+
+---
+
+## Human Principals (Tier 0) — Real Humans, Milestone Sign-Offs Only
+
+| Person | Role | Human Role Card | AI Agent Card |
+|--------|------|-----------------|---------------|
+| Prateek | CTO | `TEAM/leadership/prateek_cto.md` | `TEAM/stakeholders/prateek.md` |
+| Ryan | Decision Maker (FTF) | `TEAM/leadership/ryan_wyatt.md` | `TEAM/stakeholders/ryan.md` |
+| Wyatt | Oversight & Leadership | `TEAM/leadership/ryan_wyatt.md` | `TEAM/stakeholders/wyatt.md` |
+| Robert | Operations SME | `TEAM/sme/robert.md` | `TEAM/stakeholders/robert.md` |
+| Mark | Field Ops SME | `TEAM/sme/mark.md` | `TEAM/stakeholders/mark.md` |
+| Jessica | AR Lead | `TEAM/ar/jessica_ar_specialist.md` | `TEAM/stakeholders/jessica.md` |
+
+> Human role cards describe their business role. AI agent cards (`TEAM/stakeholders/`) are the always-available consultation layer. **Always consult the AI agent first — only ping the real human if the AI agent cannot answer.**
+
+---
+
+## Stakeholder AI Agents (Tier 0.5) — Always Available
+
+| Agent | Status | Consulted For | Enriched From |
+|-------|--------|---------------|---------------|
+| Prateek AI | **ACTIVE** | Architecture, code standards, ADR decisions, model selection | CLAUDE.md, memory.md, learnings.md, ADRs |
+| Ryan AI | STUB | Estimate tone, business rules, output quality | Sprint 6 demo feedback |
+| Robert AI | STUB | Service classification, flag trigger logic, estimate correctness | Recordings 1–8 |
+| Mark AI | STUB | Edge case classification, unusual properties, out-of-state | Recordings 1–8 |
+| Jessica AI | STUB | Reminder tiers, escalation threshold, exclusion list | Recording 10 |
+| Wyatt AI | STUB | Statement format, B2B delivery, Teams notification content | Recording 11 |
+
+> See `TEAM/stakeholders/STAKEHOLDERS_OVERVIEW.md` for consultation rules, STUB vs. ACTIVE explanation, and enrichment process.
 
 ---
 
@@ -38,26 +69,46 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  TIER 1 — LEADERSHIP & BUSINESS                                  │
-│  Prateek (CTO) · Ryan & Wyatt · Product Owner · Project Manager │
+│  TIER 0 — HUMAN PRINCIPALS (Real Humans — milestone sign-offs)   │
+│  Prateek · Ryan · Wyatt · Robert · Mark · Jessica                │
 └─────────────────────────────────────────────────────────────────┘
-                              ↓
+                              |
+                  consult AI agent first
+                              |
+                              v
+┌─────────────────────────────────────────────────────────────────┐
+│  TIER 0.5 — STAKEHOLDER AI AGENTS (Always Available)             │
+│  Prateek AI · Ryan AI · Robert AI · Mark AI · Jessica AI         │
+│  Wyatt AI                                                        │
+│  Rule: consult before pinging real human                         │
+└─────────────────────────────────────────────────────────────────┘
+                              |
+                              v
+┌─────────────────────────────────────────────────────────────────┐
+│  TIER 1 — LEADERSHIP & BUSINESS                                  │
+│  Product Owner · Project Manager                                 │
+└─────────────────────────────────────────────────────────────────┘
+                              |
+                              v
 ┌─────────────────────────────────────────────────────────────────┐
 │  TIER 2 — ARCHITECTURE & TECHNICAL SPECIALISTS                   │
 │  Enterprise Architect · IT Infrastructure · DevOps Engineer      │
 │  Prompt Engineer · Security Engineer                             │
 └─────────────────────────────────────────────────────────────────┘
-                              ↓
+                              |
+                              v
 ┌─────────────────────────────────────────────────────────────────┐
 │  TIER 3 — BUSINESS & DESIGN                                      │
 │  Business Analyst · UI/UX Designer                               │
 └─────────────────────────────────────────────────────────────────┘
-                              ↓
+                              |
+                              v
 ┌─────────────────────────────────────────────────────────────────┐
-│  TIER 4 — SUBJECT MATTER EXPERTS & SPECIALISTS                   │
+│  TIER 4 — SUBJECT MATTER EXPERTS (Human Role Cards)              │
 │  Robert (SME) · Mark (SME) · Jessica (AR Specialist)             │
 └─────────────────────────────────────────────────────────────────┘
-                              ↓
+                              |
+                              v
 ┌──────────────────────────────┐  ┌──────────────────────────────┐
 │  TIER 5 — DEVELOPMENT        │  │  TIER 6 — QA & ENGINEERING   │
 │  Dev Manager                 │  │  QA Manager                  │
@@ -72,14 +123,24 @@
 
 ```
 Junior Dev / Junior QA / QE Manual / QE Automation
-        ↓ (blockers, failures)
+        | (blockers, failures)
+        v
 Senior Dev / Senior QA
-        ↓ (unresolvable issues, systemic problems)
+        | (unresolvable issues, systemic problems)
+        v
 Dev Manager / QA Manager
-        ↓ (BLOCKER, CRITICAL, architecture conflict)
-Prateek — CTO
-        ↓ (business rule conflict, go-live decision)
-Ryan & Wyatt
+        | (BLOCKER, CRITICAL, architecture conflict)
+        v
+Prateek AI  <-- consult first (ACTIVE, always available)
+        | (cannot answer, or decision outside documented standards)
+        v
+Real Prateek — CTO
+        | (business rule conflict, go-live decision)
+        v
+Ryan AI / Wyatt AI  <-- consult first (STUB — answer from BRD)
+        | (milestone sign-off, production approval)
+        v
+Real Ryan / Real Wyatt
 ```
 
 ---
@@ -126,17 +187,20 @@ Ryan & Wyatt
 
 ## Decision Authority
 
-| Decision | Owner |
-|----------|-------|
-| Architecture choice | Enterprise Architect → Prateek approval |
-| Prompt design | Prompt Engineer |
-| Business rule | Ryan (final) |
-| Sprint scope change | Product Owner → Prateek approval |
-| Production deployment | Prateek sign-off required |
-| Security incident | Security Engineer → Prateek immediately |
-| AR escalation threshold | Jessica |
-| Statement format | Wyatt |
-| Flag trigger changes | Robert/Mark → Ryan confirmation |
+| Decision | First Consult | Final Authority |
+|----------|---------------|-----------------|
+| Architecture choice | Prateek AI | Enterprise Architect → Real Prateek approval |
+| Prompt design | Prateek AI (standards) | Prompt Engineer |
+| Business rule | Ryan AI | Real Ryan (final) |
+| Sprint scope change | Prateek AI | Product Owner → Real Prateek approval |
+| Production deployment | Prateek AI | Real Prateek sign-off required |
+| Security incident | Prateek AI | Security Engineer → Real Prateek immediately |
+| AR escalation threshold | Jessica AI | Real Jessica |
+| Statement format | Wyatt AI | Real Wyatt |
+| Flag trigger changes | Robert AI / Mark AI | Real Robert/Mark → Ryan confirmation |
+| Code standards / ADR | Prateek AI | Real Prateek (if new standard needed) |
+| Reminder tone validation | Jessica AI | Real Jessica (Sprint 7) |
+| Estimate tone validation | Ryan AI | Real Ryan (Sprint 6) |
 
 ---
 

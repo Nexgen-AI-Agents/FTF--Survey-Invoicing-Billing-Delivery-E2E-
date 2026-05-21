@@ -177,7 +177,14 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `Dependencies/Questions_Jessica.docx` | AR + statement questions for Jessica |
 | `Dependencies/Questions_Robert_Mark.docx` | Operations + service questions for Robert & Mark |
 | `Dependencies/Questions_Wyatt.docx` | Statement format questions for Wyatt |
-| `TEAM/TEAM_OVERVIEW.md` | **Master team reference** — all 22 roles, structure, escalation chain, decision authority |
+| `TEAM/stakeholders/STAKEHOLDERS_OVERVIEW.md` | **Stakeholder AI layer rules** — distinction table, org chart, Tier 0/0.5, escalation chain, STUB/ACTIVE rules, enrichment process |
+| `TEAM/stakeholders/prateek.md` | Prateek CTO AI agent — ACTIVE — architecture, code standards, ADR decisions (consulted by ALL team members) |
+| `TEAM/stakeholders/ryan.md` | Ryan AI agent — STUB — estimate tone, business rules, output quality (enriched after Sprint 6) |
+| `TEAM/stakeholders/robert.md` | Robert AI agent — STUB — service classification, flag logic, estimate correctness (enriched after Recordings 1–8) |
+| `TEAM/stakeholders/mark.md` | Mark AI agent — STUB — edge cases, unusual properties, out-of-state (enriched after Recordings 1–8) |
+| `TEAM/stakeholders/jessica.md` | Jessica AI agent — STUB — reminder tiers, escalation, exclusion list (enriched after Recording 10) |
+| `TEAM/stakeholders/wyatt.md` | Wyatt AI agent — STUB — statement format, B2B delivery, Teams notification (enriched after Recording 11) |
+| `TEAM/TEAM_OVERVIEW.md` | **Master team reference** — all 22 roles, Tier 0/0.5, escalation chain, decision authority |
 | `TEAM/leadership/prateek_cto.md` | Prateek — CTO role card — technical authority, escalation endpoint, ADR approvals |
 | `TEAM/leadership/product_owner.md` | Product Owner role card — product vision, backlog, sprint readiness gates |
 | `TEAM/leadership/project_manager.md` | Project Manager role card — timelines, dependency tracking, agile ceremonies |

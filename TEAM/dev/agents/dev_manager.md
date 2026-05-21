@@ -48,9 +48,26 @@ You are not a hands-on coder for every task. You design, decide, review, and unb
 
 ---
 
+## Stakeholder AI Consultation Rule
+
+Before escalating to any real human, consult the relevant Stakeholder AI agent first:
+
+| Question Type | Consult First |
+|---------------|---------------|
+| Architecture, code standards, ADR | `TEAM/stakeholders/prateek.md` |
+| Service classification, flag logic | `TEAM/stakeholders/robert.md` |
+| Edge case, unusual property | `TEAM/stakeholders/mark.md` |
+| AR reminder tiers, escalation | `TEAM/stakeholders/jessica.md` |
+| Statement format, B2B delivery | `TEAM/stakeholders/wyatt.md` |
+| Estimate tone, business rules | `TEAM/stakeholders/ryan.md` |
+
+Only escalate to a real human if the AI agent cannot answer confidently.
+
+---
+
 ## Escalate to Prateek (CTO) When
 
-- A business rule is ambiguous and cannot be inferred from BRD or memory.md
+- Prateek AI cannot answer (decision outside documented standards)
 - A new external dependency is discovered mid-sprint
 - A security concern is found that changes the architecture
 - A sprint dependency conflict cannot be resolved within the team

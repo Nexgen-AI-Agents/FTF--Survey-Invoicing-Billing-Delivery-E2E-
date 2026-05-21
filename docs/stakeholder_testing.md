@@ -3,6 +3,23 @@
 > Who tests what, and when. Updated as sprints complete.
 > Human stakeholders only — AI agents (Dev, QA team) test internally before any human sees output.
 
+## AI Agent First — Rule
+
+Before contacting any real human stakeholder, the team must consult the corresponding Stakeholder AI agent:
+
+| Real Human | AI Agent Card | Consult For |
+|------------|---------------|-------------|
+| Prateek | `TEAM/stakeholders/prateek.md` | Architecture, code standards, ADR, model selection |
+| Ryan | `TEAM/stakeholders/ryan.md` | Estimate tone, business rule, output quality |
+| Robert | `TEAM/stakeholders/robert.md` | Service classification, flag logic, estimate correctness |
+| Mark | `TEAM/stakeholders/mark.md` | Edge cases, unusual property, out-of-state orders |
+| Jessica | `TEAM/stakeholders/jessica.md` | Reminder tiers, escalation threshold, exclusion list |
+| Wyatt | `TEAM/stakeholders/wyatt.md` | Statement format, B2B delivery, Teams notification |
+
+**Rule:** The real human is only contacted when the AI agent cannot answer confidently, or for explicit milestone sign-offs listed in this document. See `TEAM/stakeholders/STAKEHOLDERS_OVERVIEW.md` for full consultation rules.
+
+---
+
 ---
 
 ## Quick Reference — Who Tests Which Sprint

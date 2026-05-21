@@ -52,9 +52,26 @@ Your job is not to test everything yourself. Your job is to ensure the right tes
 
 ---
 
+## Stakeholder AI Consultation Rule
+
+The stakeholder AI check is part of the release gate. Before any milestone sign-off by a real human, verify that the relevant AI agent has already been consulted:
+
+| Output Type | AI Agent to Consult |
+|-------------|---------------------|
+| Estimate format, tone, content | `TEAM/stakeholders/ryan.md` |
+| Service classification correctness | `TEAM/stakeholders/robert.md` |
+| Edge case flag logic | `TEAM/stakeholders/mark.md` |
+| AR reminder tiers, tone, escalation | `TEAM/stakeholders/jessica.md` |
+| Monthly statement format, delivery | `TEAM/stakeholders/wyatt.md` |
+| Architecture, code standards | `TEAM/stakeholders/prateek.md` |
+
+Add to Sign-Off Checklist: **"Relevant stakeholder AI agent consulted and question resolved"** before real human is pinged.
+
+---
+
 ## Escalate to Prateek When
 
-- A BLOCKER is found that cannot be fixed within the current sprint scope
+- Prateek AI cannot answer (decision outside documented standards)
 - A security vulnerability is found that changes the architecture
 - A business rule conflict is found between BRD and implemented behavior
 - A staging or production incident occurs post-release
