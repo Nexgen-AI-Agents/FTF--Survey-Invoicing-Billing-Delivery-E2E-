@@ -17,7 +17,7 @@
 | [sprint_06_sender_reporter.md](sprint_06_sender_reporter.md) | Sprint 6 ⭐ | Agent 8 Sender + Agent 9 Reporter — **first full estimate loop** | Sprint 5 ✓ | 🔲 Not Started | — |
 | [sprint_07_ar_followup.md](sprint_07_ar_followup.md) | Sprint 7 | Agents 10–14 AR Follow-Up Loop | Sprint 6 ✓ + Jessica recording | 🔲 Not Started | — |
 | [sprint_08_monthly_statements.md](sprint_08_monthly_statements.md) | Sprint 8 | Agents 15–17 Monthly Statement Loop | Sprint 7 ✓ + Wyatt/Jessica recording | 🔲 Not Started | — |
-| [sprint_09_memory_loop.md](sprint_09_memory_loop.md) | Sprint 9 | Memory Manager + Dream Processor | Sprint 8 ✓ | 🔲 Not Started | — |
+| [sprint_09_memory_loop.md](sprint_09_memory_loop.md) | Sprint 9 | Agent 1 — Orchestrator (top-level loop controller) | Sprint 8 ✓ | 🔲 Not Started | — |
 | [sprint_10_staging_test.md](sprint_10_staging_test.md) | Sprint 10 ⭐ | Full staging test — all 3 loops + cost benchmark | Sprint 9 ✓ | 🔲 Not Started | — |
 | [sprint_11_limited_production.md](sprint_11_limited_production.md) | Sprint 11 ⭐ | Limited production — estimate loop live, team monitors | Sprint 10 go/no-go | 🔲 Not Started | — |
 | [sprint_12_full_production.md](sprint_12_full_production.md) | Sprint 12 ⭐ | Full production — all 3 loops live, 24/7 autonomous | Sprint 11 clear | 🔲 Not Started | — |

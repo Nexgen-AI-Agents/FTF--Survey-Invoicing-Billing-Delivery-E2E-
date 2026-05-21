@@ -21,7 +21,7 @@ Run these steps in order. No step may be skipped.
 1. Pull latest code: `git pull origin master`
 2. Set environment: copy `.env.example` → `.env`, fill in staging credentials
 3. Install dependencies: `pip install -r requirements.txt`
-4. Run DB migrations (if schema changed): `python code/shared/db/migrate.py`
+4. Run DB schema (if schema changed): `psql -U $DB_USER -d $DB_NAME -f db/schema.sql`
 5. Run full test suite: `pytest code/sprint_NN/tests/ -v`
 6. Start the agent loop: `python code/sprint_NN/agents/agent_01_orchestrator.py`
 7. Monitor logs for 10 minutes — check `logs/` for errors

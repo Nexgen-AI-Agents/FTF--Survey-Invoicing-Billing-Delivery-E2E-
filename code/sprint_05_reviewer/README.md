@@ -2,12 +2,12 @@
 
 ## What This Sprint Builds
 
-- Agent 7: Estimate Reviewer — AI reviews the estimate for accuracy, completeness, and tone. Returns corrected estimate or escalates after 3 failed loops.
-- Agent 8: Estimate Approver — applies final formatting and prepares estimate for FTF Books submission.
+- Agent 7: Estimate Reviewer — AI reviews the estimate for accuracy, completeness, and tone. Returns pass or fail with specific feedback.
+- Agent 8: Estimate Rewriter — AI rewrites the estimate based on reviewer feedback. Loop runs up to 3 times; escalates to human gate on 3rd failure.
 
 ## Agents Built
 - `agents/agent_07_reviewer.py`
-- `agents/agent_08_approver.py`
+- `agents/agent_08_rewriter.py`
 
 ## How to Run
 ```bash

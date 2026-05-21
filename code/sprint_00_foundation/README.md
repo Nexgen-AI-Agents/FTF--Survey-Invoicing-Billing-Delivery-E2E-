@@ -5,7 +5,7 @@
 The entire infrastructure layer that all other sprints depend on:
 - GitHub repo + full folder structure (already done)
 - `db/schema.sql` — PostgreSQL schema for orders, estimates, AR, statements
-- `code/shared/core/` — all shared modules: `ftf_client.py`, `claude_client.py`, `fema_client.py`, `db.py`, `logger.py`
+- `code/shared/core/` — all shared modules: `exceptions.py`, `logger.py`, `db.py`, `state.py`, `ftf_client.py`, `fema_client.py`, `claude_client.py` (7 files)
 - `code/shared/config/` — `settings.py`, `models.py`, `flag_triggers.py`
 - `code/shared/models/` — data models (`order.py`, `estimate.py`, etc.)
 - `.env.example` — template for environment variables
