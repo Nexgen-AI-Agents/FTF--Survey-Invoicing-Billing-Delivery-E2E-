@@ -184,7 +184,7 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `TEAM/design/ui_ux_designer.md` | UI/UX Designer role card — human-facing output design (emails, statements, alerts) |
 | `TEAM/sme/robert.md` | Robert SME role card — operational validation, flag logic, missing data provision |
 | `TEAM/sme/mark.md` | Mark SME role card — edge case validation, field/office workflow expertise |
-| `TEAM/ar/ar_specialist.md` | AR Specialist role card — AR loop ownership post-implementation, reminder + escalation |
+| `TEAM/ar/jessica_ar_specialist.md` | Jessica — AR Specialist role card — AR loop ownership post-implementation, reminder + escalation |
 | `TEAM/dev/TEAM.md` | Dev team overview — roles, model rules, review flow, spawn rules |
 | `TEAM/dev/CODE_STANDARDS.md` | Python coding standards — naming, imports, security, testing rules |
 | `TEAM/dev/PR_CHECKLIST.md` | Pre-merge checklist — all code must pass before Senior Dev review |
