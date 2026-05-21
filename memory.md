@@ -158,12 +158,11 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `memory.md` | **Read second** — project brain, context, dependencies, build order |
 | `learnings.md` | **Read third** — AI learnings log: mistakes caught, patterns confirmed, non-obvious decisions |
 | `user_learnings.md` | User-facing learnings — bullet points updated on every git push |
-| `feedback_sprint_dependencies.md` | Sprint dependency rule — moved from .claude/ system folder to workspace |
-| `sprint_log.md` | Redirect only — points to `sprints/` folder |
 | `sprints/index.md` | **Sprint master index** — all 13 sprint files, status, dependencies. Read this to find active sprint. |
 | `sprints/sprint_NN_name.md` | Individual sprint files — isolated tasks, tests, blockers, completion brief per sprint |
-| `client_progress_tracker.md` | Client-facing progress table — sprint status, pending actions, sign-offs |
-| `reference_nexgen_surveying_website.md` | NexGen website data — company, services, contacts, geographic coverage |
+| `docs/client_progress_tracker.md` | Client-facing progress table — sprint status, pending actions, sign-offs |
+| `docs/reference_nexgen_surveying_website.md` | NexGen website data — company, services, contacts, geographic coverage |
+| `docs/feedback_sprint_dependencies.md` | Sprint dependency rule — before every sprint, surface all blockers |
 | `Resources/FTF_Agentic_AI_BRD_v2.docx` | Full business requirements document v2 |
 | `Resources/Agentic_AI_Folder_Structure_v2.docx` | Codebase folder structure blueprint |
 | `Resources/FTF_Technical_Architecture.html` | 17-agent system diagram (dev view) |
