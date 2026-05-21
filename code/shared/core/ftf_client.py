@@ -36,7 +36,9 @@ def get_orders(limit: int = 500) -> list[dict]:
             timeout=_TIMEOUT,
         )
         r.raise_for_status()
-        return r.json()
+        body = r.json()
+        # API returns {"count": N, "data": [...]} — extract the list
+        return body.get("data", body) if isinstance(body, dict) else body
     except httpx.HTTPStatusError as exc:
         raise AgentError(f"get_orders HTTP {exc.response.status_code}") from exc
     except Exception as exc:
@@ -73,9 +75,15 @@ def get_customer(customer_id: str) -> dict:
         raise AgentError(f"get_customer({customer_id}) failed") from exc
 
 
-def get_pricing() -> dict:
+def get_pricing(service: str, tier: str = "individual") -> dict:
+    """Fetch price for one service. tier is 'individual' (default) or 'b2b'."""
     try:
-        r = httpx.get(f"{FTF_API_BASE_URL}/pricing", headers=_headers(), timeout=_TIMEOUT)
+        r = httpx.get(
+            f"{FTF_API_BASE_URL}/pricing",
+            headers=_headers(),
+            params={"service": service, "tier": tier},
+            timeout=_TIMEOUT,
+        )
         r.raise_for_status()
         return r.json()
     except Exception as exc:
