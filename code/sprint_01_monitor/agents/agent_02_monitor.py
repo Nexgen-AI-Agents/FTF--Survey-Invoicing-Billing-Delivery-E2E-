@@ -15,6 +15,7 @@ def run() -> list[str]:
     """Poll FTF CRM for new orders; persist new ones to state DB.
 
     Returns list of newly detected order IDs.
+    Only Quote-stage orders are processed — all others are already in production.
     Orders already in processed_orders (any status) are skipped — never reset.
     No LLM calls — pure API + DB logic.
     """
@@ -23,6 +24,12 @@ def run() -> list[str]:
 
     for order in orders:
         order_id = str(order["order_id"])
+        ftf_status = order.get("status", "")
+
+        # Only Quote-stage orders need an estimate — all others are already in production
+        if ftf_status != "Quote":
+            log.debug("skip non-quote order=%s ftf_status=%s", order_id, ftf_status)
+            continue
 
         if order_exists(order_id):
             log.debug("skip existing order=%s", order_id)

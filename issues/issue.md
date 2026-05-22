@@ -41,6 +41,7 @@ OPEN → IN DEV → DEV COMPLETE → QA JUNIOR → QA SENIOR → QA MANAGER → 
 | I-009 | Sprint 0 | CRITICAL | `db.get_pending_order()` used in sprint plan to check if order exists — function takes no args | dev_manager | 2026-05-21 | Added `order_exists(order_id: str) -> bool` to `core/db.py`. Sprint 1 agent uses this instead. |
 | I-010 | Sprint 0 | MINOR | `test_get_pricing_raises_pricing_error_on_failure` called `get_pricing()` without required `service` arg | dev_manager | 2026-05-21 | Fixed test to call `get_pricing("Boundary Survey")`. |
 | I-011 | Sprint 0 | MINOR | `state.py` uses deprecated `datetime.datetime.utcnow()` — DeprecationWarning on Python 3.14 | dev_manager | 2026-05-21 | Replaced all 4 calls with `datetime.datetime.now(datetime.UTC)`. |
+| I-012 | Sprint 1 | MAJOR | Monitor saved ALL FTF orders regardless of status — Delivered/Complete/Cancelled orders incorrectly queued | dev_manager | 2026-05-22 | Added FTF status filter: only `status="Quote"` orders are processed. Confirmed via FTF staging CRM — order 1000275451 was Delivered but appeared in queue. Added UT-01-07 to cover this case. 8/8 tests pass. |
 
 ---
 

@@ -233,7 +233,8 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `TEAM/qa/test_cases/sprint_01_test_cases.md` | Sprint 1 QA test cases — 6 unit tests, 5 integration tests, 4 edge cases, acceptance criteria |
 | `code/sprint_01_monitor/agents/agent_02_monitor.py` | Agent 2 — CRM Monitor — polls FTF API, detects new orders, writes to state DB |
 | `code/sprint_01_monitor/tests/conftest.py` | Sprint 1 test path setup — adds shared/ and sprint root to sys.path |
-| `code/sprint_01_monitor/tests/test_monitor.py` | Sprint 1 unit tests — 7 tests covering all monitor scenarios |
+| `code/sprint_01_monitor/tests/test_monitor.py` | Sprint 1 unit tests — 8 tests covering all monitor scenarios including FTF status filter |
+| `config/knowledge_base/ftf_order_statuses.md` | **FTF order status hierarchy** — all 16 statuses, core pipeline, per-agent usage rules. Confirmed 2026-05-22. |
 
 ---
 
@@ -285,10 +286,10 @@ _Written here when each sprint is marked ✅ Complete in sprint_log.md._
 - **Post-sprint fixes (2026-05-21):** Added `order_exists()` to `db.py`; fixed `test_get_pricing` missing arg; fixed `state.py` `utcnow()` → `now(UTC)`. 7 ADRs written. 42/42 tests pass.
 - **Full brief:** [sprints/sprint_00_foundation.md](sprints/sprint_00_foundation.md)
 
-### Sprint 1 — CRM Monitor 🔄 (In Progress — 2026-05-21)
-- **Building:** `agent_02_monitor.py` — polls FTF API every 60 min, writes new orders to `processed_orders` with `status="pending"`
-- **Tests so far:** 7/7 unit tests pass (UT-01-01 through UT-01-06 + EC-01-03)
-- **Key decision:** `order_exists(order_id)` used to skip existing orders — no status reset risk
-- **Open blockers:** Competitor list (I-001), never-auto-quote list (I-002), Construction/Permitting FTF names (I-003) — do NOT block Sprint 1; block Sprints 2–3
+### Sprint 1 — CRM Monitor ✅ (Complete — 2026-05-22)
+- **Built:** `agent_02_monitor.py` — polls FTF API every 60 min, filters to `status="Quote"` orders only, writes new ones to `processed_orders` with `status="pending"`
+- **Tests:** 8/8 unit tests pass. Live: 500 real FTF orders on first run, 0 on second (dedup confirmed).
+- **Key decisions:** `order_exists()` prevents status reset; FTF status filter (`"Quote"` only) prevents historical orders from being queued; `order["order_id"]` not `order["id"]`
+- **Carry forward:** FTF `service_type` returns `"Quote"` for all quote-stage orders — classifier cannot use this field. Must determine service from other order data.
 - **Full brief:** [sprints/sprint_01_monitor.md](sprints/sprint_01_monitor.md)
 

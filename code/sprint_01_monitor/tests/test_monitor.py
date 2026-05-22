@@ -4,7 +4,11 @@ from unittest.mock import patch, MagicMock, call
 from agents.agent_02_monitor import run, AGENT_NAME
 
 
-_MOCK_ORDERS = [{"order_id": "O-001"}, {"order_id": "O-002"}, {"order_id": "O-003"}]
+_MOCK_ORDERS = [
+    {"order_id": "O-001", "status": "Quote"},
+    {"order_id": "O-002", "status": "Quote"},
+    {"order_id": "O-003", "status": "Quote"},
+]
 
 
 def _patch_all(orders, exists_fn):
@@ -96,7 +100,10 @@ def test_no_llm_call():
 
 # EC-01-03: Numeric order IDs from FTF cast to string correctly
 def test_numeric_order_id_cast_to_string():
-    orders_with_int_ids = [{"order_id": 101}, {"order_id": 102}]
+    orders_with_int_ids = [
+        {"order_id": 101, "status": "Quote"},
+        {"order_id": 102, "status": "Quote"},
+    ]
 
     with patch("agents.agent_02_monitor.get_orders", return_value=orders_with_int_ids), \
          patch("agents.agent_02_monitor.order_exists", return_value=False), \
@@ -107,3 +114,25 @@ def test_numeric_order_id_cast_to_string():
     assert result == ["101", "102"]
     saved_ids = [c.args[0] for c in mock_save.call_args_list]
     assert all(isinstance(oid, str) for oid in saved_ids)
+
+
+# UT-01-07: Non-Quote FTF status orders are skipped — not saved
+def test_non_quote_orders_skipped():
+    mixed_orders = [
+        {"order_id": "O-001", "status": "Quote"},
+        {"order_id": "O-002", "status": "Delivered"},
+        {"order_id": "O-003", "status": "Pending"},
+        {"order_id": "O-004", "status": "Complete"},
+        {"order_id": "O-005", "status": "Canceled"},
+    ]
+
+    with patch("agents.agent_02_monitor.get_orders", return_value=mixed_orders), \
+         patch("agents.agent_02_monitor.order_exists", return_value=False), \
+         patch("agents.agent_02_monitor.save_order_state") as mock_save, \
+         patch("agents.agent_02_monitor.log_decision"):
+        result = run()
+
+    assert result == ["O-001"]
+    assert mock_save.call_count == 1
+    saved_ids = [c.args[0] for c in mock_save.call_args_list]
+    assert saved_ids == ["O-001"]
