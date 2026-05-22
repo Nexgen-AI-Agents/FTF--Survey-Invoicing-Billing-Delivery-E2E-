@@ -31,6 +31,11 @@ def run() -> list[str]:
             log.debug("skip non-quote order=%s ftf_status=%s", order_id, ftf_status)
             continue
 
+        # Skip if estimate already sent — avoid duplicate estimates
+        if order.get("estimate_sent") is True:
+            log.debug("skip already-estimated order=%s", order_id)
+            continue
+
         if order_exists(order_id):
             log.debug("skip existing order=%s", order_id)
             continue

@@ -5,9 +5,9 @@ from agents.agent_02_monitor import run, AGENT_NAME
 
 
 _MOCK_ORDERS = [
-    {"order_id": "O-001", "status": "Quote"},
-    {"order_id": "O-002", "status": "Quote"},
-    {"order_id": "O-003", "status": "Quote"},
+    {"order_id": "O-001", "status": "Quote", "estimate_sent": False},
+    {"order_id": "O-002", "status": "Quote", "estimate_sent": False},
+    {"order_id": "O-003", "status": "Quote", "estimate_sent": False},
 ]
 
 
@@ -101,8 +101,8 @@ def test_no_llm_call():
 # EC-01-03: Numeric order IDs from FTF cast to string correctly
 def test_numeric_order_id_cast_to_string():
     orders_with_int_ids = [
-        {"order_id": 101, "status": "Quote"},
-        {"order_id": 102, "status": "Quote"},
+        {"order_id": 101, "status": "Quote", "estimate_sent": False},
+        {"order_id": 102, "status": "Quote", "estimate_sent": False},
     ]
 
     with patch("agents.agent_02_monitor.get_orders", return_value=orders_with_int_ids), \
@@ -119,11 +119,11 @@ def test_numeric_order_id_cast_to_string():
 # UT-01-07: Non-Quote FTF status orders are skipped — not saved
 def test_non_quote_orders_skipped():
     mixed_orders = [
-        {"order_id": "O-001", "status": "Quote"},
-        {"order_id": "O-002", "status": "Delivered"},
-        {"order_id": "O-003", "status": "Pending"},
-        {"order_id": "O-004", "status": "Complete"},
-        {"order_id": "O-005", "status": "Canceled"},
+        {"order_id": "O-001", "status": "Quote",     "estimate_sent": False},
+        {"order_id": "O-002", "status": "Delivered",  "estimate_sent": False},
+        {"order_id": "O-003", "status": "Pending",    "estimate_sent": False},
+        {"order_id": "O-004", "status": "Complete",   "estimate_sent": False},
+        {"order_id": "O-005", "status": "Canceled",   "estimate_sent": False},
     ]
 
     with patch("agents.agent_02_monitor.get_orders", return_value=mixed_orders), \
@@ -134,5 +134,24 @@ def test_non_quote_orders_skipped():
 
     assert result == ["O-001"]
     assert mock_save.call_count == 1
+
+
+# UT-01-08: Quote orders with estimate_sent=True are skipped — no duplicate estimates
+def test_already_estimated_orders_skipped():
+    orders = [
+        {"order_id": "O-001", "status": "Quote", "estimate_sent": False},
+        {"order_id": "O-002", "status": "Quote", "estimate_sent": True},
+        {"order_id": "O-003", "status": "Quote", "estimate_sent": True},
+    ]
+
+    with patch("agents.agent_02_monitor.get_orders", return_value=orders), \
+         patch("agents.agent_02_monitor.order_exists", return_value=False), \
+         patch("agents.agent_02_monitor.save_order_state") as mock_save, \
+         patch("agents.agent_02_monitor.log_decision"):
+        result = run()
+
+    assert result == ["O-001"]
+    assert mock_save.call_count == 1
     saved_ids = [c.args[0] for c in mock_save.call_args_list]
-    assert saved_ids == ["O-001"]
+    assert "O-002" not in saved_ids
+    assert "O-003" not in saved_ids
