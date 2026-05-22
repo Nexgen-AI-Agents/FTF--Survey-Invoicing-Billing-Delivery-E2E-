@@ -2,8 +2,8 @@
 
 **Client:** Norman G. Ehlers (NGE) — Field to Finish
 **Project:** Agentic AI Operating System
-**Last Updated:** 2026-05-20
-**Overall Status:** 🔲 Pre-Build — Documentation complete, development starting
+**Last Updated:** 2026-05-22
+**Overall Status:** 🔄 In Progress — Sprint 2 starting
 
 ---
 
@@ -11,9 +11,9 @@
 
 | Sprint | What Gets Built | Owner | Status | Completion Date |
 |--------|----------------|-------|--------|----------------|
-| Sprint 0 | Foundation — GitHub repo, database, API connections, all infrastructure | Prateek | 🔲 Not Started | — |
-| Sprint 1 | Order Detection — AI monitors FTF every 60 min for new survey orders | Prateek | 🔲 Not Started | — |
-| Sprint 2 | Smart Classification — AI reads order type, customer tier, flood zone | Prateek | 🔲 Not Started | — |
+| Sprint 0 | Foundation — GitHub repo, database, API connections, all infrastructure | Prateek | ✅ Complete | 2026-05-21 |
+| Sprint 1 | Order Detection — AI monitors FTF every 60 min for new survey orders | Prateek | ✅ Complete | 2026-05-22 |
+| Sprint 2 | Smart Classification — AI reads order type, customer tier, flood zone | Prateek | 🔄 In Progress | — |
 | Sprint 3 | Flag Detection & Human Gate — 9 triggers, MS Teams alerts to Robert/Mark/Ryan | Prateek | 🔲 Not Started | — |
 | Sprint 4 | Pricing Engine — AI looks up correct price across all 24 service types | Prateek | 🔲 Not Started | — |
 | Sprint 5 | Estimate Writer — AI writes personalized estimate + change order clause | Prateek | 🔲 Not Started | — |
