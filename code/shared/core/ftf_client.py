@@ -27,22 +27,56 @@ def health_check() -> bool:
         return False
 
 
-def get_orders(limit: int = 500) -> list[dict]:
-    try:
-        r = httpx.get(
-            f"{FTF_API_BASE_URL}/orders",
-            headers=_headers(),
-            params={"limit": limit},
-            timeout=_TIMEOUT,
+def get_orders(limit: int = 500, status: Optional[str] = None) -> list[dict]:
+    """Fetch all orders via paginated calls.
+
+    Args:
+        limit: Page size — API hard-caps at 500.
+        status: Optional server-side filter (e.g. "Quote"). When None, fetches all statuses.
+
+    Returns:
+        Flat list of all order dicts across all pages.
+    """
+    all_orders: list[dict] = []
+    offset = 0
+
+    while True:
+        params: dict = {"limit": limit, "offset": offset}
+        if status is not None:
+            params["status"] = status
+
+        try:
+            r = httpx.get(
+                f"{FTF_API_BASE_URL}/orders",
+                headers=_headers(),
+                params=params,
+                timeout=_TIMEOUT,
+            )
+            r.raise_for_status()
+            body = r.json()
+        except httpx.HTTPStatusError as exc:
+            raise AgentError(f"get_orders HTTP {exc.response.status_code}") from exc
+        except Exception as exc:
+            raise AgentError("get_orders failed") from exc
+
+        # API envelope: {"count": N, "data": [...], "limit": N, "offset": N, "total": N}
+        if isinstance(body, dict):
+            page = body.get("data", [])
+            total = body.get("total", 0)
+        else:
+            # Bare list — no pagination metadata; return as-is
+            return body  # type: ignore[return-value]
+
+        logger.info(
+            "fetched page offset=%s count=%s total=%s", offset, len(page), total
         )
-        r.raise_for_status()
-        body = r.json()
-        # API returns {"count": N, "data": [...]} — extract the list
-        return body.get("data", body) if isinstance(body, dict) else body
-    except httpx.HTTPStatusError as exc:
-        raise AgentError(f"get_orders HTTP {exc.response.status_code}") from exc
-    except Exception as exc:
-        raise AgentError("get_orders failed") from exc
+        all_orders.extend(page)
+
+        offset += limit
+        if offset >= total or not page:
+            break
+
+    return all_orders
 
 
 def get_order(order_id: str) -> dict:

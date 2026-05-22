@@ -15,23 +15,26 @@
 ## Tasks
 
 - [x] `code/sprint_01_monitor/agents/agent_02_monitor.py`
-  - Calls `ftf_client.get_orders(limit=500)`
-  - For each order: skip if `ftf_status != "Quote"` (confirmed 2026-05-22 — only Quote-stage orders need estimates)
-  - For each order: `db.order_exists(order_id)` → skip if already in DB (any status)
-  - New Quote orders → `db.save_order_state(order_id, status="pending")` + `db.log_decision()`
-  - Logs each new order via `log.info()`
-  - Returns list of new order IDs
-  - No LLM calls — pure API + DB logic
-  - Note: `db.order_exists()` added to `core/db.py` — replaces incorrect `get_pending_order(order_id)` reference in original plan
-- [x] `code/sprint_01_monitor/tests/test_monitor.py` (8 tests — all pass)
-  - UT-01-01: 3 new orders → all 3 written
-  - UT-01-02: 1 existing order → skipped, not reset
-  - UT-01-03: empty API response → no errors
-  - UT-01-04: all existing → nothing written
-  - UT-01-05: log_decision called per new order
-  - UT-01-06: no LLM call made
-  - EC-01-03: numeric order IDs cast to string
-  - UT-01-07: non-Quote FTF status orders (Delivered, Pending, Complete, Canceled) are skipped
+  - Calls `get_orders(status="Quote")` — server-side filter + full pagination (all 7000+ Quote orders, not just 500)
+  - Skips orders where `estimate_sent == True` — avoids duplicate estimates
+  - Skips orders where `order_exists(order_id)` — never resets already-processed orders
+  - New orders → `save_order_state(order_id, status="pending")` + `log_decision()`
+  - Returns list of new order IDs. No LLM calls.
+- [x] `code/shared/core/ftf_client.py` — `get_orders()` updated
+  - Added `status` param (optional) — passed as `?status=Quote` when provided
+  - Full pagination via `offset` loop — fetches all pages until `offset >= total`
+  - Per-page logging: `fetched page offset=X count=Y total=Z`
+  - Backward compatible — `status=None` fetches all orders (existing behavior)
+- [x] `code/sprint_01_monitor/tests/test_monitor.py` (16 tests — all pass)
+  - UT-01-01 through UT-01-08: original scenarios updated for new signatures
+  - UT-01-09: `get_orders` called with `status="Quote"` — primary regression guard
+  - UT-01-10: `get_orders` called exactly once per run
+  - UT-01-11: 1500-order paginated result — all processed correctly
+  - UT-01-12: 1000 orders mixed new/existing — exactly 500 saved
+  - EC-01-04: missing `estimate_sent` key treated as False — no KeyError
+  - EC-01-05: `AgentError` from `get_orders` propagates — no silent failure
+  - EC-01-06: missing `status` field — no crash, order processed
+- [x] `code/sprint_00_foundation/tests/conftest.py` — added (Sprint 0 was missing path setup; 35/35 now pass)
 - [ ] Integration test on staging: submit 3 real test orders to FTF → confirm all 3 detected (Sprint 10)
 
 ---
@@ -44,9 +47,12 @@
 | 0 duplicates on 2nd run (same orders) | ✅ | Live: second run returned 0 new orders — deduplication confirmed |
 | `processed_orders` rows created with `status="pending"` | ✅ | Live: 500 rows in DB, all status=pending |
 | `agent_decision_log` row written per order | ✅ | Live: 503 decision log entries from agent_02_monitor |
-| Unit tests pass (8 scenarios) | ✅ | 8/8 pass Sprint 1; full suite 43/43 |
+| Unit tests pass (16 scenarios) | ✅ | 16/16 Sprint 1; 51/51 combined (Sprint 0 + 1) |
 | Empty order list handled without errors | ✅ | UT-01-03 |
-| Non-Quote orders (Delivered, Complete, etc.) are skipped | ✅ | UT-01-07 — confirmed via FTF staging (order 1000275451 was Delivered) |
+| Non-Quote orders are skipped via server-side filter | ✅ | UT-01-09 — `get_orders(status="Quote")` confirmed |
+| Already-estimated orders skipped | ✅ | UT-01-08 — `estimate_sent=True` orders not queued |
+| Pagination — all 7000+ Quote orders reachable | ✅ | UT-01-11, UT-01-12 — 1500-order paginated result handled |
+| API total field: 207,622 orders, hard cap 500/call | ✅ | Confirmed via probe — pagination required and implemented |
 
 ---
 
@@ -77,7 +83,7 @@ _None._
 
 ## Completion Brief
 
-- **Built:** `agent_02_monitor.py` — polls FTF CRM every 60 min, filters to Quote-stage orders only, skips existing DB orders, writes new ones with `status="pending"`, logs every decision.
-- **Tests:** 8/8 unit tests pass. Live integration test: 500 real FTF orders on first run, 0 on second run (deduplication confirmed).
-- **Changed from plan:** (1) `order["id"]` → `order["order_id"]` — FTF API key name. (2) `db.get_pending_order()` → `order_exists()` — architectural fix. (3) Added FTF status filter (`status="Quote"` only) — discovered Delivered orders were being queued incorrectly.
-- **Carry forward for Sprint 2:** FTF `service_type` API field returns `"Quote"` for all Quote-stage orders — not the actual survey service name. Classifier (Sprint 2) must determine service type from other order fields (property details, order notes, etc.). See I-003 for Construction + Permitting name gap.
+- **Built:** `agent_02_monitor.py` — calls `get_orders(status="Quote")` with full pagination, skips `estimate_sent=True` orders and existing DB rows, saves new ones as `status="pending"`, logs every decision. `ftf_client.get_orders()` updated with `status` param + offset pagination loop.
+- **Tests:** 16/16 Sprint 1 pass. 51/51 combined (Sprint 0 + 1). Sprint 0 missing conftest.py fixed.
+- **Changed from plan:** (1) `order["id"]` → `order["order_id"]`. (2) `get_pending_order()` → `order_exists()`. (3) Server-side `status=Quote` filter + full pagination — FTF has 207,622 orders, hard cap 500/call. (4) `estimate_sent=False` guard added — prevents duplicate estimates. (5) Confirmed FTF developer must verify API status field accuracy (staging CRM/API mismatch on order 1000276072).
+- **Carry forward for Sprint 2:** FTF `service_type` field returns `"Quote"` for all Quote-stage orders — classifier must determine actual service type from other order fields. See I-003 for Construction + Permitting name gap. FTF developer to confirm API status field behavior (I-013).

@@ -12,26 +12,21 @@ log = get_logger(AGENT_NAME)
 
 
 def run() -> list[str]:
-    """Poll FTF CRM for new orders; persist new ones to state DB.
+    """Poll FTF CRM for new Quote orders; persist new ones to state DB.
 
     Returns list of newly detected order IDs.
-    Only Quote-stage orders are processed — all others are already in production.
+    Uses server-side status=Quote filter + full pagination — never misses orders.
     Orders already in processed_orders (any status) are skipped — never reset.
     No LLM calls — pure API + DB logic.
     """
-    orders = get_orders(limit=500)
+    orders = get_orders(status="Quote")
     new_order_ids: list[str] = []
 
     for order in orders:
         order_id = str(order["order_id"])
-        ftf_status = order.get("status", "")
 
-        # Only Quote-stage orders need an estimate — all others are already in production
-        if ftf_status != "Quote":
-            log.debug("skip non-quote order=%s ftf_status=%s", order_id, ftf_status)
-            continue
-
-        # Skip if estimate already sent — avoid duplicate estimates
+        # Skip if estimate already sent — server filter gives us Quote orders only,
+        # but estimate_sent is not a server-side filter so we check it here.
         if order.get("estimate_sent") is True:
             log.debug("skip already-estimated order=%s", order_id)
             continue

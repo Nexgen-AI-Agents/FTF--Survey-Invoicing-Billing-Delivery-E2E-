@@ -287,9 +287,10 @@ _Written here when each sprint is marked ✅ Complete in sprint_log.md._
 - **Full brief:** [sprints/sprint_00_foundation.md](sprints/sprint_00_foundation.md)
 
 ### Sprint 1 — CRM Monitor ✅ (Complete — 2026-05-22)
-- **Built:** `agent_02_monitor.py` — polls FTF API every 60 min, filters to `status="Quote"` orders only, writes new ones to `processed_orders` with `status="pending"`
-- **Tests:** 8/8 unit tests pass. Live: 500 real FTF orders on first run, 0 on second (dedup confirmed).
-- **Key decisions:** `order_exists()` prevents status reset; FTF status filter (`"Quote"` only) prevents historical orders from being queued; `order["order_id"]` not `order["id"]`
+- **Built:** `agent_02_monitor.py` — calls `get_orders(status="Quote")` with full pagination (207,622 total orders, 500/page hard cap), skips `estimate_sent=True` and existing DB rows, saves new as `status="pending"`. `ftf_client.get_orders()` updated with `status` param + offset pagination.
+- **Tests:** 16/16 Sprint 1 pass. 51/51 combined (Sprint 0 + 1). Sprint 0 conftest.py fix included.
+- **Key decisions:** server-side `?status=Quote` filter + pagination replaces client-side filter; `estimate_sent=False` guard prevents duplicate estimates; `order_exists()` prevents status reset
+- **Open:** I-013 — FTF API `status` field staging mismatch (order 1000276072: API=Quote, CRM=Checking). FTF developer to verify.
 - **Carry forward:** FTF `service_type` returns `"Quote"` for all quote-stage orders — classifier cannot use this field. Must determine service from other order data.
 - **Full brief:** [sprints/sprint_01_monitor.md](sprints/sprint_01_monitor.md)
 
