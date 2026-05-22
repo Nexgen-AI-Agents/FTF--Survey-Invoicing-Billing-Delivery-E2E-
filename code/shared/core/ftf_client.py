@@ -67,6 +67,9 @@ def get_orders(limit: int = 500, status: Optional[str] = None) -> list[dict]:
             # Bare list — no pagination metadata; return as-is
             return body  # type: ignore[return-value]
 
+        if offset == 0 and total == 0:
+            logger.warning("get_orders: API returned total=0 — no orders available or API misconfigured")
+
         logger.info(
             "fetched page offset=%s count=%s total=%s", offset, len(page), total
         )

@@ -18,6 +18,8 @@ class _PIIFilter(logging.Filter):
         if record.args:
             if isinstance(record.args, tuple):
                 record.args = tuple(_mask_pii(str(a)) for a in record.args)
+            elif isinstance(record.args, dict):
+                record.args = {k: _mask_pii(str(v)) for k, v in record.args.items()}
             else:
                 record.args = _mask_pii(str(record.args))
         return True
