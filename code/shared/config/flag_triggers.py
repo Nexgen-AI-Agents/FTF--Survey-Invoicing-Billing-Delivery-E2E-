@@ -3,14 +3,13 @@ ALWAYS_FLAG_SERVICES: list[str] = [
     "Other Services",
 ]
 
-# Bootstrapped 2026-05-25 by Competitor Analyst AI (web research — nexgensurveying.com + Google).
-# Reviewed 2026-05-25 by Ryan AI, Robert AI, Mark AI.
-# Action required: Robert/Mark to validate full list before Sprint 3 (Human Gate).
+# Bootstrapped 2026-05-25 by Competitor Analyst AI (web research).
+# Confirmed 2026-05-25 by Prateek (client): all names and domains validated.
+# "Florida Land Surveying" confirmed competitor — floridalandsurveying.com
+# "Atlantic Coast Surveying" confirmed competitor — acsiweb.net (Atlantic Coast Surveying Inc)
 # See: TEAM/research/competitive_analysis.md for full competitor profiles.
-# NOTE: "Florida Land Surveying" and "Atlantic Coast Surveying" retained but flagged as
-# high-false-positive-risk entries — real Robert/Mark must confirm (see I-038).
 COMPETITOR_NAMES: list[str] = [
-    # Primary Florida surveying competitors (web-confirmed)
+    # Primary Florida surveying competitors (confirmed)
     "Apex Surveying & Mapping",
     "Apex Surveying",
     "ApexSurvey",
@@ -30,13 +29,13 @@ COMPETITOR_NAMES: list[str] = [
     "National Flood Experts",
     "First Choice Surveying",
     "John Ibarra & Associates",
-    "Atlantic Coast Surveying",   # Robert/Mark confirm — generic name, false positive risk (I-038)
+    "Atlantic Coast Surveying",
     "GeoPoint Surveying",
-    "Florida Land Surveying",     # Robert/Mark confirm — generic name, false positive risk (I-038)
+    "Florida Land Surveying",
     "Target Surveying",
     "Sliger & Associates",
     "Fordco Surveying",
-    # National firms with active Florida presence (added after Mark AI review)
+    # National firms with active Florida presence
     "Terracon",
     "Terracon Consultants",
     "Kimley-Horn",
@@ -44,8 +43,8 @@ COMPETITOR_NAMES: list[str] = [
     "AECOM",
 ]
 
-# NOTE: acsiweb.net — pending Robert confirmation (likely Atlantic Coast Surveying Inc).
-# studioaeng.com and cwi-assoc.com removed — unconfirmed surveying firms, false positive risk.
+# All domains confirmed 2026-05-25 by Prateek (client).
+# acsiweb.net = Atlantic Coast Surveying Inc (confirmed).
 COMPETITOR_DOMAINS: list[str] = [
     "apexsurvey.us",
     "gtsurvey.com",
@@ -60,7 +59,7 @@ COMPETITOR_DOMAINS: list[str] = [
     "geopointsurvey.com",
     "floridalandsurveying.com",
     "targetsurveying.com",
-    "acsiweb.net",          # Robert confirm — likely Atlantic Coast Surveying Inc (I-038)
+    "acsiweb.net",
 ]
 
 # FTF service types that must never be auto-quoted — always flag for human review.
@@ -71,7 +70,7 @@ NEVER_AUTO_QUOTE: list[str] = [
     "Specific Purpose Survey",  # Scope undefined until client describes purpose
     "Lot Split",                # County/municipality review and approval cycles required
     "Wetland Delineation",      # FDEP/Army Corps/SFWMD jurisdiction; outcome not guaranteed
-    "B-II Title Review",        # Scope varies with title commitment exceptions; not a field job
+    # B-II Title Review removed 2026-05-25 — confirmed auto-quoteable by Prateek (I-004)
     "Acreage",                  # $250 base rate does not hold above ~2 acres; scope swings hard
     "Legal Description",        # Metes-and-bounds / rural county descriptions not flat-rate safe
     "Topography Survey",        # $225 listed price is below FL market rate; scope varies by site
