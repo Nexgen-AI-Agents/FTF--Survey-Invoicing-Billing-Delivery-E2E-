@@ -99,6 +99,22 @@ def test_none_service_type_flags():
     assert result["flag_for_human"] is True
 
 
+# ── UT-02-05b  informal survey type flags (I-003) ────────────────────────────
+
+def test_construction_permitting_flags():
+    # I-003: "Construction/Permitting" is an informal CRM bundle label — not a priced service.
+    # Must flag for human review regardless of case.
+    result = _classify({"service_type": "Construction/Permitting"})
+    assert result["flag_for_human"] is True
+    assert "informal survey type" in result["flag_reason"]
+    assert "Construction/Permitting" in result["flag_reason"]
+
+
+def test_construction_permitting_case_insensitive():
+    result = _classify({"service_type": "construction/permitting"})
+    assert result["flag_for_human"] is True
+
+
 # ── UT-02-06  missing county flags (I-036) ────────────────────────────────────
 
 def test_missing_county_flags():

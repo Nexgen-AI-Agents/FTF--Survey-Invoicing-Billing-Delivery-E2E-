@@ -20,6 +20,10 @@ log = get_logger(AGENT_NAME)
 # customer_type values from FTF API that map to b2b pricing tier
 _B2B_TYPES = frozenset({"b2b", "company", "business"})
 
+# Informal survey type labels used in FTF CRM that are NOT in the pricing catalogue.
+# These are bundle descriptors, not priced services — flag for human to confirm scope.
+_INFORMAL_SERVICE_TYPES = frozenset({"construction/permitting"})
+
 
 def classify_order(order_id: str) -> dict:
     """Fetch order from FTF API, classify it, persist result to DB.
@@ -67,6 +71,11 @@ def classify_order(order_id: str) -> dict:
         _flag(f"service requires human review: {service_type}")
     elif service_type in NEVER_AUTO_QUOTE:
         _flag(f"never-auto-quote service: {service_type}")
+    elif service_type.lower() in _INFORMAL_SERVICE_TYPES:
+        _flag(
+            f"informal survey type '{service_type}' — bundle label, not a priced service; "
+            "human must confirm scope and select correct service"
+        )
     elif not service_type or service_type.lower() == "quote":
         _flag("service_type unresolved as 'Quote' — human must identify correct service")
 
