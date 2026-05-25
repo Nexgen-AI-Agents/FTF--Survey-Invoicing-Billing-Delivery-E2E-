@@ -147,6 +147,9 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | HIGH | Monthly statement format confirmation | Wyatt | Pending |
 | RESOLVED | Geographic scope | nexgensurveying.com | Florida only ✓ |
 | RESOLVED | Change order clause source | In-house draft | No Ryan dependency ✓ |
+| RESOLVED | Geocoding for FEMA lat/lng | API probe 2026-05-25 | `GET /orders/{id}` returns `property_lat`/`property_lng` directly — no geocoding service needed ✓ |
+| RESOLVED | GET /orders/{id} schema | API probe 2026-05-25 | 26 fields confirmed. `service_type` = actual name or "Quote". `flood_zone` pre-populated by FTF for most orders ✓ |
+| RESOLVED | GET /customers/{id} schema | API probe 2026-05-25 | 12 fields confirmed. `customer_type`, `email`, `pricing_type`, `custom_rate` ✓ |
 
 ---
 
@@ -235,6 +238,7 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `code/sprint_01_monitor/tests/conftest.py` | Sprint 1 test path setup — adds shared/ and sprint root to sys.path |
 | `code/sprint_01_monitor/tests/test_monitor.py` | Sprint 1 unit tests — 8 tests covering all monitor scenarios including FTF status filter |
 | `config/knowledge_base/ftf_order_statuses.md` | **FTF order status hierarchy** — all 16 statuses, core pipeline, per-agent usage rules. Confirmed 2026-05-22. |
+| `config/knowledge_base/ftf_api_schemas.md` | **FTF API confirmed schemas** — GET /orders (7 fields), GET /orders/{id} (26 fields incl. lat/lng, flood_zone, customer_type), GET /customers/{id} (12 fields). Probed 2026-05-25. Resolves I-014, I-015, I-016. |
 
 ---
 
