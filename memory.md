@@ -301,3 +301,108 @@ _Written here when each sprint is marked ✅ Complete in sprint_log.md._
 - **Carry forward:** FTF `service_type` returns `"Quote"` for all quote-stage orders — classifier cannot use this field. Must determine service from other order data.
 - **Full brief:** [sprints/sprint_01_monitor.md](sprints/sprint_01_monitor.md)
 
+---
+
+## Business Rules — Confirmed by Robert (2026-05-25)
+
+**Source:** Robert verbal Q&A sessions, Recordings 1 & 2, transcribed 2026-05-25.
+
+### Service Type Name Mappings (Canonical)
+
+| Informal / Customer Name | Canonical FTF Name | Notes |
+|--------------------------|-------------------|-------|
+| Topographic Survey (brand new, from scratch) | Topographic Boundary Survey | Full new survey |
+| Topographic Survey (update / topo only) | Topo Survey / Topographic Survey / Update/Topographic Survey | Any of these three names |
+| Construction Survey (design phase) | Topo Survey | Maps to Topo; stakeout/form board/foundation tie-in = during-construction sub-services |
+| Permitting Survey | Boundary Survey (+ digital signature) | "Permitting" = 3rd-party digital signature requirement for county portal uploads |
+| Special Purpose Survey | Specific Purpose Survey | Interchangeable; use "Specific Purpose Survey" as canonical |
+| Land Survey Only | Boundary Survey ($350) | Staff nickname; confirmed as Boundary Survey |
+
+### Services NGE DOES Perform
+
+- Boundary Survey
+- Topographic Survey / Topographic Boundary Survey
+- Form Board Survey
+- Spot Survey
+- Foundation Tie-In Survey (aka Spot/Foundation)
+- As-Built Survey
+- Specific Purpose Survey / Special Purpose Survey
+- Elevation Certificate
+- Plot Plan
+- Acreage, Elevation Only, Final Survey, Legal Description, Sketch and Description, Survey Re-draw, Surveyor's Affidavit, Tree Location, Update Survey (all in 24-service FTF list)
+
+### Services NGE does NOT Do (Never Auto-Quote)
+
+| Service | Reason |
+|---------|--------|
+| Engineering services / drainage design | NGE is a surveying company only — no engineers |
+| Site Plans | Should be architects or engineers |
+| Wetland Delineation | Needs specialist engineer; too complex for NGE |
+| Building Stakeout | Ambiguous — NGE "dabbling" in it again; flag for human review (I-042) |
+
+### Geographic Coverage Rules
+
+- **Florida only** — all 67 FL counties can be quoted
+- **Monroe County (Florida Keys):** flag for extra review, charge more, limited crew availability (I-034 already built)
+- **Panhandle / northwest FL:** NGE struggles with crew coverage but still quotes — do not auto-reject
+- **Vero Beach:** having issues but manageable — do not auto-reject
+- **Strong coverage:** Jacksonville, St. Augustine, Orlando, South/Southeast/Southwest FL
+- **Out-of-state:** flag immediately — NGE FL-only for Phase 1
+
+### Pricing Decision Factors (How Robert Prices)
+
+Robert (and Alan/Mark) weighs these factors when confirming a quoted price:
+
+1. **Client sales history** — what price range that client has accepted before (e.g., Jean Cascio: $400–$700, mostly $400, last accepted $475)
+2. **Property features** — pool, seawall, canal, right-of-ways; reviewed on GIS map before confirming
+3. **Area / county / market** — geographic location affects competitive pricing
+4. **Platted vs. unplatted** — affects survey complexity
+5. **Scope of work** — exactly what the survey entails
+6. **Competitive positioning** — where NGE sits vs. competitors for this client
+
+Robert's summary: "Most of the time we're just looking at features, area, if we've done work with that client in the past and then what's the scope."
+
+### Quoting Workflow (Summit's Role)
+
+- Summit (internal) handles initial quotes: posts suggested prices in Teams — "Blue Invoicing" (standard) and "Yellow Invoicing" channels
+- Robert / Alan / Mark review Summit's suggested price, confirm or adjust, THEN the quote is sent
+- Robert checks GIS map visually before confirming every price
+- Robert is NOT normally the one creating or importing orders in FTF
+
+### Orders NGE Will NOT Quote (Hard Boundaries)
+
+- Engineering or drainage design requests — auto-reject / flag (Naya Rodriguez example: rejected because she needed drainage/engineering, not surveying)
+- Out-of-state properties
+- Wetland Delineation
+
+### Customer Approval Workflow (Most to Least Common)
+
+1. Client pays invoice via payment link → order auto-advances to "pending"
+2. Client emails confirmation ("please proceed" / "we accept")
+3. Client accepts via FTF portal
+4. Phone call — Robert then asks for email follow-up
+
+### Change Order Clause
+
+- Currently NO change order language exists in estimates — this is entirely new (BRD Amendment 001)
+- Communication process when scope changes: call/contact client first → explain the scope change → get verbal or email OK → THEN add to invoice
+- Change order additions must NEVER be auto-added without explicit client confirmation
+- Ryan to draft the clause text (I-043); staging placeholder in `config/knowledge_base/change_order_clause.txt` exists but needs production sign-off
+
+### Always-Human-Review Services (Management Level)
+
+Robert confirmed ALL of the following always require human review before sending:
+- ALTA Table A Survey
+- B-II Title Review
+- Wetland Delineation
+- Lot Split
+- Building Stakeout (until confirmed back in service — I-042)
+
+### Pipeline Design Note — Suggest-Then-Approve (CRITICAL)
+
+Robert stated he ALWAYS personally reviews every estimate before it goes to the client — even routine ones. The AI pipeline must be designed as:
+
+> **AI suggests price + generates draft estimate → routes to Robert/Mark for review → they approve and send**
+
+Auto-send (even for routine orders) is NOT acceptable per Robert's explicit instruction. This overrides any prior assumption that routine orders could bypass human review. Impact: Agents 4, 6, 7, 8, 9 design may need revision. Tracked as I-044. Discuss with Prateek and Ryan before Sprint 6.
+
