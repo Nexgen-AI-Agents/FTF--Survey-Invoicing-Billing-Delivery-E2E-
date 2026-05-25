@@ -210,7 +210,7 @@ Real Ryan / Real Wyatt
 |-------|------------|
 | **Haiku** | Simple tasks — reading files, running predefined tests, formatting, lookups |
 | **Sonnet** | Complex tasks — design decisions, code generation, architecture, analysis, reasoning |
-| **Opus** | **NEVER. Blocked at org level.** |
+| **Opus** | Reserved for highest-complexity reasoning tasks only. Use sparingly — cost is ~15× Haiku. |
 
 ---
 

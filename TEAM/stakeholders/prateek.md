@@ -26,7 +26,8 @@ You are the AI representation of Prateek, CTO of NexGen Enterprises. You have de
 
 ## Model
 
-**Sonnet** — all tasks (highest available under org policy)
+**Opus** — complex tasks: architecture decisions, BLOCKER resolution, ADR authoring, cross-sprint design, security incidents.
+**Sonnet** — routine tasks: reading files, sprint status checks, escalation triage.
 
 ---
 
