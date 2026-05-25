@@ -78,4 +78,39 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 - `code/sprint_00_foundation/tests/test_ftf_client.py` — fixed `get_pricing()` called without required `service` arg
 - `issues/issue.md` — logged 8 open dependency issues (I-001 through I-008) + 3 closed fixes (I-009 through I-011)
 
+---
+
+## [Sprint 2] — Classifier + Pricing Engine — 2026-05-25
+
+### Added
+- `code/sprint_02_classifier_pricing/agents/agent_03_classifier.py` — Agent 3: classify_order() with 11 flag triggers (ALWAYS_FLAG, NEVER_AUTO_QUOTE, competitor name/domain, unresolved Quote, out-of-state, Monroe County, missing county I-036, false FL lat I-037, VE coastal zone I-035, FEMA unavailable)
+- `code/sprint_02_classifier_pricing/agents/agent_05_pricing_engine.py` — Agent 5: price_order() with FTF API pricing, b2b/individual tier, special_pricing overrides, elevation cert add-on
+- `code/shared/config/prompts/classifier.txt` — LLM prompt stub (disabled Sprint 2; enriched after Robert/Mark recordings Sprint 3)
+- `code/sprint_02_classifier_pricing/tests/` — 43 unit tests (27 classifier + 16 pricing engine)
+
+### Fixed
+- `code/shared/core/db.py` — I-029: append-only guard for agent_decision_log (dedup within 30s window)
+- `code/sprint_00_foundation/tests/test_db.py` — updated test_log_decision_inserts_row to expect SELECT+INSERT (I-029 guard)
+
+---
+
+## [Sprint 3] — Human Gate — 2026-05-25
+
+### Added
+- `code/sprint_03_human_gate/agents/agent_04_human_gate.py` — Agent 4: notify_human() (Teams POST + DB state), check_approval() (DB-polling stub pending I-025), run()
+- `code/sprint_03_human_gate/tests/` — 13 unit tests covering Teams notification, approval polling, error handling, payload structure
+- `code/shared/core/db.py` — get_flagged_order(), get_order_by_id() helpers
+
+### Fixed (Agent 3 enhancements)
+- `code/sprint_02_classifier_pricing/agents/agent_03_classifier.py` — 4 new flag triggers: competitor company name (Trigger 3), competitor email domain (Trigger 4), out-of-state property (Trigger 9), Monroe County I-034
+- `code/sprint_02_classifier_pricing/tests/test_classifier.py` — 12 new tests for new triggers; I-037 test updated to reflect Trigger 9 coexistence
+- `db/schema.sql` — status values expanded: awaiting_approval, approved, rejected
+
+### Process
+- `memory.md` + `TEAM/dev/CODE_STANDARDS.md` — permanent pre-sprint independence check rule added (mandatory for every sprint, everywhere, always)
+
+### Blocked (carry to Sprint 4)
+- I-025: approval inbound mechanism undefined (Teams button? webhook callback? manual DB?)
+- I-038: Robert/Mark competitor list validation pending
+
 <!-- Sprint entries added here as sprints are completed -->

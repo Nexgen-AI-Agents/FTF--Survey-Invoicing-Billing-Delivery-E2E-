@@ -43,6 +43,27 @@ def order_exists(order_id: str) -> bool:
         return cur.fetchone() is not None
 
 
+def get_flagged_order() -> Optional[dict]:
+    """Return the oldest order with status='flagged' that has not yet been notified."""
+    with _get_cursor() as cur:
+        cur.execute(
+            "SELECT * FROM processed_orders WHERE status = 'flagged' ORDER BY created_at ASC LIMIT 1"
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
+def get_order_by_id(order_id: str) -> Optional[dict]:
+    """Return processed_orders row for a given order_id, or None if not found."""
+    with _get_cursor() as cur:
+        cur.execute(
+            "SELECT * FROM processed_orders WHERE order_id = %s LIMIT 1",
+            (order_id,),
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
 def get_pending_order() -> Optional[dict]:
     with _get_cursor() as cur:
         cur.execute(

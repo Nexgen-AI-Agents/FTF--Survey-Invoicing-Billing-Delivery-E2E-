@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS processed_orders (
     id                  SERIAL PRIMARY KEY,
     order_id            VARCHAR(50)     UNIQUE NOT NULL,
     status              VARCHAR(50)     NOT NULL DEFAULT 'pending',
-    -- status values: pending | classified | priced | written | reviewed | sent | flagged | error
+    -- status values: pending | classified | priced | written | reviewed | sent | flagged | awaiting_approval | approved | rejected | error
 
     service_type        VARCHAR(100),
     customer_email      VARCHAR(255),

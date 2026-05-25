@@ -97,6 +97,22 @@ No multi-line docstrings except for functions that are part of a public API.
 
 ---
 
+## Sprint Workflow (MANDATORY — every sprint, no exceptions)
+
+Before writing any code for a sprint:
+
+1. **List everything the sprint needs** — agents, tests, configs, schema changes, docs.
+2. **Split into two columns:**
+   - ✅ Buildable now (no external dependency)
+   - ❌ Blocked (waiting on Robert/Mark data, human decisions, infrastructure, etc.)
+3. **Build ALL independent items first.** Never idle on a blocker when independent work exists.
+4. **Stub blocked interfaces.** Build the function signature + unit test now; fill the implementation when the dependency arrives.
+5. **Log every blocker as an issue** in `issues/issue.md`.
+
+This rule applies to every sprint, every team member, everywhere, always.
+
+---
+
 ## Git Commit Standard
 
 ```

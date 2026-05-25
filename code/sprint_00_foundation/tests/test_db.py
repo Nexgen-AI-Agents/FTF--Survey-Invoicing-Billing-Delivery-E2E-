@@ -69,7 +69,10 @@ def test_order_exists_returns_false_when_not_found(mock_ctx, mock_cursor):
 def test_log_decision_inserts_row(mock_ctx, mock_cursor):
     mock_ctx.return_value.__enter__ = lambda s: mock_cursor
     mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+    # I-029: log_decision now does SELECT (dedup check) + INSERT — fetchone returns None
+    # so no duplicate is detected and the INSERT proceeds.
+    mock_cursor.fetchone.return_value = None
     log_decision("agent_03_classifier", "classified", order_id="ORD-001", reason="Boundary Survey")
-    mock_cursor.execute.assert_called_once()
-    sql = mock_cursor.execute.call_args[0][0]
-    assert "INSERT INTO agent_decision_log" in sql
+    assert mock_cursor.execute.call_count == 2  # SELECT dedup check + INSERT
+    insert_sql = mock_cursor.execute.call_args_list[-1][0][0]
+    assert "INSERT INTO agent_decision_log" in insert_sql

@@ -127,10 +127,13 @@ def test_fl_state_valid_lat_no_false_flag():
     assert result["flag_for_human"] is False
 
 
-def test_non_fl_state_high_lat_no_flag():
-    # Georgia address — property_state != FL, so I-037 guard must not fire
+def test_non_fl_state_high_lat_i037_does_not_fire():
+    # I-037 guard only fires when property_state=FL. A GA address must NOT
+    # trigger "outside Florida bounds" — it triggers out-of-state (Trigger 9) instead.
     result = _classify({"property_state": "GA", "property_lat": 33.5})
-    assert result["flag_for_human"] is False
+    assert result["flag_for_human"] is True  # out-of-state Trigger 9 fires
+    assert "FL-only" in result["flag_reason"]
+    assert "outside Florida bounds" not in result["flag_reason"]  # I-037 must NOT fire
 
 
 # ── UT-02-08  flood zone — elevation cert required ────────────────────────────
@@ -255,3 +258,85 @@ def test_multiple_flags_accumulate_in_reason():
     assert result["flag_for_human"] is True
     assert "county" in result["flag_reason"].lower()
     assert "VE" in result["flag_reason"]
+
+
+# ── UT-02-15  Trigger 3: competitor company name match ───────────────────────
+
+def test_competitor_company_name_flags():
+    order = {**_BASE, "company_name": "Apex Surveying & Mapping"}
+    result = _classify(order)
+    assert result["flag_for_human"] is True
+    assert "competitor company name" in result["flag_reason"].lower()
+
+
+def test_competitor_name_substring_match_flags():
+    # "Apex Surveying" is a substring of "Apex Surveying Florida LLC"
+    order = {**_BASE, "company_name": "Apex Surveying Florida LLC"}
+    result = _classify(order)
+    assert result["flag_for_human"] is True
+
+
+def test_non_competitor_company_no_flag():
+    order = {**_BASE, "company_name": "Smith Family Properties"}
+    result = _classify(order)
+    assert result["flag_for_human"] is False
+
+
+# ── UT-02-16  Trigger 4: competitor email domain match ───────────────────────
+
+def test_competitor_email_domain_flags():
+    order = {**_BASE, "customer_email": "info@apexsurvey.us"}
+    result = _classify(order)
+    assert result["flag_for_human"] is True
+    assert "apexsurvey.us" in result["flag_reason"]
+
+
+def test_non_competitor_email_no_flag():
+    order = {**_BASE, "customer_email": "client@gmail.com"}
+    result = _classify(order)
+    assert result["flag_for_human"] is False
+
+
+def test_email_without_at_no_crash():
+    # Malformed email must not crash the classifier
+    order = {**_BASE, "customer_email": "not-an-email"}
+    result = _classify(order)
+    assert result["flag_for_human"] is False
+
+
+# ── UT-02-17  Trigger 9: out-of-state property ───────────────────────────────
+
+def test_georgia_property_flags():
+    result = _classify({"property_state": "GA", "property_lat": 33.5, "property_lng": -84.4})
+    assert result["flag_for_human"] is True
+    assert "FL-only" in result["flag_reason"]
+
+
+def test_fl_property_does_not_trigger_out_of_state():
+    result = _classify({"property_state": "FL"})
+    # Out-of-state trigger must NOT fire for FL orders
+    assert not any("FL-only" in r for r in (result["flag_reason"] or "").split("; "))
+
+
+def test_empty_state_does_not_trigger_out_of_state():
+    # Missing state field — no out-of-state flag (separate data quality check)
+    result = _classify({"property_state": ""})
+    assert not any("FL-only" in r for r in (result["flag_reason"] or "").split("; "))
+
+
+# ── UT-02-18  I-034: Monroe County (Florida Keys) ────────────────────────────
+
+def test_monroe_county_flags():
+    result = _classify({"property_county": "Monroe"})
+    assert result["flag_for_human"] is True
+    assert "Monroe" in result["flag_reason"]
+
+
+def test_monroe_county_case_insensitive():
+    result = _classify({"property_county": "monroe county"})
+    assert result["flag_for_human"] is True
+
+
+def test_broward_county_no_monroe_flag():
+    result = _classify({"property_county": "Broward"})
+    assert result["flag_for_human"] is False

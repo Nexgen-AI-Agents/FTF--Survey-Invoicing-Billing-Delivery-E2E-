@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared")
 
 from datetime import datetime, timezone
 
-from config.flag_triggers import ALWAYS_FLAG_SERVICES, NEVER_AUTO_QUOTE
+from config.flag_triggers import ALWAYS_FLAG_SERVICES, COMPETITOR_DOMAINS, COMPETITOR_NAMES, NEVER_AUTO_QUOTE
 from config.models import CLASSIFIER_MODEL
 from config.settings import SERVICE_STATE
 from core.db import log_decision, save_order_state
@@ -24,9 +24,16 @@ _B2B_TYPES = frozenset({"b2b", "company", "business"})
 def classify_order(order_id: str) -> dict:
     """Fetch order from FTF API, classify it, persist result to DB.
 
-    Applies flag triggers: ALWAYS_FLAG_SERVICES, NEVER_AUTO_QUOTE, unresolved
-    service_type, missing county (I-036), false FL coordinate (I-037),
-    FEMA VE coastal zone (I-035), and FEMA unavailability.
+    Flag triggers applied:
+      Trigger 1 — ALWAYS_FLAG_SERVICES (ALTA, Other Services)
+      Trigger 2 — NEVER_AUTO_QUOTE services
+      Trigger 3 — competitor company name match
+      Trigger 4 — competitor email domain match
+      Trigger 5 — unresolved service_type ("Quote")
+      Trigger 8 — FEMA VE coastal zone (I-035); FEMA unavailable
+      Trigger 9 — property outside Florida (out-of-state)
+      Data quality — missing county (I-036), false FL coordinate (I-037)
+      Domain — Monroe County Florida Keys (I-034)
 
     Returns classification dict.
     """
@@ -42,6 +49,7 @@ def classify_order(order_id: str) -> dict:
     property_state: str = (order.get("property_state") or "").upper().strip()
     property_county: str = (order.get("property_county") or "").strip()
     customer_email: str = (order.get("customer_email") or "").strip()
+    company_name: str = (order.get("company_name") or "").strip()
 
     flag_for_human = False
     flag_reasons: list[str] = []
@@ -61,6 +69,28 @@ def classify_order(order_id: str) -> dict:
         _flag(f"never-auto-quote service: {service_type}")
     elif not service_type or service_type.lower() == "quote":
         _flag("service_type unresolved as 'Quote' — human must identify correct service")
+
+    # --- Trigger 3: competitor company name ---
+    if company_name:
+        company_lower = company_name.lower()
+        for name in COMPETITOR_NAMES:
+            if name.lower() in company_lower:
+                _flag(f"competitor company name match: {name}")
+                break
+
+    # --- Trigger 4: competitor email domain ---
+    if "@" in customer_email:
+        email_domain = customer_email.split("@")[-1].lower()
+        if email_domain in COMPETITOR_DOMAINS:
+            _flag(f"competitor email domain: {email_domain}")
+
+    # --- Trigger 9: out-of-state property ---
+    if property_state and property_state != SERVICE_STATE:
+        _flag(f"property_state={property_state} — NexGen is FL-only, cannot auto-quote out-of-state")
+
+    # --- I-034: Monroe County (Florida Keys) — non-standard pricing ---
+    if property_county and "monroe" in property_county.lower():
+        _flag("Monroe County (Florida Keys) — non-standard pricing, human review required")
 
     # --- Data quality flags ---
     if not property_county:
@@ -138,6 +168,7 @@ def classify_order(order_id: str) -> dict:
         "property_county": property_county or None,
         "property_state": property_state,
         "customer_email": customer_email,
+        "company_name": company_name or None,
     }
 
 

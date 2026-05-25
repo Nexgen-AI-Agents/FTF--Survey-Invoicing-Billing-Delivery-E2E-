@@ -127,6 +127,7 @@ Automates 3 workflows that are currently manual and 9-to-5:
 
 | Rule | Detail |
 |------|--------|
+| **Pre-sprint dependency check (MANDATORY — every sprint, no exceptions)** | Before writing a single line of code for any sprint: (1) List everything the sprint needs. (2) Split into two columns: "buildable now without external input" vs. "blocked by external dependency." (3) Build ALL independent items first — never idle-wait on a blocker when independent work exists. (4) Log every blocker as an issue. (5) Stubs are acceptable for blocked items — build the interface now, fill the implementation when the dependency arrives. This rule applies to every sprint, every team member, every time. |
 | **Dependency check before every sprint** | Before starting any sprint, identify all blocking dependencies. If a major dependency could halt work mid-sprint, highlight it explicitly before the sprint begins. For each blocker: state what's missing, what it blocks, and whether demo/mock data can substitute. Only proceed once the user has acknowledged or resolved the blockers. |
 
 ---
@@ -271,7 +272,7 @@ Automates 3 workflows that are currently manual and 9-to-5:
 2. **Workspace only** — all files, notes, references, and outputs go into this OneDrive folder. Never use local machine space or `.claude/` system folders for project files.
 3. **Git push after every save — NO CONFIRMATION NEEDED** — after creating or updating any workspace file, immediately run `git add . && git commit -m "..." && git push`. Do not ask. Do not wait. Just push.
 4. **Model selection** — Haiku for simple/fast tasks (file reads, lookups, minor edits, formatting). Sonnet for complex tasks (multi-step reasoning, code generation, architecture, analysis). NEVER use Opus under any circumstances.
-5. **Sprint dependency check** — before starting any sprint, identify all blocking dependencies. Flag any that could halt work mid-sprint. For each blocker: state what's missing, what it blocks, and whether demo/mock data can substitute. Only proceed once user has acknowledged.
+5. **Pre-sprint independence check (MANDATORY — every sprint, no exceptions)** — before writing any code: split the sprint scope into "buildable now" vs. "blocked." Build ALL independent items first. Never wait idle on a blocker when independent work exists. Stub blocked interfaces; fill them when dependencies arrive. Log every blocker as an issue. This rule applies to every sprint, everywhere, always.
 6. **Sprint tracking** — open `sprints/index.md` to find active sprint file. Update that sprint file's task checkboxes in real time. On sprint complete: fill Completion Brief in the sprint file → add one-liner link to Sprint Briefs below → update `sprints/index.md` status → update `docs/client_progress_tracker.md`.
 7. **One agent, one job** — each agent `.py` file does exactly one thing.
 8. **No raw calls** — all API, DB, and LLM calls go through `core/`. Never inside agent files.
