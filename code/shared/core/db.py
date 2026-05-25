@@ -89,6 +89,26 @@ def log_decision(
     model_used: Optional[str] = None,
 ) -> None:
     with _get_cursor() as cur:
+        # I-029 append-only guard: skip duplicate within 30 s to prevent
+        # redundant audit entries on agent retries or re-runs.
+        cur.execute(
+            """
+            SELECT 1 FROM agent_decision_log
+            WHERE agent_name = %s
+              AND order_id IS NOT DISTINCT FROM %s
+              AND decision = %s
+              AND created_at >= NOW() - INTERVAL '30 seconds'
+            LIMIT 1
+            """,
+            (agent_name, order_id, decision),
+        )
+        if cur.fetchone() is not None:
+            logger.warning(
+                "log_decision duplicate skipped agent=%s order=%s decision=%s",
+                agent_name, order_id, decision,
+            )
+            return
+
         cur.execute(
             """
             INSERT INTO agent_decision_log

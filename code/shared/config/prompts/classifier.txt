@@ -1,0 +1,23 @@
+# Classifier Prompt — Agent 03
+# STATUS: STUB — enriched after Robert/Mark recordings arrive (Sprint 3)
+#
+# This file will contain the system prompt for the LLM classifier once
+# Robert and Mark have provided recorded examples of how they manually
+# classify ambiguous FTF orders (service_type="Quote" cases).
+#
+# Until then, Agent 03 uses deterministic rule-based classification only:
+#   - ALWAYS_FLAG_SERVICES list  (flag_triggers.py)
+#   - NEVER_AUTO_QUOTE list      (flag_triggers.py)
+#   - FEMA flood zone lookup     (fema_client.py)
+#   - Customer type detection    (customer_type field from FTF API)
+#   - Data quality guards        (county, coordinate bounds)
+#
+# LLM invocation: DISABLED in Sprint 2.
+# Target: Sprint 3 — after Robert/Mark recordings collected.
+#
+# When LLM is enabled, the prompt will instruct the model to:
+#   1. Read the full order dict
+#   2. Determine the correct service_type when FTF returns "Quote"
+#   3. Identify any unusual characteristics (coastal, wetland, large acreage)
+#   4. Output a structured JSON classification result
+#   5. Provide a plain-English reason for the decision
