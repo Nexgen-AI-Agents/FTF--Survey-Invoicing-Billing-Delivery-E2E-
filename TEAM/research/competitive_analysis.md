@@ -281,4 +281,57 @@ Services from NexGen's 24-service list where auto-quoting carries high risk:
 
 ---
 
-_Last updated: 2026-05-25. Re-run this analysis each time flag_triggers.py is updated or when a new competitor is identified._
+---
+
+## 10. Stakeholder AI Review — 2026-05-25
+
+The competitive analysis was reviewed simultaneously by Ryan AI, Robert AI, and Mark AI. Key findings below. Items marked **[needs real human]** are blocked on human confirmation before Sprint 3.
+
+### Ryan AI (Decision Maker) — Key Findings
+
+- **GT Surveys is the correct #1 local threat.** Five miles from HQ, Saturday hours, same services.
+- **Remove `studioaeng.com` + `cwi-assoc.com`** from competitor domains — unverified, false positive risk. → Done.
+- **NEVER_AUTO_QUOTE additions agreed:** B-II Title Review, Legal Description. Surveyor's Affidavit flagged as candidate — **[needs real Ryan]** (liability call).
+- **Boundary Surveys on website:** "This is not a gap, this is a mistake. We already do it. Fix the website."
+- **LOMA/LOMR:** Agrees it's a high-value upsell. **[needs real Ryan]** — is it in Phase 1 scope?
+- **Pricing transparency:** Recommends NOT publishing full prices. Publish "from $X" for Mortgage + Elevation only. Keep others quote-based.
+- **Competitor-flagged orders:** Full hold — no estimate until human explicitly approves. Alert must include matched field + matched value + competitor name, not just "competitor flag."
+- **P1 reorder:** Fix Boundary Surveys on website → Fix homepage inconsistency → Publish credentials → Address GT Surveys → LOMA/LOMR.
+
+### Robert AI (Operations SME) — Key Findings
+
+- **"Florida Land Surveying" + "Atlantic Coast Surveying"**: Too generic — false positive risk against title companies and lenders. **[needs real Robert]** — confirm or downgrade to soft-flag.
+- **B-II Title Review → NEVER_AUTO_QUOTE**: Agreed. Scope varies with title commitment exceptions; not a field job.
+- **Add Legal Description to NEVER_AUTO_QUOTE**: Agreed. Irregular parcels are not flat-rate safe.
+- **Final Survey vs. As-Built Survey**: May be the same FTF service name. **[needs real Robert]** — if builders need As-Built for CO, is "Final Survey" the correct booking code?
+- **Acreage flag**: Cannot auto-detect large vs. small acreage without lot-size field in order form. Logged as Sprint 2 gap.
+- **Competitor alert context**: Human gate notification must show which field matched, what value triggered it, and which competitor name was matched. Not just a yes/no flag.
+- **Confirmed for removal**: `studioaeng.com`, `cwi-assoc.com` removed. `acsiweb.net` flagged for Robert confirmation (I-038).
+
+### Mark AI (Field Ops SME) — Key Findings
+
+- **Monroe County (Florida Keys) = highest risk gap.** Any Keys boundary survey auto-quoted at $350 will be a losing job. Mean high water determination + FDEP + access complications = $1,500–$3,500 job. Add `property_county = "Monroe"` as hard flag before Sprint 3. Logged as I-034. **[needs real Mark]** — does NexGen service the Keys?
+- **VE flood zone not flagged.** FEMA Zone VE = coastal/tidal high hazard. Parsing the `flood_zone` field for "V" prefix is the correct coastal detection signal. Zone AE alone is insufficient. Logged as I-035.
+- **Missing county guard.** `property_county` null/empty/unknown = cannot price. Flag for data quality. Logged as I-036.
+- **False FL address.** `property_state = "FL"` but `property_lat > 31.0` = data entry error. Add coordinate cross-check. Logged as I-037.
+- **NEVER_AUTO_QUOTE additions:** Acreage ($250 flat rate doesn't hold above 2 acres), Topography Survey ($225 listed price is below FL market rate; scope swings from residential to commercial), Legal Description (rural/metes-and-bounds are not flat-rate safe). All added.
+- **National firms added to competitor list:** Terracon, Kimley-Horn, AECOM — all have active Florida survey divisions. Added.
+- **Title companies:** Should NOT be in competitor list. B2B orders from known title companies (First American, Old Republic, Attorneys' Title) should be a soft-flag for Robert review, not a hard competitor block. New flag logic for Sprint 3.
+
+### Changes Applied After Review
+
+| Change | Source | Status |
+|--------|--------|--------|
+| Removed `studioaeng.com`, `cwi-assoc.com` from COMPETITOR_DOMAINS | Ryan + Robert | Done |
+| Added B-II Title Review, Acreage, Legal Description, Topography Survey to NEVER_AUTO_QUOTE | Ryan + Robert + Mark | Done |
+| Added Terracon, Kimley-Horn, AECOM to COMPETITOR_NAMES | Mark | Done |
+| Flagged "Florida Land Surveying", "Atlantic Coast Surveying" for Robert/Mark confirmation | Ryan + Robert | Logged I-038 |
+| Monroe County hard flag | Mark | Logged I-034 |
+| VE zone coastal flag | Mark | Logged I-035 |
+| Missing county guard | Mark | Logged I-036 |
+| False FL address coordinate check | Mark | Logged I-037 |
+| Competitor alert must include matched field + value | Ryan + Robert | Sprint 3 dev requirement |
+| Surveyor's Affidavit as NEVER_AUTO_QUOTE candidate | Ryan | Needs real Ryan |
+| LOMA/LOMR Phase 1 scope | Ryan | Needs real Ryan |
+
+_Last updated: 2026-05-25 — after Ryan AI, Robert AI, Mark AI review._
