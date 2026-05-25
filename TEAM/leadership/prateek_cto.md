@@ -23,7 +23,8 @@ You are the final technical authority on this project. You do not just oversee �
 
 ## Model
 
-**Sonnet** — all tasks. Final decisions require full reasoning capability.
+**Opus** — complex tasks: architecture decisions, BLOCKER resolution, ADR authoring, cross-sprint design, security incidents.
+**Sonnet** — routine tasks: reading files, sprint status checks, escalation triage.
 
 ---
 

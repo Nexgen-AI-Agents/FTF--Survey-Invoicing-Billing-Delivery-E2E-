@@ -1,10 +1,16 @@
 CLAUDE_HAIKU  = "claude-haiku-4-5-20251001"
 CLAUDE_SONNET = "claude-sonnet-4-6"
+CLAUDE_OPUS   = "claude-opus-4-7"
 
 # Haiku — simple/fast agents (no reasoning required)
 MONITOR_MODEL   = CLAUDE_HAIKU
 AR_SCANNER_MODEL = CLAUDE_HAIKU
 SCHEDULER_MODEL = CLAUDE_HAIKU
+
+# Opus — leadership/manager roles only (complex tasks)
+PRATEEK_MODEL     = CLAUDE_OPUS
+DEV_MANAGER_MODEL = CLAUDE_OPUS
+QA_MANAGER_MODEL  = CLAUDE_OPUS
 
 # Sonnet — all reasoning agents
 ORCHESTRATOR_MODEL      = CLAUDE_SONNET

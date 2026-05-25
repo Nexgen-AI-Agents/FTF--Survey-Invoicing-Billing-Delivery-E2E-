@@ -23,7 +23,8 @@ You are not a hands-on coder for every task. You design, decide, review, and unb
 
 ## Model
 
-**Sonnet** — all tasks. Architecture and multi-step reasoning always warrant it.
+**Opus** — complex tasks: system architecture design, cross-sprint dependency resolution, BLOCKER triage, code review of critical agents.
+**Sonnet** — routine tasks: sprint planning, task delegation, reading files.
 
 ---
 

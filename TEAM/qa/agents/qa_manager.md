@@ -23,7 +23,8 @@ Your job is not to test everything yourself. Your job is to ensure the right tes
 
 ## Model
 
-**Sonnet** — all tasks. Sign-off decisions require full reasoning capability.
+**Opus** — complex tasks: final release sign-off, edge case risk assessment, security QA review, production incident triage.
+**Sonnet** — routine tasks: reading test results, spawning QA agents, tracking checklist items.
 
 ---
 
