@@ -136,8 +136,8 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | Priority | Item | Owner | Status |
 |----------|------|-------|--------|
 | CRITICAL | 15 recording sessions (Recordings 1–15) | Robert/Mark/Jessica/Wyatt | Not started |
-| CRITICAL | Competitor company names + domains list | Robert/Mark | Pending |
-| CRITICAL | Never-auto-quote service list | Robert/Mark | Pending |
+| CRITICAL | Competitor company names + domains list | Competitor Analyst AI | **Bootstrapped 2026-05-25** — 25 names + 16 domains in `flag_triggers.py`. Robert/Mark to validate before Sprint 3. |
+| CRITICAL | Never-auto-quote service list | Competitor Analyst AI | **Bootstrapped 2026-05-25** — 3 FTF service types in `flag_triggers.py`. Robert/Mark to validate before Sprint 3. |
 | CRITICAL | Exact FTF names for Construction + Permitting surveys | Robert/Mark | Pending |
 | CRITICAL | FTF Books footer supports change order clause | Dev Team | Pending |
 | HIGH | B-II Title Review — always flag? | Robert/Mark | Pending |
@@ -180,6 +180,8 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | `Dependencies/Questions_Jessica.docx` | AR + statement questions for Jessica |
 | `Dependencies/Questions_Robert_Mark.docx` | Operations + service questions for Robert & Mark |
 | `Dependencies/Questions_Wyatt.docx` | Statement format questions for Wyatt |
+| `TEAM/research/competitor_analyst.md` | **Competitor Analyst AI** — ACTIVE research agent; Florida market competitor intelligence, flag trigger data, market gap analysis. Tools: WebSearch + WebFetch. |
+| `TEAM/research/competitive_analysis.md` | **Florida competitive analysis** — NexGen vs. 8 Florida competitors; service gaps, 16 improvement suggestions (P1/P2/P3); competitor names + domains for flag_triggers.py. Updated 2026-05-25. |
 | `TEAM/stakeholders/STAKEHOLDERS_OVERVIEW.md` | **Stakeholder AI layer rules** — distinction table, org chart, Tier 0/0.5, escalation chain, STUB/ACTIVE rules, enrichment process |
 | `TEAM/stakeholders/prateek.md` | Prateek CTO AI agent — ACTIVE — architecture, code standards, ADR decisions (consulted by ALL team members) |
 | `TEAM/stakeholders/ryan.md` | Ryan AI agent — STUB — estimate tone, business rules, output quality (enriched after Sprint 6) |

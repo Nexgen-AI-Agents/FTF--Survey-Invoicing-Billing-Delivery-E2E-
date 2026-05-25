@@ -1,6 +1,6 @@
 # FTF Agentic AI OS — Full Team Overview
 
-> **22 AI roles across 6 tiers + 6 human principals with parallel AI agent representations.**
+> **23 AI roles across 6 tiers + 6 human principals with parallel AI agent representations.**
 > Every role has a dedicated role card with persona, responsibilities, model selection, escalation path, and reading protocol.
 > This document is the single reference for who does what and how the team works together.
 
@@ -49,19 +49,20 @@
 | 7 | DevOps Engineer | `TEAM/architecture/devops_engineer.md` | CI/CD pipeline, Docker, staging + production deployment |
 | 8 | Prompt Engineer | `TEAM/architecture/prompt_engineer.md` | All AI prompts in `config/prompts/` — design, iteration, output validation |
 | 9 | Security Engineer | `TEAM/architecture/security_engineer.md` | Threat modelling, OWASP audit, secrets management, pen testing |
-| 10 | Business Analyst | `TEAM/business/ba.md` | E2E project knowledge, requirements clarity, full document map |
-| 11 | UI/UX Designer | `TEAM/design/ui_ux_designer.md` | Human-facing output design — emails, statements, alerts |
-| 12 | Robert — SME | `TEAM/sme/robert.md` | NexGen operations validation, flag logic, missing data provision |
-| 13 | Mark — SME | `TEAM/sme/mark.md` | Field/office edge case validation, workflow expertise |
-| 14 | Jessica — AR Specialist | `TEAM/ar/jessica_ar_specialist.md` | AR loop ownership post-implementation, reminder + escalation |
-| 15 | Dev Manager | `TEAM/dev/agents/dev_manager.md` | Dev team leadership, sprint coordination, PR approval |
-| 16 | Senior Dev | `TEAM/dev/agents/senior_dev.md` | Complex logic, integration, code review |
-| 17 | Junior Dev | `TEAM/dev/agents/junior_dev.md` | Well-defined tasks, unit tests, self-check before handoff |
-| 18 | QA Manager | `TEAM/qa/agents/qa_manager.md` | Final release gate, spawns QA agents, sign-off authority |
-| 19 | Senior QA | `TEAM/qa/agents/senior_qa.md` | Edge cases, integration testing, security checks, test case authoring |
-| 20 | Junior QA | `TEAM/qa/agents/junior_qa.md` | Happy path testing, basic functional checks |
-| 21 | QE Manual | `TEAM/qa/agents/qe_manual.md` | Exploratory testing, UX validation of all human-facing outputs |
-| 22 | QE Automation | `TEAM/qa/agents/qe_automation.md` | Automated regression suite, CI/CD test coverage |
+| 10 | Competitor Analyst | `TEAM/research/competitor_analyst.md` | Tier 2 Research — Florida competitor intelligence, flag trigger data, market gap analysis |
+| 11 | Business Analyst | `TEAM/business/ba.md` | E2E project knowledge, requirements clarity, full document map |
+| 12 | UI/UX Designer | `TEAM/design/ui_ux_designer.md` | Human-facing output design — emails, statements, alerts |
+| 13 | Robert — SME | `TEAM/sme/robert.md` | NexGen operations validation, flag logic, missing data provision |
+| 14 | Mark — SME | `TEAM/sme/mark.md` | Field/office edge case validation, workflow expertise |
+| 15 | Jessica — AR Specialist | `TEAM/ar/jessica_ar_specialist.md` | AR loop ownership post-implementation, reminder + escalation |
+| 16 | Dev Manager | `TEAM/dev/agents/dev_manager.md` | Dev team leadership, sprint coordination, PR approval |
+| 17 | Senior Dev | `TEAM/dev/agents/senior_dev.md` | Complex logic, integration, code review |
+| 18 | Junior Dev | `TEAM/dev/agents/junior_dev.md` | Well-defined tasks, unit tests, self-check before handoff |
+| 19 | QA Manager | `TEAM/qa/agents/qa_manager.md` | Final release gate, spawns QA agents, sign-off authority |
+| 20 | Senior QA | `TEAM/qa/agents/senior_qa.md` | Edge cases, integration testing, security checks, test case authoring |
+| 21 | Junior QA | `TEAM/qa/agents/junior_qa.md` | Happy path testing, basic functional checks |
+| 22 | QE Manual | `TEAM/qa/agents/qe_manual.md` | Exploratory testing, UX validation of all human-facing outputs |
+| 23 | QE Automation | `TEAM/qa/agents/qe_automation.md` | Automated regression suite, CI/CD test coverage |
 
 ---
 
@@ -93,7 +94,7 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │  TIER 2 — ARCHITECTURE & TECHNICAL SPECIALISTS                   │
 │  Enterprise Architect · IT Infrastructure · DevOps Engineer      │
-│  Prompt Engineer · Security Engineer                             │
+│  Prompt Engineer · Security Engineer · Competitor Analyst        │
 └─────────────────────────────────────────────────────────────────┘
                               |
                               v

@@ -49,6 +49,20 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 - FEMA flood zone check — downgraded to WARN (corporate firewall blocks hazards.fema.gov; passes on GitHub Actions)
 - Windows cp1252 encoding — replaced all Unicode symbols with ASCII in test script
 
+## [Research] — Competitor Analyst + I-001/I-002 Resolution — 2026-05-25
+
+### Added
+- `TEAM/research/competitor_analyst.md` — Competitor Analyst AI agent (Tier 2 research specialist, ACTIVE). WebSearch + WebFetch enabled. Consulted by Dev Manager, Prompt Engineer, QA Manager, Senior Dev, BA for competitor detection and flag trigger questions.
+- `TEAM/research/competitive_analysis.md` — Full Florida competitive analysis: NexGen vs. 8 Florida surveying competitors (GT Surveys, Apex Surveying, Land Surveying Palm Beach, Accurate Land Surveyors, Suarez Surveying, Stoner & Associates, SurvTech Solutions, No Flood Florida). Includes service comparison matrix, pricing benchmarks, 16 improvement suggestions (P1/P2/P3).
+- `TEAM/TEAM_OVERVIEW.md` — Competitor Analyst added as role #10 in Tier 2; team count updated to 23 AI roles.
+
+### Fixed
+- `code/shared/config/flag_triggers.py` — `COMPETITOR_NAMES` populated (25 entries), `COMPETITOR_DOMAINS` populated (16 entries), `NEVER_AUTO_QUOTE` populated (3 entries: Specific Purpose Survey, Lot Split, Wetland Delineation). All bootstrapped from web research — Robert/Mark to validate before Sprint 3.
+- `issues/issue.md` — I-001 and I-002 moved from OPEN to CLOSED (bootstrapped resolution; validation pending from Robert/Mark).
+- `memory.md` — Open Dependencies updated; 2 new files added to Workspace Files Index.
+
+---
+
 ## [Sprint 1] — CRM Monitor — 2026-05-21 (In Progress)
 
 ### Added

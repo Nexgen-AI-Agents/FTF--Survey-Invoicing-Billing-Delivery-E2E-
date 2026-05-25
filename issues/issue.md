@@ -23,8 +23,6 @@ OPEN → IN DEV → DEV COMPLETE → QA JUNIOR → QA SENIOR → QA MANAGER → 
 
 | ID | Sprint | Severity | Title | Assigned | Status | Opened | Notes |
 |----|--------|----------|-------|----------|--------|--------|-------|
-| I-001 | Sprint 2 | CRITICAL | Competitor names + domains list missing — Agent 4 flag logic incomplete | dev_manager | OPEN | 2026-05-21 | Robert/Mark must provide before Sprint 3 (Human Gate). `flag_triggers.py`: COMPETITOR_NAMES=[], COMPETITOR_DOMAINS=[]. Blocks trigger #3 and #4. |
-| I-002 | Sprint 2 | CRITICAL | Never-auto-quote service list missing — Agent 4 flag trigger #2 incomplete | dev_manager | OPEN | 2026-05-21 | Robert/Mark must provide before Sprint 3. `flag_triggers.py`: NEVER_AUTO_QUOTE=[]. Blocks trigger #2. |
 | I-003 | Sprint 2 | CRITICAL | Exact FTF names for Construction + Permitting surveys unknown | dev_manager | OPEN | 2026-05-21 | Robert/Mark must provide before Sprint 2 (Classifier). 22 of 24 services confirmed. These 2 cannot be classified correctly without exact names. |
 | I-004 | Sprint 2 | MAJOR | B-II Title Review flag status unconfirmed | dev_manager | OPEN | 2026-05-21 | `service_names.json`: `"flag": "pending_confirmation"`. Robert/Mark to confirm: always-flag or auto-quote? Blocks classifier for this service type. |
 | I-005 | Sprint 2 | MAJOR | Wetland Delineation — does NexGen perform this service? | dev_manager | OPEN | 2026-05-21 | `service_names.json`: `"flag": "pending_confirmation"`. Robert/Mark to confirm if this service should be in the 24-service list or removed. |
@@ -53,6 +51,8 @@ OPEN → IN DEV → DEV COMPLETE → QA JUNIOR → QA SENIOR → QA MANAGER → 
 
 | ID | Sprint | Severity | Title | Resolved By | Closed | Resolution |
 |----|--------|----------|-------|-------------|--------|------------|
+| I-001 | Sprint 2 | CRITICAL | Competitor names + domains list missing — Agent 4 flag logic incomplete | competitor_analyst | 2026-05-25 | Bootstrapped from Florida market web research. 25 competitor names + 16 domains added to `flag_triggers.py`. Source: `TEAM/research/competitive_analysis.md`. Robert/Mark to validate list before Sprint 3. |
+| I-002 | Sprint 2 | CRITICAL | Never-auto-quote service list missing — Agent 4 flag trigger #2 incomplete | competitor_analyst | 2026-05-25 | Bootstrapped from web research. `NEVER_AUTO_QUOTE` populated: Specific Purpose Survey, Lot Split, Wetland Delineation. Robert/Mark to validate before Sprint 3. |
 | I-009 | Sprint 0 | CRITICAL | `db.get_pending_order()` used in sprint plan to check if order exists — function takes no args | dev_manager | 2026-05-21 | Added `order_exists(order_id: str) -> bool` to `core/db.py`. Sprint 1 agent uses this instead. |
 | I-010 | Sprint 0 | MINOR | `test_get_pricing_raises_pricing_error_on_failure` called `get_pricing()` without required `service` arg | dev_manager | 2026-05-21 | Fixed test to call `get_pricing("Boundary Survey")`. |
 | I-011 | Sprint 0 | MINOR | `state.py` uses deprecated `datetime.datetime.utcnow()` — DeprecationWarning on Python 3.14 | dev_manager | 2026-05-21 | Replaced all 4 calls with `datetime.datetime.now(datetime.UTC)`. |
