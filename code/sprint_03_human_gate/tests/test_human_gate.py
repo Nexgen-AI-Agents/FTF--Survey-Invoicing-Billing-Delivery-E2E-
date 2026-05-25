@@ -4,7 +4,9 @@ from unittest.mock import patch, MagicMock
 from agents.agent_04_human_gate import (
     notify_human,
     check_approval,
+    process_approval_reply,
     run,
+    run_escalation_check,
     AGENT_NAME,
     STATUS_AWAITING,
     STATUS_APPROVED,
@@ -198,3 +200,99 @@ def test_teams_payload_contains_order_id():
     fact_values = {f["name"]: f["value"] for f in facts}
     assert fact_values["Order ID"] == "ORD-001"
     assert fact_values["Flag Reason"] == _FLAGGED_ROW["flag_reason"]
+
+
+# ── UT-03-09  process_approval_reply: approve ────────────────────────────────
+
+def test_process_approval_approve():
+    row = {**_FLAGGED_ROW, "status": STATUS_AWAITING}
+    with patch("agents.agent_04_human_gate.get_order_by_id", return_value=row), \
+         patch("agents.agent_04_human_gate.save_order_state") as mock_save, \
+         patch("agents.agent_04_human_gate.log_decision") as mock_log:
+        result = process_approval_reply("ORD-001", "approve")
+
+    assert result["status"] == STATUS_APPROVED
+    assert result["decision"] == "approve"
+    assert result["order_id"] == "ORD-001"
+    mock_save.assert_called_once()
+    assert mock_save.call_args[1]["status"] == STATUS_APPROVED
+    mock_log.assert_called_once()
+    assert mock_log.call_args[1]["decision"] == STATUS_APPROVED
+
+
+# ── UT-03-10  process_approval_reply: reject ─────────────────────────────────
+
+def test_process_approval_reject():
+    row = {**_FLAGGED_ROW, "status": STATUS_AWAITING}
+    with patch("agents.agent_04_human_gate.get_order_by_id", return_value=row), \
+         patch("agents.agent_04_human_gate.save_order_state") as mock_save, \
+         patch("agents.agent_04_human_gate.log_decision"):
+        result = process_approval_reply("ORD-001", "REJECT")  # uppercase — must normalise
+
+    assert result["status"] == STATUS_REJECTED
+    assert mock_save.call_args[1]["status"] == STATUS_REJECTED
+
+
+# ── UT-03-11  process_approval_reply: invalid decision → AgentError ──────────
+
+def test_process_approval_invalid_decision():
+    row = {**_FLAGGED_ROW, "status": STATUS_AWAITING}
+    with patch("agents.agent_04_human_gate.get_order_by_id", return_value=row):
+        with pytest.raises(AgentError, match="invalid decision"):
+            process_approval_reply("ORD-001", "maybe")
+
+
+# ── UT-03-12  process_approval_reply: order not found → AgentError ───────────
+
+def test_process_approval_order_not_found():
+    with patch("agents.agent_04_human_gate.get_order_by_id", return_value=None):
+        with pytest.raises(AgentError, match="not found"):
+            process_approval_reply("ORD-999", "approve")
+
+
+# ── UT-03-13  process_approval_reply: wrong status → AgentError ──────────────
+
+def test_process_approval_wrong_status():
+    row = {**_FLAGGED_ROW, "status": "classified"}
+    with patch("agents.agent_04_human_gate.get_order_by_id", return_value=row):
+        with pytest.raises(AgentError, match="not awaiting approval"):
+            process_approval_reply("ORD-001", "approve")
+
+
+# ── UT-03-14  run_escalation_check: no overdue orders → empty list ───────────
+
+def test_run_escalation_check_no_overdue():
+    with patch("agents.agent_04_human_gate.TEAMS_WEBHOOK_URL", _TEAMS_URL), \
+         patch("agents.agent_04_human_gate.get_overdue_approvals", return_value=[]):
+        result = run_escalation_check()
+    assert result == []
+
+
+# ── UT-03-15  run_escalation_check: overdue orders get escalation POST ───────
+
+def test_run_escalation_check_sends_alerts():
+    overdue = [
+        {**_FLAGGED_ROW, "order_id": "ORD-001", "status": STATUS_AWAITING},
+        {**_FLAGGED_ROW, "order_id": "ORD-002", "status": STATUS_AWAITING},
+    ]
+    with patch("agents.agent_04_human_gate.TEAMS_WEBHOOK_URL", _TEAMS_URL), \
+         patch("agents.agent_04_human_gate.get_overdue_approvals", return_value=overdue), \
+         patch("agents.agent_04_human_gate.httpx.post",
+               return_value=MagicMock(status_code=200, raise_for_status=MagicMock())) as mock_post, \
+         patch("agents.agent_04_human_gate.log_decision"):
+        result = run_escalation_check(timeout_hours=24)
+
+    assert result == ["ORD-001", "ORD-002"]
+    assert mock_post.call_count == 2
+    # Escalation payload must be orange (FF6600), not red (FF0000)
+    payload = mock_post.call_args_list[0][1]["json"]
+    assert payload["themeColor"] == "FF6600"
+    assert "ESCALATION" in payload["title"]
+
+
+# ── UT-03-16  run_escalation_check: no webhook → AgentError ──────────────────
+
+def test_run_escalation_check_no_webhook():
+    with patch("agents.agent_04_human_gate.TEAMS_WEBHOOK_URL", None):
+        with pytest.raises(AgentError, match="TEAMS_WEBHOOK_URL"):
+            run_escalation_check()

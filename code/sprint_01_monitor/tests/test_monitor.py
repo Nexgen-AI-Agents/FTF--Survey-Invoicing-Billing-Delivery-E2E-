@@ -287,6 +287,35 @@ def test_get_orders_exception_propagates():
     mock_save.assert_not_called()
 
 
+# ---------------------------------------------------------------------------
+# CLI tests (I-023)
+# ---------------------------------------------------------------------------
+
+# UT-01-13: --run-now flag triggers run() and returns new order IDs
+def test_cli_run_now_triggers_run():
+    from agents.agent_02_monitor import main
+
+    with patch("agents.agent_02_monitor.run", return_value=["O-001", "O-002"]) as mock_run:
+        result = main(["--run-now"])
+
+    mock_run.assert_called_once()
+    assert result == ["O-001", "O-002"]
+
+
+# UT-01-14: no args — run() is NOT called, returns None
+def test_cli_no_args_returns_none(capsys):
+    from agents.agent_02_monitor import main
+
+    with patch("agents.agent_02_monitor.run") as mock_run:
+        result = main([])
+
+    mock_run.assert_not_called()
+    assert result is None
+    # help text should be printed to stdout
+    captured = capsys.readouterr()
+    assert "--run-now" in captured.out
+
+
 # EC-01-06: status field missing from order dict — no KeyError, order is processed.
 # Agent no longer reads the status field (server filter guarantees Quote-only).
 # Missing key must not crash; order goes through the remaining checks normally.

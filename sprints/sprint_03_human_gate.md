@@ -5,7 +5,7 @@
 | Field | Value |
 |-------|-------|
 | Goal | AI evaluates 9 flag triggers per order — routes flagged orders to MS Teams, clears others to continue |
-| Status | ✅ Complete (partial) — 2026-05-25. Triggers 1–5, 8, 9 + Monroe County built. Approval inbound (I-025) stubbed. |
+| Status | ✅ Complete — 2026-05-25. All buildable items done. I-025 approval mechanism + escalation check built; live Teams integration test deferred to Sprint 10. |
 | Dates | TBD |
 | Reads From | [sprint_02_classifier_pricing.md](sprint_02_classifier_pricing.md) — needs classification dict (customer type, service, flood zone, special_pricing) as input |
 | Outputs | `agent_04_human_gate.py`, `config/flag_triggers.py` (updated with competitor list when received), MS Teams alert confirmed working |
@@ -19,9 +19,13 @@
 - [x] Monroe County hard flag (I-034) added to Agent 3 Classifier
 - [x] `tests/conftest.py` + `tests/test_human_gate.py` — 13 tests covering notify, approval polling, error handling, payload structure
 - [x] `db/schema.sql` — status values updated to include awaiting_approval, approved, rejected
+- [x] `agent_02_monitor.py` — `main(argv)` CLI entrypoint with `--run-now` flag (I-023)
+- [x] `agent_04_human_gate.py` — `process_approval_reply()`, `run_escalation_check()`, `_send_escalation_alert()`, full CLI entrypoint (I-025 code-complete)
+- [x] `core/db.py` — `get_overdue_approvals(timeout_hours)` added
+- [x] `config/settings.py` — `APPROVAL_TIMEOUT_HOURS` added (default 24h, env-configurable)
+- [x] Tests: UT-01-13, UT-01-14 (CLI), UT-03-09 through UT-03-16 (approval + escalation) — 131/131 pass
 - [ ] MS Teams webhook live integration test (needs real TEAMS_WEBHOOK_URL — Sprint 10+)
 - [ ] `config/flag_triggers.py` — COMPETITOR_NAMES + NEVER_AUTO_QUOTE validated by Robert/Mark (I-038)
-- [ ] Approval inbound mechanism (I-025 — Ryan/Robert decision needed)
 - [ ] Integration test: competitor, ALTA, Other Services, out-of-state — all fire alerts on staging
 
 ---
@@ -56,7 +60,12 @@
 | check_approval() polls DB status (stub) | ✅ | UT-03-04 |
 | Missing TEAMS_WEBHOOK_URL → AgentError | ✅ | UT-03-05 |
 | Teams HTTP/network failure → AgentError | ✅ | UT-03-06 |
-| Post-approval: AI auto-sends without manual click | 🔲 | Blocked on I-025 (approval mechanism undefined) |
+| process_approval_reply() approve/reject updates DB | ✅ | UT-03-09, UT-03-10 |
+| process_approval_reply() invalid/wrong-status → AgentError | ✅ | UT-03-11, UT-03-13 |
+| run_escalation_check() fires orange alert for overdue orders | ✅ | UT-03-15 |
+| run_escalation_check() no webhook → AgentError | ✅ | UT-03-16 |
+| CLI --run-now triggers monitor run (I-023) | ✅ | UT-01-13 |
+| Post-approval: AI auto-sends without manual click | 🔲 | Requires live Teams integration — Sprint 10 |
 
 ---
 
@@ -85,7 +94,7 @@ _Log here as they happen._
 
 ## Completion Brief
 
-- **Built:** agent_04_human_gate.py (notify_human, check_approval stub, run); 4 new flag triggers added to Agent 3 (competitor name, competitor domain, out-of-state, Monroe County); get_flagged_order() + get_order_by_id() added to db.py
-- **Tests:** 13/13 pass (Sprint 3); 119/119 pass (full suite — Sprints 0–3)
-- **Changed from plan:** Flag trigger logic kept in Agent 3 Classifier (not duplicated in Agent 4); check_approval() is a DB-polling stub pending I-025 resolution
-- **Carry forward for Sprint 4:** I-025 approval mechanism; Robert/Mark competitor list validation (I-038); live Teams webhook integration test
+- **Built:** agent_04_human_gate.py (notify_human, check_approval stub, run, process_approval_reply, run_escalation_check, main CLI); 4 new flag triggers added to Agent 3 (competitor name, competitor domain, out-of-state, Monroe County); get_flagged_order() + get_order_by_id() + get_overdue_approvals() added to db.py; APPROVAL_TIMEOUT_HOURS added to settings.py; agent_02_monitor.py CLI entrypoint with --run-now flag (I-023)
+- **Tests:** 21/21 pass (Sprint 3); 131/131 pass (full suite — Sprints 0–3)
+- **Changed from plan:** Flag trigger logic kept in Agent 3 Classifier (not duplicated in Agent 4); check_approval() is a DB-polling stub (I-025 inbound mechanism TBD); process_approval_reply() is the inbound handler — any mechanism (CLI, Teams bot, webhook) can call it
+- **Carry forward for Sprint 4:** Live Teams webhook integration test (Sprint 10); Robert/Mark competitor list validation (I-038)

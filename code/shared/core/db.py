@@ -1,6 +1,7 @@
 import psycopg2
 import psycopg2.extras
 from contextlib import contextmanager
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from config.settings import DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
@@ -138,6 +139,24 @@ def log_decision(
             """,
             (agent_name, order_id, decision, reason, input_summary, output_summary, model_used),
         )
+
+
+def get_overdue_approvals(timeout_hours: int = 24) -> list[dict]:
+    """Return all orders with status='awaiting_approval' and flagged_at older than timeout_hours."""
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=timeout_hours)
+    with _get_cursor() as cur:
+        cur.execute(
+            """
+            SELECT * FROM processed_orders
+            WHERE status = 'awaiting_approval'
+              AND flagged_at IS NOT NULL
+              AND flagged_at < %s
+            ORDER BY flagged_at ASC
+            """,
+            (cutoff,),
+        )
+        rows = cur.fetchall()
+        return [dict(row) for row in rows]
 
 
 def get_unprocessed_reminder() -> Optional[dict]:

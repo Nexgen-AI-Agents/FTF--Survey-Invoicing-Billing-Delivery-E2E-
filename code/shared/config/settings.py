@@ -8,7 +8,8 @@ load_dotenv()
 MAX_REVIEWER_RETRIES: int = 3
 ESTIMATE_DELAY_MIN:   int = 360    # 6 minutes — lower bound of random send delay
 ESTIMATE_DELAY_MAX:   int = 780    # 13 minutes — upper bound of random send delay
-AR_ESCALATION_DAYS:   int = 90
+AR_ESCALATION_DAYS:        int = 90
+APPROVAL_TIMEOUT_HOURS:    int = int(os.getenv("APPROVAL_TIMEOUT_HOURS", "24"))
 ELEVATION_CERT_PRICE: int = 225
 SERVICE_STATE:        str = "FL"
 

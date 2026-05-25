@@ -52,5 +52,32 @@ def run() -> list[str]:
     return new_order_ids
 
 
+def main(argv=None) -> list[str] | None:
+    """CLI entrypoint for manual trigger.
+
+    Usage:
+      python -m agents.agent_02_monitor --run-now
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(description="FTF Order Monitor — Agent 2")
+    parser.add_argument(
+        "--run-now",
+        action="store_true",
+        help="Trigger a monitor run immediately and print new order IDs",
+    )
+    args = parser.parse_args(argv)
+
+    if args.run_now:
+        new_ids = run()
+        log.info("CLI run-now complete new=%s", len(new_ids))
+        for oid in new_ids:
+            print(oid)
+        return new_ids
+
+    parser.print_help()
+    return None
+
+
 if __name__ == "__main__":
-    run()
+    main()
