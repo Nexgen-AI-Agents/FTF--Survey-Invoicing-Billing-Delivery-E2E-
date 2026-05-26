@@ -116,7 +116,7 @@ def splash() -> None:
         Align.center(
             "[bold bright_white]FTF Agentic AI Operating System[/bold bright_white]\n"
             "[dim]Automated Estimate Generation Pipeline · Sprints 0 – 6[/dim]\n\n"
-            "[cyan]9 Agents  ·  151 Unit Tests  ·  0 Failures[/cyan]\n"
+            "[cyan]9 Agents  ·  186 Unit Tests  ·  0 Failures[/cyan]\n"
             "[dim]NexGen Land Surveying · Florida[/dim]"
         ),
         border_style="bright_blue",
@@ -568,7 +568,7 @@ def footer() -> None:
     console.print(Panel(
         "[bold bright_white]Sprint 0–6 Complete[/bold bright_white]\n\n"
         "  [cyan]9 agents[/cyan] built and tested  "
-        " ·  [cyan]151 unit tests[/cyan], 0 failures  "
+        " ·  [cyan]186 Unit Tests[/cyan], 0 failures  "
         " ·  [cyan]6 sprints[/cyan] delivered\n\n"
         "  [green]Estimate generation loop is functionally complete[/green]\n"
         "  [dim](staging validation and production go-live in Sprints 10 – 11)[/dim]\n\n"
