@@ -213,4 +213,15 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 ### Full Test Suite
 - Sprints 1–6: **151 tests, 151 pass** (0 fail, 0 skip)
 
+## [Sprint 2 — I-054 Fix] — NEVER_AUTO_QUOTE Over-Blocking Removed — 2026-05-26
+
+### Fixed
+- `code/shared/config/flag_triggers.py` — I-054: removed `"Acreage"` and `"Legal Description"` from `NEVER_AUTO_QUOTE`; both are flat-rate routine services ($250/$300) with no scope ambiguity. `"Topography Survey"` remains (price below FL market rate, scope varies). Robert to confirm all three before Sprint 11 production go-live.
+
+### Issues Closed
+- I-054 (MAJOR) — over-blocking removed for Acreage + Legal Description; Topography Survey kept pending Robert confirmation
+
+### Full Test Suite
+- Sprints 1–6: **151 tests, 151 pass** (0 fail, 0 skip)
+
 <!-- Sprint entries added here as sprints are completed -->

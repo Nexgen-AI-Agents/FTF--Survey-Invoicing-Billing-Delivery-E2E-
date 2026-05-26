@@ -72,7 +72,7 @@ NEVER_AUTO_QUOTE: list[str] = [
     "Lot Split",                # County/municipality review and approval cycles required
     "Wetland Delineation",      # FDEP/Army Corps/SFWMD jurisdiction; outcome not guaranteed
     # B-II Title Review removed 2026-05-25 — confirmed auto-quoteable by Prateek (I-004)
-    "Acreage",                  # $250 base rate does not hold above ~2 acres; scope swings hard
-    "Legal Description",        # Metes-and-bounds / rural county descriptions not flat-rate safe
+    # Acreage removed 2026-05-26 — flat-rate $250 routine service; Robert to confirm before Sprint 11 (I-054)
+    # Legal Description removed 2026-05-26 — flat-rate $300 routine service; Robert to confirm before Sprint 11 (I-054)
     "Topography Survey",        # $225 listed price is below FL market rate; scope varies by site
 ]
