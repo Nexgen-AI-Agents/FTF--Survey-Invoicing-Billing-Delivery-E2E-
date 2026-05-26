@@ -6,6 +6,26 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 
 ---
 
+## [Skill] — FTF AR Report — 2026-05-26
+
+### Added
+- `skills/ftf_ar_report/SKILL.md` — skill spec: login flow, column definitions, aging buckets, credential overrides
+- `skills/ftf_ar_report/scripts/build_ar_report.py` — login to Books, download full unpaid xlsx, enrich with Days Since Delivery + aging bucket, build 2-sheet Excel (Unpaid detail + Summary pivot), output as `Unpaid_AR_Report_MM.DD.YYYY.xlsx`
+- `scripts/probe_ftf_books_login.py` / `probe_ftf_admin_nav.py` / `probe_ftf_admin_html.py` / `probe_ftf_books_module.py` / `probe_stage_ar.py` — discovery probe scripts used to find Books module URL and download endpoint
+- `docs/demos/20260526_v5/demo.mp4` — client demo v5: Sprint 0-9 Phase 1 complete, 3.2 min, 11 scenes
+
+### Verified
+- Staging login: `POST https://stage.fieldtofinish.jobs/admin/login` ✓
+- Books download: `GET /books/get_data_excel?show_all=1` → 146KB xlsx, 2,111 unpaid rows ✓
+- API: `GET /invoices?status=unpaid` → 78,524 records ✓
+- Output: 12-column Unpaid sheet + pivot Summary, hyperlinked orders, currency fmt, freeze pane ✓
+
+### Sprint 7/8 Assessment
+- **Sprint 7 (AR Follow-Up)**: data layer confirmed ✓ — `agent_10_ar_scanner` + `agent_11_scheduler` + `agent_13_ar_reviewer` can be built. `agent_12_reminder_writer` still blocked by I-006 (Jessica Recording 10).
+- **Sprint 8 (Monthly Statements)**: Excel generation proven ✓ — `agent_15_statement_generator` can wrap `build_ar_report.py`. Content format still needs I-007 (Wyatt Recording 11).
+
+---
+
 ## [Sprint 9] — Memory Loop — 2026-05-26
 
 ### Added
