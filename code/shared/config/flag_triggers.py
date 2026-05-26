@@ -8,6 +8,7 @@ ALWAYS_FLAG_SERVICES: list[str] = [
 # Confirmed 2026-05-25 by Prateek (client): all names and domains validated.
 # "Florida Land Surveying" confirmed competitor — floridalandsurveying.com
 # "Atlantic Coast Surveying" confirmed competitor — acsiweb.net (Atlantic Coast Surveying Inc)
+# 2026-05-26 by Prateek: added Exacta Land Surveyors, Me Land Services Inc, Landtec Surveying
 # See: TEAM/research/competitive_analysis.md for full competitor profiles.
 COMPETITOR_NAMES: list[str] = [
     # Primary Florida surveying competitors (confirmed)
@@ -36,6 +37,13 @@ COMPETITOR_NAMES: list[str] = [
     "Target Surveying",
     "Sliger & Associates",
     "Fordco Surveying",
+    "Exacta Land Surveyors",
+    "Exacta Land Surveyors LLC",
+    "Me Land Services",
+    "Me Land Services Inc",
+    "Landtec Surveying",
+    "Landtec Surveying and Lien",
+    "Landtec Surveying and Lien LLC",
     # National firms with active Florida presence
     "Terracon",
     "Terracon Consultants",
