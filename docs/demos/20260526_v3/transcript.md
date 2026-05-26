@@ -1,0 +1,65 @@
+# FTF Agentic AI — Client Demo v3
+**Total duration:** 2m 5s
+**Date:** 2026-05-26  |  **Voice:** OpenAI TTS nova  |  **Sprint 0–6**
+
+---
+
+## Scene 1 — Introduction  [00:00 – 00:09]
+
+> Welcome. Let me show you exactly what NexGen built — 8 AI agents that automate your entire quoting process. We'll follow one real order, start to finish.
+
+---
+
+## Scene 2 — The Problem  [00:10 – 00:21]
+
+> Before: your team had to manually check Field to Finish for new orders, look up the price, write the email, and send it. 50 new orders a week — hours of repetitive work every day.
+
+---
+
+## Scene 3 — Pipeline Overview  [00:21 – 00:33]
+
+> The solution: 8 AI agents running every 60 minutes, around the clock. Detect, classify, price, approve if needed, write, review, send, report. All 6 sprints are built, tested, and ready.
+
+---
+
+## Scene 4 — Meet the Order  [00:33 – 00:45]
+
+> Let's follow John Martinez. He submits a Boundary Survey request at 9:14 AM. Half an acre, Hillsborough County. He's waiting for a quote. Before this system — he might wait until tomorrow.
+
+---
+
+## Scene 5 — Agent 2 — Monitor  [00:45 – 00:56]
+
+> Agent 2 scans Field to Finish every 60 minutes. It finds John's order, confirms it's new, and logs it to the database. Status: pending. Nobody on your team did anything.
+
+---
+
+## Scene 6 — Classify & Price  [00:57 – 01:10]
+
+> Agent 3 runs 14 checks in under 2 seconds. Standard service, Florida property, no competitor, no flood zone issues — all 14 checks pass. Agent 5 pulls the price from Field to Finish: 350 dollars.
+
+---
+
+## Scene 7 — Human Approval Gate  [01:11 – 01:25]
+
+> For complex orders — like this ALTA Survey in Monroe County — Agent 4 sends Robert a Teams alert instantly. Robert reviews it, types approve, and the pipeline continues. Nothing sensitive goes out without a human sign-off.
+
+---
+
+## Scene 8 — Write, Review & Send  [01:25 – 01:40]
+
+> Back to John. Agent 6 writes a personalized estimate email. Agent 7 runs 4 accuracy checks: price, name, address, change order clause. At 10:27 AM, Agent 8 sends the quote. 73 minutes from submission. Zero manual work.
+
+---
+
+## Scene 9 — Sprint 7–12 Roadmap  [01:40 – 01:54]
+
+> Sprints 0 through 6 are complete. Sprint 7 and 8 need Jessica and Wyatt's process recordings. Sprint 9 can start now. Sprints 10 through 12 follow once Ryan approves the monthly cost.
+
+---
+
+## Scene 10 — Summary  [01:54 – 02:04]
+
+> 141 automated tests. 8 agents. 6 sprints, on schedule. Your quoting process runs automatically. Your team focuses on the work that needs a human. Thank you.
+
+---
