@@ -146,3 +146,24 @@ CREATE TABLE IF NOT EXISTS loop_state (
 );
 
 CREATE INDEX IF NOT EXISTS idx_ls_loop_name ON loop_state (loop_name);
+
+
+-- ─────────────────────────────────────────
+-- 7. LISTEN/NOTIFY trigger
+--    Fires pg_notify('order_state_changed', 'order_id:status') on every
+--    INSERT or status UPDATE to processed_orders.
+--    Consumed by agent_00_listener.py (real-time pipeline trigger).
+-- ─────────────────────────────────────────
+CREATE OR REPLACE FUNCTION notify_order_state_change()
+RETURNS trigger AS $$
+BEGIN
+    PERFORM pg_notify('order_state_changed', NEW.order_id || ':' || NEW.status);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_processed_orders_notify ON processed_orders;
+CREATE TRIGGER trg_processed_orders_notify
+    AFTER INSERT OR UPDATE OF status ON processed_orders
+    FOR EACH ROW
+    EXECUTE FUNCTION notify_order_state_change();

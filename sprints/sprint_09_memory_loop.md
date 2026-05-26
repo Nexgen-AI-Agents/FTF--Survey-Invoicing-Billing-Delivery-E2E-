@@ -21,6 +21,10 @@
 - [x] `code/shared/core/db.py` — `get_decisions_for_date`, `get_decisions_since`, `save_loop_state`, `get_loop_state`
 - [x] Schedule both in GitHub Actions: `.github/workflows/nightly_memory.yml` (04:00 UTC daily)
 - [x] Activated `estimate_generation.yml` — replaced stub with orchestrator call
+- [x] `agent_00_listener.py` — persistent daemon, LISTEN/NOTIFY real-time pipeline trigger
+- [x] `db/schema.sql` — `notify_order_state_change()` trigger function + `trg_processed_orders_notify` trigger
+- [x] `code/shared/core/db.py` — `get_listen_connection()` helper
+- [x] `.github/workflows/order_listener.yml` — runs listener, restarts every 6h
 
 ---
 
@@ -35,7 +39,10 @@
 | dream_processor appends on second run (history preserved) | ✅ | |
 | orchestrator logs loop_start + loop_complete | ✅ | 2/2 tests pass |
 | orchestrator saves loop_state: running → completed | ✅ | |
-| **Total** | **11/11 pass** | Sprint 9 green |
+| listener triggers pipeline on pending order | ✅ | 3/3 trigger tests pass |
+| listener logs started + stopped | ✅ | |
+| malformed payload does not crash | ✅ | |
+| **Total** | **17/17 pass** | Sprint 9 green |
 
 ---
 
@@ -62,7 +69,7 @@ _Log here as they happen._
 
 ## Completion Brief
 
-- **Built:** `agent_01_orchestrator.py` (full pipeline coordinator), `memory_manager.py` (daily log writer), `dream_processor.py` (7-day pattern analyzer), `loop_state` DB table, 4 new DB helper functions, `nightly_memory.yml` GitHub Actions workflow, activated `estimate_generation.yml`
-- **Tests:** 11/11 pass — TestMemoryManager (5), TestDreamProcessor (4), TestOrchestrator (2)
+- **Built:** `agent_00_listener.py` (LISTEN/NOTIFY real-time daemon), `agent_01_orchestrator.py` (full pipeline coordinator), `memory_manager.py` (daily log writer), `dream_processor.py` (7-day pattern analyzer), `loop_state` DB table, DB trigger + notify function, 5 new DB helper functions, 3 GitHub Actions workflows
+- **Tests:** 17/17 pass — TestTriggerPipeline (3), TestListenerRun (3), TestMemoryManager (5), TestDreamProcessor (4), TestOrchestrator (2)
 - **Changed from plan:** Memory files go to `docs/memory/` (not `.claude/`). Orchestrator uses lazy agent loading to keep tests clean. `loop_state` UNIQUE constraint on `loop_name` allows upsert pattern.
 - **Carry forward for Sprint 10:** AR loop agents (10–14) — will be wired into orchestrator once built

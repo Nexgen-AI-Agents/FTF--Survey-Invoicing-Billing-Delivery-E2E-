@@ -2,6 +2,7 @@ import psycopg2
 import psycopg2.extras
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from typing import Optional
 
 from config.settings import DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
@@ -288,6 +289,27 @@ def get_loop_state(loop_name: str) -> Optional[dict]:
         )
         row = cur.fetchone()
         return dict(row) if row else None
+
+
+def get_listen_connection(channel: str = "order_state_changed"):
+    """
+    Open and return a dedicated autocommit connection subscribed to `channel`.
+
+    Caller is responsible for closing the connection.
+    The connection's `.notifies` deque is populated by calling `.poll()` after
+    `select.select` signals the socket is readable.
+    """
+    conn = psycopg2.connect(
+        host=DB_HOST,
+        port=DB_PORT,
+        dbname=DB_NAME,
+        user=DB_USER,
+        password=DB_PASSWORD,
+    )
+    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    with conn.cursor() as cur:
+        cur.execute(f"LISTEN {channel}")
+    return conn
 
 
 def get_unprocessed_reminder() -> Optional[dict]:
