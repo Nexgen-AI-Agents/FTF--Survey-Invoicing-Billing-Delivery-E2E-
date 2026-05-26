@@ -6,6 +6,35 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 
 ---
 
+## [Ryan Call Extraction + Demo v7] — 2026-05-26
+
+### Business Intelligence — Ryan-Prateek 45-min Call
+- Logged 12 new issues (I-059 through I-070) from Ryan-Prateek call transcript
+- **I-059/I-060**: Demo fixes — "50 orders a week" → generic language; competitor check narration clarified
+- **I-061**: New agent required — monitor `info@nexgensurveying.com` for quote-approval emails (Sprint 5)
+- **I-062**: Website chat → order conversion agent (Sprint 6)
+- **I-063**: Hard rule codified — AI never processes refunds; always routes to Jessica
+- **I-064**: Robert approval flow redesigned — hourly batch digest with Approve/Deny column (not per-order ping)
+- **I-065**: Dynamic pricing complexity factors — pools, walls, sheds, driveways, distance from crew
+- **I-066**: Historical invoicing — last 2 years of FTF data for pricing reference (Sprint 5)
+- **I-067**: AI training interface — Robert feeds pricing rationale, AI retains permanently
+- **I-068**: Florida PSM Chapter 5J-17 FAC standards to be loaded into AI knowledge base
+- **I-069**: Role-based AI modification governance — Jessica (AR), Robert (logistics), not cross-domain
+- **I-070**: Weather monitoring agent — daily check → delay-risk orders → proactive customer emails
+
+### Memory Updates
+- `memory.md`: Fixed "Bobby" → "Robert" throughout Confirmed Decisions
+- `memory.md`: Added full "Business Rules — Confirmed by Ryan" section
+
+### Demo v7 — Narration Fixes
+- `scripts/generate_client_demo_v7.py` created — identical to v6 with 3 targeted fixes:
+  - Narration: "50 new orders a week" → "a lot of new orders a week"
+  - Slide bullet: "50+ orders/week" → "Many orders/week"
+  - Classify scene: competitor check now explained — "competitor email routes to human review, not auto-quoted"
+- `docs/demos/20260526_v7/` — v7 video + transcript (generated)
+
+---
+
 ## [Demo v6] — AR Data Live — 2026-05-26
 
 ### Added

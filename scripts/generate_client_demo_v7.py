@@ -45,7 +45,7 @@ OAI = OpenAI(api_key=os.getenv("OpenAI_API_KEY"))
 # ═══════════════════════════════════════════════════════════════════════════
 
 DATE_TAG  = datetime.now().strftime("%Y%m%d")
-DEMO_DIR  = Path("docs") / "demos" / f"{DATE_TAG}_v6"
+DEMO_DIR  = Path("docs") / "demos" / f"{DATE_TAG}_v7"
 AUDIO_DIR = DEMO_DIR / "audio"
 TS_DIR    = DEMO_DIR / "timestamps"
 
@@ -1038,7 +1038,7 @@ def write_transcript(audio_map: dict) -> None:
         11: "Summary",
     }
     lines = [
-        "# FTF Agentic AI — Client Demo v6",
+        "# FTF Agentic AI — Client Demo v7",
         f"**Date:** {datetime.now().strftime('%Y-%m-%d')}  |  **Voice:** OpenAI TTS nova (0.85x)  |  **Sprint 0-9 · AR Data Live**",
         "", "---", "",
     ]
@@ -1063,7 +1063,7 @@ def write_transcript(audio_map: dict) -> None:
 # ═══════════════════════════════════════════════════════════════════════════
 
 async def build_video() -> None:
-    print("\nNexGen Client Demo v6 — Sprint 0-9 AR Data Live")
+    print("\nNexGen Client Demo v7 — Sprint 0-9 AR Data Live")
     print("=" * 58)
     print(f"Output: {DEMO_DIR}")
 

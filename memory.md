@@ -110,7 +110,7 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | FEMA flood zone | AI auto-adds Elevation Certificate ($225) — no flag required |
 | Monthly statement trigger | 1st of every calendar month |
 | Statement format | Excel + PDF via MS Teams + email to billing contact |
-| Refunds | Manual only — Jessica / Bobby |
+| Refunds | Manual only — Jessica / Robert |
 | New customer | AI classifies; flags if unsure |
 | Alert channel | MS Teams + email to relevant stakeholders |
 | Post-approval send | AI sends automatically — no manual click needed |
@@ -413,4 +413,76 @@ Robert stated he ALWAYS personally reviews every estimate before it goes to the 
 > **AI suggests price + generates draft estimate → routes to Robert/Mark for review → they approve and send**
 
 Auto-send (even for routine orders) is NOT acceptable per Robert's explicit instruction. This overrides any prior assumption that routine orders could bypass human review. Impact: Agents 4, 6, 7, 8, 9 design may need revision. Tracked as I-044. Discuss with Prateek and Ryan before Sprint 6.
+
+---
+
+## Business Rules — Confirmed by Ryan (2026-05-26 Call)
+
+**Source:** Ryan-Prateek 45-minute call transcript, 2026-05-26.
+
+### Refund Rule (Hard Stop — AI Never Touches)
+
+- If any customer message or request contains refund intent → **notify Jessica immediately → AI stops, no further action**
+- AI never processes, approves, or initiates any refund under any circumstances
+- Same class of rule as NEVER_AUTO_QUOTE — codify in all AR-facing agent logic
+- Tracked: I-063
+
+### Human Review Phase Rule (Current Deployment)
+
+Ryan: *"Right now, we would want to send everything for manual review...in that process we need to be able to teach it."*
+- **Current phase**: ALL quotes go to Robert for review before anything is sent to client
+- Not just flagged orders — every single order in the current phase
+- Relaxes over time as confidence in AI accuracy builds
+- This aligns with and reinforces I-044 / Robert's suggest-then-approve rule
+
+### Robert Approval Flow — Hourly Batch Digest
+
+Ryan: *"Send Robert a list every hour — links, job size, brief description, estimate total with Approve/Deny column — he can bulk-approve or pick specific ones."*
+- Agent 4 (Human Gate) must output a **batched hourly digest**, not one Teams ping per order
+- Each row: clickable FTF order link, job size/type, brief lot description, estimate reason, total, Approve/Deny
+- Robert bulk-approves everything OR picks individual rows to deny/handle manually
+- Note: "Bobby" appearing in prior docs was incorrect — reviewer is **Robert**
+- Tracked: I-064
+
+### Dynamic Pricing Complexity Factors (Ryan-Confirmed)
+
+Ryan: *"Same half-acre with a pool, 30 walls, shed, two driveways = $700. Same half-acre plain house = $350."*
+
+| Factor | Direction |
+|--------|-----------|
+| Swimming pool | Significant upcharge |
+| Wall/corner count >8 | Proportional upcharge |
+| Back patio | Moderate upcharge |
+| Shed(s) | Per-shed upcharge |
+| Multiple / looping driveways | Upcharge |
+| Distance from nearest crew | Travel cost → higher price |
+| Remote area / no crew nearby | Charge more |
+
+Near-future: crew schedule availability + job location relative to available crews → pricing factor.
+Robert to confirm factor weights before Sprint 4/5. Tracked: I-065.
+
+### Quote → Pending: Email Monitoring (New Agent)
+
+Ryan: *"An agent should monitor info emails — any email that says 'convert'/'approved'/'go ahead' — read it, figure out what's being approved, move to pending, notify team."*
+- Monitor email: **info@nexgensurveying.com**
+- Trigger keywords: "approved", "convert", "go ahead", "move forward", "please proceed"
+- On match: identify order from email content (address or order# preferred), move quote → pending, notify team
+- Sprint 5 agent. Tracked: I-061
+
+### Website Chat → Order Conversion
+
+Ryan: *"If they go on website chat and say 'I want to move forward' — AI asks for address or order# — one of those → converts to pending."*
+- Customer initiates chat → states intent to proceed
+- AI must ask: "What is the property address or your order number?"
+- If either provided → convert quote → pending
+- If neither → politely restate requirement; cannot proceed without one
+- Sprint 6+. Tracked: I-062
+
+### AI Knowledge Enrichment (Ongoing)
+
+Ryan: *"Feed it the Florida standards for licensed surveyors. Create a persona of a high-performing licensed Florida surveyor."*
+- Load Florida PSM Chapter 5J-17 FAC (Professional Surveyor and Mapper rules) into AI knowledge base
+- AI answers client technical questions from two angles: (1) FL PSM standard answer, (2) NexGen-specific perspective
+- Robert can describe jobs → AI stores pricing rationale permanently (builds on prior sessions)
+- Role-based: Jessica trains AR/refund rules; Robert trains pricing/logistics. Cross-domain requires both. Tracked: I-068, I-067, I-069.
 
