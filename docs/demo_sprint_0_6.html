@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+.r1 {color: #0000ff; text-decoration-color: #0000ff}
+.r2 {color: #ffffff; text-decoration-color: #ffffff; font-weight: bold}
+.r3 {color: #7f7f7f; text-decoration-color: #7f7f7f}
+.r4 {color: #008080; text-decoration-color: #008080}
+.r5 {font-weight: bold}
+.r6 {color: #008000; text-decoration-color: #008000}
+.r7 {color: #808000; text-decoration-color: #808000}
+.r8 {color: #008000; text-decoration-color: #008000; font-weight: bold}
+.r9 {color: #00ffff; text-decoration-color: #00ffff}
+.r10 {color: #00ffff; text-decoration-color: #00ffff; font-weight: bold}
+.r11 {color: #c0c0c0; text-decoration-color: #c0c0c0}
+.r12 {color: #c0c0c0; text-decoration-color: #c0c0c0; font-weight: bold}
+.r13 {color: #808000; text-decoration-color: #808000; background-color: #000000; font-weight: bold}
+.r14 {color: #7fbf7f; text-decoration-color: #7fbf7f}
+.r15 {color: #ffff00; text-decoration-color: #ffff00}
+.r16 {color: #ffff00; text-decoration-color: #ffff00; font-weight: bold}
+.r17 {color: #008000; text-decoration-color: #008000; background-color: #000000; font-weight: bold}
+.r18 {color: #800080; text-decoration-color: #800080}
+.r19 {color: #800080; text-decoration-color: #800080; font-weight: bold}
+.r20 {color: #00ff00; text-decoration-color: #00ff00}
+.r21 {color: #00ff00; text-decoration-color: #00ff00; font-weight: bold}
+.r22 {color: #008080; text-decoration-color: #008080; background-color: #000000; font-weight: bold}
+.r23 {color: #808000; text-decoration-color: #808000; font-weight: bold}
+.r24 {color: #bfbf7f; text-decoration-color: #bfbf7f}
+.r25 {color: #7f7f7f; text-decoration-color: #7f7f7f; font-weight: bold}
+.r26 {color: #0000ff; text-decoration-color: #0000ff; font-weight: bold}
+.r27 {color: #dfdfdf; text-decoration-color: #dfdfdf}
+.r28 {color: #00ff00; text-decoration-color: #00ff00; background-color: #000000; font-weight: bold}
+.r29 {color: #800000; text-decoration-color: #800000; font-weight: bold}
+.r30 {color: #800000; text-decoration-color: #800000}
+.r31 {color: #800000; text-decoration-color: #800000; background-color: #c0c0c0; font-weight: bold}
+.r32 {color: #bf7f7f; text-decoration-color: #bf7f7f}
+.r33 {color: #7f7f7f; text-decoration-color: #7f7f7f; font-style: italic}
+.r34 {color: #ff8700; text-decoration-color: #ff8700; background-color: #c0c0c0; font-weight: bold}
+.r35 {color: #008080; text-decoration-color: #008080; font-weight: bold}
+.r36 {color: #7fbfbf; text-decoration-color: #7fbfbf}
+.r37 {color: #7f7fff; text-decoration-color: #7f7fff}
+body {
+    color: #000000;
+    background-color: #ffffff;
+}
+</style>
+</head>
+<body>
+    <pre style="font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><code style="font-family:inherit">[H
+<span class="r1">┌──────────────────────────────────────────────────────────────────┐</span>
+<span class="r1">│</span>                                                                  <span class="r1">│</span>
+<span class="r1">│</span>      <span class="r2">FTF Agentic AI Operating System</span>                             <span class="r1">│</span>
+<span class="r1">│</span>      <span class="r3">Automated Estimate Generation Pipeline · Sprints 0 – 6</span>      <span class="r1">│</span>
+<span class="r1">│</span>                                                                  <span class="r1">│</span>
+<span class="r1">│</span>      <span class="r4">9 Agents  ·  151 Unit Tests  ·  0 Failures</span>                  <span class="r1">│</span>
+<span class="r1">│</span>      <span class="r3">NexGen Land Surveying · Florida</span>                             <span class="r1">│</span>
+<span class="r1">│</span>                                                                  <span class="r1">│</span>
+<span class="r1">└──────────────────────────────────────────────────────────────────┘</span>
+
+<span class="r5">What this system does — every 60 minutes, automatically:</span>
+  <span class="r4">1.</span> Scans FTF CRM for new Quote-stage orders
+  <span class="r4">2.</span> Classifies each order — service type, flood zone, 9 flag triggers
+  <span class="r4">3.</span> Prices the estimate via FTF Pricing API
+  <span class="r4">4.</span> Routes flagged orders to Robert / Mark for approval in MS Teams
+  <span class="r4">5.</span> Writes a personalized estimate email via Claude AI
+  <span class="r4">6.</span> Reviews the email — 4 accuracy checks, self-corrects if needed
+  <span class="r4">7.</span> Sends the estimate with a human-like 6 – 13 min delay
+  <span class="r4">8.</span> Posts a daily summary to MS Teams
+
+<span class="r5">Today&#x27;s demo — 3 real scenarios:</span>
+  <span class="r6">Scenario 1</span> — Standard order: Boundary Survey, auto-quoted end-to-end
+  <span class="r7">Scenario 2</span> — Flagged order: ALTA Survey + Monroe County -&gt; Teams alert -&gt; Robert approves
+  <span class="r4">Scenario 3</span>  — Reviewer self-correction: AI catches wrong price, fixes on attempt 2
+
+<span class="r6">────────────────────────────────────── </span><span class="r8">SCENARIO 1 — Standard Auto-Quote</span><span class="r6"> ──────────────────────────────────────</span>
+<span class="r3">  Boundary Survey · John Smith · Boca Raton FL · Broward County · Zone X</span>
+
+<span class="r9">──────────────── </span><span class="r10">Agent 2 — CRM Monitor</span>  <span class="r3">Polls FTF API every 60 min for new Quote-stage orders</span><span class="r9"> ────────────────</span>
+  🔍  <span class="r11">Connecting to FTF CRM  -&gt;  stage.fieldtofinish.jobs</span>
+  📊  <span class="r11">GET /orders?status=Quote&amp;limit=500  -&gt;  275,705 total orders, </span><span class="r12">12 new</span><span class="r11"> since last poll</span>
+  ✅  <span class="r11">New order detected: </span><span class="r12">ORD-2026-1001</span>
+<span class="r3">┌──────────────────────────────────────── FTF Order — ORD-2026-1001 ─────────────────────────────────────────┐</span>
+<span class="r3">│</span> <span class="r3"> Order Id        </span><span class="r5"> ORD-2026-1001                         </span>                                                   <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Customer Name   </span><span class="r5"> John Smith                            </span>                                                   <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Customer Email  </span><span class="r5"> j.smith@gmail.com                     </span>                                                   <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Customer Type   </span><span class="r5"> individual                            </span>                                                   <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Service Type    </span><span class="r5"> Boundary Survey                       </span>                                                   <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Address         </span><span class="r5"> 1234 Palm Avenue, Boca Raton FL 33432 </span>                                                   <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Property County </span><span class="r5"> Broward                               </span>                                                   <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Property State  </span><span class="r5"> FL                                    </span>                                                   <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Flood Zone      </span><span class="r5"> X                                     </span>                                                   <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Special Pricing </span><span class="r5"> False                                 </span>                                                   <span class="r3">│</span>
+<span class="r3">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+  💾  <span class="r11">Saved to processed_orders</span>
+  Status -&gt; <span class="r13"> PENDING </span>
+<span class="r3">  order_id         status   </span>
+<span class="r14">  ORD-2026-1001  </span><span class="r8">  pending  </span>
+
+<span class="r15">────────────── </span><span class="r16">Agent 3 — Classifier</span>  <span class="r3">Service type · pricing tier · flood zone · 9 flag triggers</span><span class="r15"> ──────────────</span>
+  🔎  <span class="r11">&quot;Boundary Survey&quot; -&gt; canonical FTF service name  ✓</span>
+  🔎  <span class="r11">customer_type = individual  -&gt;  pricing_tier = individual  ✓</span>
+  🔎  <span class="r11">property_state = FL  -&gt;  in-state  ✓</span>
+  🔎  <span class="r11">property_county = Broward  -&gt;  no Monroe County flag  ✓</span>
+  🔎  <span class="r11">flood_zone = X  -&gt;  no elevation certificate required  ✓</span>
+  🔎  <span class="r11">competitor check: gmail.com not in competitor domain list  ✓</span>
+  🔎  <span class="r11">ALWAYS_FLAG_SERVICES: Boundary Survey not listed  ✓</span>
+  🔎  <span class="r11">NEVER_AUTO_QUOTE: Boundary Survey not listed  ✓</span>
+
+  <span class="r8">No flags. All 9 triggers clear. Proceeding to pricing.</span>
+  Status -&gt; <span class="r17"> CLASSIFIED </span>
+<span class="r3">  order_id         status        service_type       tier          elev_cert  </span>
+<span class="r14">  ORD-2026-1001  </span><span class="r8">  classified  </span><span class="r14">  Boundary Survey    individual    No         </span>
+
+<span class="r18">───────────── </span><span class="r19">Agent 5 — Pricing Engine</span>  <span class="r3">FTF API pricing · override check · elevation cert add-on</span><span class="r18"> ─────────────</span>
+  💲  <span class="r11">GET /pricing?service=Boundary+Survey&amp;tier=individual  -&gt;  $350.00</span>
+  💲  <span class="r11">special_pricing = False  -&gt;  no override lookup needed</span>
+  💲  <span class="r11">elevation_cert_required = False  -&gt;  $0 add-on</span>
+<span class="r3">┌────────────────────────────────────────────── Pricing Result ──────────────────────────────────────────────┐</span>
+<span class="r3">│</span> <span class="r3">  Base amount             </span><span class="r5">  $350.00     </span>                                                                   <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3">  Elevation cert add-on   </span><span class="r5">  $0.00       </span>                                                                   <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3">  ──────────────────────  </span><span class="r5">  ──────────  </span>                                                                   <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3">  TOTAL ESTIMATE          </span><span class="r5">  </span><span class="r8">$350.00</span><span class="r5">     </span>                                                                   <span class="r3">│</span>
+<span class="r3">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+  Status -&gt; <span class="r17"> PRICED </span>
+<span class="r3">  order_id         status    estimate_amount  </span>
+<span class="r14">  ORD-2026-1001  </span><span class="r8">  priced  </span><span class="r14">  $350.00          </span>
+
+<span class="r20">── </span><span class="r21">Agent 6 — Estimate Writer</span>  <span class="r3">Claude AI · warm/friendly tone for individuals · change order clause appended</span><span class="r20"> ──</span>
+  ✍️   <span class="r11">Sending to Claude (claude-sonnet-4-6) — individual tone prompt...</span>
+<span class="r6">┌───────────────────────────────────── </span><span class="r14">Draft Estimate Email — Attempt 1</span><span class="r6"> ─────────────────────────────────────┐</span>
+<span class="r6">│</span> <span class="r3">Subject:</span> <span class="r5">Your NexGen Land Surveying Estimate — Boundary Survey</span>                                             <span class="r6">│</span>
+<span class="r6">│</span>                                                                                                            <span class="r6">│</span>
+<span class="r6">│</span> Dear John,                                                                                                 <span class="r6">│</span>
+<span class="r6">│</span>                                                                                                            <span class="r6">│</span>
+<span class="r6">│</span> Thank you for reaching out to NexGen Land Surveying! We&#x27;d be delighted to                                  <span class="r6">│</span>
+<span class="r6">│</span> assist you with a Boundary Survey at 1234 Palm Avenue, Boca Raton.                                         <span class="r6">│</span>
+<span class="r6">│</span>                                                                                                            <span class="r6">│</span>
+<span class="r6">│</span>   <span class="r5">Service:</span>   Boundary Survey                                                                               <span class="r6">│</span>
+<span class="r6">│</span>   <span class="r5">Property:</span>  1234 Palm Avenue, Boca Raton FL 33432                                                         <span class="r6">│</span>
+<span class="r6">│</span>   <span class="r5">Total:</span>     <span class="r8">$350.00</span>                                                                                       <span class="r6">│</span>
+<span class="r6">│</span>                                                                                                            <span class="r6">│</span>
+<span class="r6">│</span> Once you&#x27;re ready to proceed, please reply to this email or use the payment                                <span class="r6">│</span>
+<span class="r6">│</span> link to secure your appointment. We look forward to serving you!                                           <span class="r6">│</span>
+<span class="r6">│</span>                                                                                                            <span class="r6">│</span>
+<span class="r6">│</span> Warm regards,                                                                                              <span class="r6">│</span>
+<span class="r6">│</span> NexGen Land Surveying  ·  (561) 508-6272                                                                   <span class="r6">│</span>
+<span class="r6">│</span>                                                                                                            <span class="r6">│</span>
+<span class="r6">│</span> <span class="r3">──────────────────────────────────────────────────────────────────────</span>                                     <span class="r6">│</span>
+<span class="r6">│</span> <span class="r3">CHANGE ORDER CLAUSE: Any changes to the agreed scope of work requested</span>                                     <span class="r6">│</span>
+<span class="r6">│</span> <span class="r3">after this estimate is accepted may result in additional charges. NexGen</span>                                   <span class="r6">│</span>
+<span class="r6">│</span> <span class="r3">Land Surveying will contact you for written approval before proceeding</span>                                     <span class="r6">│</span>
+<span class="r6">│</span> <span class="r3">with any scope changes.</span>                                                                                    <span class="r6">│</span>
+<span class="r6">│</span> <span class="r3">──────────────────────────────────────────────────────────────────────</span>                                     <span class="r6">│</span>
+<span class="r6">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+  Status -&gt; <span class="r22"> WRITTEN </span>
+<span class="r3">  order_id         status   </span>
+<span class="r14">  ORD-2026-1001  </span><span class="r8">  written  </span>
+
+<span class="r7">─────────── </span><span class="r23">Agent 7 — Estimate Reviewer</span>  <span class="r3">4 deterministic checks · self-correction up to 3 attempts</span><span class="r7"> ───────────</span>
+<span class="r7">┌─────────────────────────────────────── </span><span class="r24">Reviewer — 4 Accuracy Checks</span><span class="r7"> ───────────────────────────────────────┐</span>
+<span class="r7">│</span> <span class="r25">  Check                  Expected                        Found in email                     Result   </span>      <span class="r7">│</span>
+<span class="r7">│</span>   Total price          <span class="r4">  $350.00                         $350.00                          </span>  <span class="r8">✓  PASS</span>        <span class="r7">│</span>
+<span class="r7">│</span>   Customer name        <span class="r4">  John Smith                      John                             </span>  <span class="r8">✓  PASS</span>        <span class="r7">│</span>
+<span class="r7">│</span>   Property address     <span class="r4">  1234 Palm Ave, Boca Raton FL    1234 Palm Avenue, Boca Raton FL  </span>  <span class="r8">✓  PASS</span>        <span class="r7">│</span>
+<span class="r7">│</span>   Change order clause  <span class="r4">  Required                        Present                          </span>  <span class="r8">✓  PASS</span>        <span class="r7">│</span>
+<span class="r7">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+  <span class="r8">All 4 checks PASSED. No correction needed.</span>
+  Status -&gt; <span class="r17"> REVIEWED </span>
+<span class="r3">  order_id         status    </span>
+<span class="r14">  ORD-2026-1001  </span><span class="r8">  reviewed  </span>
+
+<span class="r1">──────────── </span><span class="r26">Agent 8 — Sender</span>  <span class="r3">8 AM–6 PM ET send window · 6–13 min human-like delay · 3 retry max</span><span class="r1"> ────────────</span>
+  🕑  <span class="r11">Send window check: 10:32 AM ET  -&gt;  within window  ✓</span>
+  ⏱   <span class="r11">Human-like delay applied: 9 minutes  </span><span class="r27">(skipped in demo)</span>
+  📋  <span class="r11">POST /invoices  -&gt;  FTF invoice created: INV-2026-1001</span>
+  📧  <span class="r11">Estimate email sent to j.smith@gmail.com  ✓</span>
+  Status -&gt; <span class="r28"> SENT </span>
+
+<span class="r6">┌─────────────────────────────────────────── </span><span class="r14">Scenario 1 Complete</span><span class="r6"> ────────────────────────────────────────────┐</span>
+<span class="r6">│</span> <span class="r8">✓  Estimate delivered automatically — zero human touches needed.</span>                                           <span class="r6">│</span>
+<span class="r6">│</span>                                                                                                            <span class="r6">│</span>
+<span class="r6">│</span>   Order ORD-2026-1001  ·  $350.00  ·  John Smith  ·  Broward County                                        <span class="r6">│</span>
+<span class="r6">│</span>   Full audit trail written to agent_decision_log for every agent step.                                     <span class="r6">│</span>
+<span class="r6">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="r7">────────────────────────────────── </span><span class="r23">SCENARIO 2 — Flagged Order + Human Gate</span><span class="r7"> ───────────────────────────────────</span>
+<span class="r3">  ALTA Table A Survey · Coastal Builders LLC (B2B) · Monroe County FL · Zone AE</span>
+
+<span class="r9">───────────────────────────── </span><span class="r10">Agent 2 — CRM Monitor</span>  <span class="r3">Polls FTF API every 60 min</span><span class="r9"> ──────────────────────────────</span>
+  ✅  <span class="r11">New order: </span><span class="r12">ORD-2026-1002</span>
+<span class="r3">┌──────────────────────────────────────── FTF Order — ORD-2026-1002 ─────────────────────────────────────────┐</span>
+<span class="r3">│</span> <span class="r3"> Order Id        </span><span class="r5"> ORD-2026-1002                     </span>                                                       <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Customer Name   </span><span class="r5"> Coastal Builders LLC              </span>                                                       <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Customer Email  </span><span class="r5"> projects@coastalbuilders.com      </span>                                                       <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Customer Type   </span><span class="r5"> b2b                               </span>                                                       <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Service Type    </span><span class="r5"> ALTA Table A Survey               </span>                                                       <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Address         </span><span class="r5"> 77 Ocean Drive, Key West FL 33040 </span>                                                       <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Property County </span><span class="r5"> Monroe                            </span>                                                       <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Property State  </span><span class="r5"> FL                                </span>                                                       <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Flood Zone      </span><span class="r5"> AE                                </span>                                                       <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3"> Special Pricing </span><span class="r5"> False                             </span>                                                       <span class="r3">│</span>
+<span class="r3">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+  Status -&gt; <span class="r13"> PENDING </span>
+<span class="r3">  order_id         status   </span>
+<span class="r14">  ORD-2026-1002  </span><span class="r8">  pending  </span>
+
+<span class="r15">────────────────────────────── </span><span class="r16">Agent 3 — Classifier</span>  <span class="r3">9 flag triggers evaluated</span><span class="r15"> ───────────────────────────────</span>
+  🔎  <span class="r11">Service type: &quot;ALTA Table A Survey&quot;</span>
+  🚩  <span class="r29">TRIGGER 1 — ALWAYS_FLAG_SERVICES: ALTA Table A Survey (complex, high-value, mandatory review)</span>
+  🚩  <span class="r29">TRIGGER 10 — Monroe County (Florida Keys): non-standard pricing, limited crew availability</span>
+  🌊  <span class="r11">flood_zone = AE  -&gt;  elevation_cert_required = True (+$225)</span>
+
+  <span class="r5">2 flags accumulated:</span>
+    <span class="r30">•</span> ALTA Table A Survey — always requires human review
+    <span class="r30">•</span> Monroe County — non-standard pricing, human review required
+
+  <span class="r23">Routing to Human Gate — pricing deferred until approval.</span>
+  Status -&gt; <span class="r31"> FLAGGED </span>
+<span class="r3">  order_id         status     flag_reason                    elev_cert  </span>
+<span class="r14">  ORD-2026-1002  </span><span class="r8">  flagged  </span><span class="r14">  ALWAYS_FLAG + Monroe County    Yes        </span>
+
+<span class="r30">────────── </span><span class="r29">Agent 4 — Human Gate</span>  <span class="r3">Teams notification · awaiting_approval · escalation after timeout</span><span class="r30"> ───────────</span>
+  📡  <span class="r11">Retrieving order details from DB...</span>
+  📋  <span class="r11">Building Teams MessageCard payload...</span>
+  🚀  <span class="r11">POST to TEAMS_WEBHOOK_URL  -&gt;  HTTP 200 OK  ✓</span>
+<span class="r30">┌───────────────────────────────────── </span><span class="r32">MS Teams — FTF Invoicing Channel</span><span class="r30"> ─────────────────────────────────────┐</span>
+<span class="r30">│</span>  <span class="r2">FTF Estimate — Human Review Required</span>                                                                      <span class="r30">│</span>
+<span class="r30">│</span>  <span class="r3">─────────────────────────────────────────────────</span>                                                         <span class="r30">│</span>
+<span class="r30">│</span>    <span class="r5">Order ID           </span>  ORD-2026-1002                                                                      <span class="r30">│</span>
+<span class="r30">│</span>    <span class="r5">Service            </span>  ALTA Table A Survey                                                                <span class="r30">│</span>
+<span class="r30">│</span>    <span class="r5">County             </span>  Monroe                                                                             <span class="r30">│</span>
+<span class="r30">│</span>    <span class="r5">State              </span>  FL                                                                                 <span class="r30">│</span>
+<span class="r30">│</span>    <span class="r5">Flag Reason        </span>  ALWAYS_FLAG; Monroe County — non-standard pricing                                  <span class="r30">│</span>
+<span class="r30">│</span>    <span class="r5">Elevation Cert     </span>  Required (Zone AE)                                                                 <span class="r30">│</span>
+<span class="r30">│</span>    <span class="r5">Estimate Amount    </span>  TBD (priced after approval)                                                        <span class="r30">│</span>
+<span class="r30">│</span>    <span class="r5">Flagged At         </span>  2026-05-26 10:47 UTC                                                               <span class="r30">│</span>
+<span class="r30">│</span>  <span class="r3">─────────────────────────────────────────────────</span>                                                         <span class="r30">│</span>
+<span class="r30">│</span>                                                                                                            <span class="r30">│</span>
+<span class="r30">│</span>  <span class="r33">Reply &quot;approve&quot; or &quot;reject&quot; to process this order.</span>                                                        <span class="r30">│</span>
+<span class="r30">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+  Status -&gt; <span class="r34"> AWAITING_APPROVAL </span>
+<span class="r3">  order_id         status             </span>
+<span class="r14">  ORD-2026-1002  </span><span class="r8">  awaiting_approval  </span>
+
+  <span class="r3">Robert opens the FTF order in CRM, checks the property on GIS...</span>
+
+  <span class="r25">Robert (Teams):</span> <span class="r8">approve</span>
+  ✅  <span class="r6">process_approval_reply(&#x27;ORD-2026-1002&#x27;, &#x27;approve&#x27;)  -&gt;  status = approved</span>
+  Status -&gt; <span class="r17"> APPROVED </span>
+<span class="r3">  order_id         status    </span>
+<span class="r14">  ORD-2026-1002  </span><span class="r8">  approved  </span>
+
+  <span class="r3">Pipeline resumes automatically after approval:</span>
+  <span class="r3">  Agent 5 -&gt; $1,500 base + $225 elevation cert = $1,725 total</span>
+  <span class="r3">  Agent 6 -&gt; B2B estimate (concise, professional tone)</span>
+  <span class="r3">  Agent 7 -&gt; 4 checks PASSED</span>
+  <span class="r3">  Agent 8 -&gt; sent to projects@coastalbuilders.com</span>
+
+<span class="r7">┌─────────────────────────────────────────── </span><span class="r24">Scenario 2 Complete</span><span class="r7"> ────────────────────────────────────────────┐</span>
+<span class="r7">│</span> <span class="r8">✓  Flagged order handled correctly.</span>                                                                        <span class="r7">│</span>
+<span class="r7">│</span>                                                                                                            <span class="r7">│</span>
+<span class="r7">│</span>   Order ORD-2026-1002  ·  $1,725.00  ·  Coastal Builders LLC  ·  Monroe County                             <span class="r7">│</span>
+<span class="r7">│</span>   Robert approved in Teams · audit trail complete · no order bypassed review.                              <span class="r7">│</span>
+<span class="r7">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="r4">───────────────────────────────── </span><span class="r35">SCENARIO 3 — Reviewer Self-Correction Loop</span><span class="r4"> ─────────────────────────────────</span>
+<span class="r3">  Elevation Certificate · Maria Santos · Miami Beach FL · Zone AE</span>
+
+<span class="r9">────────────────────────────── </span><span class="r10">Agent 2 — CRM Monitor</span>  <span class="r3">New Quote order detected</span><span class="r9"> ───────────────────────────────</span>
+  ✅  <span class="r11">New order: </span><span class="r12">ORD-2026-1003</span><span class="r11"> — Maria Santos, Elevation Certificate, Miami Beach FL</span>
+  Status -&gt; <span class="r13"> PENDING </span>
+<span class="r3">  order_id         status   </span>
+<span class="r14">  ORD-2026-1003  </span><span class="r8">  pending  </span>
+
+<span class="r15">─────────────────────────────────── </span><span class="r16">Agent 3 — Classifier</span>  <span class="r3">Flood zone check</span><span class="r15"> ───────────────────────────────────</span>
+  🔎  <span class="r11">Service type: &quot;Elevation Certificate&quot;  -&gt;  canonical ✓</span>
+  🔎  <span class="r11">FL · Miami-Dade County · no competitor flags ✓</span>
+  🌊  <span class="r4">flood_zone = AE  -&gt;  FEMA flood zone confirmed  -&gt;  elevation_cert_required = True</span>
+  Status -&gt; <span class="r17"> CLASSIFIED </span>
+<span class="r3">  order_id         status        elev_cert_required  </span>
+<span class="r14">  ORD-2026-1003  </span><span class="r8">  classified  </span><span class="r14">  True                </span>
+
+<span class="r18">─────────────────────────── </span><span class="r19">Agent 5 — Pricing Engine</span>  <span class="r3">Base + elevation cert add-on</span><span class="r18"> ───────────────────────────</span>
+  💲  <span class="r11">GET /pricing?service=Elevation+Certificate&amp;tier=individual  -&gt;  $225.00 base</span>
+  💲  <span class="r4">elevation_cert_required = True  -&gt;  +$225.00 (FEMA add-on)</span>
+<span class="r3">┌────────────────────────────────────────────── Pricing Result ──────────────────────────────────────────────┐</span>
+<span class="r3">│</span> <span class="r3">  Base amount            </span><span class="r5">  $225.00     </span>                                                                    <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3">  Elevation cert add-on  </span><span class="r5">  </span><span class="r35">$225.00</span><span class="r5">     </span>                                                                    <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3">  ─────────────────────  </span><span class="r5">  ──────────  </span>                                                                    <span class="r3">│</span>
+<span class="r3">│</span> <span class="r3">  TOTAL ESTIMATE         </span><span class="r5">  </span><span class="r8">$450.00</span><span class="r5">     </span>                                                                    <span class="r3">│</span>
+<span class="r3">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+  Status -&gt; <span class="r17"> PRICED </span>
+<span class="r3">  order_id         status    estimate_amount  </span>
+<span class="r14">  ORD-2026-1003  </span><span class="r8">  priced  </span><span class="r14">  $450.00          </span>
+
+<span class="r20">───────────────────────────────── </span><span class="r21">Agent 6 — Estimate Writer</span>  <span class="r3">Attempt 1 of 3</span><span class="r20"> ──────────────────────────────────</span>
+  ✍️   <span class="r11">Generating estimate email (claude-sonnet-4-6)...</span>
+<span class="r30">┌──────────────────────────────────────── </span><span class="r32">Draft Estimate — Attempt 1</span><span class="r30"> ────────────────────────────────────────┐</span>
+<span class="r30">│</span> Dear Maria,                                                                                                <span class="r30">│</span>
+<span class="r30">│</span>                                                                                                            <span class="r30">│</span>
+<span class="r30">│</span> Thank you for contacting NexGen Land Surveying. We&#x27;re happy to assist with                                 <span class="r30">│</span>
+<span class="r30">│</span> your Elevation Certificate at 456 Ocean Drive, Miami Beach.                                                <span class="r30">│</span>
+<span class="r30">│</span>                                                                                                            <span class="r30">│</span>
+<span class="r30">│</span>   <span class="r5">Service:</span>   Elevation Certificate                                                                         <span class="r30">│</span>
+<span class="r30">│</span>   <span class="r5">Property:</span>  456 Ocean Drive, Miami Beach FL 33139                                                         <span class="r30">│</span>
+<span class="r30">│</span>   <span class="r5">Total:</span>     <span class="r29">$350.00</span>     <span class="r3">←  AI wrote wrong price (base only, forgot add-on)</span>                                <span class="r30">│</span>
+<span class="r30">│</span>                                                                                                            <span class="r30">│</span>
+<span class="r30">│</span> Please reply when you&#x27;re ready to schedule.                                                                <span class="r30">│</span>
+<span class="r30">│</span>                                                                                                            <span class="r30">│</span>
+<span class="r30">│</span> Warm regards,                                                                                              <span class="r30">│</span>
+<span class="r30">│</span> NexGen Land Surveying                                                                                      <span class="r30">│</span>
+<span class="r30">│</span>                                                                                                            <span class="r30">│</span>
+<span class="r30">│</span> <span class="r3">CHANGE ORDER CLAUSE: [...]</span>                                                                                 <span class="r30">│</span>
+<span class="r30">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="r7">────────────────────────────── </span><span class="r23">Agent 7 — Estimate Reviewer</span>  <span class="r3">Checking attempt 1</span><span class="r7"> ───────────────────────────────</span>
+<span class="r30">┌─────────────────────────────────────────── </span><span class="r32">Reviewer — Attempt 1</span><span class="r30"> ───────────────────────────────────────────┐</span>
+<span class="r30">│</span> <span class="r25">  Check                  Expected                           Found in email                     Result   </span>   <span class="r30">│</span>
+<span class="r30">│</span>   Total price          <span class="r4">  $450.00                            $350.00                          </span>  <span class="r29">✗  FAIL</span>     <span class="r30">│</span>
+<span class="r30">│</span>   Customer name        <span class="r4">  Maria Santos                       Maria                            </span>  <span class="r8">✓  PASS</span>     <span class="r30">│</span>
+<span class="r30">│</span>   Property address     <span class="r4">  456 Ocean Drive, Miami Beach FL    456 Ocean Drive, Miami Beach FL  </span>  <span class="r8">✓  PASS</span>     <span class="r30">│</span>
+<span class="r30">│</span>   Change order clause  <span class="r4">  Required                           Present                          </span>  <span class="r8">✓  PASS</span>     <span class="r30">│</span>
+<span class="r30">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+  <span class="r29">✗  FAIL — Price mismatch. Sending correction note back to Writer...</span>
+  <span class="r3">correction_note: &quot;Total price in email ($350.00) does not match estimate total ($450.00). Price must be </span>
+<span class="r3">$450.00 = $225 base + $225 elevation certificate add-on.&quot;</span>
+
+<span class="r20">───────────────── </span><span class="r21">Agent 6 — Estimate Writer</span>  <span class="r3">Attempt 2 of 3 — rewriting with correction note</span><span class="r20"> ─────────────────</span>
+  ✍️   <span class="r11">Rewriting with correction note applied...</span>
+<span class="r6">┌──────────────────────────────────────── </span><span class="r14">Draft Estimate — Attempt 2</span><span class="r6"> ────────────────────────────────────────┐</span>
+<span class="r6">│</span> Dear Maria,                                                                                                <span class="r6">│</span>
+<span class="r6">│</span>                                                                                                            <span class="r6">│</span>
+<span class="r6">│</span> Thank you for contacting NexGen Land Surveying! We&#x27;re pleased to assist with                               <span class="r6">│</span>
+<span class="r6">│</span> your Elevation Certificate at 456 Ocean Drive, Miami Beach.                                                <span class="r6">│</span>
+<span class="r6">│</span>                                                                                                            <span class="r6">│</span>
+<span class="r6">│</span> As your property is located in a FEMA AE flood zone, your survey includes                                  <span class="r6">│</span>
+<span class="r6">│</span> a full Elevation Certificate as required by your lender / municipality.                                    <span class="r6">│</span>
+<span class="r6">│</span>                                                                                                            <span class="r6">│</span>
+<span class="r6">│</span>   <span class="r5">Service:</span>    Elevation Certificate (incl. FEMA AE zone cert)                                              <span class="r6">│</span>
+<span class="r6">│</span>   <span class="r5">Property:</span>   456 Ocean Drive, Miami Beach FL 33139                                                        <span class="r6">│</span>
+<span class="r6">│</span>   <span class="r5">Flood Zone:</span> AE — elevation certificate required                                                          <span class="r6">│</span>
+<span class="r6">│</span>   <span class="r5">Base:</span>       $225.00  |  <span class="r5">Elev. Cert:</span> $225.00                                                              <span class="r6">│</span>
+<span class="r6">│</span>   <span class="r5">TOTAL:</span>      <span class="r8">$450.00</span>                                                                                      <span class="r6">│</span>
+<span class="r6">│</span>                                                                                                            <span class="r6">│</span>
+<span class="r6">│</span> Please don&#x27;t hesitate to reach out with any questions!                                                     <span class="r6">│</span>
+<span class="r6">│</span>                                                                                                            <span class="r6">│</span>
+<span class="r6">│</span> Warm regards,                                                                                              <span class="r6">│</span>
+<span class="r6">│</span> NexGen Land Surveying  ·  (561) 508-6272                                                                   <span class="r6">│</span>
+<span class="r6">│</span>                                                                                                            <span class="r6">│</span>
+<span class="r6">│</span> <span class="r3">CHANGE ORDER CLAUSE: [...]</span>                                                                                 <span class="r6">│</span>
+<span class="r6">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="r7">────────────────────────────── </span><span class="r23">Agent 7 — Estimate Reviewer</span>  <span class="r3">Checking attempt 2</span><span class="r7"> ───────────────────────────────</span>
+<span class="r6">┌─────────────────────────────────────────── </span><span class="r14">Reviewer — Attempt 2</span><span class="r6"> ───────────────────────────────────────────┐</span>
+<span class="r6">│</span> <span class="r25">  Check                  Expected                           Found in email                     Result   </span>   <span class="r6">│</span>
+<span class="r6">│</span>   Total price          <span class="r4">  $450.00                            $450.00                          </span>  <span class="r8">✓  PASS</span>     <span class="r6">│</span>
+<span class="r6">│</span>   Customer name        <span class="r4">  Maria Santos                       Maria                            </span>  <span class="r8">✓  PASS</span>     <span class="r6">│</span>
+<span class="r6">│</span>   Property address     <span class="r4">  456 Ocean Drive, Miami Beach FL    456 Ocean Drive, Miami Beach FL  </span>  <span class="r8">✓  PASS</span>     <span class="r6">│</span>
+<span class="r6">│</span>   Change order clause  <span class="r4">  Required                           Present                          </span>  <span class="r8">✓  PASS</span>     <span class="r6">│</span>
+<span class="r6">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+  <span class="r8">✓  All 4 checks PASSED on attempt 2. No further correction needed.</span>
+  Status -&gt; <span class="r17"> REVIEWED </span>
+<span class="r3">  order_id         status    </span>
+<span class="r14">  ORD-2026-1003  </span><span class="r8">  reviewed  </span>
+
+<span class="r1">──────────────────────────────── </span><span class="r26">Agent 8 — Sender</span>  <span class="r3">Sending reviewed estimate</span><span class="r1"> ─────────────────────────────────</span>
+  📧  <span class="r11">Estimate sent to m.santos@gmail.com  ✓  (9-min delay simulated)</span>
+  Status -&gt; <span class="r28"> SENT </span>
+
+<span class="r4">┌─────────────────────────────────────────── </span><span class="r36">Scenario 3 Complete</span><span class="r4"> ────────────────────────────────────────────┐</span>
+<span class="r4">│</span> <span class="r8">✓  AI caught its own error and corrected it — no human intervention needed.</span>                                <span class="r4">│</span>
+<span class="r4">│</span>                                                                                                            <span class="r4">│</span>
+<span class="r4">│</span>   Order ORD-2026-1003  ·  $450.00  ·  Maria Santos  ·  Miami Beach                                         <span class="r4">│</span>
+<span class="r4">│</span>   Error detected on check 1/4  ·  Corrected on attempt 2 of 3  ·  Sent successfully.                       <span class="r4">│</span>
+<span class="r4">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="r1">───────────────────────────────── </span><span class="r26">Agent 9 — Daily Report posted to MS Teams</span><span class="r1"> ──────────────────────────────────</span>
+  📊  <span class="r11">Querying processed_orders for today&#x27;s stats...</span>
+<span class="r1">┌───────────────────────────────────── </span><span class="r37">MS Teams — FTF Invoicing Channel</span><span class="r1"> ─────────────────────────────────────┐</span>
+<span class="r1">│</span>  <span class="r2">FTF AI — Daily Estimate Report</span>                                                                            <span class="r1">│</span>
+<span class="r1">│</span>  <span class="r3">NexGen Land Surveying  ·  2026-05-26</span>                                                                      <span class="r1">│</span>
+<span class="r1">│</span>                                                                                                            <span class="r1">│</span>
+<span class="r1">│</span>  <span class="r3">─────────────────────────────────────────</span>                                                                 <span class="r1">│</span>
+<span class="r1">│</span>    <span class="r5">Estimates Sent Today      </span>  <span class="r8">8</span>                                                                           <span class="r1">│</span>
+<span class="r1">│</span>    <span class="r5">Flagged (Needs Review)    </span>  <span class="r23">2</span>                                                                           <span class="r1">│</span>
+<span class="r1">│</span>    <span class="r5">Awaiting Human Approval   </span>  <span class="r23">1</span>                                                                           <span class="r1">│</span>
+<span class="r1">│</span>    <span class="r5">Ready to Send             </span>  <span class="r35">3</span>                                                                           <span class="r1">│</span>
+<span class="r1">│</span>    <span class="r5">Active Pipeline (total)   </span>  <span class="r12">14</span>                                                                          <span class="r1">│</span>
+<span class="r1">│</span>  <span class="r3">─────────────────────────────────────────</span>                                                                 <span class="r1">│</span>
+<span class="r1">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="r3">──────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
+
+<span class="r1">┌───────────────────────────────────── </span><span class="r37">FTF Agentic AI OS — Demo Summary</span><span class="r1"> ─────────────────────────────────────┐</span>
+<span class="r1">│</span>                                                                                                            <span class="r1">│</span>
+<span class="r1">│</span>  <span class="r2">Sprint 0–6 Complete</span>                                                                                       <span class="r1">│</span>
+<span class="r1">│</span>                                                                                                            <span class="r1">│</span>
+<span class="r1">│</span>    <span class="r4">9 agents</span> built and tested   ·  <span class="r4">151 unit tests</span>, 0 failures   ·  <span class="r4">6 sprints</span> delivered                      <span class="r1">│</span>
+<span class="r1">│</span>                                                                                                            <span class="r1">│</span>
+<span class="r1">│</span>    <span class="r6">Estimate generation loop is functionally complete</span>                                                       <span class="r1">│</span>
+<span class="r1">│</span>    <span class="r3">(staging validation and production go-live in Sprints 10 – 11)</span>                                          <span class="r1">│</span>
+<span class="r1">│</span>                                                                                                            <span class="r1">│</span>
+<span class="r1">│</span>  <span class="r5">What&#x27;s next:</span>                                                                                              <span class="r1">│</span>
+<span class="r1">│</span>    <span class="r7">Sprint 7</span>  — AR Follow-Up Loop     <span class="r3">(needs: Jessica recording)</span>                                            <span class="r1">│</span>
+<span class="r1">│</span>    <span class="r7">Sprint 8</span>  — Monthly Statements    <span class="r3">(needs: Wyatt recording)</span>                                              <span class="r1">│</span>
+<span class="r1">│</span>    <span class="r4">Sprint 9</span>  — Orchestrator (24/7 autonomous, every 60 min)                                                <span class="r1">│</span>
+<span class="r1">│</span>    <span class="r4">Sprint 10</span> — Staging test with live FTF data                                                             <span class="r1">│</span>
+<span class="r1">│</span>    <span class="r6">Sprint 11</span> — Limited production go-live                                                                  <span class="r1">│</span>
+<span class="r1">│</span>                                                                                                            <span class="r1">│</span>
+<span class="r1">└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘</span>
+
+</code></pre>
+</body>
+</html>

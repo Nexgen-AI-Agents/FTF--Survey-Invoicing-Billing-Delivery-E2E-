@@ -595,7 +595,15 @@ def main() -> None:
         "--scenario", type=int, choices=[1, 2, 3],
         help="Run a single scenario (1=auto-quote, 2=flagged, 3=self-correction)",
     )
+    parser.add_argument(
+        "--save-html", metavar="OUTPUT_PATH",
+        help="Export demo as a styled HTML file (no delays, for sharing/recording)",
+    )
     args = parser.parse_args()
+
+    if args.save_html:
+        _run_html_export(args.save_html)
+        return
 
     if args.scenario == 1:
         scenario_1()
@@ -610,6 +618,34 @@ def main() -> None:
         scenario_3()
         daily_report()
         footer()
+
+
+def _run_html_export(output_path: str) -> None:
+    """Re-run the full demo with zero delays into a recording console, export as HTML."""
+    global console, SPLASH_HOLD, SCAN_DELAY, STEP_DELAY, WRITE_DELAY, SCENE_HOLD
+
+    # Zero out all delays for the export run
+    SPLASH_HOLD = SCAN_DELAY = STEP_DELAY = WRITE_DELAY = SCENE_HOLD = 0.0
+
+    # Replace the global console with a recording one (force_terminal=True renders markup)
+    console = Console(
+        width=110,
+        record=True,
+        force_terminal=True,
+        highlight=False,
+    )
+
+    splash()
+    scenario_1()
+    scenario_2()
+    scenario_3()
+    daily_report()
+    footer()
+
+    console.save_html(output_path, theme=None, clear=False)
+    # Print confirmation to the real stdout
+    import builtins
+    builtins.print(f"Demo HTML saved to: {output_path}")
 
 
 if __name__ == "__main__":
