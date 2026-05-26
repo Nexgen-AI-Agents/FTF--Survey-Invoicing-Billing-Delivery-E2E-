@@ -356,3 +356,72 @@ def test_monroe_county_case_insensitive():
 def test_broward_county_no_monroe_flag():
     result = _classify({"property_county": "Broward"})
     assert result["flag_for_human"] is False
+
+
+# ── I-050: property_state normalization (FTF API returns "FLORIDA" not "FL") ─
+
+def test_florida_full_name_not_flagged_as_out_of_state():
+    result = _classify({"property_state": "FLORIDA"})
+    assert "FL-only" not in (result["flag_reason"] or "")
+
+
+def test_florida_mixed_case_not_flagged():
+    result = _classify({"property_state": "Florida"})
+    assert "FL-only" not in (result["flag_reason"] or "")
+
+
+def test_florida_lat_check_works_after_state_normalization():
+    # After "FLORIDA" normalizes to "FL", the I-037 lat-bounds check must still fire
+    result = _classify({"property_state": "FLORIDA", "property_lat": 35.0})
+    assert result["flag_for_human"] is True
+    assert "outside Florida bounds" in result["flag_reason"]
+    assert "FL-only" not in result["flag_reason"]
+
+
+# ── I-053: service type alias normalization + LLM fallback ───────────────────
+
+def test_alias_land_survey_only_maps_to_boundary_survey():
+    result = _classify({"service_type": "Land Survey Only"})
+    assert result["flag_for_human"] is False
+    assert result["service_type"] == "Boundary Survey"
+
+
+def test_alias_special_purpose_maps_to_specific_purpose_and_flags():
+    # "Special Purpose Survey" -> "Specific Purpose Survey" which is NEVER_AUTO_QUOTE
+    result = _classify({"service_type": "Special Purpose Survey"})
+    assert result["flag_for_human"] is True
+    assert "never-auto-quote" in result["flag_reason"]
+
+
+def test_alias_construction_survey_maps_to_topography():
+    # "Construction Survey" -> "Topography Survey" (Robert confirmed).
+    # "Topography Survey" is currently in NEVER_AUTO_QUOTE (I-054 — unresolved).
+    # So mapping is correct; order is flagged until I-054 removes it from NEVER_AUTO_QUOTE.
+    result = _classify({"service_type": "Construction Survey"})
+    assert result["service_type"] == "Topography Survey"
+    assert result["flag_for_human"] is True
+    assert "never-auto-quote" in result["flag_reason"]
+
+
+def test_unrecognized_service_type_calls_llm_and_uses_result():
+    with patch("agents.agent_03_classifier._llm_normalize_service_type", return_value="Boundary Survey") as mock_llm:
+        result = _classify({"service_type": "Re-plot Survey"})
+    mock_llm.assert_called_once_with("Re-plot Survey")
+    assert result["service_type"] == "Boundary Survey"
+    assert result["flag_for_human"] is False
+
+
+def test_llm_returns_unrecognized_sentinel_flags_order():
+    from agents.agent_03_classifier import _UNRECOGNIZED
+    with patch("agents.agent_03_classifier._llm_normalize_service_type", return_value=_UNRECOGNIZED):
+        result = _classify({"service_type": "Drone Mapping Service"})
+    assert result["flag_for_human"] is True
+    assert "unrecognized" in result["flag_reason"].lower()
+    assert "Drone Mapping Service" in result["flag_reason"]
+
+
+def test_canonical_service_type_skips_llm():
+    with patch("agents.agent_03_classifier._llm_normalize_service_type") as mock_llm:
+        result = _classify({"service_type": "Boundary Survey"})
+    mock_llm.assert_not_called()
+    assert result["flag_for_human"] is False

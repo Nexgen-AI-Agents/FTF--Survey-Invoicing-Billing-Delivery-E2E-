@@ -182,4 +182,22 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 - `code/sprint_06_sender_reporter/tests/test_sender.py` — 3 new I-024 tests added (outside window → None; transient retry → success; max retries → error); all 8 existing tests updated with `_in_send_window=True` patch for time-independence
 - Sprints 1–6: **141 tests, 141 pass** (0 fail, 0 skip)
 
+## [Sprint 2 — I-050/I-051/I-052/I-053 Fixes] — Classifier Hardening — 2026-05-26
+
+### Fixed
+- `code/sprint_02_classifier_pricing/agents/agent_03_classifier.py` — I-050: `property_state` normalization — "FLORIDA"/"Florida" → "FL" before out-of-state and lat-bounds checks; I-053: `_normalize_service_type()` added — alias map (15 Robert-confirmed informal→canonical mappings) + `_llm_normalize_service_type()` LLM fallback for truly unrecognized types; `_UNRECOGNIZED` sentinel flags unclassifiable orders for human review
+- `code/shared/config/prompts/classifier.txt` — I-053: rewritten from STUB to ACTIVE system prompt; 24 canonical names + Robert-confirmed mappings; used by `_llm_normalize_service_type()` as last-resort LLM call
+- `code/shared/config/flag_triggers.py` — I-052: `"Building Stake Out"` added to `ALWAYS_FLAG_SERVICES` (I-042 mandated; remove when Robert confirms back in service)
+- `code/sprint_02_classifier_pricing/tests/test_classifier.py` — 9 new tests: I-050 state normalization (3), I-053 alias + LLM fallback (6)
+
+### Issues Closed
+- I-050 (CRITICAL) — property_state FLORIDA/FL normalization bug
+- I-051 (CRITICAL) — non-standard service types crashing Pricing Engine
+- I-052 (MAJOR) — Building Stakeout not flagged
+- I-053 (MAJOR) — LLM classifier never enabled
+- I-056 (MAJOR) — Teams approval buttons (design decision: AI asks approve/reject in chat; no buttons needed)
+
+### Full Test Suite
+- Sprints 1–6: **150 tests, 150 pass** (0 fail, 0 skip)
+
 <!-- Sprint entries added here as sprints are completed -->

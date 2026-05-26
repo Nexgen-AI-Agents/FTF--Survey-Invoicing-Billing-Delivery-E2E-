@@ -1,6 +1,7 @@
 ALWAYS_FLAG_SERVICES: list[str] = [
     "ALTA Table A Survey",
     "Other Services",
+    "Building Stake Out",  # I-042/I-052: NGE status ambiguous; flag until Robert confirms back in service
 ]
 
 # Bootstrapped 2026-05-25 by Competitor Analyst AI (web research).

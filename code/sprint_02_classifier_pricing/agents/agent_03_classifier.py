@@ -4,10 +4,12 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
 from datetime import datetime, timezone
+from pathlib import Path
 
 from config.flag_triggers import ALWAYS_FLAG_SERVICES, COMPETITOR_DOMAINS, COMPETITOR_NAMES, NEVER_AUTO_QUOTE
 from config.models import CLASSIFIER_MODEL
 from config.settings import SERVICE_STATE
+from core.claude_client import call as llm_call
 from core.db import log_decision, save_order_state
 from core.exceptions import FEMAUnavailableError
 from core.fema_client import check_flood_zone
@@ -17,12 +19,96 @@ from core.logger import get_logger
 AGENT_NAME = "agent_03_classifier"
 log = get_logger(AGENT_NAME)
 
+_SHARED_ROOT = Path(__file__).parent.parent.parent / "shared"
+_CLASSIFIER_PROMPT_PATH = _SHARED_ROOT / "config" / "prompts" / "classifier.txt"
+
+_UNRECOGNIZED = "UNRECOGNIZED_SERVICE_TYPE"
+
+_CANONICAL_SERVICES: frozenset[str] = frozenset({
+    "Acreage", "ALTA Table A Survey", "B-II Title Review", "Boundary Survey",
+    "Building Stake Out", "Elevation Certificate", "Elevation Only", "Final Survey",
+    "Form Board Survey", "Foundation Tie-In", "Legal Description", "Lot Split",
+    "Other Services", "Pad Stake Out", "Property Flagging", "Site Plan",
+    "Sketch and Description", "Specific Purpose Survey", "Survey Re-draw",
+    "Surveyor's Affidavit", "Topography Survey", "Tree Location", "Update Survey",
+    "Wetland Delineation",
+})
+
+# Deterministic informal-name -> canonical-name mappings (Robert, Recording 1, 2026-05-25)
+_SERVICE_TYPE_ALIASES: dict[str, str] = {
+    "land survey only": "Boundary Survey",
+    "land survey": "Boundary Survey",
+    "special purpose survey": "Specific Purpose Survey",
+    "construction survey": "Topography Survey",
+    "permitting survey": "Boundary Survey",
+    "spot survey": "Foundation Tie-In",
+    "topo survey": "Topography Survey",
+    "topographic survey": "Topography Survey",
+    "topographic boundary survey": "Topography Survey",
+    "update/topographic survey": "Update Survey",
+    "re-survey": "Update Survey",
+    "resurvey": "Update Survey",
+    "as-built survey": "Final Survey",
+    "boundary": "Boundary Survey",
+    "elevation cert": "Elevation Certificate",
+}
+
 # customer_type values from FTF API that map to b2b pricing tier
 _B2B_TYPES = frozenset({"b2b", "company", "business"})
 
 # Informal survey type labels used in FTF CRM that are NOT in the pricing catalogue.
-# These are bundle descriptors, not priced services — flag for human to confirm scope.
+# Bundle descriptors, not priced services — flag for human to confirm scope.
 _INFORMAL_SERVICE_TYPES = frozenset({"construction/permitting"})
+
+
+def _load_classifier_prompt() -> str:
+    return _CLASSIFIER_PROMPT_PATH.read_text(encoding="utf-8").strip()
+
+
+def _llm_normalize_service_type(raw: str) -> str:
+    """Call LLM to map an unrecognized service_type string to a canonical FTF name.
+
+    Returns a canonical name if confident, else _UNRECOGNIZED.
+    Exceptions are caught internally — callers always receive a safe return value.
+    """
+    try:
+        prompt = _load_classifier_prompt()
+        result = llm_call(
+            model=CLASSIFIER_MODEL,
+            system=prompt,
+            user=f'Map this FTF order service type to the canonical name: "{raw}"',
+            max_tokens=30,
+        ).strip()
+        if result in _CANONICAL_SERVICES:
+            log.info("LLM normalized service type '%s' -> '%s'", raw, result)
+            return result
+        log.warning("LLM returned non-canonical value '%s' for raw='%s'", result, raw)
+    except Exception as exc:
+        log.warning("LLM service type normalization failed raw=%s error=%s", raw, exc)
+    return _UNRECOGNIZED
+
+
+def _normalize_service_type(raw: str) -> str:
+    """Normalize raw FTF service_type to a canonical FTF name.
+
+    Resolution order:
+      1. Empty / 'Quote' -> return as-is (downstream flag logic handles it)
+      2. Already canonical -> return as-is
+      3. In deterministic alias map -> return canonical alias
+      4. In _INFORMAL_SERVICE_TYPES -> return as-is (downstream flag logic handles it)
+      5. LLM fallback -> canonical name or _UNRECOGNIZED
+    """
+    if not raw or raw.lower() == "quote":
+        return raw
+    if raw in _CANONICAL_SERVICES:
+        return raw
+    alias = _SERVICE_TYPE_ALIASES.get(raw.lower().strip())
+    if alias:
+        log.info("alias normalized service type '%s' -> '%s'", raw, alias)
+        return alias
+    if raw.lower().strip() in _INFORMAL_SERVICE_TYPES:
+        return raw
+    return _llm_normalize_service_type(raw)
 
 
 def classify_order(order_id: str) -> dict:
@@ -43,7 +129,9 @@ def classify_order(order_id: str) -> dict:
     """
     order = get_order(order_id)
 
-    service_type: str = (order.get("service_type") or "").strip()
+    raw_service_type: str = (order.get("service_type") or "").strip()
+    service_type: str = _normalize_service_type(raw_service_type)  # I-053: alias + LLM normalization
+
     customer_type: str = (order.get("customer_type") or "individual").strip()
     pricing_tier: str = "b2b" if customer_type.lower() in _B2B_TYPES else "individual"
     special_pricing: bool = bool(order.get("special_pricing", False))
@@ -51,6 +139,9 @@ def classify_order(order_id: str) -> dict:
     property_lat = order.get("property_lat")
     property_lng = order.get("property_lng")
     property_state: str = (order.get("property_state") or "").upper().strip()
+    # I-050: FTF API returns full state name ("FLORIDA") — normalize to 2-letter code
+    if property_state == "FLORIDA":
+        property_state = "FL"
     property_county: str = (order.get("property_county") or "").strip()
     customer_email: str = (order.get("customer_email") or "").strip()
     company_name: str = (order.get("company_name") or "").strip()
@@ -67,7 +158,14 @@ def classify_order(order_id: str) -> dict:
         flag_reasons.append(reason)
 
     # --- Static service flags ---
-    if service_type in ALWAYS_FLAG_SERVICES:
+    if not service_type or service_type.lower() == "quote":
+        _flag("service_type unresolved as 'Quote' — human must identify correct service")
+    elif service_type == _UNRECOGNIZED:
+        _flag(
+            f"unrecognized service type '{raw_service_type}' — not in FTF catalogue; "
+            "human must identify and reclassify"
+        )
+    elif service_type in ALWAYS_FLAG_SERVICES:
         _flag(f"service requires human review: {service_type}")
     elif service_type in NEVER_AUTO_QUOTE:
         _flag(f"never-auto-quote service: {service_type}")
@@ -76,8 +174,6 @@ def classify_order(order_id: str) -> dict:
             f"informal survey type '{service_type}' — bundle label, not a priced service; "
             "human must confirm scope and select correct service"
         )
-    elif not service_type or service_type.lower() == "quote":
-        _flag("service_type unresolved as 'Quote' — human must identify correct service")
 
     # --- Trigger 3: competitor company name ---
     if company_name:
