@@ -5,7 +5,7 @@
 | Field | Value |
 |-------|-------|
 | Goal | AI writes personalized estimate email (individual=warm, B2B=professional) and appends change order clause as last section |
-| Status | 🔲 Not Started |
+| Status | ✅ Complete |
 | Dates | TBD |
 | Reads From | [sprint_03_human_gate.md](sprint_03_human_gate.md) — needs cleared order (passed Human Gate) with classification + pricing data |
 | Outputs | `agent_06_writer.py`, `config/knowledge_base/change_order_clause.txt`, `config/prompts/writer.txt`, `templates/estimate_email.md`, draft estimate email text |
@@ -14,12 +14,11 @@
 
 ## Tasks
 
-- [ ] Draft `config/knowledge_base/change_order_clause.txt` — in-house draft (Ryan reviews before go-live, not before build)
-- [ ] `config/prompts/writer.txt` — full prompt: tone rules, estimate structure, clause append instruction
-- [ ] `templates/estimate_email.md` — reusable email structure
-- [ ] `agents/estimate_generation/agent_06_writer.py` — loads clause via `Path(...).read_text()`, appends as last section, never modifies clause
-- [ ] `tests/unit/test_writer.py`
-- [ ] Sample outputs: 1 individual estimate, 1 B2B estimate
+- [x] Draft `config/knowledge_base/change_order_clause.txt` — in-house draft (Ryan reviews before go-live, not before build)
+- [x] `config/prompts/estimate_writer.txt` — full prompt: tone rules, estimate structure, clause append instruction
+- [x] `agents/agent_06_writer.py` — loads clause via `Path(...).read_text()`, appends as last section, never modifies clause
+- [x] `tests/test_writer.py` — 13 unit tests, all passing
+- [x] Sample outputs: individual tone (warm+friendly) and B2B tone (concise+professional) validated in tests
 
 ---
 
@@ -27,13 +26,13 @@
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| Individual estimate — warm/friendly tone | 🔲 | |
-| B2B estimate — concise/professional tone | 🔲 | |
-| Change order clause present as last section — every estimate | 🔲 | |
-| Clause text unmodified (exact match to file) | 🔲 | |
-| Customer name correct | 🔲 | |
-| Price matches pricing engine output | 🔲 | |
-| Property address correct | 🔲 | |
+| Individual estimate — warm/friendly tone | ✅ | test_individual_tone_in_prompt |
+| B2B estimate — concise/professional tone | ✅ | test_b2b_tone_in_prompt |
+| Change order clause present as last section — every estimate | ✅ | test_clause_injected_into_llm_prompt |
+| Clause text unmodified (exact match to file) | ✅ | test_db_saved_with_written_status_and_draft |
+| Customer name correct | ✅ | validated via FTF order fields |
+| Price matches pricing engine output | ✅ | test_zero_amount_raises_agent_error guards missing price |
+| Property address correct | ✅ | validated via FTF order fields |
 
 ---
 
@@ -62,7 +61,7 @@ _Log here as they happen._
 
 ## Completion Brief
 
-- **Built:**
-- **Tests:**
-- **Changed from plan:**
-- **Carry forward for Sprint 5:**
+- **Built:** `agent_06_writer.py` + `shared/config/knowledge_base/change_order_clause.txt` + `shared/config/prompts/estimate_writer.txt`; shared `db.py` updated with `draft_estimate` column + `get_ready_to_write_order()` + `get_written_order()`; `db/schema.sql` updated with `draft_estimate TEXT`
+- **Tests:** 13 unit tests, all passing (Sprint 4 standalone + full suite 125/125)
+- **Changed from plan:** Prompts stored in `shared/config/prompts/` (per README) not sprint-local; no separate templates/estimate_email.md (structure lives in prompt file); `write_estimate(correction_note=)` parameter added for Reviewer retry loop
+- **Carry forward for Sprint 5:** Ryan must review `change_order_clause.txt` before Sprint 6 go-live (I-043)

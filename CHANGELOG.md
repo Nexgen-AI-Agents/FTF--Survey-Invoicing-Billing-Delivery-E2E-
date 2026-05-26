@@ -113,4 +113,35 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 - I-025: approval inbound mechanism undefined (Teams button? webhook callback? manual DB?)
 - I-038: Robert/Mark competitor list validation pending
 
+---
+
+## [Sprint 4] — Estimate Writer — 2026-05-26
+
+### Added
+- `code/sprint_04_writer/agents/agent_06_writer.py` — Agent 6: write_estimate() generates personalized estimate email via Claude. Warm/friendly tone for individual clients; concise/professional for B2B. Injects change order clause as unmodifiable final section. `correction_note` param enables Reviewer retry loop.
+- `code/shared/config/knowledge_base/change_order_clause.txt` — Change order clause draft (Ryan reviews before Sprint 6 go-live per I-043)
+- `code/shared/config/prompts/estimate_writer.txt` — Writer system prompt with tone rules, structure requirements, clause append instruction
+- `code/sprint_04_writer/tests/` — 13 unit tests (all passing)
+
+### Fixed (shared infrastructure)
+- `code/shared/core/db.py` — added `draft_estimate` to `_VALID_ORDER_COLUMNS`; added `get_ready_to_write_order()` (picks up 'priced' OR 'approved' orders); added `get_written_order()`
+- `db/schema.sql` — added `draft_estimate TEXT` column to `processed_orders`
+
+---
+
+## [Sprint 5] — Estimate Reviewer — 2026-05-26
+
+### Added
+- `code/sprint_05_reviewer/agents/agent_07_reviewer.py` — Agent 7: review_estimate() runs 4 deterministic checks (price, customer name, property address, change order clause). On failure, calls write_estimate(correction_note=) for rewrite (up to MAX_REVIEWER_RETRIES=3). After 3 failures raises ReviewerFailError and re-flags order for Human Gate.
+- `code/shared/config/prompts/estimate_reviewer.txt` — Reviewer LLM prompt (available for future LLM-based enrichment; Sprint 5 uses deterministic string checks)
+- `code/sprint_05_reviewer/tests/` — 16 unit tests: 6 pure `_run_checks` tests + 10 integration tests (all passing)
+
+### Architecture
+- Sprints 4+5 built simultaneously (no mutual dependency — Sprint 4 output structure was known before build)
+- Reviewer imports write_estimate at module level (required for pytest.patch to work correctly)
+- Deterministic checks chosen over LLM validation for 4 factual accuracy checks — faster, cheaper, no hallucination risk
+
+### Full Test Suite
+- Sprints 1–5: **125 tests, 125 pass** (0 fail, 0 skip)
+
 <!-- Sprint entries added here as sprints are completed -->

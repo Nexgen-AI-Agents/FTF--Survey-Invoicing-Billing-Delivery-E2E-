@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS processed_orders (
     order_id            VARCHAR(50)     UNIQUE NOT NULL,
     status              VARCHAR(50)     NOT NULL DEFAULT 'pending',
     -- status values: pending | classified | priced | written | reviewed | sent | flagged | awaiting_approval | approved | rejected | error
+    -- draft_estimate: AI-generated estimate email text (set by Agent 6, validated by Agent 7)
 
     service_type        VARCHAR(100),
     customer_email      VARCHAR(255),
@@ -19,6 +20,8 @@ CREATE TABLE IF NOT EXISTS processed_orders (
     estimate_amount     NUMERIC(10, 2),
     flag_reason         TEXT,
     retry_count         INTEGER         NOT NULL DEFAULT 0,
+
+    draft_estimate      TEXT,
 
     classified_at       TIMESTAMP,
     priced_at           TIMESTAMP,

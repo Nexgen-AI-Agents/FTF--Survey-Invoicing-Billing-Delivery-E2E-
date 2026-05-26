@@ -13,6 +13,7 @@ logger = get_logger(__name__)
 _VALID_ORDER_COLUMNS = {
     "status", "service_type", "customer_email", "property_lat", "property_lng",
     "is_flood_zone", "estimate_amount", "flag_reason", "retry_count",
+    "draft_estimate",
     "classified_at", "priced_at", "written_at", "reviewed_at", "sent_at", "flagged_at",
 }
 
@@ -69,6 +70,34 @@ def get_pending_order() -> Optional[dict]:
     with _get_cursor() as cur:
         cur.execute(
             "SELECT * FROM processed_orders WHERE status = 'pending' ORDER BY created_at ASC LIMIT 1"
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
+def get_ready_to_write_order() -> Optional[dict]:
+    """Return the oldest order ready for estimate writing.
+
+    Picks up 'priced' (auto-flow) or 'approved' (post-human-gate) orders.
+    """
+    with _get_cursor() as cur:
+        cur.execute(
+            """
+            SELECT * FROM processed_orders
+            WHERE status IN ('priced', 'approved')
+            ORDER BY created_at ASC
+            LIMIT 1
+            """
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
+def get_written_order() -> Optional[dict]:
+    """Return the oldest order with status='written', awaiting Reviewer validation."""
+    with _get_cursor() as cur:
+        cur.execute(
+            "SELECT * FROM processed_orders WHERE status = 'written' ORDER BY created_at ASC LIMIT 1"
         )
         row = cur.fetchone()
         return dict(row) if row else None
