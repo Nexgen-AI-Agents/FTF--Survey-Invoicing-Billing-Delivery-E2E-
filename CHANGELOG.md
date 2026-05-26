@@ -6,6 +6,24 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 
 ---
 
+## [Demo v6] — AR Data Live — 2026-05-26
+
+### Added
+- `scripts/generate_client_demo_v6.py` — 12-scene demo, 4.4 min, 9.0 MB
+- `docs/demos/20260526_v6/demo.mp4` — v6 video
+- `docs/demos/20260526_v6/transcript.md` — full timestamped transcript
+
+### v6 Improvements vs v5
+- New scene 9: **AR Report Skill** — shows Books login, 2,111 unpaid invoices, 78,524 API records, aging bucket bar chart, auto-generated XLSX command line
+- Intro stat: "8 Sprints" replaced with "78k+ Live Invoices" (real AR data)
+- `write_send` narration: 14 Whisper words (v5) → 28 words — fully expanded
+- `roadmap` narration: 13 Whisper words (v5) → 98 words — fully expanded
+- `outro` narration: 2 Whisper words (v5, failure) → 31 words — rewritten and fresh
+- Header tag updated to "AR Data Live"
+- Total: 12 scenes (was 11)
+
+---
+
 ## [Skill] — FTF AR Report — 2026-05-26
 
 ### Added
