@@ -165,4 +165,21 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 ### Full Test Suite
 - Sprints 1–6: **138 tests, 138 pass** (0 fail, 0 skip)
 
+---
+
+## [Sprint 6 — I-024 Fix] — Agent 8 Send Window + Retry Logic — 2026-05-26
+
+### Fixed
+- `code/sprint_06_sender_reporter/agents/agent_08_sender.py` — I-024: added `_in_send_window()` (8 AM–6 PM ET via `zoneinfo`); `_create_and_send_invoice()` retry wrapper with `MAX_SENDER_RETRIES` attempts; `status="error"` saved after exhausting all retries; `send_estimate()` returns `None` when called outside send window so Orchestrator reschedules
+- `code/shared/config/settings.py` — added `MAX_SENDER_RETRIES` (default 3), `SEND_HOUR_START` (8), `SEND_HOUR_END` (18), all env-configurable
+
+### Fixed (documentation)
+- `docs/recording_01_ai_quoting_review_guidelines.md` — corrected issue ID references (I-040→I-041, I-041→I-042, I-042→I-043); updated item 14 to reflect I-044 closure
+- `issues/issue.md` — logged I-045 through I-049 from Recording 02 open questions Q1–Q4, Q12 (service type list, order statuses, county pricing matrix, Smith Zone, 60-day SLA)
+- `memory.md` — added 60-day quote auto-cancel rule (confirmed Recording 02, frame 0640)
+
+### Tests
+- `code/sprint_06_sender_reporter/tests/test_sender.py` — 3 new I-024 tests added (outside window → None; transient retry → success; max retries → error); all 8 existing tests updated with `_in_send_window=True` patch for time-independence
+- Sprints 1–6: **141 tests, 141 pass** (0 fail, 0 skip)
+
 <!-- Sprint entries added here as sprints are completed -->

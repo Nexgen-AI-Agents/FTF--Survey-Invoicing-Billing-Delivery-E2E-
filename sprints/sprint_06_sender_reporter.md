@@ -63,6 +63,9 @@ reviewed → (Agent 8: delay + FTF create_invoice + send_invoice + mark_estimate
 | missing order → AgentError | ✅ | test_send_estimate_raises_on_missing_order |
 | wrong status → AgentError | ✅ | test_send_estimate_raises_on_wrong_status |
 | zero amount → AgentError | ✅ | test_send_estimate_raises_on_zero_amount |
+| outside 8AM–6PM ET → returns None, no invoice created (I-024) | ✅ | test_send_estimate_returns_none_outside_send_window |
+| transient failure → retries, succeeds on 2nd attempt (I-024) | ✅ | test_send_estimate_retries_on_transient_failure |
+| all MAX_SENDER_RETRIES fail → status=error, AgentError (I-024) | ✅ | test_send_estimate_marks_error_after_max_retries |
 | run() picks reviewed order | ✅ | test_run_picks_reviewed_order |
 | report POSTs to Teams webhook | ✅ | test_report_posts_to_teams |
 | report contains sent_today count | ✅ | test_report_contains_sent_today_count |
@@ -107,7 +110,7 @@ _None._
 
 ## Completion Brief
 
-- **Built:** `agent_08_sender.py` (create→delay→send→mark FTF flow); `agent_09_reporter.py` (deterministic Teams digest with 5 stats); `db.py` updated with `get_reviewed_order()` + `get_daily_summary()`; `reporter.txt` prompt stub
-- **Tests:** 13 unit tests, all passing; full suite 138/138
+- **Built:** `agent_08_sender.py` (create→delay→send→mark FTF flow + 8AM–6PM ET window + MAX_SENDER_RETRIES retry loop); `agent_09_reporter.py` (deterministic Teams digest with 5 stats); `db.py` updated with `get_reviewed_order()` + `get_daily_summary()`; `reporter.txt` prompt stub
+- **Tests:** 16 unit tests, all passing; full suite 141/141
 - **Changed from plan:** Reporter is fully deterministic (no LLM) — template-based stats digest is faster, cheaper, and no hallucination risk. LLM prompt stub (`reporter.txt`) available for future enrichment. Split two agents into separate files (original README had combined).
 - **Carry forward for Sprint 7:** I-006 (Jessica recording) required before AR Follow-Up; I-018 PII masking must resolve before Sprint 11; I-043 Ryan reviews change order clause text before go-live

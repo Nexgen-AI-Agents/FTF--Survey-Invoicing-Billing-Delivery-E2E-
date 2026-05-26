@@ -369,6 +369,14 @@ Robert's summary: "Most of the time we're just looking at features, area, if we'
 - Robert checks GIS map visually before confirming every price
 - Robert is NOT normally the one creating or importing orders in FTF
 
+### Quote Expiry Rule (Confirmed Recording 02 — frame 0640)
+
+- FTF portal auto-cancels any quote older than 60 days ("Quotes older than 60 days will be automatically moved to Cancelled")
+- AI pipeline must prioritise sending within this window; Orchestrator (Sprint 9) must track quote age
+- Tracked as I-049 for Sprint 6 Sender edge case logging
+
+---
+
 ### Orders NGE Will NOT Quote (Hard Boundaries)
 
 - Engineering or drainage design requests — auto-reject / flag (Naya Rodriguez example: rejected because she needed drainage/engineering, not surveying)

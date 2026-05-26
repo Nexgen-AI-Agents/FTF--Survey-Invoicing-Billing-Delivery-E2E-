@@ -74,9 +74,9 @@ Most to least common:
 
 | Item | Status |
 |------|--------|
-| Competitor list (do-not-auto-quote companies) | Robert will write it up — I-040 |
-| Building Stakeout confirmed back in service? | Ambiguous — I-041 |
-| Change order clause exact text | Ryan to draft — I-042 |
+| Competitor list (do-not-auto-quote companies) | Robert will write it up — I-041 |
+| Building Stakeout confirmed back in service? | Ambiguous — I-042 |
+| Change order clause exact text | Ryan to draft — I-043 |
 | Past dispute history (Section 5 row 3) | Not yet provided |
 
 ---
@@ -293,7 +293,7 @@ The presenter navigated Google Earth showing:
 
 1. **Service name mappings (Section 2):** ~~All three CRITICAL service name questions are unanswered.~~ **RESOLVED 2026-05-25** — Robert confirmed all four mappings verbally. See "Verbal Answers" section above and I-039 (closed).
 
-2. **Competitor / do-not-quote list (Section 3, row 1):** Still open. Robert confirmed the list exists and will write it up. Tracked as I-040.
+2. **Competitor / do-not-quote list (Section 3, row 1):** Still open. Robert confirmed the list exists and will write it up. Tracked as I-041.
 
 3. **NGE service scope (Section 3, row 2):** **RESOLVED 2026-05-25** — Robert confirmed full do/don't-do list verbally. See "Verbal Answers" section above.
 
@@ -303,7 +303,7 @@ The presenter navigated Google Earth showing:
 
 6. **Wetland Delineation scope (Section 4, row 2):** **RESOLVED 2026-05-25** — NGE does NOT do Wetland Delineation (needs specialist engineer; too complex). Add to never-auto-quote list.
 
-7. **Change order clause existing text (Section 5, row 1):** **RESOLVED 2026-05-25** — Confirmed NO existing change order language in estimates. This is completely new. Ryan to draft (I-042).
+7. **Change order clause existing text (Section 5, row 1):** **RESOLVED 2026-05-25** — Confirmed NO existing change order language in estimates. This is completely new. Ryan to draft (I-043).
 
 8. **Customer approval method (Section 5, row 2):** **RESOLVED 2026-05-25** — Four methods confirmed, most to least common: (1) pay via payment link, (2) email confirmation, (3) FTF portal acceptance, (4) phone call. See "Verbal Answers" section above.
 
@@ -313,11 +313,11 @@ The presenter navigated Google Earth showing:
 
 11. **"Specific Purpose Survey" vs "Special Purpose Survey":** **RESOLVED 2026-05-25** — Robert uses "Specific Purpose Survey." Both are interchangeable; use "Specific Purpose Survey" as canonical name.
 
-12. **Recording 6 reference (competitor list):** Still open. Robert confirmed list exists. Tracked as I-040.
+12. **Recording 6 reference (competitor list):** Still open. Robert confirmed list exists. Tracked as I-041.
 
-13. **Building Stakeout service status:** Ambiguous — Robert says NGE is "dabbling" in it again. Treat as flag-for-human-review until formally confirmed back in service. Tracked as I-041.
+13. **Building Stakeout service status:** Ambiguous — Robert says NGE is "dabbling" in it again. Treat as flag-for-human-review until formally confirmed back in service. Tracked as I-042.
 
-14. **AI pipeline design (suggest vs. auto-send):** **NEW FINDING 2026-05-25** — Robert said he ALWAYS personally reviews every estimate before sending. Pipeline must be configured as suggest-then-approve for ALL orders. Tracked as I-043.
+14. **AI pipeline design (suggest vs. auto-send):** **RESOLVED 2026-05-26** — Prateek decision: Robert AI agent handles routine order review. Pipeline auto-sends routine orders; flagged orders route to Human Gate. Tracked as I-044 (closed).
 
 ---
 

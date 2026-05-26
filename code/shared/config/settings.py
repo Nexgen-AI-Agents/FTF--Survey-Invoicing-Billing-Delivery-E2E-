@@ -6,8 +6,11 @@ load_dotenv()
 
 # Pipeline behaviour
 MAX_REVIEWER_RETRIES: int = 3
+MAX_SENDER_RETRIES:   int = int(os.getenv("MAX_SENDER_RETRIES", "3"))
 ESTIMATE_DELAY_MIN:   int = 360    # 6 minutes — lower bound of random send delay
 ESTIMATE_DELAY_MAX:   int = 780    # 13 minutes — upper bound of random send delay
+SEND_HOUR_START:      int = int(os.getenv("SEND_HOUR_START", "8"))   # 8 AM ET
+SEND_HOUR_END:        int = int(os.getenv("SEND_HOUR_END", "18"))    # 6 PM ET
 AR_ESCALATION_DAYS:        int = 90
 APPROVAL_TIMEOUT_HOURS:    int = int(os.getenv("APPROVAL_TIMEOUT_HOURS", "24"))
 ELEVATION_CERT_PRICE: int = 225
