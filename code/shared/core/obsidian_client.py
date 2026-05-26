@@ -1,126 +1,181 @@
 """
-obsidian_client.py — Obsidian Local REST API integration
+obsidian_client.py — Obsidian vault integration (dual-mode)
 
-Why Obsidian alongside memory.md?
+Why Obsidian?
   - memory.md is a flat file — no search, no linking, no visual graph
-  - Obsidian's graph view makes decision relationships visible:
-      ADR-001 -> Sprint 3 -> I-025 -> Ryan decision
-  - Every agent decision auto-writes a linked note in the vault
-  - Humans can open the vault and see the full project knowledge graph
-  - Local first — no cloud, no sensitive order data leaving the network
+  - Obsidian's graph view makes every agent decision visible and linked:
+      ADR-001 -> Sprint 3 -> I-025 -> Ryan approval -> Agent 4 log
+  - Local first — no sensitive order data leaving the network
 
-Setup (one-time, 5 minutes):
-  1. Open Obsidian → Settings → Community plugins → Browse
-  2. Search "Local REST API" → Install → Enable
-  3. Go to Local REST API plugin settings → copy the API key
-  4. Add to .env: Obsidian=<your-api-key>
-  5. Default port: 27123 (configurable via OBSIDIAN_BASE_URL in .env)
+Two modes (auto-detected, no config needed):
+  1. REST API mode  — when Obsidian app is open with Local REST API plugin enabled
+                      reads/writes via HTTP to localhost:27123
+  2. Direct file mode — always works; writes markdown files directly into the vault
+                        folder. Obsidian picks them up live when the app is open.
 
-Vault structure created by this client:
-  vault/
-    agents/          -> one note per agent (decisions, errors, stats)
-    decisions/       -> ADRs and architectural choices
-    issues/          -> mirrors issues/issue.md as linked notes
-    memory/          -> persistent agent memory across sessions
-    sprints/         -> sprint summaries + status
+Vault location: C:/Users/Prateek Chandra/Documents/FTF-AgentVault/
+Obsidian setup (open vault in app, one-time):
+  1. Launch Obsidian → "Open folder as vault" → select FTF-AgentVault
+  2. Settings → Community Plugins → enable Local REST API plugin
+  For now: direct file mode works without Obsidian being open at all.
 """
 
 from __future__ import annotations
 
-import json
+import os
 from datetime import datetime, UTC
-from pathlib import PurePosixPath
+from pathlib import Path
 from typing import Any
-
-import httpx
 
 from config import settings
 
+# ── vault root ────────────────────────────────────────────────────────────────
+VAULT_ROOT = Path(os.getenv("OBSIDIAN_VAULT_PATH",
+    r"C:\Users\Prateek Chandra\Documents\FTF-AgentVault"))
+
 
 class ObsidianError(Exception):
-    """Raised when the Obsidian REST API returns an error."""
-
-
-def _headers() -> dict[str, str]:
-    if not settings.OBSIDIAN_API_KEY:
-        raise ObsidianError(
-            "Obsidian API key not set. Add 'Obsidian=<key>' to .env.\n"
-            "See code/shared/core/obsidian_client.py docstring for setup."
-        )
-    return {
-        "Authorization": f"Bearer {settings.OBSIDIAN_API_KEY}",
-        "Content-Type": "text/markdown",
-    }
-
-
-def _base() -> str:
-    return settings.OBSIDIAN_BASE_URL.rstrip("/")
+    pass
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  Core CRUD
+#  Mode detection
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _api_available() -> bool:
+    """Return True if the Obsidian Local REST API is reachable."""
+    if not settings.OBSIDIAN_API_KEY:
+        return False
+    try:
+        import httpx
+        r = httpx.get(f"{settings.OBSIDIAN_BASE_URL}/", timeout=2,
+                      headers={"Authorization": f"Bearer {settings.OBSIDIAN_API_KEY}"},
+                      verify=False)
+        return r.status_code in (200, 401)
+    except Exception:
+        return False
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Direct file I/O (always available — no Obsidian app required)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _file_path(vault_path: str) -> Path:
+    p = VAULT_ROOT / vault_path
+    p.parent.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def _file_read(vault_path: str) -> str:
+    p = _file_path(vault_path)
+    return p.read_text(encoding="utf-8") if p.exists() else ""
+
+
+def _file_write(vault_path: str, content: str, append: bool = False) -> None:
+    p = _file_path(vault_path)
+    if append and p.exists():
+        existing = p.read_text(encoding="utf-8")
+        p.write_text(existing + content, encoding="utf-8")
+    else:
+        p.write_text(content, encoding="utf-8")
+
+
+def _file_delete(vault_path: str) -> None:
+    p = _file_path(vault_path)
+    if p.exists():
+        p.unlink()
+
+
+def _file_search(query: str) -> list[dict[str, Any]]:
+    results = []
+    q = query.lower()
+    for md in VAULT_ROOT.rglob("*.md"):
+        try:
+            text = md.read_text(encoding="utf-8", errors="ignore")
+            if q in text.lower():
+                rel = md.relative_to(VAULT_ROOT).as_posix()
+                idx = text.lower().find(q)
+                snippet = text[max(0, idx-60):idx+140].strip()
+                results.append({"filename": rel, "score": 1.0, "matches": [snippet]})
+        except Exception:
+            pass
+    return results
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  REST API I/O (when Obsidian is open with Local REST API plugin)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _api_read(vault_path: str) -> str:
+    import httpx
+    url = f"{settings.OBSIDIAN_BASE_URL}/vault/{vault_path}"
+    r = httpx.get(url, headers={"Authorization": f"Bearer {settings.OBSIDIAN_API_KEY}"},
+                  verify=False, timeout=10)
+    return "" if r.status_code == 404 else r.text
+
+
+def _api_write(vault_path: str, content: str, append: bool = False) -> None:
+    import httpx
+    url = f"{settings.OBSIDIAN_BASE_URL}/vault/{vault_path}"
+    method = "POST" if append else "PUT"
+    httpx.request(method, url,
+                  headers={"Authorization": f"Bearer {settings.OBSIDIAN_API_KEY}",
+                            "Content-Type": "text/markdown"},
+                  content=content.encode("utf-8"),
+                  verify=False, timeout=10)
+
+
+def _api_search(query: str) -> list[dict[str, Any]]:
+    import httpx
+    r = httpx.post(f"{settings.OBSIDIAN_BASE_URL}/search/simple/",
+                   headers={"Authorization": f"Bearer {settings.OBSIDIAN_API_KEY}",
+                             "Content-Type": "application/json"},
+                   json={"query": query, "contextLength": 200},
+                   verify=False, timeout=15)
+    return r.json() if r.status_code == 200 else []
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Public API — auto-selects mode
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def read_note(vault_path: str) -> str:
-    """
-    Read a note from the vault.
-    vault_path: relative path within vault, e.g. "memory/agents.md"
-    """
-    url = f"{_base()}/vault/{vault_path}"
-    resp = httpx.get(url, headers=_headers(), verify=False, timeout=10)
-    if resp.status_code == 404:
-        return ""
-    if resp.status_code != 200:
-        raise ObsidianError(f"read_note({vault_path}) failed: {resp.status_code} {resp.text}")
-    return resp.text
+    if _api_available():
+        return _api_read(vault_path)
+    return _file_read(vault_path)
 
 
 def write_note(vault_path: str, content: str, append: bool = False) -> None:
-    """
-    Write or append to a note.
-    vault_path: e.g. "agents/agent_03_classifier.md"
-    """
-    url = f"{_base()}/vault/{vault_path}"
-    method = "POST" if append else "PUT"
-    resp = httpx.request(
-        method,
-        url,
-        headers=_headers(),
-        content=content.encode("utf-8"),
-        verify=False,
-        timeout=10,
-    )
-    if resp.status_code not in (200, 204):
-        raise ObsidianError(f"write_note({vault_path}) failed: {resp.status_code} {resp.text}")
+    # Always write to file (so vault stays up to date even when app is closed)
+    _file_write(vault_path, content, append)
+    # Also push via API if Obsidian is open (triggers live graph refresh)
+    if _api_available():
+        try:
+            _api_write(vault_path, content, append)
+        except Exception:
+            pass
 
 
 def delete_note(vault_path: str) -> None:
-    url = f"{_base()}/vault/{vault_path}"
-    resp = httpx.delete(url, headers=_headers(), verify=False, timeout=10)
-    if resp.status_code not in (200, 204, 404):
-        raise ObsidianError(f"delete_note({vault_path}) failed: {resp.status_code}")
+    _file_delete(vault_path)
+    if _api_available():
+        try:
+            import httpx
+            httpx.delete(f"{settings.OBSIDIAN_BASE_URL}/vault/{vault_path}",
+                         headers={"Authorization": f"Bearer {settings.OBSIDIAN_API_KEY}"},
+                         verify=False, timeout=10)
+        except Exception:
+            pass
 
 
-def search(query: str, context_length: int = 200) -> list[dict[str, Any]]:
-    """
-    Full-text search across the vault.
-    Returns list of {filename, score, matches} dicts.
-    """
-    url = f"{_base()}/search/simple/"
-    resp = httpx.post(
-        url,
-        headers={**_headers(), "Content-Type": "application/json"},
-        json={"query": query, "contextLength": context_length},
-        verify=False,
-        timeout=15,
-    )
-    if resp.status_code != 200:
-        raise ObsidianError(f"search({query!r}) failed: {resp.status_code} {resp.text}")
-    return resp.json()
+def search(query: str) -> list[dict[str, Any]]:
+    if _api_available():
+        return _api_search(query)
+    return _file_search(query)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  Agent decision logging — writes to vault automatically
+#  Agent decision logging
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def log_agent_decision(
@@ -132,79 +187,57 @@ def log_agent_decision(
 ) -> None:
     """
     Append a timestamped decision entry to the agent's vault note.
-    Called by agents in addition to DB log_decision() for human-readable history.
-
-    Example vault path: agents/agent_03_classifier.md
+    Works even when Obsidian is closed — file is written directly.
+    When user opens Obsidian, they see the full history in graph view.
     """
     ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     entry = (
         f"\n## {ts} | {order_id}\n"
         f"- **Decision**: {decision}\n"
         f"- **Reason**: {reason}\n"
-        f"- **Status set**: `{status}`\n"
+        f"- **Status**: `{status}`\n"
     )
     vault_path = f"agents/{agent_name.lower().replace(' ', '_')}.md"
     try:
         write_note(vault_path, entry, append=True)
-    except ObsidianError:
-        pass  # Obsidian offline is non-fatal — DB log is the source of truth
+    except Exception:
+        pass  # non-fatal — DB is source of truth
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  Vault initializer — creates folder structure on first run
+#  Vault initializer
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _VAULT_INDEX = """\
 # FTF Agentic AI OS — Knowledge Vault
 
-## Structure
-- [[agents/]] — per-agent decision history
-- [[decisions/]] — Architecture Decision Records (ADRs)
-- [[issues/]] — open and closed issues
-- [[memory/]] — persistent agent memory across sessions
-- [[sprints/]] — sprint summaries and status
+Auto-managed by the FTF pipeline agents.
 
-## Quick Links
-- [[memory/project_memory]] — main project memory (mirrors memory.md)
-- [[memory/open_dependencies]] — current open blockers
-- [[sprints/sprint_roadmap]] — 14-sprint delivery plan status
+## Structure
+- **[[agents/]]** — per-agent decision history (auto-written on every run)
+- **[[decisions/]]** — Architecture Decision Records (ADRs 001-007+)
+- **[[issues/]]** — open and closed issues (mirrors issues/issue.md)
+- **[[memory/]]** — persistent agent memory across sessions
+- **[[sprints/]]** — sprint summaries and delivery status
+
+## Open in Obsidian
+Vault path: `C:/Users/Prateek Chandra/Documents/FTF-AgentVault`
+→ File → Open Vault → Open folder as vault → select above path
 """
 
 def init_vault() -> None:
-    """
-    Create the vault folder structure + index note.
-    Safe to call multiple times — skips existing notes.
-    """
-    folders = [
-        "agents/README.md",
-        "decisions/README.md",
-        "issues/README.md",
-        "memory/README.md",
-        "sprints/README.md",
-    ]
-    try:
-        if not read_note("README.md"):
-            write_note("README.md", _VAULT_INDEX)
-        for f in folders:
-            if not read_note(f):
-                write_note(f, f"# {f.split('/')[0].title()}\n\nAuto-created by FTF Agentic AI OS.\n")
-    except ObsidianError:
-        pass  # vault offline — skip silently
+    """Create vault structure. Safe to call multiple times."""
+    if not (VAULT_ROOT / "README.md").exists():
+        write_note("README.md", _VAULT_INDEX)
+    for folder in ["agents", "decisions", "issues", "memory", "sprints"]:
+        readme = f"{folder}/README.md"
+        if not (VAULT_ROOT / readme).exists():
+            write_note(readme, f"# {folder.title()}\n\nAuto-managed by FTF agents.\n")
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  Health check
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def health_check() -> bool:
-    """Returns True if Obsidian Local REST API is reachable."""
-    try:
-        resp = httpx.get(
-            f"{_base()}/",
-            headers={"Authorization": f"Bearer {settings.OBSIDIAN_API_KEY or ''}"},
-            verify=False,
-            timeout=3,
-        )
-        return resp.status_code in (200, 401)  # 401 = online but wrong key
-    except Exception:
-        return False
+def health_check() -> dict[str, bool]:
+    """Check both modes."""
+    return {
+        "vault_folder": VAULT_ROOT.exists(),
+        "rest_api":     _api_available(),
+    }
