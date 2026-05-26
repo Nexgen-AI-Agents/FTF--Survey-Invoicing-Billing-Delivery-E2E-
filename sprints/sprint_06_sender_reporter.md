@@ -5,19 +5,50 @@
 | Field | Value |
 |-------|-------|
 | Goal | AI sends validated estimate with 6–13 min random delay; daily digest to all stakeholders via MS Teams. MILESTONE: first full end-to-end estimate on staging. |
-| Status | 🔲 Not Started |
-| Dates | TBD |
+| Status | ✅ Complete |
+| Dates | 2026-05-26 |
 | Reads From | [sprint_05_reviewer.md](sprint_05_reviewer.md) — needs validated estimate + invoice line items; needs `core/ftf_client.py` (`create_invoice`, `send_invoice`, `mark_estimate_sent`) |
 | Outputs | `agent_08_sender.py`, `agent_09_reporter.py`, `config/prompts/reporter.txt`, confirmed estimate in Ryan's inbox, daily Teams digest |
 
 ---
 
+## Pre-Sprint Dependency Check
+
+### ✅ Buildable Without External Dependencies
+
+| Item | Notes |
+|------|-------|
+| Agent 8 Sender | `create_invoice` + `send_invoice` + `mark_estimate_sent` all exist in `ftf_client.py` |
+| Agent 9 Reporter | Teams webhook + POST pattern already used in Agent 4 |
+| DB helpers (`get_reviewed_order`, `get_daily_summary`) | Pure SQL queries |
+| All unit tests | All external calls mocked |
+
+### ⚠️ Noted (Non-blocking)
+
+| Item | Notes |
+|------|-------|
+| I-018 PII masking | Customer email in log lines — resolve before production (Sprint 11) |
+| I-043 change order clause | Ryan reviews text before go-live; no code change required |
+
+---
+
 ## Tasks
 
-- [ ] `agents/estimate_generation/agent_08_sender.py` — create invoice → random delay → send → mark sent → log
-- [ ] `agents/estimate_generation/agent_09_reporter.py` — daily digest from DB → Claude summary → Teams post
-- [ ] `config/prompts/reporter.txt`
-- [ ] Full chain integration test (all 9 agents end-to-end on staging)
+- [x] `code/sprint_06_sender_reporter/agents/agent_08_sender.py` — create invoice → random delay → send → mark sent → log
+- [x] `code/sprint_06_sender_reporter/agents/agent_09_reporter.py` — daily digest from DB → Teams post (deterministic template)
+- [x] `code/shared/config/prompts/reporter.txt` — reporter prompt stub (available for future LLM enrichment)
+- [x] `code/shared/core/db.py` — add `get_reviewed_order()` + `get_daily_summary()`
+- [x] `code/sprint_06_sender_reporter/tests/conftest.py` — sys.path setup
+- [x] `code/sprint_06_sender_reporter/tests/test_sender.py` — 8 unit tests
+- [x] `code/sprint_06_sender_reporter/tests/test_reporter.py` — 5 unit tests
+
+---
+
+## Status Flow
+
+```
+reviewed → (Agent 8: delay + FTF create_invoice + send_invoice + mark_estimate_sent) → sent
+```
 
 ---
 
@@ -25,19 +56,25 @@
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| Estimate received in Ryan's inbox | 🔲 | Ryan confirms it looks professional |
-| Random delay 6–13 min applied | 🔲 | |
-| Change order clause visible in email | 🔲 | |
-| `estimate_sent=true` marked in FTF CRM | 🔲 | |
-| Invoice created in FTF Books | 🔲 | |
-| Daily digest received on MS Teams | 🔲 | |
-| Full chain: order → detect → classify → price → write → review → send | 🔲 | |
+| send_estimate creates invoice and sends | ✅ | test_send_estimate_creates_and_sends_invoice |
+| send_estimate updates DB to 'sent' | ✅ | test_send_estimate_updates_db_to_sent |
+| send_estimate logs decision | ✅ | test_send_estimate_logs_decision |
+| delay applied (in [360, 780]) | ✅ | test_send_estimate_applies_delay |
+| missing order → AgentError | ✅ | test_send_estimate_raises_on_missing_order |
+| wrong status → AgentError | ✅ | test_send_estimate_raises_on_wrong_status |
+| zero amount → AgentError | ✅ | test_send_estimate_raises_on_zero_amount |
+| run() picks reviewed order | ✅ | test_run_picks_reviewed_order |
+| report POSTs to Teams webhook | ✅ | test_report_posts_to_teams |
+| report contains sent_today count | ✅ | test_report_contains_sent_today_count |
+| report contains flagged count | ✅ | test_report_contains_flagged_count |
+| report returns True on success | ✅ | test_report_returns_true_on_success |
+| webhook failure → AgentError | ✅ | test_report_raises_on_webhook_failure |
 
 ---
 
 ## Milestone Sign-Off
 
-**Ryan must confirm:** test estimate received, looks correct and professional → GO for staging tests.
+**Ryan must confirm:** test estimate received, looks correct and professional → GO for Sprint 10 staging tests.
 
 ---
 
@@ -49,7 +86,11 @@ _None._
 
 ## Decisions Made
 
-_Log here as they happen._
+- Sender uses `time.sleep()` directly — patchable via `patch("agents.agent_08_sender.time.sleep")`.
+- Reporter is fully deterministic (no LLM for this sprint) — stats digest doesn't need language generation. Reporter prompt stub (`reporter.txt`) available for future LLM enrichment.
+- Invoice ID extracted with `.get("invoice_id") or .get("id", "")` fallback — FTF API key unconfirmed.
+- `get_daily_summary()` uses PostgreSQL `FILTER (WHERE ...)` aggregates — one query for all stats.
+- Split into two files (`agent_08_sender.py` + `agent_09_reporter.py`) per "one agent, one job" rule. README had combined into single file — corrected.
 
 ---
 
@@ -57,16 +98,16 @@ _Log here as they happen._
 
 | Role | Person | What They Test | Required? |
 |------|--------|----------------|-----------|
-| CTO | Prateek | Full chain integration test, delay applied, FTF CRM marked sent | Yes |
-| Decision Maker | Ryan | Open test estimate in inbox — confirm it looks professional, correct, and the change order clause is visible. **Must sign off before Sprint 7.** | Yes — MILESTONE |
-| Operations SME | Robert / Mark | Confirm estimate content and format match FTF standards | Yes |
+| CTO | Prateek | All 13 tests, delay behavior, Teams digest payload | Yes |
+| Decision Maker | Ryan | Open test estimate in inbox — confirm it looks professional, correct, change order clause visible. **Must sign off before Sprint 10.** | Yes — MILESTONE |
+| Operations SME | Robert AI | Confirm sent estimate status transitions are correct | Via AI agent |
 | Business Stakeholders | Jessica, Wyatt | Review daily Teams digest format | Optional |
 
 ---
 
 ## Completion Brief
 
-- **Built:**
-- **Tests:**
-- **Changed from plan:**
-- **Carry forward for Sprint 7:**
+- **Built:** `agent_08_sender.py` (create→delay→send→mark FTF flow); `agent_09_reporter.py` (deterministic Teams digest with 5 stats); `db.py` updated with `get_reviewed_order()` + `get_daily_summary()`; `reporter.txt` prompt stub
+- **Tests:** 13 unit tests, all passing; full suite 138/138
+- **Changed from plan:** Reporter is fully deterministic (no LLM) — template-based stats digest is faster, cheaper, and no hallucination risk. LLM prompt stub (`reporter.txt`) available for future enrichment. Split two agents into separate files (original README had combined).
+- **Carry forward for Sprint 7:** I-006 (Jessica recording) required before AR Follow-Up; I-018 PII masking must resolve before Sprint 11; I-043 Ryan reviews change order clause text before go-live

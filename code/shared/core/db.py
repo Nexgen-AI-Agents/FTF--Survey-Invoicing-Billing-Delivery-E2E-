@@ -188,6 +188,43 @@ def get_overdue_approvals(timeout_hours: int = 24) -> list[dict]:
         return [dict(row) for row in rows]
 
 
+def get_reviewed_order() -> Optional[dict]:
+    """Return the oldest order with status='reviewed', ready for the Sender to dispatch."""
+    with _get_cursor() as cur:
+        cur.execute(
+            "SELECT * FROM processed_orders WHERE status = 'reviewed' ORDER BY created_at ASC LIMIT 1"
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
+def get_daily_summary() -> dict:
+    """Return today's pipeline stats in a single query."""
+    with _get_cursor() as cur:
+        cur.execute(
+            """
+            SELECT
+                COUNT(*) FILTER (WHERE status = 'sent'
+                    AND sent_at >= CURRENT_DATE)              AS sent_today,
+                COUNT(*) FILTER (WHERE status = 'flagged'
+                    AND flagged_at >= CURRENT_DATE)           AS flagged_today,
+                COUNT(*) FILTER (WHERE status = 'awaiting_approval')
+                                                              AS awaiting_approval,
+                COUNT(*) FILTER (WHERE status = 'reviewed')  AS ready_to_send,
+                COUNT(*) FILTER (WHERE status NOT IN
+                    ('sent', 'rejected'))                     AS active_pipeline
+            FROM processed_orders
+            """
+        )
+        row = cur.fetchone()
+        if row:
+            return dict(row)
+        return {
+            "sent_today": 0, "flagged_today": 0,
+            "awaiting_approval": 0, "ready_to_send": 0, "active_pipeline": 0,
+        }
+
+
 def get_unprocessed_reminder() -> Optional[dict]:
     with _get_cursor() as cur:
         cur.execute(

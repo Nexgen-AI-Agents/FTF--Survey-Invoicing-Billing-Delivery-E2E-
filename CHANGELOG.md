@@ -144,4 +144,25 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 ### Full Test Suite
 - Sprints 1–5: **125 tests, 125 pass** (0 fail, 0 skip)
 
+---
+
+## [Sprint 6] — Sender + Reporter — 2026-05-26
+
+### Added
+- `code/sprint_06_sender_reporter/agents/agent_08_sender.py` — Agent 8: send_estimate() applies random 6–13 min delay, creates FTF invoice, sends it, marks estimate_sent on order, updates DB to `status='sent'`
+- `code/sprint_06_sender_reporter/agents/agent_09_reporter.py` — Agent 9: queries daily stats, builds Teams MessageCard (5 facts), POSTs to TEAMS_WEBHOOK_URL. Fully deterministic — no LLM needed for stats digest
+- `code/shared/config/prompts/reporter.txt` — Reporter prompt stub (available for future LLM narrative enrichment; Sprint 6 uses deterministic template)
+- `code/sprint_06_sender_reporter/tests/` — 13 unit tests (8 sender + 5 reporter), all passing
+
+### Fixed (shared infrastructure)
+- `code/shared/core/db.py` — added `get_reviewed_order()` (picks up `status='reviewed'` orders for Sender); added `get_daily_summary()` (single-query daily stats using PostgreSQL FILTER aggregates)
+
+### Architecture
+- Split original combined `agent_09_sender_reporter.py` README design into two files per "one agent, one job" rule
+- Sender uses `time.sleep()` at module level (patchable via `patch("agents.agent_08_sender.time.sleep")`)
+- Reporter is deterministic — no REPORTER_MODEL LLM call this sprint; prompt stub reserved for Sprint 9+ enrichment
+
+### Full Test Suite
+- Sprints 1–6: **138 tests, 138 pass** (0 fail, 0 skip)
+
 <!-- Sprint entries added here as sprints are completed -->
