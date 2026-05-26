@@ -6,6 +6,25 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 
 ---
 
+## [Sprint 9] — Memory Loop — 2026-05-26
+
+### Added
+- `code/sprint_09_memory_loop/agents/agent_01_orchestrator.py` — full estimate pipeline coordinator; lazy-loads agents 2–9, saves loop_state, logs loop_start/loop_complete decisions
+- `code/sprint_09_memory_loop/agents/memory/memory_manager.py` — nightly writer: reads `agent_decision_log`, produces `docs/memory/YYYY-MM-DD.md` + `docs/memory/latest.md` with agent health table (🟢/🟡/🔴)
+- `code/sprint_09_memory_loop/agents/memory/dream_processor.py` — 7-day pattern analyzer: flags agents with >10% error rate, appends to `docs/reflection.md` (full history preserved)
+- `code/sprint_09_memory_loop/tests/test_memory_loop.py` — 11 tests across TestMemoryManager, TestDreamProcessor, TestOrchestrator
+- `.github/workflows/nightly_memory.yml` — nightly cron (04:00 UTC) runs memory_manager + dream_processor, auto-commits memory files
+- `db/schema.sql` — `loop_state` table (upsert pattern via UNIQUE on loop_name)
+
+### Changed
+- `code/shared/core/db.py` — 4 new functions: `get_decisions_for_date`, `get_decisions_since`, `save_loop_state`, `get_loop_state`
+- `.github/workflows/estimate_generation.yml` — activated: replaced stub with `python agent_01_orchestrator.py`
+
+### Test Results
+- Sprint 9: **11/11 pass**
+
+---
+
 ## [Pre-Build] — Team Framework & Documentation — 2026-05-20
 
 ### Added

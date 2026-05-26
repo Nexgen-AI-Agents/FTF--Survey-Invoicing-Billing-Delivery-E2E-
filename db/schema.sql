@@ -126,3 +126,23 @@ CREATE TABLE IF NOT EXISTS excluded_ar_clients (
 );
 
 CREATE INDEX IF NOT EXISTS idx_exc_email ON excluded_ar_clients (client_email);
+
+
+-- ─────────────────────────────────────────
+-- 6. loop_state
+--    Tracks the run state of each automated loop (estimate, ar, statement, memory).
+-- ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS loop_state (
+    id           SERIAL PRIMARY KEY,
+    loop_name    VARCHAR(100)  UNIQUE NOT NULL,
+    -- loop_name values: estimate_generation | ar_followup | monthly_statements | memory
+    status       VARCHAR(50)   NOT NULL DEFAULT 'idle',
+    -- status values: idle | running | completed | error
+    last_run_at  TIMESTAMP,
+    next_run_at  TIMESTAMP,
+    error_count  INTEGER       NOT NULL DEFAULT 0,
+    last_error   TEXT,
+    updated_at   TIMESTAMP     NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_ls_loop_name ON loop_state (loop_name);

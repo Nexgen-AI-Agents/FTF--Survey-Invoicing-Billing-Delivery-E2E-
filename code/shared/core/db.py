@@ -225,6 +225,71 @@ def get_daily_summary() -> dict:
         }
 
 
+def get_decisions_for_date(target_date) -> list[dict]:
+    """Return all agent_decision_log rows for a given date (date object or ISO string)."""
+    with _get_cursor() as cur:
+        cur.execute(
+            """
+            SELECT * FROM agent_decision_log
+            WHERE created_at::date = %s
+            ORDER BY created_at ASC
+            """,
+            (target_date,),
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+
+def get_decisions_since(days: int) -> list[dict]:
+    """Return all agent_decision_log rows from the last `days` days, oldest first."""
+    with _get_cursor() as cur:
+        cur.execute(
+            """
+            SELECT * FROM agent_decision_log
+            WHERE created_at >= NOW() - INTERVAL '%s days'
+            ORDER BY created_at ASC
+            """,
+            (days,),
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+
+def save_loop_state(
+    loop_name: str,
+    status: str,
+    last_run_at=None,
+    next_run_at=None,
+    error_count: int = 0,
+    last_error: Optional[str] = None,
+) -> None:
+    """Upsert a row in loop_state for the given loop_name."""
+    with _get_cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO loop_state (loop_name, status, last_run_at, next_run_at, error_count, last_error, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, NOW())
+            ON CONFLICT (loop_name) DO UPDATE SET
+                status       = EXCLUDED.status,
+                last_run_at  = EXCLUDED.last_run_at,
+                next_run_at  = EXCLUDED.next_run_at,
+                error_count  = EXCLUDED.error_count,
+                last_error   = EXCLUDED.last_error,
+                updated_at   = NOW()
+            """,
+            (loop_name, status, last_run_at, next_run_at, error_count, last_error),
+        )
+
+
+def get_loop_state(loop_name: str) -> Optional[dict]:
+    """Return the current loop_state row for loop_name, or None if not found."""
+    with _get_cursor() as cur:
+        cur.execute(
+            "SELECT * FROM loop_state WHERE loop_name = %s LIMIT 1",
+            (loop_name,),
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
 def get_unprocessed_reminder() -> Optional[dict]:
     with _get_cursor() as cur:
         cur.execute(
