@@ -33,4 +33,19 @@ DB_PASSWORD: str | None = os.getenv("DB_PASSWORD")
 # MS Teams
 TEAMS_WEBHOOK_URL: str | None = os.getenv("TEAMS_WEBHOOK_URL")
 
+# OpenAI
+OPENAI_API_KEY:     str | None = os.getenv("OpenAI_API_KEY")
+OPENAI_CHAT_MODEL:  str        = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
+OPENAI_TTS_MODEL:   str        = os.getenv("OPENAI_TTS_MODEL", "tts-1-hd")
+OPENAI_TTS_VOICE:   str        = os.getenv("OPENAI_TTS_VOICE", "nova")        # warm female
+OPENAI_EMBED_MODEL: str        = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small")
+
+# Hermes (local via Ollama)
+HERMES_MODEL:    str = os.getenv("HERMES_MODEL", "hermes3")
+HERMES_BASE_URL: str = os.getenv("HERMES_BASE_URL", "http://localhost:11434")
+
+# Obsidian (Local REST API plugin — port 27123 is default)
+OBSIDIAN_API_KEY:  str | None = os.getenv("Obsidian")
+OBSIDIAN_BASE_URL: str        = os.getenv("OBSIDIAN_BASE_URL", "http://localhost:27123")
+
 LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

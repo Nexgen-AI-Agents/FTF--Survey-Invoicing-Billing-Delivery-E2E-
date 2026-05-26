@@ -11,6 +11,14 @@ from config.models import CLASSIFIER_MODEL
 from config.settings import SERVICE_STATE
 from core.claude_client import call as llm_call
 from core.db import log_decision, save_order_state
+
+# Hermes (local, free) is preferred for service-type normalization — structured JSON,
+# zero API cost, no data egress. Falls back to Claude if Ollama is not running.
+try:
+    from core.hermes_client import normalize_service_type as _hermes_normalize
+    _HERMES_AVAILABLE = True
+except Exception:
+    _HERMES_AVAILABLE = False
 from core.exceptions import FEMAUnavailableError
 from core.fema_client import check_flood_zone
 from core.ftf_client import get_order
@@ -66,23 +74,40 @@ def _load_classifier_prompt() -> str:
 
 
 def _llm_normalize_service_type(raw: str) -> str:
-    """Call LLM to map an unrecognized service_type string to a canonical FTF name.
+    """Map an unrecognized service_type string to a canonical FTF name.
 
-    Returns a canonical name if confident, else _UNRECOGNIZED.
-    Exceptions are caught internally — callers always receive a safe return value.
+    Resolution order:
+      1. Hermes 3 (local Ollama) — free, fast, zero data egress, structured JSON output
+      2. Claude fallback — if Ollama is not running or Hermes model missing
+
+    Returns canonical name if confident (Hermes confidence >= 0.7), else _UNRECOGNIZED.
     """
+    # ── 1. Try Hermes (local, free) ───────────────────────────────────────
+    if _HERMES_AVAILABLE:
+        try:
+            result = _hermes_normalize(raw)
+            if not result.get("unrecognized") and result.get("canonical") in _CANONICAL_SERVICES:
+                log.info(
+                    "Hermes normalized '%s' -> '%s' (confidence=%.2f)",
+                    raw, result["canonical"], result.get("confidence", 0),
+                )
+                return result["canonical"]
+        except Exception as exc:
+            log.debug("Hermes normalization unavailable (%s) — falling back to Claude", exc)
+
+    # ── 2. Fall back to Claude ─────────────────────────────────────────────
     try:
         prompt = _load_classifier_prompt()
-        result = llm_call(
+        result_str = llm_call(
             model=CLASSIFIER_MODEL,
             system=prompt,
             user=f'Map this FTF order service type to the canonical name: "{raw}"',
             max_tokens=30,
         ).strip()
-        if result in _CANONICAL_SERVICES:
-            log.info("LLM normalized service type '%s' -> '%s'", raw, result)
-            return result
-        log.warning("LLM returned non-canonical value '%s' for raw='%s'", result, raw)
+        if result_str in _CANONICAL_SERVICES:
+            log.info("Claude normalized service type '%s' -> '%s'", raw, result_str)
+            return result_str
+        log.warning("Claude returned non-canonical value '%s' for raw='%s'", result_str, raw)
     except Exception as exc:
         log.warning("LLM service type normalization failed raw=%s error=%s", raw, exc)
     return _UNRECOGNIZED

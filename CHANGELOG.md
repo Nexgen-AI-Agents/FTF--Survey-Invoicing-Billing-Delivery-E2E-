@@ -224,4 +224,41 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 ### Full Test Suite
 - Sprints 1–6: **151 tests, 151 pass** (0 fail, 0 skip)
 
+---
+
+## [Integration] — Hermes + OpenAI + Obsidian + Live Demo v2 — 2026-05-26
+
+### Added — Integrations
+- `code/shared/core/openai_client.py` — OpenAI integration: TTS (`tts-1-hd`, voice `nova`), chat completion (`gpt-4o-mini` fallback), embeddings (`text-embedding-3-small` for Sprint 9 memory loop)
+- `code/shared/core/hermes_client.py` — NousResearch Hermes 3 via Ollama: `normalize_service_type()` (structured JSON, $0/call local), `evaluate_flags()` (secondary classifier, Sprint 9+), `health_check()`
+- `code/shared/core/obsidian_client.py` — Obsidian Local REST API: `read_note()`, `write_note()`, `search()`, `log_agent_decision()`, `init_vault()` — agents auto-write linked notes to vault
+
+### Changed — Agent 3
+- `code/sprint_02_classifier_pricing/agents/agent_03_classifier.py` — `_llm_normalize_service_type()` now tries Hermes 3 (local, $0) first; falls back to Claude if Ollama not running. Hermes confidence >= 0.7 required for canonical acceptance.
+
+### Changed — Settings
+- `code/shared/config/settings.py` — added: `OPENAI_API_KEY`, `OPENAI_CHAT_MODEL`, `OPENAI_TTS_MODEL`, `OPENAI_TTS_VOICE`, `OPENAI_EMBED_MODEL`, `HERMES_MODEL`, `HERMES_BASE_URL`, `OBSIDIAN_API_KEY`, `OBSIDIAN_BASE_URL`
+
+### Added — Live Demo v2
+- `docs/demo_live_v2.html` — Full interactive browser demo: animated talking avatar ("Alex"), DB state panel updating per scene, pipeline stage sidebar, terminal-style agent output, OpenAI TTS audio playback, auto-advance, keyboard shortcuts (Space/←/→)
+- `docs/demo_audio/scene_00_intro.mp3` through `scene_22_outro.mp3` — 23 OpenAI TTS audio files (`tts-1-hd`, `nova` voice), 8.8 MB total
+- `scripts/generate_demo_audio.py` — regenerates all 23 audio files from OpenAI TTS
+
+### Why multiple LLMs
+| Model | Role | Cost |
+|-------|------|------|
+| Claude Sonnet 4.6 | Estimate writing, complex reasoning | API (pipeline) |
+| Hermes 3 (Ollama) | Service type classification, structured JSON | $0 local |
+| OpenAI GPT-4o-mini | Claude fallback for resilience | API (fallback only) |
+| OpenAI TTS | Demo narration, future client comms | API (demo) |
+| OpenAI Embeddings | Sprint 9 semantic memory search | API (Sprint 9) |
+
+### Obsidian Setup (one-time)
+1. Obsidian → Settings → Community Plugins → Browse → "Local REST API" → Install → Enable
+2. Copy API key from plugin settings → paste into `.env` as `Obsidian=<key>`
+3. Port default: 27123 (change via `OBSIDIAN_BASE_URL` if needed)
+
+### Full Test Suite
+- All Sprints: **186 tests, 186 pass** (0 fail, 0 skip)
+
 <!-- Sprint entries added here as sprints are completed -->

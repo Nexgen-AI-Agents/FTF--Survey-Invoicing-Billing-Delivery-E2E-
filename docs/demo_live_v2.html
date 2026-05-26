@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexGen FTF Agentic AI OS — Live Demo Sprint 0-6</title>
+<style>
+:root {
+  --bg:     #0d1117;
+  --panel:  #161b22;
+  --border: #30363d;
+  --white:  #c9d1d9;
+  --cyan:   #4fc3f7;
+  --green:  #3fb950;
+  --yellow: #d29922;
+  --red:    #f85149;
+  --blue:   #58a6ff;
+  --purple: #bc8cff;
+  --gray:   #8b949e;
+  --dim:    #484f58;
+  --font-mono: 'Consolas', 'Courier New', monospace;
+  --font-ui:   'Segoe UI', system-ui, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--white); font-family: var(--font-ui); overflow: hidden; }
+
+/* ── HEADER ─────────────────────────────────────────────────────────────── */
+#header {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--panel); border-bottom: 1px solid var(--border);
+  padding: 0 20px; height: 52px; flex-shrink: 0;
+}
+#header-left { display: flex; align-items: center; gap: 12px; }
+#logo-badge {
+  background: linear-gradient(135deg, var(--cyan), var(--blue));
+  color: #000; font-weight: 800; font-size: 11px; padding: 4px 10px;
+  border-radius: 4px; letter-spacing: 1px;
+}
+#header-title { font-size: 15px; font-weight: 600; color: var(--white); }
+#header-sub { font-size: 12px; color: var(--gray); margin-top: 2px; }
+#scene-counter { font-family: var(--font-mono); font-size: 13px; color: var(--gray); }
+
+/* ── MAIN LAYOUT ────────────────────────────────────────────────────────── */
+#layout {
+  display: grid;
+  grid-template-columns: 200px 1fr 300px;
+  height: calc(100vh - 52px - 72px);
+}
+
+/* ── LEFT: PIPELINE STAGE ───────────────────────────────────────────────── */
+#pipeline-panel {
+  background: var(--panel); border-right: 1px solid var(--border);
+  padding: 16px 0; overflow-y: auto;
+}
+#pipeline-panel h3 {
+  font-size: 10px; letter-spacing: 1.5px; color: var(--gray);
+  text-transform: uppercase; padding: 0 14px 10px;
+}
+.agent-step {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px; cursor: pointer; transition: background 0.2s;
+  border-left: 3px solid transparent;
+}
+.agent-step:hover { background: rgba(255,255,255,0.04); }
+.agent-step.active { border-left-color: var(--cyan); background: rgba(79,195,247,0.08); }
+.agent-step.done { border-left-color: var(--green); }
+.agent-step.flagged { border-left-color: var(--red); }
+.step-dot {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 2px solid var(--border); display: flex; align-items: center;
+  justify-content: center; font-size: 10px; font-weight: 700;
+  flex-shrink: 0; transition: all 0.3s; font-family: var(--font-mono);
+}
+.agent-step.active .step-dot { border-color: var(--cyan); background: rgba(79,195,247,0.15); color: var(--cyan); }
+.agent-step.done .step-dot { border-color: var(--green); background: rgba(63,185,80,0.15); color: var(--green); }
+.agent-step.flagged .step-dot { border-color: var(--red); background: rgba(248,81,73,0.15); color: var(--red); }
+.step-info { flex: 1; min-width: 0; }
+.step-name { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step-status { font-size: 10px; color: var(--gray); margin-top: 1px; }
+.agent-step.active .step-name { color: var(--cyan); }
+.agent-step.done .step-name { color: var(--green); }
+
+/* pipeline dividers */
+.pipe-connector {
+  width: 2px; height: 10px; background: var(--border);
+  margin: 0 auto 0 26px;
+}
+
+/* ── CENTER: CONTENT AREA ───────────────────────────────────────────────── */
+#content-area {
+  padding: 20px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;
+}
+
+/* scenario banner */
+#scenario-banner {
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  padding: 4px 12px; border-radius: 4px; display: inline-block;
+  text-transform: uppercase; transition: all 0.3s;
+}
+.sc1 { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid var(--green); }
+.sc2 { background: rgba(210,153,34,0.15); color: var(--yellow); border: 1px solid var(--yellow); }
+.sc3 { background: rgba(79,195,247,0.15); color: var(--cyan); border: 1px solid var(--cyan); }
+.sc0 { display: none !important; }
+
+/* agent badge */
+#agent-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700;
+  transition: all 0.3s;
+}
+
+/* slide title */
+#slide-title {
+  font-size: 28px; font-weight: 700; line-height: 1.2;
+  color: var(--white); transition: all 0.3s;
+}
+#slide-subtitle { font-size: 14px; color: var(--gray); margin-top: 4px; }
+
+/* terminal box */
+#terminal-box {
+  background: #010409; border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px 16px; font-family: var(--font-mono); font-size: 13px;
+  line-height: 1.8; min-height: 120px; position: relative;
+}
+#terminal-box::before {
+  content: '●  ●  ●';
+  position: absolute; top: 8px; left: 12px;
+  font-size: 10px; color: var(--dim);
+  letter-spacing: 4px;
+}
+#terminal-content { margin-top: 20px; }
+.t-cmd  { color: var(--cyan); }
+.t-ok   { color: var(--green); }
+.t-warn { color: var(--yellow); }
+.t-err  { color: var(--red); }
+.t-gray { color: var(--gray); }
+.t-line { opacity: 0; transition: opacity 0.3s; animation: fadeIn 0.4s forwards; }
+@keyframes fadeIn { from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none} }
+
+/* DB state card */
+#db-state-box {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 14px;
+}
+#db-state-box h4 { font-size: 11px; color: var(--gray); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+.db-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; font-family: var(--font-mono); font-size: 12px; }
+.db-key { color: var(--gray); min-width: 130px; flex-shrink: 0; }
+.db-val { color: var(--white); }
+.db-val.status-pending   { color: var(--yellow); }
+.db-val.status-classified{ color: var(--cyan); }
+.db-val.status-priced    { color: var(--cyan); }
+.db-val.status-flagged   { color: var(--red); }
+.db-val.status-awaiting  { color: var(--yellow); }
+.db-val.status-approved  { color: var(--green); }
+.db-val.status-written   { color: var(--purple); }
+.db-val.status-reviewed  { color: var(--green); }
+.db-val.status-sent      { color: var(--green); font-weight: 700; }
+.db-val.status-none      { color: var(--dim); }
+
+/* ── RIGHT: AVATAR + INFO ───────────────────────────────────────────────── */
+#right-panel {
+  background: var(--panel); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 16px 12px; gap: 16px; overflow-y: auto;
+}
+
+/* avatar container */
+#avatar-wrap {
+  width: 160px; height: 160px; position: relative; flex-shrink: 0;
+}
+#avatar-glow {
+  position: absolute; inset: -8px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(79,195,247,0.15) 0%, transparent 70%);
+  opacity: 0; transition: opacity 0.4s;
+}
+#avatar-glow.speaking { opacity: 1; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+
+/* SVG avatar */
+#avatar-svg { width: 160px; height: 160px; }
+
+/* mouth animation */
+#mouth-path { transition: d 0.15s; }
+.speaking-anim #mouth-path {
+  animation: speak 0.35s ease-in-out infinite alternate;
+}
+@keyframes speak {
+  from { d: path("M72,136 Q100,144 128,136"); }
+  to   { d: path("M72,133 Q100,150 128,133"); }
+}
+
+/* avatar name + status */
+#avatar-name { font-size: 13px; font-weight: 700; color: var(--cyan); text-align: center; }
+#avatar-status {
+  font-size: 10px; color: var(--gray); text-align: center;
+  display: flex; align-items: center; gap: 6px;
+}
+#speaking-indicator {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--gray);
+  transition: background 0.2s;
+}
+#speaking-indicator.on { background: var(--green); animation: blink 0.8s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* audio levels */
+#audio-bars {
+  display: flex; align-items: flex-end; gap: 3px; height: 28px;
+}
+.bar {
+  width: 5px; background: var(--cyan); border-radius: 3px 3px 0 0;
+  opacity: 0.3; transition: height 0.1s, opacity 0.2s;
+}
+.bar.active { opacity: 1; }
+
+/* info cards */
+.info-card {
+  width: 100%; background: #010409; border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px;
+}
+.info-card h5 { font-size: 10px; letter-spacing: 1.2px; color: var(--gray); text-transform: uppercase; margin-bottom: 8px; }
+.stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.stat-label { font-size: 11px; color: var(--gray); }
+.stat-val { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--white); }
+.stat-val.green { color: var(--green); }
+.stat-val.yellow { color: var(--yellow); }
+.stat-val.red { color: var(--red); }
+
+/* ── FOOTER: PLAYBAR ────────────────────────────────────────────────────── */
+#playbar {
+  height: 72px; background: var(--panel); border-top: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 20px; gap: 16px; flex-shrink: 0;
+}
+#btn-prev, #btn-next, #btn-play {
+  background: none; border: 1px solid var(--border); border-radius: 6px;
+  color: var(--white); cursor: pointer; padding: 6px 14px; font-size: 13px;
+  transition: all 0.2s; flex-shrink: 0;
+}
+#btn-play { background: var(--cyan); color: #000; border-color: var(--cyan); font-weight: 700; min-width: 80px; }
+#btn-prev:hover, #btn-next:hover { border-color: var(--cyan); color: var(--cyan); }
+#btn-play:hover { background: #7dd3fc; }
+
+#progress-wrap { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+#progress-bar-bg {
+  height: 5px; background: var(--border); border-radius: 3px;
+  cursor: pointer; position: relative;
+}
+#progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--cyan), var(--blue));
+  border-radius: 3px; transition: width 0.1s linear; width: 0%;
+}
+#progress-labels { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--gray); }
+#time-current { color: var(--cyan); }
+
+#autoplay-toggle {
+  font-size: 11px; color: var(--gray); cursor: pointer; white-space: nowrap;
+  display: flex; align-items: center; gap: 6px;
+}
+#autoplay-dot {
+  width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--dim);
+  transition: all 0.2s;
+}
+#autoplay-dot.on { background: var(--green); border-color: var(--green); }
+
+/* ── TRANSITIONS ──────────────────────────────────────────────────────────── */
+#content-area > * { transition: opacity 0.25s; }
+.scene-fade { opacity: 0 !important; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <div id="header-left">
+    <span id="logo-badge">NEXGEN</span>
+    <div>
+      <div id="header-title">FTF Agentic AI Operating System</div>
+      <div id="header-sub">Sprint 0–6 Live Demo &nbsp;·&nbsp; 8 Agents &nbsp;·&nbsp; 186 Unit Tests</div>
+    </div>
+  </div>
+  <div id="scene-counter">Scene <span id="sc-cur">1</span> / 23</div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div id="layout">
+
+  <!-- LEFT: pipeline stages -->
+  <div id="pipeline-panel">
+    <h3>Pipeline Agents</h3>
+    <div id="pipeline-steps">
+      <div class="agent-step" data-agent="2"><div class="step-dot">2</div><div class="step-info"><div class="step-name">CRM Monitor</div><div class="step-status" id="st2">idle</div></div></div>
+      <div class="pipe-connector"></div>
+      <div class="agent-step" data-agent="3"><div class="step-dot">3</div><div class="step-info"><div class="step-name">Classifier</div><div class="step-status" id="st3">idle</div></div></div>
+      <div class="pipe-connector"></div>
+      <div class="agent-step" data-agent="4"><div class="step-dot">4</div><div class="step-info"><div class="step-name">Human Gate</div><div class="step-status" id="st4">idle</div></div></div>
+      <div class="pipe-connector"></div>
+      <div class="agent-step" data-agent="5"><div class="step-dot">5</div><div class="step-info"><div class="step-name">Pricing Engine</div><div class="step-status" id="st5">idle</div></div></div>
+      <div class="pipe-connector"></div>
+      <div class="agent-step" data-agent="6"><div class="step-dot">6</div><div class="step-info"><div class="step-name">Writer</div><div class="step-status" id="st6">idle</div></div></div>
+      <div class="pipe-connector"></div>
+      <div class="agent-step" data-agent="7"><div class="step-dot">7</div><div class="step-info"><div class="step-name">Reviewer</div><div class="step-status" id="st7">idle</div></div></div>
+      <div class="pipe-connector"></div>
+      <div class="agent-step" data-agent="8"><div class="step-dot">8</div><div class="step-info"><div class="step-name">Sender</div><div class="step-status" id="st8">idle</div></div></div>
+      <div class="pipe-connector"></div>
+      <div class="agent-step" data-agent="9"><div class="step-dot">9</div><div class="step-info"><div class="step-name">Reporter</div><div class="step-status" id="st9">idle</div></div></div>
+    </div>
+  </div>
+
+  <!-- CENTER: content -->
+  <div id="content-area">
+    <div id="scenario-banner" class="sc0">SCENARIO 1</div>
+    <div id="agent-badge" style="display:none"></div>
+    <div>
+      <div id="slide-title">FTF Agentic AI Operating System</div>
+      <div id="slide-subtitle">Sprint 0–6 full pipeline demo</div>
+    </div>
+    <div id="terminal-box"><div id="terminal-content"></div></div>
+    <div id="db-state-box">
+      <h4>&#x1F5C4; processed_orders (DB)</h4>
+      <div class="db-row"><span class="db-key">order_id</span><span class="db-val status-none" id="db-order-id">—</span></div>
+      <div class="db-row"><span class="db-key">service_type</span><span class="db-val" id="db-service">—</span></div>
+      <div class="db-row"><span class="db-key">customer_name</span><span class="db-val" id="db-customer">—</span></div>
+      <div class="db-row"><span class="db-key">property_county</span><span class="db-val" id="db-county">—</span></div>
+      <div class="db-row"><span class="db-key">estimate_amount</span><span class="db-val" id="db-amount">—</span></div>
+      <div class="db-row"><span class="db-key">status</span><span class="db-val status-none" id="db-status">—</span></div>
+      <div class="db-row"><span class="db-key">flag_reason</span><span class="db-val" id="db-flag" style="font-size:11px">—</span></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: avatar + stats -->
+  <div id="right-panel">
+    <!-- Avatar -->
+    <div id="avatar-wrap">
+      <div id="avatar-glow"></div>
+      <svg id="avatar-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- neck -->
+        <rect x="85" y="165" width="30" height="35" rx="6" fill="#2a4060"/>
+        <!-- shirt -->
+        <path d="M60,185 Q100,175 140,185 L160,200 L40,200 Z" fill="#1a3050"/>
+        <!-- collar -->
+        <path d="M85,173 L100,183 L115,173" fill="none" stroke="#fff" stroke-width="2"/>
+        <!-- head -->
+        <circle cx="100" cy="100" r="75" fill="#1e3a5f"/>
+        <!-- hair -->
+        <ellipse cx="100" cy="42" rx="62" ry="30" fill="#0d1b2a"/>
+        <ellipse cx="40" cy="90" rx="18" ry="45" fill="#0d1b2a"/>
+        <ellipse cx="160" cy="90" rx="18" ry="45" fill="#0d1b2a"/>
+        <path d="M38,60 Q60,25 100,22 Q140,25 162,60" fill="#0d1b2a"/>
+        <!-- ears -->
+        <ellipse cx="25" cy="100" rx="10" ry="14" fill="#1e3a5f"/>
+        <ellipse cx="175" cy="100" rx="10" ry="14" fill="#1e3a5f"/>
+        <!-- face highlight -->
+        <ellipse cx="100" cy="105" rx="55" ry="60" fill="#234876" opacity="0.4"/>
+        <!-- eyebrows -->
+        <path d="M68,78 Q80,73 92,76" fill="none" stroke="#0d1b2a" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M108,76 Q120,73 132,78" fill="none" stroke="#0d1b2a" stroke-width="3.5" stroke-linecap="round"/>
+        <!-- eyes white -->
+        <ellipse cx="80" cy="94" rx="14" ry="10" fill="white"/>
+        <ellipse cx="120" cy="94" rx="14" ry="10" fill="white"/>
+        <!-- iris -->
+        <circle cx="82" cy="94" r="7" fill="#2563eb"/>
+        <circle cx="122" cy="94" r="7" fill="#2563eb"/>
+        <!-- pupil -->
+        <circle cx="83" cy="94" r="4" fill="#0a0a1a"/>
+        <circle cx="123" cy="94" r="4" fill="#0a0a1a"/>
+        <!-- eye shine -->
+        <circle cx="85" cy="91" r="2" fill="white"/>
+        <circle cx="125" cy="91" r="2" fill="white"/>
+        <!-- nose -->
+        <path d="M100,108 L94,122 Q100,126 106,122 Z" fill="#1a3050" stroke="#7ba3c8" stroke-width="1"/>
+        <!-- mouth / lip -->
+        <path id="mouth-upper" d="M78,136 Q100,130 122,136" fill="none" stroke="#7ba3c8" stroke-width="1.5"/>
+        <path id="mouth-path" d="M78,136 Q100,144 122,136" fill="#0d1b2a" stroke="#7ba3c8" stroke-width="2" stroke-linecap="round"/>
+        <!-- cheek blush subtle -->
+        <circle cx="63" cy="112" r="12" fill="#e07070" opacity="0.08"/>
+        <circle cx="137" cy="112" r="12" fill="#e07070" opacity="0.08"/>
+      </svg>
+    </div>
+
+    <div id="avatar-name">Alex — AI Demo Lead</div>
+    <div id="avatar-status">
+      <span id="speaking-indicator"></span>
+      <span id="speaking-text">Ready</span>
+    </div>
+
+    <!-- Audio bars -->
+    <div id="audio-bars">
+      <div class="bar" style="height:6px" id="b0"></div>
+      <div class="bar" style="height:10px" id="b1"></div>
+      <div class="bar" style="height:18px" id="b2"></div>
+      <div class="bar" style="height:24px" id="b3"></div>
+      <div class="bar" style="height:18px" id="b4"></div>
+      <div class="bar" style="height:10px" id="b5"></div>
+      <div class="bar" style="height:6px" id="b6"></div>
+    </div>
+
+    <!-- Pipeline stats card -->
+    <div class="info-card">
+      <h5>Pipeline Stats</h5>
+      <div class="stat-row"><span class="stat-label">Sprints Complete</span><span class="stat-val green">6 / 14</span></div>
+      <div class="stat-row"><span class="stat-label">Unit Tests</span><span class="stat-val green">186 / 186</span></div>
+      <div class="stat-row"><span class="stat-label">Test Failures</span><span class="stat-val">0</span></div>
+      <div class="stat-row"><span class="stat-label">Agents Built</span><span class="stat-val">8</span></div>
+    </div>
+
+    <!-- Scenario progress -->
+    <div class="info-card">
+      <h5>Demo Progress</h5>
+      <div class="stat-row"><span class="stat-label">Scenario 1</span><span class="stat-val" id="sp1" style="color:var(--dim)">●●●●●●●●</span></div>
+      <div class="stat-row"><span class="stat-label">Scenario 2</span><span class="stat-val" id="sp2" style="color:var(--dim)">●●●●●</span></div>
+      <div class="stat-row"><span class="stat-label">Scenario 3</span><span class="stat-val" id="sp3" style="color:var(--dim)">●●●●●●</span></div>
+    </div>
+  </div>
+
+</div><!-- /layout -->
+
+<!-- PLAYBAR -->
+<div id="playbar">
+  <button id="btn-prev">&#8592; Prev</button>
+  <button id="btn-play">&#9654; Play</button>
+  <button id="btn-next">Next &#8594;</button>
+  <div id="progress-wrap">
+    <div id="progress-bar-bg"><div id="progress-fill"></div></div>
+    <div id="progress-labels">
+      <span id="time-current">0:00</span>
+      <span id="scene-title-bar">Intro</span>
+      <span id="time-total">0:00</span>
+    </div>
+  </div>
+  <div id="autoplay-toggle" onclick="toggleAutoplay()">
+    <div id="autoplay-dot" class="on"></div>
+    Auto-advance
+  </div>
+</div>
+
+<!-- HIDDEN AUDIO -->
+<audio id="player" preload="auto"></audio>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SCENE DATA
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const SCENES = [
+  {
+    id: 0, slug: "intro",
+    title: "FTF Agentic AI Operating System",
+    subtitle: "Automated Estimate Generation — Sprint 0 through 6 — NexGen Land Surveying FL",
+    scenario: 0, agent: null,
+    terminal: [
+      {cls:"t-cmd",  text:"$ python -m ftf_pipeline --status"},
+      {cls:"t-ok",   text:"[OK] FTF API connection verified (stage.fieldtofinish.jobs)"},
+      {cls:"t-ok",   text:"[OK] PostgreSQL connected (ftf_agentic_ai)"},
+      {cls:"t-ok",   text:"[OK] Claude AI client ready (claude-sonnet-4-6)"},
+      {cls:"t-ok",   text:"[OK] Hermes 3 local model ready (ollama:11434)"},
+      {cls:"t-ok",   text:"[OK] 8 agents loaded  |  186 unit tests, 0 failures"},
+      {cls:"t-gray", text:"→ Pipeline running every 60 minutes. Starting demo..."},
+    ],
+    db: {order_id:"—",service:"—",customer:"—",county:"—",amount:"—",status:"none",flag:"—"},
+    agentStates: {}
+  },
+  {
+    id: 1, slug: "pipeline_overview",
+    title: "The 8-Step Automated Pipeline",
+    subtitle: "Every Quote-stage order runs through all 8 steps automatically",
+    scenario: 0, agent: null,
+    terminal: [
+      {cls:"t-cmd",  text:"FTF CRM  →  Agent 2  →  Agent 3  →  (Agent 4)  →  Agent 5"},
+      {cls:"t-gray", text:"                                     Human Gate"},
+      {cls:"t-cmd",  text:"         →  Agent 6  →  Agent 7  →  Agent 8  →  Client Email"},
+      {cls:"t-gray", text:"                                  8AM–6PM ET"},
+      {cls:"t-ok",   text:"Agent 9: Daily Teams digest to Ryan + Robert + team"},
+    ],
+    db: {order_id:"—",service:"—",customer:"—",county:"—",amount:"—",status:"none",flag:"—"},
+    agentStates: {}
+  },
+
+  // ── SCENARIO 1 ───────────────────────────────────────────────────────────
+  {
+    id: 2, slug: "s1_intro",
+    title: "Scenario 1: Standard Auto-Quote",
+    subtitle: "Boundary Survey · John Smith · Boca Raton FL · Broward County · Zone X",
+    scenario: 1, agent: null,
+    terminal: [
+      {cls:"t-gray", text:"Order: ORD-2026-1001"},
+      {cls:"t-gray", text:"Service: Boundary Survey"},
+      {cls:"t-gray", text:"Client: John Smith (individual)"},
+      {cls:"t-gray", text:"Location: Boca Raton FL, Broward County"},
+      {cls:"t-gray", text:"Flood zone: X (no elevation cert needed)"},
+      {cls:"t-ok",   text:"→ Expected result: full auto-quote, zero human touches"},
+    ],
+    db: {order_id:"—",service:"—",customer:"—",county:"—",amount:"—",status:"none",flag:"—"},
+    agentStates: {}
+  },
+  {
+    id: 3, slug: "s1_agent2",
+    title: "New order detected in FTF CRM",
+    subtitle: "Agent 2 — CRM Monitor",
+    scenario: 1, agent: {num:2, name:"CRM Monitor", color:"var(--cyan)"},
+    terminal: [
+      {cls:"t-cmd",  text:"GET /orders?status=Quote&limit=500"},
+      {cls:"t-gray", text:'Response: {"count": 275705, "data": [...12 new orders...]}'},
+      {cls:"t-ok",   text:"[FOUND] ORD-2026-1001: Boundary Survey, John Smith"},
+      {cls:"t-gray", text:"estimate_sent = False  →  not yet processed"},
+      {cls:"t-cmd",  text:"INSERT INTO processed_orders (order_id, status) VALUES (...)"},
+      {cls:"t-ok",   text:"[OK] Saved to pipeline DB  |  status = pending"},
+    ],
+    db: {order_id:"ORD-2026-1001",service:"Boundary Survey",customer:"John Smith",county:"Broward",amount:"—",status:"pending",flag:"—"},
+    agentStates: {2:"active"}
+  },
+  {
+    id: 4, slug: "s1_agent3",
+    title: "9 Flag Triggers Evaluated — All Clear",
+    subtitle: "Agent 3 — Classifier",
+    scenario: 1, agent: {num:3, name:"Classifier", color:"var(--yellow)"},
+    terminal: [
+      {cls:"t-ok",   text:"[OK] Service: Boundary Survey — canonical, not in ALWAYS_FLAG"},
+      {cls:"t-ok",   text:"[OK] Not in NEVER_AUTO_QUOTE list"},
+      {cls:"t-ok",   text:"[OK] Customer: individual tier, not competitor domain"},
+      {cls:"t-ok",   text:"[OK] property_state = FL (in-state)"},
+      {cls:"t-ok",   text:"[OK] property_county = Broward (not Monroe)"},
+      {cls:"t-ok",   text:"[OK] Flood zone X — elevation_cert_required = False"},
+      {cls:"t-ok",   text:"[PASS] All 9 triggers clear → auto-quote approved"},
+      {cls:"t-cmd",  text:"UPDATE processed_orders SET status='classified' WHERE ..."},
+    ],
+    db: {order_id:"ORD-2026-1001",service:"Boundary Survey",customer:"John Smith",county:"Broward",amount:"—",status:"classified",flag:"—"},
+    agentStates: {2:"done", 3:"active"}
+  },
+  {
+    id: 5, slug: "s1_agent5",
+    title: "FTF API Pricing Confirmed",
+    subtitle: "Agent 5 — Pricing Engine",
+    scenario: 1, agent: {num:5, name:"Pricing Engine", color:"var(--purple)"},
+    terminal: [
+      {cls:"t-cmd",  text:"GET /pricing?service=Boundary+Survey&tier=individual"},
+      {cls:"t-gray", text:'Response: {"amount": 350.00, "currency": "USD"}'},
+      {cls:"t-ok",   text:"Base amount: $350.00"},
+      {cls:"t-gray", text:"Elevation cert: $0.00  (Zone X — not required)"},
+      {cls:"t-ok",   text:"TOTAL ESTIMATE: $350.00"},
+      {cls:"t-cmd",  text:"UPDATE processed_orders SET estimate_amount=350.00, status='priced'"},
+    ],
+    db: {order_id:"ORD-2026-1001",service:"Boundary Survey",customer:"John Smith",county:"Broward",amount:"$350.00",status:"priced",flag:"—"},
+    agentStates: {2:"done", 3:"done", 5:"active"}
+  },
+  {
+    id: 6, slug: "s1_agent6",
+    title: "Claude AI Writes Personalized Email",
+    subtitle: "Agent 6 — Estimate Writer",
+    scenario: 1, agent: {num:6, name:"Estimate Writer", color:"var(--green)"},
+    terminal: [
+      {cls:"t-cmd",  text:"POST anthropic/messages  model=claude-sonnet-4-6"},
+      {cls:"t-gray", text:'System: "Warm, friendly tone for individual client..."'},
+      {cls:"t-gray", text:"Injecting: service=Boundary Survey, amount=$350, address=..."},
+      {cls:"t-ok",   text:"[OK] Draft email generated (438 tokens)"},
+      {cls:"t-warn", text:"[NOTE] Change order clause auto-appended (new language)"},
+      {cls:"t-cmd",  text:"UPDATE processed_orders SET draft_estimate=..., status='written'"},
+    ],
+    db: {order_id:"ORD-2026-1001",service:"Boundary Survey",customer:"John Smith",county:"Broward",amount:"$350.00",status:"written",flag:"—"},
+    agentStates: {2:"done", 3:"done", 5:"done", 6:"active"}
+  },
+  {
+    id: 7, slug: "s1_agent7",
+    title: "4 Accuracy Checks — All Passed",
+    subtitle: "Agent 7 — Estimate Reviewer",
+    scenario: 1, agent: {num:7, name:"Estimate Reviewer", color:"var(--yellow)"},
+    terminal: [
+      {cls:"t-ok",  text:'[PASS] Price check: "$350.00" found in email ✓'},
+      {cls:"t-ok",  text:'[PASS] Customer name: "John" found in email ✓'},
+      {cls:"t-ok",  text:'[PASS] Property address: "1234 Palm Ave" found ✓'},
+      {cls:"t-ok",  text:'[PASS] Change order clause: present and complete ✓'},
+      {cls:"t-ok",  text:"[PASS] All 4 checks passed on attempt 1 — no correction needed"},
+      {cls:"t-cmd", text:"UPDATE processed_orders SET status='reviewed'"},
+    ],
+    db: {order_id:"ORD-2026-1001",service:"Boundary Survey",customer:"John Smith",county:"Broward",amount:"$350.00",status:"reviewed",flag:"—"},
+    agentStates: {2:"done", 3:"done", 5:"done", 6:"done", 7:"active"}
+  },
+  {
+    id: 8, slug: "s1_agent8",
+    title: "Estimate Sent to Client",
+    subtitle: "Agent 8 — Sender",
+    scenario: 1, agent: {num:8, name:"Sender", color:"var(--blue)"},
+    terminal: [
+      {cls:"t-ok",  text:"Send window check: 10:32 AM ET — window open (8AM–6PM) ✓"},
+      {cls:"t-gray",text:"Human-like delay: 9 min 14 sec applied (6–13 min random range)"},
+      {cls:"t-cmd", text:"POST /invoices  →  INV-2026-1001 created"},
+      {cls:"t-ok",  text:"[OK] FTF invoice created"},
+      {cls:"t-ok",  text:"[OK] Estimate email sent to j.smith@gmail.com"},
+      {cls:"t-cmd", text:"UPDATE processed_orders SET status='sent', estimate_sent=True"},
+    ],
+    db: {order_id:"ORD-2026-1001",service:"Boundary Survey",customer:"John Smith",county:"Broward",amount:"$350.00",status:"sent",flag:"—"},
+    agentStates: {2:"done", 3:"done", 5:"done", 6:"done", 7:"done", 8:"active"}
+  },
+  {
+    id: 9, slug: "s1_complete",
+    title: "Scenario 1 Complete — Zero Human Touches",
+    subtitle: "ORD-2026-1001 · $350.00 · John Smith · Boundary Survey",
+    scenario: 1, agent: null,
+    terminal: [
+      {cls:"t-ok",  text:"[COMPLETE] ORD-2026-1001 processed end-to-end automatically"},
+      {cls:"t-gray",text:"Total compute time: 1m 43s (+ 9m 14s human-like send delay)"},
+      {cls:"t-ok",  text:"Audit log: 8 entries in agent_decision_log"},
+      {cls:"t-ok",  text:"DB status: sent  |  estimate_sent = True"},
+      {cls:"t-gray",text:"→ Moving to Scenario 2: flagged order + Human Gate..."},
+    ],
+    db: {order_id:"ORD-2026-1001",service:"Boundary Survey",customer:"John Smith",county:"Broward",amount:"$350.00",status:"sent",flag:"—"},
+    agentStates: {2:"done", 3:"done", 5:"done", 6:"done", 7:"done", 8:"done"}
+  },
+
+  // ── SCENARIO 2 ───────────────────────────────────────────────────────────
+  {
+    id: 10, slug: "s2_intro",
+    title: "Scenario 2: Flagged + Human Gate",
+    subtitle: "ALTA Table A Survey · Coastal Builders LLC · Monroe County FL · Zone AE",
+    scenario: 2, agent: null,
+    terminal: [
+      {cls:"t-warn",text:"[ALERT] ORD-2026-1002 — multiple flags expected"},
+      {cls:"t-gray",text:"Service: ALTA Table A Survey"},
+      {cls:"t-gray",text:"Client: Coastal Builders LLC (B2B)"},
+      {cls:"t-gray",text:"Location: Monroe County FL (Florida Keys)"},
+      {cls:"t-gray",text:"Flood zone: AE — elevation cert required"},
+      {cls:"t-warn",text:"→ Result: Human Gate activates, Robert approves via Teams"},
+    ],
+    db: {order_id:"—",service:"—",customer:"—",county:"—",amount:"—",status:"none",flag:"—"},
+    agentStates: {}
+  },
+  {
+    id: 11, slug: "s2_agent3",
+    title: "2 Flags Fired — Routing to Human Gate",
+    subtitle: "Agent 3 — Classifier",
+    scenario: 2, agent: {num:3, name:"Classifier", color:"var(--yellow)"},
+    terminal: [
+      {cls:"t-err",  text:'[FLAG] TRIGGER 1: "ALTA Table A Survey" in ALWAYS_FLAG_SERVICES'},
+      {cls:"t-gray", text:"       → Always requires Robert review (complex, high-value)"},
+      {cls:"t-err",  text:'[FLAG] TRIGGER 10: Monroe County → non-standard pricing, limited crew'},
+      {cls:"t-warn", text:"[INFO] Flood zone AE → elevation_cert_required = True (+$225)"},
+      {cls:"t-warn", text:"[INFO] Pricing deferred — must await Human Gate approval"},
+      {cls:"t-cmd",  text:"UPDATE processed_orders SET status='flagged', flag_reason=..."},
+    ],
+    db: {order_id:"ORD-2026-1002",service:"ALTA Table A Survey",customer:"Coastal Builders LLC",county:"Monroe",amount:"TBD",status:"flagged",flag:"ALWAYS_FLAG + Monroe County"},
+    agentStates: {2:"done", 3:"active"}
+  },
+  {
+    id: 12, slug: "s2_agent4_notify",
+    title: "Teams Notification Sent to Robert",
+    subtitle: "Agent 4 — Human Gate",
+    scenario: 2, agent: {num:4, name:"Human Gate", color:"var(--red)"},
+    terminal: [
+      {cls:"t-cmd",  text:"POST TEAMS_WEBHOOK_URL  (MS Teams MessageCard)"},
+      {cls:"t-gray", text:'Payload: {Order: ORD-2026-1002, Service: ALTA Table A Survey,'},
+      {cls:"t-gray", text:'         County: Monroe, Flags: ALWAYS_FLAG + Monroe County,'},
+      {cls:"t-gray", text:'         ElevationCert: Required (Zone AE), Amount: TBD}'},
+      {cls:"t-ok",   text:"[OK] Teams notification delivered — Robert notified"},
+      {cls:"t-cmd",  text:"UPDATE processed_orders SET status='awaiting_approval'"},
+    ],
+    db: {order_id:"ORD-2026-1002",service:"ALTA Table A Survey",customer:"Coastal Builders LLC",county:"Monroe",amount:"TBD",status:"awaiting",flag:"ALWAYS_FLAG + Monroe County"},
+    agentStates: {2:"done", 3:"done", 4:"active"}
+  },
+  {
+    id: 13, slug: "s2_agent4_approve",
+    title: "Robert Approves — Pipeline Resumes",
+    subtitle: "Agent 4 — Human Gate · Agent 5 · Agent 6 · Agent 7 · Agent 8",
+    scenario: 2, agent: {num:4, name:"Human Gate", color:"var(--red)"},
+    terminal: [
+      {cls:"t-ok",  text:'[REPLY] Robert (Teams): "approve"'},
+      {cls:"t-cmd", text:"UPDATE processed_orders SET status='approved'"},
+      {cls:"t-ok",  text:"[A5] ALTA price: $1,500 + elevation cert $225 = $1,725.00"},
+      {cls:"t-ok",  text:"[A6] B2B estimate generated (concise, professional tone)"},
+      {cls:"t-ok",  text:"[A7] All 4 checks passed"},
+      {cls:"t-ok",  text:"[A8] Estimate sent → coastal.builders@email.com"},
+    ],
+    db: {order_id:"ORD-2026-1002",service:"ALTA Table A Survey",customer:"Coastal Builders LLC",county:"Monroe",amount:"$1,725.00",status:"sent",flag:"Approved by Robert"},
+    agentStates: {2:"done", 3:"done", 4:"done", 5:"done", 6:"done", 7:"done", 8:"done"}
+  },
+  {
+    id: 14, slug: "s2_complete",
+    title: "Scenario 2 Complete",
+    subtitle: "ORD-2026-1002 · $1,725.00 · Coastal Builders LLC · Monroe County",
+    scenario: 2, agent: null,
+    terminal: [
+      {cls:"t-ok",  text:"[COMPLETE] ORD-2026-1002 approved and sent"},
+      {cls:"t-ok",  text:"Total: $1,725.00 (ALTA $1,500 + elevation cert $225)"},
+      {cls:"t-gray",text:"Full audit trail in agent_decision_log (Robert's approval logged)"},
+      {cls:"t-ok",  text:"Nothing bypassed Robert — every flag goes to Human Gate"},
+      {cls:"t-gray",text:"→ Scenario 3: AI self-correction loop..."},
+    ],
+    db: {order_id:"ORD-2026-1002",service:"ALTA Table A Survey",customer:"Coastal Builders LLC",county:"Monroe",amount:"$1,725.00",status:"sent",flag:"Approved by Robert"},
+    agentStates: {2:"done", 3:"done", 4:"done", 5:"done", 6:"done", 7:"done", 8:"done"}
+  },
+
+  // ── SCENARIO 3 ───────────────────────────────────────────────────────────
+  {
+    id: 15, slug: "s3_intro",
+    title: "Scenario 3: Reviewer Self-Correction",
+    subtitle: "Elevation Certificate · Maria Santos · Miami Beach FL · Zone AE",
+    scenario: 3, agent: null,
+    terminal: [
+      {cls:"t-gray", text:"Order: ORD-2026-1003"},
+      {cls:"t-gray", text:"Service: Elevation Certificate"},
+      {cls:"t-gray", text:"Client: Maria Santos (individual)"},
+      {cls:"t-gray", text:"Flood zone: AE — elevation cert required (+$225 add-on)"},
+      {cls:"t-warn", text:"[DEMO] Writer will make a pricing error on attempt 1"},
+      {cls:"t-ok",   text:"→ Reviewer catches it, Writer self-corrects on attempt 2"},
+    ],
+    db: {order_id:"ORD-2026-1003",service:"Elevation Certificate",customer:"Maria Santos",county:"Miami-Dade",amount:"—",status:"pending",flag:"—"},
+    agentStates: {2:"active"}
+  },
+  {
+    id: 16, slug: "s3_agent5",
+    title: "Zone AE — Elevation Cert Add-On Applied",
+    subtitle: "Agent 5 — Pricing Engine",
+    scenario: 3, agent: {num:5, name:"Pricing Engine", color:"var(--purple)"},
+    terminal: [
+      {cls:"t-ok",  text:"elevation_cert_required = True  (FEMA Zone AE detected)"},
+      {cls:"t-cmd", text:"GET /pricing?service=Elevation+Certificate&tier=individual"},
+      {cls:"t-gray",text:'Response: {"amount": 225.00}'},
+      {cls:"t-ok",  text:"Base amount:          $225.00"},
+      {cls:"t-ok",  text:"Elevation cert add-on: $225.00  (Zone AE mandatory)"},
+      {cls:"t-ok",  text:"TOTAL ESTIMATE:        $450.00"},
+    ],
+    db: {order_id:"ORD-2026-1003",service:"Elevation Certificate",customer:"Maria Santos",county:"Miami-Dade",amount:"$450.00",status:"priced",flag:"—"},
+    agentStates: {2:"done", 3:"done", 5:"active"}
+  },
+  {
+    id: 17, slug: "s3_agent6_bad",
+    title: "Writer — Attempt 1 — Price Error",
+    subtitle: "Agent 6 — Estimate Writer (Attempt 1 of 3)",
+    scenario: 3, agent: {num:6, name:"Writer (Attempt 1)", color:"var(--red)"},
+    terminal: [
+      {cls:"t-cmd", text:"POST anthropic/messages  model=claude-sonnet-4-6"},
+      {cls:"t-ok",  text:"[OK] Draft email generated"},
+      {cls:"t-err", text:'[ERROR] Email body shows: "Total: $350.00"  ← WRONG'},
+      {cls:"t-warn",text:"       Correct total: $450.00 (= $225 base + $225 elev. cert)"},
+      {cls:"t-gray",text:"Writer forgot the elevation certificate add-on"},
+      {cls:"t-warn",text:"→ Sending to Reviewer for accuracy check..."},
+    ],
+    db: {order_id:"ORD-2026-1003",service:"Elevation Certificate",customer:"Maria Santos",county:"Miami-Dade",amount:"$450.00",status:"written",flag:"draft has price error"},
+    agentStates: {2:"done", 3:"done", 5:"done", 6:"active"}
+  },
+  {
+    id: 18, slug: "s3_agent7_fail",
+    title: "Reviewer Catches the Error",
+    subtitle: "Agent 7 — Estimate Reviewer (Checking Attempt 1)",
+    scenario: 3, agent: {num:7, name:"Reviewer — FAIL", color:"var(--red)"},
+    terminal: [
+      {cls:"t-err",  text:'[FAIL] Price check: "$350" in email ≠ $450.00 estimate ✗'},
+      {cls:"t-ok",   text:'[PASS] Customer name: "Maria" present ✓'},
+      {cls:"t-ok",   text:'[PASS] Property address: "456 Ocean Drive" correct ✓'},
+      {cls:"t-ok",   text:'[PASS] Change order clause: present ✓'},
+      {cls:"t-warn", text:"→ Correction note: Total must be $450 = $225 base + $225 elev cert"},
+      {cls:"t-cmd",  text:"Calling write_estimate(correction_note=...) — attempt 2 of 3"},
+    ],
+    db: {order_id:"ORD-2026-1003",service:"Elevation Certificate",customer:"Maria Santos",county:"Miami-Dade",amount:"$450.00",status:"written",flag:"reviewer check failed (attempt 1)"},
+    agentStates: {2:"done", 3:"done", 5:"done", 6:"done", 7:"active"}
+  },
+  {
+    id: 19, slug: "s3_agent6_fixed",
+    title: "Writer — Attempt 2 — Corrected",
+    subtitle: "Agent 6 — Estimate Writer (Attempt 2 of 3)",
+    scenario: 3, agent: {num:6, name:"Writer (Attempt 2)", color:"var(--green)"},
+    terminal: [
+      {cls:"t-cmd",  text:"POST anthropic/messages  (with correction_note injected)"},
+      {cls:"t-gray", text:'Correction: "Total must be $450 = $225 base + $225 elevation cert"'},
+      {cls:"t-ok",   text:"[OK] New draft generated with correction applied"},
+      {cls:"t-ok",   text:'Email body now shows: "Total: $450.00"'},
+      {cls:"t-gray", text:"Includes FEMA Zone AE flood context for Maria's reference"},
+      {cls:"t-ok",   text:"→ Sending corrected draft to Reviewer..."},
+    ],
+    db: {order_id:"ORD-2026-1003",service:"Elevation Certificate",customer:"Maria Santos",county:"Miami-Dade",amount:"$450.00",status:"written",flag:"—"},
+    agentStates: {2:"done", 3:"done", 5:"done", 6:"active", 7:"done"}
+  },
+  {
+    id: 20, slug: "s3_agent7_pass",
+    title: "All 4 Checks Pass — Attempt 2",
+    subtitle: "Agent 7 — Estimate Reviewer (Checking Attempt 2)",
+    scenario: 3, agent: {num:7, name:"Reviewer — PASS", color:"var(--green)"},
+    terminal: [
+      {cls:"t-ok",  text:'[PASS] Price check: "$450.00" in email = estimate ✓'},
+      {cls:"t-ok",  text:'[PASS] Customer name: "Maria" present ✓'},
+      {cls:"t-ok",  text:'[PASS] Property address: "456 Ocean Drive" correct ✓'},
+      {cls:"t-ok",  text:'[PASS] Change order clause: present and complete ✓'},
+      {cls:"t-ok",  text:"[PASS] All 4 checks passed on attempt 2"},
+      {cls:"t-cmd", text:"UPDATE processed_orders SET status='reviewed'"},
+    ],
+    db: {order_id:"ORD-2026-1003",service:"Elevation Certificate",customer:"Maria Santos",county:"Miami-Dade",amount:"$450.00",status:"reviewed",flag:"—"},
+    agentStates: {2:"done", 3:"done", 5:"done", 6:"done", 7:"active", 8:"done"}
+  },
+
+  // ── DAILY REPORT ─────────────────────────────────────────────────────────
+  {
+    id: 21, slug: "agent9_report",
+    title: "Agent 9 — Daily Teams Digest",
+    subtitle: "Posted to FTF Invoicing channel at end of each business day",
+    scenario: 0, agent: {num:9, name:"Reporter", color:"var(--cyan)"},
+    terminal: [
+      {cls:"t-cmd",  text:"POST TEAMS_WEBHOOK_URL  (daily summary MessageCard)"},
+      {cls:"t-ok",   text:"Estimates Sent Today:     8"},
+      {cls:"t-warn", text:"Flagged (Needs Review):   2"},
+      {cls:"t-warn", text:"Awaiting Approval:        1"},
+      {cls:"t-ok",   text:"Ready to Send:            3"},
+      {cls:"t-gray", text:"Active Pipeline (total):  14"},
+      {cls:"t-ok",   text:"[OK] Daily digest delivered to Ryan, Robert, Wyatt, Mark"},
+    ],
+    db: {order_id:"—",service:"Daily summary",customer:"—",county:"—",amount:"8 sent",status:"sent",flag:"—"},
+    agentStates: {9:"active"}
+  },
+
+  // ── OUTRO ─────────────────────────────────────────────────────────────────
+  {
+    id: 22, slug: "outro",
+    title: "Sprint 0–6 Complete",
+    subtitle: "Estimate generation loop built, tested, and functionally ready",
+    scenario: 0, agent: null,
+    terminal: [
+      {cls:"t-ok",   text:"9 agents  |  186 unit tests  |  0 failures  |  6 sprints"},
+      {cls:"t-warn", text:"Sprint 7: AR Follow-Up Loop  — needs Jessica recording (I-006)"},
+      {cls:"t-warn", text:"Sprint 8: Monthly Statements — needs Wyatt recording (I-007)"},
+      {cls:"t-ok",   text:"Sprint 9: Orchestrator — full 24/7 autonomous pipeline"},
+      {cls:"t-ok",   text:"Sprint 10: Staging test with live FTF data"},
+      {cls:"t-ok",   text:"Sprint 11: Limited production go-live"},
+    ],
+    db: {order_id:"—",service:"—",customer:"—",county:"—",amount:"—",status:"none",flag:"—"},
+    agentStates: {}
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let currentScene = 0;
+let isPlaying = false;
+let autoAdvance = true;
+let progressTimer = null;
+let barAnimTimer = null;
+
+const player = document.getElementById("player");
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  AUDIO FILE MAP
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const AUDIO = {
+   0: "demo_audio/scene_00_intro.mp3",
+   1: "demo_audio/scene_01_pipeline_overview.mp3",
+   2: "demo_audio/scene_02_s1_intro.mp3",
+   3: "demo_audio/scene_03_s1_agent2.mp3",
+   4: "demo_audio/scene_04_s1_agent3.mp3",
+   5: "demo_audio/scene_05_s1_agent5.mp3",
+   6: "demo_audio/scene_06_s1_agent6.mp3",
+   7: "demo_audio/scene_07_s1_agent7.mp3",
+   8: "demo_audio/scene_08_s1_agent8.mp3",
+   9: "demo_audio/scene_09_s1_complete.mp3",
+  10: "demo_audio/scene_10_s2_intro.mp3",
+  11: "demo_audio/scene_11_s2_agent3.mp3",
+  12: "demo_audio/scene_12_s2_agent4_notify.mp3",
+  13: "demo_audio/scene_13_s2_agent4_approve.mp3",
+  14: "demo_audio/scene_14_s2_complete.mp3",
+  15: "demo_audio/scene_15_s3_intro.mp3",
+  16: "demo_audio/scene_16_s3_agent5.mp3",
+  17: "demo_audio/scene_17_s3_agent6_bad.mp3",
+  18: "demo_audio/scene_18_s3_agent7_fail.mp3",
+  19: "demo_audio/scene_19_s3_agent6_fixed.mp3",
+  20: "demo_audio/scene_20_s3_agent7_pass.mp3",
+  21: "demo_audio/scene_21_agent9_report.mp3",
+  22: "demo_audio/scene_22_outro.mp3",
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  RENDER SCENE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function renderScene(idx) {
+  const s = SCENES[idx];
+
+  // fade
+  const content = document.getElementById("content-area");
+  content.classList.add("scene-fade");
+  setTimeout(() => { _applyScene(s); content.classList.remove("scene-fade"); }, 220);
+
+  // scene counter
+  document.getElementById("sc-cur").textContent = idx + 1;
+  document.getElementById("scene-title-bar").textContent = s.title.substring(0, 35);
+
+  // progress
+  document.getElementById("progress-fill").style.width = ((idx / (SCENES.length - 1)) * 100) + "%";
+
+  // audio
+  const src = AUDIO[idx];
+  if (src) {
+    player.src = src;
+    player.load();
+  } else {
+    player.src = "";
+  }
+}
+
+function _applyScene(s) {
+  // scenario banner
+  const banner = document.getElementById("scenario-banner");
+  banner.className = "sc" + s.scenario;
+  banner.textContent = s.scenario > 0 ? "SCENARIO " + s.scenario : "";
+
+  // agent badge
+  const badge = document.getElementById("agent-badge");
+  if (s.agent) {
+    badge.style.display = "inline-flex";
+    badge.style.background = s.agent.color.replace("var(--", "").replace(")", "");
+    badge.style.backgroundColor = s.agent.color;
+    badge.style.color = "#000";
+    badge.innerHTML = `<span style="opacity:0.7">AGENT</span>&nbsp;${s.agent.num}&nbsp;—&nbsp;${s.agent.name}`;
+  } else {
+    badge.style.display = "none";
+  }
+
+  // title / subtitle
+  document.getElementById("slide-title").textContent = s.title;
+  document.getElementById("slide-subtitle").textContent = s.subtitle;
+
+  // terminal
+  const tc = document.getElementById("terminal-content");
+  tc.innerHTML = "";
+  s.terminal.forEach((line, i) => {
+    const el = document.createElement("div");
+    el.className = "t-line " + line.cls;
+    el.textContent = line.text;
+    el.style.animationDelay = (i * 80) + "ms";
+    tc.appendChild(el);
+  });
+
+  // DB state
+  const db = s.db;
+  _dbVal("db-order-id", db.order_id, "");
+  _dbVal("db-service",  db.service,  "");
+  _dbVal("db-customer", db.customer, "");
+  _dbVal("db-county",   db.county,   "");
+  _dbVal("db-amount",   db.amount,   "");
+  _dbVal("db-flag",     db.flag,     "");
+  const statusEl = document.getElementById("db-status");
+  statusEl.textContent = db.status === "none" ? "—" : db.status;
+  statusEl.className = "db-val status-" + (db.status === "awaiting_approval" ? "awaiting" : db.status);
+
+  // pipeline sidebar
+  _updatePipeline(s.agentStates || {});
+
+  // scenario progress dots
+  _updateScenarioDots(s);
+}
+
+function _dbVal(id, val, cls) {
+  const el = document.getElementById(id);
+  el.textContent = val || "—";
+  if (cls) el.className = "db-val " + cls;
+}
+
+function _updatePipeline(states) {
+  for (let n = 2; n <= 9; n++) {
+    const step = document.querySelector(`.agent-step[data-agent="${n}"]`);
+    if (!step) continue;
+    const st = states[n];
+    step.className = "agent-step" + (st ? " " + st : "");
+    const statusEl = document.getElementById("st" + n);
+    if (statusEl) {
+      statusEl.textContent = st === "active" ? "running..." : st === "done" ? "done" : st === "flagged" ? "flagged" : "idle";
+    }
+  }
+}
+
+function _updateScenarioDots(s) {
+  const sceneId = s.id;
+  // Scenario 1: scenes 2-9, Scenario 2: scenes 10-14, Scenario 3: scenes 15-20
+  if (sceneId >= 2 && sceneId <= 9) {
+    const done = sceneId - 2 + 1;
+    document.getElementById("sp1").style.color = "var(--green)";
+    document.getElementById("sp1").textContent = "●".repeat(done) + "○".repeat(8 - done);
+  }
+  if (sceneId >= 10 && sceneId <= 14) {
+    const done = sceneId - 10 + 1;
+    document.getElementById("sp2").style.color = "var(--yellow)";
+    document.getElementById("sp2").textContent = "●".repeat(done) + "○".repeat(5 - done);
+  }
+  if (sceneId >= 15 && sceneId <= 20) {
+    const done = sceneId - 15 + 1;
+    document.getElementById("sp3").style.color = "var(--cyan)";
+    document.getElementById("sp3").textContent = "●".repeat(done) + "○".repeat(6 - done);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  AVATAR SPEAKING ANIMATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _barPhase = 0;
+const BAR_HEIGHTS = [
+  [4,8,14,20,14,8,4],
+  [6,14,20,28,20,14,6],
+  [8,16,24,28,24,16,8],
+  [4,10,18,24,18,10,4],
+  [6,12,20,26,20,12,6],
+];
+
+function _startSpeaking() {
+  document.getElementById("avatar-glow").classList.add("speaking");
+  document.getElementById("avatar-svg").classList.add("speaking-anim");
+  document.getElementById("speaking-indicator").classList.add("on");
+  document.getElementById("speaking-text").textContent = "Speaking...";
+
+  const bars = [0,1,2,3,4,5,6].map(i => document.getElementById("b"+i));
+  bars.forEach(b => b.classList.add("active"));
+
+  barAnimTimer = setInterval(() => {
+    _barPhase = (_barPhase + 1) % BAR_HEIGHTS.length;
+    const hs = BAR_HEIGHTS[_barPhase];
+    bars.forEach((b, i) => { if (b) b.style.height = hs[i] + "px"; });
+  }, 180);
+}
+
+function _stopSpeaking() {
+  document.getElementById("avatar-glow").classList.remove("speaking");
+  document.getElementById("avatar-svg").classList.remove("speaking-anim");
+  document.getElementById("speaking-indicator").classList.remove("on");
+  document.getElementById("speaking-text").textContent = "Ready";
+
+  clearInterval(barAnimTimer);
+  const bars = [0,1,2,3,4,5,6].map(i => document.getElementById("b"+i));
+  const idle = [4,8,14,18,14,8,4];
+  bars.forEach((b, i) => { if (b) { b.classList.remove("active"); b.style.height = idle[i] + "px"; } });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  PLAYBACK CONTROLS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function playAudio() {
+  if (!player.src || player.src.endsWith("html")) return;
+  player.play().catch(() => {});
+}
+
+function pauseAudio() {
+  player.pause();
+}
+
+function togglePlay() {
+  if (player.paused || !player.src.includes("mp3")) {
+    playAudio();
+    document.getElementById("btn-play").textContent = "⏸ Pause";
+    isPlaying = true;
+  } else {
+    pauseAudio();
+    document.getElementById("btn-play").textContent = "▶ Play";
+    isPlaying = false;
+  }
+}
+
+function goNext() {
+  if (currentScene < SCENES.length - 1) {
+    currentScene++;
+    renderScene(currentScene);
+    if (isPlaying) setTimeout(playAudio, 200);
+  } else {
+    isPlaying = false;
+    document.getElementById("btn-play").textContent = "▶ Play";
+    _stopSpeaking();
+  }
+}
+
+function goPrev() {
+  if (currentScene > 0) {
+    currentScene--;
+    renderScene(currentScene);
+    if (isPlaying) setTimeout(playAudio, 200);
+  }
+}
+
+function toggleAutoplay() {
+  autoAdvance = !autoAdvance;
+  const dot = document.getElementById("autoplay-dot");
+  dot.className = "autoplay-dot" + (autoAdvance ? " on" : "");
+}
+
+document.getElementById("btn-play").addEventListener("click", togglePlay);
+document.getElementById("btn-next").addEventListener("click", goNext);
+document.getElementById("btn-prev").addEventListener("click", goPrev);
+
+// audio events
+player.addEventListener("play",  _startSpeaking);
+player.addEventListener("pause", _stopSpeaking);
+player.addEventListener("ended", () => {
+  _stopSpeaking();
+  if (autoAdvance) setTimeout(goNext, 600);
+});
+
+player.addEventListener("timeupdate", () => {
+  if (!player.duration) return;
+  const pct = (player.currentTime / player.duration) * 100;
+  // small fill within current scene portion
+  const base = (currentScene / (SCENES.length - 1)) * 100;
+  const seg  = (1 / (SCENES.length - 1)) * 100;
+  document.getElementById("progress-fill").style.width = (base + (pct/100)*seg) + "%";
+  document.getElementById("time-current").textContent = _fmt(player.currentTime);
+  document.getElementById("time-total").textContent   = _fmt(player.duration);
+});
+
+function _fmt(s) {
+  if (!s || isNaN(s)) return "0:00";
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return m + ":" + String(sec).padStart(2, "0");
+}
+
+// click on progress bar
+document.getElementById("progress-bar-bg").addEventListener("click", e => {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  const scIdx = Math.round(pct * (SCENES.length - 1));
+  currentScene = Math.max(0, Math.min(SCENES.length - 1, scIdx));
+  renderScene(currentScene);
+  if (isPlaying) setTimeout(playAudio, 200);
+});
+
+// keyboard shortcuts
+document.addEventListener("keydown", e => {
+  if (e.key === " " || e.key === "k") { e.preventDefault(); togglePlay(); }
+  if (e.key === "ArrowRight" || e.key === "l") goNext();
+  if (e.key === "ArrowLeft"  || e.key === "j") goPrev();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+renderScene(0);
+</script>
+</body>
+</html>
