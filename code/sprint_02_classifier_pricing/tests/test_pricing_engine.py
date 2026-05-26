@@ -174,13 +174,36 @@ def test_pricing_api_error_propagates():
             price_order(_BASE_CLASS)
 
 
-def test_override_error_propagates():
+def test_override_error_flags_order_and_raises_agent_error():
+    # I-057: overrides API unavailable → flag for human (not crash) — AgentError raised
+    from core.exceptions import AgentError
     with patch("agents.agent_05_pricing_engine.get_pricing_overrides",
                side_effect=PricingError("overrides down")), \
+         patch("agents.agent_05_pricing_engine.save_order_state") as mock_save, \
+         patch("agents.agent_05_pricing_engine.log_decision"):
+        with pytest.raises(AgentError, match="overrides API unavailable"):
+            price_order(_OVERRIDE_CLASS)
+
+    # DB must be updated to flagged status
+    flag_save = mock_save.call_args
+    assert flag_save[1].get("status") == "flagged"
+    assert "overrides API unavailable" in flag_save[1].get("flag_reason", "")
+
+
+# ── I-057: overrides fallback ─────────────────────────────────────────────────
+
+def test_override_unavailable_does_not_use_standard_rate():
+    # When overrides API fails, order must NOT be priced at standard rate
+    from core.exceptions import AgentError
+    with patch("agents.agent_05_pricing_engine.get_pricing_overrides",
+               side_effect=PricingError("endpoint 404")), \
+         patch("agents.agent_05_pricing_engine.get_pricing") as mock_get_pricing, \
          patch("agents.agent_05_pricing_engine.save_order_state"), \
          patch("agents.agent_05_pricing_engine.log_decision"):
-        with pytest.raises(PricingError, match="overrides down"):
+        with pytest.raises(AgentError):
             price_order(_OVERRIDE_CLASS)
+
+    mock_get_pricing.assert_not_called()
 
 
 # ── UT-02-21  return dict structure ──────────────────────────────────────────

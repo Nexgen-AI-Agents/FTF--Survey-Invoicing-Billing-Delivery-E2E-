@@ -38,7 +38,22 @@ def price_order(classification: dict) -> dict:
     pricing_source = "ftf_api"
 
     if special_pricing:
-        overrides = get_pricing_overrides()  # raises PricingError on failure
+        try:
+            overrides = get_pricing_overrides()
+        except PricingError as exc:
+            # I-057: /pricing/overrides endpoint may not exist on staging/prod.
+            # Cannot safely use standard rate for a customer with negotiated pricing
+            # — flag for human to confirm the correct rate.
+            flag_reason = f"special_pricing=True but overrides API unavailable ({exc}) — human must confirm rate"
+            log.warning("price_order overrides unavailable order=%s — flagging", order_id)
+            save_order_state(order_id, status="flagged", flag_reason=flag_reason,
+                             flagged_at=datetime.now(timezone.utc).isoformat())
+            log_decision(agent_name=AGENT_NAME, decision="flagged", order_id=order_id,
+                         reason=flag_reason, input_summary=f"service={service_type}",
+                         output_summary="flagged — overrides API unavailable", model_used=PRICING_MODEL)
+            from core.exceptions import AgentError
+            raise AgentError(flag_reason) from exc
+
         if service_type in overrides:
             raw = overrides[service_type]
             if isinstance(raw, dict):

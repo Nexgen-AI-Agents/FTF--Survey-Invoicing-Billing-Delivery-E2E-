@@ -200,4 +200,17 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 ### Full Test Suite
 - Sprints 1–6: **150 tests, 150 pass** (0 fail, 0 skip)
 
+## [Sprint 2 — I-055/I-057 Fixes] — Pricing Engine Fallback — 2026-05-26
+
+### Fixed
+- `code/sprint_02_classifier_pricing/agents/agent_05_pricing_engine.py` — I-057: `get_pricing_overrides()` now wrapped in try/except — on `PricingError`, order is saved as `status="flagged"` with reason and `AgentError` raised; standard rate is never silently applied to a special_pricing customer
+- `code/sprint_02_classifier_pricing/tests/test_pricing_engine.py` — updated `test_override_error_propagates` to expect `AgentError` + flagged DB state; added `test_override_unavailable_does_not_use_standard_rate`
+
+### Issues Closed
+- I-055 (MAJOR) — B-II Title Review: no human review required as of now; full review before staging→production API cutover
+- I-057 (MAJOR) — /pricing/overrides fallback added; confirm endpoint with FTF dev before Sprint 10
+
+### Full Test Suite
+- Sprints 1–6: **151 tests, 151 pass** (0 fail, 0 skip)
+
 <!-- Sprint entries added here as sprints are completed -->
