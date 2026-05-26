@@ -31,7 +31,9 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
   - Narration: "50 new orders a week" → "a lot of new orders a week"
   - Slide bullet: "50+ orders/week" → "Many orders/week"
   - Classify scene: competitor check now explained — "competitor email routes to human review, not auto-quoted"
-- `docs/demos/20260526_v7/` — v7 video + transcript (generated)
+- `docs/demos/20260526_v7/demo.mp4` — 271s (4.5 min), 9.1 MB, exit 0
+- `docs/demos/20260526_v7/transcript.md` — full timestamped transcript
+- classify scene: 16.4s (v6) → 24.4s (competitor explanation added)
 
 ---
 
