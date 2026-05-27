@@ -32,7 +32,7 @@ def test_returns_x_when_no_features(mock_get):
 @patch("core.fema_client.httpx.get")
 def test_raises_on_timeout(mock_get):
     mock_get.side_effect = httpx.TimeoutException("timed out")
-    with pytest.raises(FEMAUnavailableError, match="timed out"):
+    with pytest.raises(FEMAUnavailableError, match="all 3 strategies failed"):
         check_flood_zone(26.7998, -80.0642)
 
 
