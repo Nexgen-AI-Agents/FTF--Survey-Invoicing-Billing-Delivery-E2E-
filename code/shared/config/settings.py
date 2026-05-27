@@ -20,6 +20,7 @@ SERVICE_STATE:        str = "FL"
 # FTF API
 FTF_API_BASE_URL: str = os.getenv("FTF_API_BASE_URL", "https://stage.fieldtofinish.jobs/ftf-ai-api/v1")
 FTF_API_KEY:      str | None = os.getenv("FTF_API_KEY")
+FTF_ORDER_URL:    str = os.getenv("FTF_ORDER_URL", "https://stage.fieldtofinish.jobs/admin/orders")
 
 # FTF Books (AR Excel download — session-cookie auth)
 FTF_BOOKS_BASE_URL: str      = os.getenv("FTF_BOOKS_BASE_URL", "https://stage.fieldtofinish.jobs")
@@ -68,3 +69,27 @@ OBSIDIAN_API_KEY:  str | None = os.getenv("Obsidian")
 OBSIDIAN_BASE_URL: str        = os.getenv("OBSIDIAN_BASE_URL", "http://localhost:27123")
 
 LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+
+# FTF API status keyword map (confirmed 2026-05-27 — Prateek)
+# Keys = FTF API query param values; values = CRM display labels.
+# "needs_fp" and "set_up" are special-cased: not the CRM label, must use these exact keys.
+# "set_up" (Set Up) has 0 orders in production — kept for completeness.
+FTF_STATUS_KEYWORD_MAP: dict[str, str] = {
+    "pending":        "Pending",
+    "quote":          "Quote",
+    "assigned":       "Assigned",
+    "in_field":       "In-Field",
+    "drafting_queue": "Drafting Queue",
+    "drafting":       "Drafting",
+    "checking":       "Checking",
+    "complete":       "Complete",
+    "delivered":      "Delivered",
+    "on_hold":        "On Hold",
+    "in_progress":    "In Progress",
+    "go_back":        "Go Back",
+    "set_corners":    "Set Corners",
+    "re_draft":       "Re-Draft",
+    "canceled":       "Canceled",
+    "needs_fp":       "Needs FP",   # special key — CRM label differs
+    "set_up":         "Set Up",     # special key — 0 orders in prod; retained for completeness
+}

@@ -255,6 +255,9 @@ def classify_order(order_id: str) -> dict:
         status=new_status,
         service_type=service_type,
         is_flood_zone=is_flood_zone,
+        pricing_tier=pricing_tier,
+        elevation_cert_required=elevation_cert_required,
+        special_pricing=special_pricing,
         classified_at=datetime.now(timezone.utc).isoformat(),
     )
     if customer_email:

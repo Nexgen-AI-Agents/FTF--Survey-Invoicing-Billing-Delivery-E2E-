@@ -96,7 +96,7 @@ def test_run_no_alerts_when_no_overdue():
         from agents.agent_11_ar_escalation import run
         result = run()
 
-    assert result == {"alerts_90": 0, "alerts_60": 0}
+    assert result == {"alerts_90": 0, "alerts_60": 0, "refund_stopped": 0}
     mock_alert.assert_not_called()
 
 

@@ -15,6 +15,7 @@ _VALID_ORDER_COLUMNS = {
     "status", "service_type", "customer_email", "property_lat", "property_lng",
     "is_flood_zone", "estimate_amount", "flag_reason", "retry_count",
     "draft_estimate",
+    "pricing_tier", "elevation_cert_required", "special_pricing",
     "classified_at", "priced_at", "written_at", "reviewed_at", "sent_at", "flagged_at",
 }
 
@@ -56,6 +57,24 @@ def get_flagged_order() -> Optional[dict]:
         return dict(row) if row else None
 
 
+def get_all_flagged_orders() -> list[dict]:
+    """Return all orders with status='flagged', oldest first — for batch approval digest."""
+    with _get_cursor() as cur:
+        cur.execute(
+            "SELECT * FROM processed_orders WHERE status = 'flagged' ORDER BY created_at ASC"
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+
+def get_all_awaiting_orders() -> list[dict]:
+    """Return all orders with status='awaiting_approval', oldest first."""
+    with _get_cursor() as cur:
+        cur.execute(
+            "SELECT * FROM processed_orders WHERE status = 'awaiting_approval' ORDER BY flagged_at ASC"
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+
 def get_order_by_id(order_id: str) -> Optional[dict]:
     """Return processed_orders row for a given order_id, or None if not found."""
     with _get_cursor() as cur:
@@ -71,6 +90,16 @@ def get_pending_order() -> Optional[dict]:
     with _get_cursor() as cur:
         cur.execute(
             "SELECT * FROM processed_orders WHERE status = 'pending' ORDER BY created_at ASC LIMIT 1"
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
+def get_classified_order() -> Optional[dict]:
+    """Return the oldest order with status='classified', awaiting pricing."""
+    with _get_cursor() as cur:
+        cur.execute(
+            "SELECT * FROM processed_orders WHERE status = 'classified' ORDER BY created_at ASC LIMIT 1"
         )
         row = cur.fetchone()
         return dict(row) if row else None
@@ -470,3 +499,79 @@ def update_statement_status(
             """,
             (status, sent_at, client_email, statement_month),
         )
+
+
+# ── Pricing Examples (I-067) ──────────────────────────────────────────────────
+
+def save_pricing_example(
+    job_description: str,
+    final_price: float,
+    service_type: Optional[str] = None,
+    county: Optional[str] = None,
+    lot_size_acres: Optional[float] = None,
+    complexity_notes: Optional[str] = None,
+    pricing_rationale: Optional[str] = None,
+    entered_by: str = "Robert",
+    domain: str = "pricing",
+) -> int:
+    """Insert a new pricing example entered by Robert/Mark. Returns new row id."""
+    with _get_cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO pricing_examples
+                (job_description, service_type, county, lot_size_acres,
+                 complexity_notes, final_price, pricing_rationale,
+                 entered_by, domain)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+            """,
+            (
+                job_description, service_type, county, lot_size_acres,
+                complexity_notes, final_price, pricing_rationale,
+                entered_by, domain,
+            ),
+        )
+        row = cur.fetchone()
+        return row["id"] if row else -1
+
+
+def get_pricing_examples(
+    service_type: Optional[str] = None,
+    county: Optional[str] = None,
+    limit: int = 20,
+) -> list[dict]:
+    """Return recent pricing examples, optionally filtered by service_type and/or county."""
+    clauses: list[str] = []
+    params: list = []
+
+    if service_type:
+        clauses.append("LOWER(service_type) = LOWER(%s)")
+        params.append(service_type)
+    if county:
+        clauses.append("LOWER(county) = LOWER(%s)")
+        params.append(county)
+
+    where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    params.append(limit)
+
+    with _get_cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT * FROM pricing_examples
+            {where}
+            ORDER BY created_at DESC
+            LIMIT %s
+            """,
+            params,
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+
+def get_recent_pricing_examples(limit: int = 10) -> list[dict]:
+    """Return the most recent pricing examples across all service types."""
+    with _get_cursor() as cur:
+        cur.execute(
+            "SELECT * FROM pricing_examples ORDER BY created_at DESC LIMIT %s",
+            (limit,),
+        )
+        return [dict(row) for row in cur.fetchall()]

@@ -2,23 +2,47 @@
 
 Downloads unpaid invoices from FTF Books, identifies overdue accounts
 (>= 60 days), and upserts them into ar_reminders for escalation processing.
+
+I-063 hard rule: if any invoice notes contain refund intent, alert Jessica
+immediately and skip the AR reminder flow for that order.
 """
 
-from core.db import upsert_ar_reminder
+from core.db import get_order_by_id, upsert_ar_reminder
 from core.ftf_books_client import get_unpaid_invoices
 from core.logger import get_logger
+from core.refund_guard import alert_jessica_refund, detect_refund_intent
 
 logger = get_logger(__name__)
 
 MIN_DAYS_OVERDUE = 60
 
 
+def _check_refund(inv: dict) -> bool:
+    """Return True if this invoice/order contains any refund-related text."""
+    order_rec = get_order_by_id(inv["order_id"])
+    if not order_rec:
+        return False
+    suspect_fields = [
+        order_rec.get("flag_reason") or "",
+        order_rec.get("draft_estimate") or "",
+    ]
+    for field_text in suspect_fields:
+        if detect_refund_intent(field_text):
+            alert_jessica_refund(inv["order_id"], field_text)
+            return True
+    return False
+
+
 def run() -> dict:
     invoices = get_unpaid_invoices()
 
     tracked = 0
+    refund_stopped = 0
     for inv in invoices:
         if inv["days_overdue"] >= MIN_DAYS_OVERDUE:
+            if _check_refund(inv):
+                refund_stopped += 1
+                continue
             upsert_ar_reminder(
                 order_id=inv["order_id"],
                 customer_email=inv["customer_email"],
@@ -28,8 +52,11 @@ def run() -> dict:
             )
             tracked += 1
 
-    logger.info("agent_10_ar_scanner: %d/%d invoices >=60d upserted", tracked, len(invoices))
-    return {"scanned": len(invoices), "tracked": tracked}
+    logger.info(
+        "agent_10_ar_scanner: %d/%d invoices >=60d upserted, %d stopped-refund",
+        tracked, len(invoices), refund_stopped,
+    )
+    return {"scanned": len(invoices), "tracked": tracked, "refund_stopped": refund_stopped}
 
 
 if __name__ == "__main__":

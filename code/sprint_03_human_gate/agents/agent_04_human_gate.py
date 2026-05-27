@@ -8,8 +8,11 @@ from datetime import datetime, timezone
 import httpx
 
 from config.models import HUMAN_GATE_MODEL
-from config.settings import APPROVAL_TIMEOUT_HOURS, TEAMS_WEBHOOK_URL
-from core.db import get_flagged_order, get_order_by_id, get_overdue_approvals, log_decision, save_order_state
+from config.settings import APPROVAL_TIMEOUT_HOURS, FTF_ORDER_URL, TEAMS_WEBHOOK_URL
+from core.db import (
+    get_all_awaiting_orders, get_all_flagged_orders, get_flagged_order,
+    get_order_by_id, get_overdue_approvals, log_decision, save_order_state,
+)
 from core.exceptions import AgentError
 from core.logger import get_logger
 
@@ -228,18 +231,110 @@ def run_escalation_check(timeout_hours: int = APPROVAL_TIMEOUT_HOURS) -> list[st
     return escalated
 
 
-def run() -> dict | None:
-    """Pick up the oldest flagged order, notify the human reviewer, return result.
+def send_batch_approval_digest() -> dict:
+    """Send one hourly Teams digest with ALL flagged + awaiting orders.
 
-    Returns None if no flagged orders are waiting.
+    I-064: Ryan (2026-05-26) — "Bobby should get that spreadsheet every hour —
+    job link, job size, brief description, estimate total, Approve/Deny column."
+    Robert bulk-approves or picks specific ones to deny and handle manually.
+
+    Returns summary dict with counts.
     """
-    order_rec = get_flagged_order()
-    if not order_rec:
-        log.info("no flagged orders waiting for human review")
-        return None
+    flagged = get_all_flagged_orders()
+    awaiting = get_all_awaiting_orders()
+    all_orders = flagged + awaiting
 
-    order_id = order_rec["order_id"]
-    return notify_human(order_id)
+    if not all_orders:
+        log.info("batch digest: no orders to review")
+        return {"flagged": 0, "awaiting": 0, "sent": False}
+
+    if not TEAMS_WEBHOOK_URL:
+        raise AgentError("TEAMS_WEBHOOK_URL not configured — cannot send batch digest")
+
+    rows = []
+    now = datetime.now(timezone.utc)
+    for rec in all_orders:
+        order_id = rec["order_id"]
+        amount = rec.get("estimate_amount")
+        amount_str = f"${float(amount):,.2f}" if amount else "TBD"
+        age_h = ""
+        if rec.get("flagged_at"):
+            try:
+                from datetime import datetime as _dt
+                flagged_at = _dt.fromisoformat(str(rec["flagged_at"]))
+                if flagged_at.tzinfo is None:
+                    import pytz; flagged_at = pytz.utc.localize(flagged_at)
+                age_h = f"{int((now - flagged_at).total_seconds() / 3600)}h ago"
+            except Exception:
+                pass
+        link = f"{FTF_ORDER_URL}/{order_id}"
+        row = (
+            f"**[{order_id}]({link})** | "
+            f"{rec.get('service_type') or 'Unknown'} | "
+            f"{amount_str} | "
+            f"{rec.get('flag_reason') or 'see order'[:60]} | "
+            f"{rec.get('status', '')} | {age_h}"
+        )
+        rows.append(row)
+
+    table_text = "\n".join(rows)
+    order_count = len(all_orders)
+    title = f"FTF Estimates Pending Review — {order_count} order{'s' if order_count != 1 else ''}"
+    body = (
+        f"**Robert — please review and approve/deny the following estimates:**\n\n"
+        f"| Order | Service | Amount | Flag Reason | Status | Age |\n"
+        f"|---|---|---|---|---|---|\n"
+        f"{chr(10).join('| ' + r.replace(' | ', ' | ') for r in rows)}\n\n"
+        f"**To approve:** Reply APPROVE [order_id]  \n"
+        f"**To deny:** Reply DENY [order_id]  \n"
+        f"**To bulk-approve all:** Reply APPROVE ALL"
+    )
+
+    payload = {
+        "@type":      "MessageCard",
+        "@context":   "http://schema.org/extensions",
+        "themeColor": "0078D7",
+        "summary":    title,
+        "title":      title,
+        "text":       body,
+    }
+
+    try:
+        r = httpx.post(TEAMS_WEBHOOK_URL, json=payload, timeout=15.0)
+        r.raise_for_status()
+    except Exception as exc:
+        raise AgentError(f"batch digest Teams POST failed: {exc}") from exc
+
+    # Advance all flagged orders to awaiting_approval
+    for rec in flagged:
+        save_order_state(
+            rec["order_id"],
+            status=STATUS_AWAITING,
+            flagged_at=datetime.now(timezone.utc).isoformat(),
+        )
+        log_decision(
+            agent_name=AGENT_NAME,
+            decision="batch_notified",
+            order_id=rec["order_id"],
+            reason=rec.get("flag_reason"),
+            input_summary=f"service={rec.get('service_type')}",
+            output_summary="included in hourly batch digest",
+            model_used=HUMAN_GATE_MODEL,
+        )
+
+    log.info("batch digest sent: %d flagged + %d awaiting = %d total", len(flagged), len(awaiting), order_count)
+    return {"flagged": len(flagged), "awaiting": len(awaiting), "sent": True}
+
+
+def run() -> dict | None:
+    """Send the hourly batch approval digest to Robert.
+
+    I-064: Replaced per-order ping with hourly batch list — all flagged +
+    awaiting_approval orders in one Teams message with Approve/Deny column.
+    Returns None if no orders are waiting.
+    """
+    result = send_batch_approval_digest()
+    return result if result.get("sent") else None
 
 
 def main(argv=None) -> None:

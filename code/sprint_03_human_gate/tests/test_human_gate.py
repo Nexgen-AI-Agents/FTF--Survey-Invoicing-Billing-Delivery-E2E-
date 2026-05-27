@@ -160,25 +160,28 @@ def test_teams_network_error_raises_agent_error():
             notify_human("ORD-001")
 
 
-# ── UT-03-07  run() picks first flagged order ─────────────────────────────────
+# ── UT-03-07  run() sends batch digest when flagged orders exist ──────────────
 
-def test_run_picks_first_flagged_order():
-    with patch("agents.agent_04_human_gate.get_flagged_order",
-               return_value=_FLAGGED_ROW) as mock_get, \
+def test_run_sends_batch_digest_when_flagged_orders():
+    with patch("agents.agent_04_human_gate.get_all_flagged_orders",
+               return_value=[_FLAGGED_ROW]) as mock_get, \
+         patch("agents.agent_04_human_gate.get_all_awaiting_orders", return_value=[]), \
          patch("agents.agent_04_human_gate.TEAMS_WEBHOOK_URL", _TEAMS_URL), \
-         patch("agents.agent_04_human_gate.get_order_by_id", return_value=_FLAGGED_ROW), \
          patch("agents.agent_04_human_gate.httpx.post",
                return_value=MagicMock(status_code=200, raise_for_status=MagicMock())), \
          patch("agents.agent_04_human_gate.save_order_state"), \
          patch("agents.agent_04_human_gate.log_decision"):
         result = run()
 
-    mock_get.assert_called_once()
-    assert result["order_id"] == "ORD-001"
+    assert mock_get.called
+    assert result is not None
+    assert result["flagged"] == 1
+    assert result["sent"] is True
 
 
 def test_run_returns_none_when_no_flagged_orders():
-    with patch("agents.agent_04_human_gate.get_flagged_order", return_value=None):
+    with patch("agents.agent_04_human_gate.get_all_flagged_orders", return_value=[]), \
+         patch("agents.agent_04_human_gate.get_all_awaiting_orders", return_value=[]):
         result = run()
     assert result is None
 

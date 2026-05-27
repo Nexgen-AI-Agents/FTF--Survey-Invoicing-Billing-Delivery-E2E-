@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 from config.models import PRICING_MODEL
 from config.settings import ELEVATION_CERT_PRICE
-from core.db import log_decision, save_order_state
+from core.db import get_classified_order, log_decision, save_order_state
 from core.exceptions import PricingError
 from core.ftf_client import get_pricing, get_pricing_overrides
 from core.logger import get_logger
@@ -104,6 +104,23 @@ def price_order(classification: dict) -> dict:
         "override_applied": override_applied,
         "pricing_source": pricing_source,
     }
+
+
+def run() -> dict | None:
+    """Price the next classified order from DB. Returns pricing dict or None."""
+    order_rec = get_classified_order()
+    if not order_rec:
+        log.info("no classified orders awaiting pricing")
+        return None
+
+    classification = {
+        "order_id": order_rec["order_id"],
+        "service_type": order_rec.get("service_type") or "",
+        "pricing_tier": order_rec.get("pricing_tier") or "individual",
+        "elevation_cert_required": bool(order_rec.get("elevation_cert_required", False)),
+        "special_pricing": bool(order_rec.get("special_pricing", False)),
+    }
+    return price_order(classification)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch, call
-from core.db import get_pending_order, save_order_state, log_decision, get_unprocessed_reminder, order_exists
+from core.db import get_pending_order, get_classified_order, save_order_state, log_decision, get_unprocessed_reminder, order_exists
 from core.exceptions import AgentError
 
 
@@ -63,6 +63,28 @@ def test_order_exists_returns_false_when_not_found(mock_ctx, mock_cursor):
     mock_cursor.fetchone.return_value = None
     result = order_exists("ORD-999")
     assert result is False
+
+
+@patch("core.db._get_cursor")
+def test_get_classified_order_returns_none_when_empty(mock_ctx, mock_cursor):
+    mock_ctx.return_value.__enter__ = lambda s: mock_cursor
+    mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+    mock_cursor.fetchone.return_value = None
+    result = get_classified_order()
+    assert result is None
+
+
+@patch("core.db._get_cursor")
+def test_get_classified_order_returns_dict(mock_ctx, mock_cursor):
+    mock_ctx.return_value.__enter__ = lambda s: mock_cursor
+    mock_ctx.return_value.__exit__ = MagicMock(return_value=False)
+    mock_cursor.fetchone.return_value = {
+        "order_id": "ORD-001", "status": "classified",
+        "pricing_tier": "individual", "elevation_cert_required": False,
+    }
+    result = get_classified_order()
+    assert result["status"] == "classified"
+    assert result["pricing_tier"] == "individual"
 
 
 @patch("core.db._get_cursor")

@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, call
 
-from agents.agent_05_pricing_engine import price_order, AGENT_NAME
+from agents.agent_05_pricing_engine import price_order, run, AGENT_NAME
 from core.exceptions import PricingError
 
 
@@ -220,3 +220,48 @@ def test_return_dict_has_all_keys():
 def test_order_id_preserved_in_result():
     result = _price()
     assert result["order_id"] == "ORD-001"
+
+
+# ── UT-02-22  run() orchestrator entry point ──────────────────────────────────
+
+def test_run_returns_none_when_no_classified_orders():
+    with patch("agents.agent_05_pricing_engine.get_classified_order", return_value=None):
+        result = run()
+    assert result is None
+
+
+def test_run_calls_price_order_with_db_record():
+    db_row = {
+        "order_id": "ORD-002",
+        "service_type": "Boundary Survey",
+        "pricing_tier": "individual",
+        "elevation_cert_required": False,
+        "special_pricing": False,
+    }
+    with patch("agents.agent_05_pricing_engine.get_classified_order", return_value=db_row), \
+         patch("agents.agent_05_pricing_engine.get_pricing", return_value={"price": 350.0}), \
+         patch("agents.agent_05_pricing_engine.get_pricing_overrides", return_value={}), \
+         patch("agents.agent_05_pricing_engine.save_order_state"), \
+         patch("agents.agent_05_pricing_engine.log_decision"):
+        result = run()
+    assert result is not None
+    assert result["order_id"] == "ORD-002"
+    assert result["total_amount"] == 350.0
+
+
+def test_run_defaults_pricing_tier_when_missing_from_db():
+    db_row = {
+        "order_id": "ORD-003",
+        "service_type": "Final Survey",
+        "pricing_tier": None,
+        "elevation_cert_required": None,
+        "special_pricing": None,
+    }
+    with patch("agents.agent_05_pricing_engine.get_classified_order", return_value=db_row), \
+         patch("agents.agent_05_pricing_engine.get_pricing", return_value={"price": 300.0}), \
+         patch("agents.agent_05_pricing_engine.get_pricing_overrides", return_value={}), \
+         patch("agents.agent_05_pricing_engine.save_order_state"), \
+         patch("agents.agent_05_pricing_engine.log_decision"):
+        result = run()
+    assert result["pricing_tier"] == "individual"
+    assert result["total_amount"] == 300.0

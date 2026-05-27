@@ -60,9 +60,9 @@ def _init_agents() -> None:
     sys.path.insert(0, os.path.join(_code, "sprint_05_reviewer",           "agents"))
     sys.path.insert(0, os.path.join(_code, "sprint_06_sender_reporter",    "agents"))
 
-    import agent_02_monitor      as m2;  _monitor    = m2   # noqa: E702
-    import agent_03_classifier   as m3;  _classifier = m3   # noqa: E702
-    import agent_05_pricing      as m5;  _pricing    = m5   # noqa: E702
+    import agent_02_monitor        as m2;  _monitor    = m2   # noqa: E702
+    import agent_03_classifier     as m3;  _classifier = m3   # noqa: E702
+    import agent_05_pricing_engine as m5;  _pricing    = m5   # noqa: E702
     import agent_04_human_gate   as m4;  _human_gate = m4   # noqa: E702
     import agent_06_writer       as m6;  _writer     = m6   # noqa: E702
     import agent_07_reviewer     as m7;  _reviewer   = m7   # noqa: E702

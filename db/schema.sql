@@ -23,6 +23,11 @@ CREATE TABLE IF NOT EXISTS processed_orders (
 
     draft_estimate      TEXT,
 
+    -- Pricing pass-through (set by classifier, consumed by pricing engine)
+    pricing_tier            VARCHAR(20)  DEFAULT 'individual',
+    elevation_cert_required BOOLEAN      DEFAULT FALSE,
+    special_pricing         BOOLEAN      DEFAULT FALSE,
+
     classified_at       TIMESTAMP,
     priced_at           TIMESTAMP,
     written_at          TIMESTAMP,
@@ -167,3 +172,38 @@ CREATE TRIGGER trg_processed_orders_notify
     AFTER INSERT OR UPDATE OF status ON processed_orders
     FOR EACH ROW
     EXECUTE FUNCTION notify_order_state_change();
+
+
+-- ─────────────────────────────────────────
+-- 8. pricing_examples
+--    Robert / Mark training data — job descriptions with pricing rationale.
+--    AI pricing engine loads recent examples as context (I-067).
+-- ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS pricing_examples (
+    id                  SERIAL PRIMARY KEY,
+    job_description     TEXT            NOT NULL,
+    service_type        VARCHAR(100),
+    county              VARCHAR(100),
+    lot_size_acres      DECIMAL(10, 4),
+    complexity_notes    TEXT,
+    final_price         DECIMAL(10, 2)  NOT NULL,
+    pricing_rationale   TEXT,
+    entered_by          VARCHAR(50)     NOT NULL DEFAULT 'Robert',
+    -- domain lock: only 'pricing' or 'logistics' entries accepted here
+    domain              VARCHAR(50)     NOT NULL DEFAULT 'pricing',
+    created_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pe_service_type ON pricing_examples (service_type);
+CREATE INDEX IF NOT EXISTS idx_pe_county       ON pricing_examples (county);
+CREATE INDEX IF NOT EXISTS idx_pe_created      ON pricing_examples (created_at);
+
+
+-- ─────────────────────────────────────────
+-- 9. Column migrations (safe to re-run on existing DBs)
+--    Added 2026-05-27: pricing pass-through columns for estimate pipeline
+-- ─────────────────────────────────────────
+ALTER TABLE processed_orders ADD COLUMN IF NOT EXISTS pricing_tier            VARCHAR(20)  DEFAULT 'individual';
+ALTER TABLE processed_orders ADD COLUMN IF NOT EXISTS elevation_cert_required BOOLEAN      DEFAULT FALSE;
+ALTER TABLE processed_orders ADD COLUMN IF NOT EXISTS special_pricing         BOOLEAN      DEFAULT FALSE;

@@ -75,6 +75,14 @@ COMPETITOR_DOMAINS: list[str] = [
 # Uses exact FTF service_type names from the 24-service list.
 # Bootstrapped 2026-05-25 — expanded after Ryan AI, Robert AI, Mark AI review.
 # Robert/Mark to validate complete list before Sprint 3.
+# I-063: Hard rule — refund requests NEVER processed by AI.
+# Any text matching these keywords triggers immediate Jessica notification and stops AI action.
+REFUND_KEYWORDS: list[str] = [
+    "refund", "money back", "get my money", "reimburse", "reimbursement",
+    "charge back", "chargeback", "dispute charge", "reverse charge",
+    "cancel and refund", "i want my money", "give me my money",
+]
+
 NEVER_AUTO_QUOTE: list[str] = [
     "Specific Purpose Survey",  # Scope undefined until client describes purpose
     "Lot Split",                # County/municipality review and approval cycles required

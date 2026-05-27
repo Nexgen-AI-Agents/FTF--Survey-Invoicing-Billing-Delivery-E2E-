@@ -11,8 +11,9 @@ thresholds and sends internal Teams alerts per the escalation policy:
 import httpx
 
 from config.settings import AR_ALERT_DAYS_60, AR_ESCALATION_DAYS, TEAMS_WEBHOOK_URL
-from core.db import get_invoices_due_for_escalation, log_decision, update_ar_escalation_level
+from core.db import get_invoices_due_for_escalation, get_order_by_id, log_decision, update_ar_escalation_level
 from core.logger import get_logger
+from core.refund_guard import alert_jessica_refund, detect_refund_intent
 
 logger = get_logger(__name__)
 
@@ -59,13 +60,29 @@ def _send_teams_alert(order_id: str, customer_email: str, days_overdue: int,
         logger.error("teams_alert failed order=%s: %s", order_id, exc)
 
 
+def _has_refund_intent(order_id: str) -> bool:
+    """Check processed_orders record for refund-related language. I-063 hard rule."""
+    order_rec = get_order_by_id(order_id)
+    if not order_rec:
+        return False
+    for field_text in [order_rec.get("flag_reason") or "", order_rec.get("draft_estimate") or ""]:
+        if detect_refund_intent(field_text):
+            alert_jessica_refund(order_id, field_text)
+            return True
+    return False
+
+
 def run() -> dict:
     alerts_90 = 0
     alerts_60 = 0
+    refund_stopped = 0
 
     # 90-day first — prevents a 90d invoice from also being counted at 60d
     invoices_90 = get_invoices_due_for_escalation(min_days=AR_ESCALATION_DAYS, max_level=3)
     for inv in invoices_90:
+        if _has_refund_intent(inv["order_id"]):
+            refund_stopped += 1
+            continue
         _send_teams_alert(
             order_id=inv["order_id"],
             customer_email=inv["customer_email"],
@@ -85,6 +102,9 @@ def run() -> dict:
     # 60-day — only those not yet advanced to level 2+
     invoices_60 = get_invoices_due_for_escalation(min_days=AR_ALERT_DAYS_60, max_level=2)
     for inv in invoices_60:
+        if _has_refund_intent(inv["order_id"]):
+            refund_stopped += 1
+            continue
         _send_teams_alert(
             order_id=inv["order_id"],
             customer_email=inv["customer_email"],
@@ -101,8 +121,11 @@ def run() -> dict:
         )
         alerts_60 += 1
 
-    logger.info("agent_11_ar_escalation: 90d=%d alerts, 60d=%d alerts", alerts_90, alerts_60)
-    return {"alerts_90": alerts_90, "alerts_60": alerts_60}
+    logger.info(
+        "agent_11_ar_escalation: 90d=%d alerts, 60d=%d alerts, %d refund-stopped",
+        alerts_90, alerts_60, refund_stopped,
+    )
+    return {"alerts_90": alerts_90, "alerts_60": alerts_60, "refund_stopped": refund_stopped}
 
 
 if __name__ == "__main__":
