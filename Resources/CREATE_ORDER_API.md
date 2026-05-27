@@ -113,8 +113,8 @@ Use `GET /ftf-ai-api/v1/pricing?service=<name>&tier=<tier>` to validate service 
 ## cURL Example
 
 ```bash
-curl -X POST https://<host>/ftf-ai-api/v1/orders \
-  -H "X-API-Key: your-api-key" \
+curl -X POST https://stage.fieldtofinish.jobs/ftf-ai-api/v1/orders \
+  -H "X-API-Key: $FTF_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "customer_id": 1042,
