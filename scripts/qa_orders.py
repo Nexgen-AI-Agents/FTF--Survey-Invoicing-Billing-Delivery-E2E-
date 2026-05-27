@@ -36,7 +36,7 @@ from core.logger import get_logger
 
 log = get_logger("qa_orders")
 
-# ─── Scenario catalogue ───────────────────────────────────────────────────────
+# --- Scenario catalogue -------------------------------------------------------
 # Each scenario is what agent_03_classifier would have produced and persisted.
 # Fields map directly to processed_orders columns.
 
@@ -51,7 +51,7 @@ QA_SCENARIOS: list[dict] = [
         "customer_type": "individual",
         "status": "classified",
         "flag_reason": None,
-        "note": "Standard individual boundary — clean path through pricing→writer→reviewer",
+        "note": "Standard individual boundary -- clean path through pricing->writer->reviewer",
     },
     {
         "id": "boundary-flood",
@@ -63,7 +63,7 @@ QA_SCENARIOS: list[dict] = [
         "customer_type": "individual",
         "status": "classified",
         "flag_reason": None,
-        "note": "AE flood zone — elevation cert upcharge expected in pricing",
+        "note": "AE flood zone -- elevation cert upcharge expected in pricing",
     },
     {
         "id": "topo-b2b",
@@ -75,7 +75,7 @@ QA_SCENARIOS: list[dict] = [
         "customer_type": "b2b",
         "status": "classified",
         "flag_reason": None,
-        "note": "B2B topography — should use b2b pricing tier",
+        "note": "B2B topography -- should use b2b pricing tier",
     },
     {
         "id": "final-survey",
@@ -87,7 +87,7 @@ QA_SCENARIOS: list[dict] = [
         "customer_type": "individual",
         "status": "classified",
         "flag_reason": None,
-        "note": "Final survey — standard Tampa-area residential",
+        "note": "Final survey -- standard Tampa-area residential",
     },
     {
         "id": "form-board",
@@ -99,7 +99,7 @@ QA_SCENARIOS: list[dict] = [
         "customer_type": "individual",
         "status": "classified",
         "flag_reason": None,
-        "note": "Form board survey — Jacksonville area",
+        "note": "Form board survey -- Jacksonville area",
     },
     {
         "id": "update-survey",
@@ -111,7 +111,7 @@ QA_SCENARIOS: list[dict] = [
         "customer_type": "individual",
         "status": "classified",
         "flag_reason": None,
-        "note": "Update survey — Gainesville area",
+        "note": "Update survey -- Gainesville area",
     },
     {
         "id": "elevation-cert-flagged",
@@ -123,7 +123,7 @@ QA_SCENARIOS: list[dict] = [
         "customer_type": "individual",
         "status": "flagged",
         "flag_reason": "service requires human review: Elevation Certificate",
-        "note": "ALWAYS_FLAG service — should route to human gate (agent_04)",
+        "note": "ALWAYS_FLAG service -- should route to human gate (agent_04)",
     },
     {
         "id": "alta-b2b-flagged",
@@ -135,14 +135,14 @@ QA_SCENARIOS: list[dict] = [
         "customer_type": "b2b",
         "status": "flagged",
         "flag_reason": "service requires human review: ALTA Table A Survey",
-        "note": "ALWAYS_FLAG service — human gate required before pricing",
+        "note": "ALWAYS_FLAG service -- human gate required before pricing",
     },
 ]
 
 _SCENARIO_MAP = {s["id"]: s for s in QA_SCENARIOS}
 
 
-# ─── DB helpers ──────────────────────────────────────────────────────────────
+# --- DB helpers --------------------------------------------------------------
 
 def _connect():
     return psycopg2.connect(
@@ -176,7 +176,7 @@ def insert_qa_order(scenario: dict, dry_run: bool = False) -> str:
                 )
                 existing = cur.fetchone()
                 if existing:
-                    print(f"  SKIP  {order_id} — already exists (status={existing[0]})")
+                    print(f"  SKIP  {order_id} -- already exists (status={existing[0]})")
                     return order_id
 
                 cols = [
@@ -264,7 +264,7 @@ def cleanup_qa_orders(dry_run: bool = False) -> int:
         conn.close()
 
 
-# ─── CLI ─────────────────────────────────────────────────────────────────────
+# --- CLI ---------------------------------------------------------------------
 
 def cmd_create(args) -> None:
     if args.id:
@@ -296,7 +296,7 @@ def cmd_create(args) -> None:
         print(f"  {len(created)} QA order(s) seeded at 'classified' (or 'flagged') status.")
         print()
         print("  Next steps:")
-        print("   - Run the estimate loop (GitHub Actions → workflow_dispatch) to process them")
+        print("   - Run the estimate loop (GitHub Actions -> workflow_dispatch) to process them")
         print("   - Or run locally: python code/sprint_09_memory_loop/agents/agent_01_orchestrator.py")
         print("   - Cleanup when done: python scripts/qa_orders.py cleanup")
     print()
@@ -307,20 +307,20 @@ def cmd_list(args) -> None:
     print()
     print(f"  QA Orders in DB: {len(orders)}")
     if not orders:
-        print("  (none — run: python scripts/qa_orders.py create)")
+        print("  (none -- run: python scripts/qa_orders.py create)")
         print()
         return
 
     print()
     header = f"  {'ORDER ID':<32}  {'STATUS':<12}  {'SERVICE TYPE':<24}  {'AMOUNT':>8}  FLAG"
     print(header)
-    print("  " + "─" * 90)
+    print("  " + "-" * 90)
     for o in orders:
-        amount = f"${float(o['estimate_amount']):,.0f}" if o.get("estimate_amount") else "—"
+        amount = f"${float(o['estimate_amount']):,.0f}" if o.get("estimate_amount") else "--"
         flag = "!" if o.get("flag_reason") else ""
         print(
             f"  {o['order_id']:<32}  {o['status']:<12}  "
-            f"{(o.get('service_type') or '—'):<24}  {amount:>8}  {flag}"
+            f"{(o.get('service_type') or '--'):<24}  {amount:>8}  {flag}"
         )
     print()
 
@@ -343,7 +343,7 @@ def cmd_cleanup(args) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="QA order seeding utility — create/list/cleanup test orders in processed_orders"
+        description="QA order seeding utility -- create/list/cleanup test orders in processed_orders"
     )
     parser.add_argument("command", choices=["create", "list", "cleanup"],
                         help="create: seed test orders | list: show QA orders | cleanup: delete all QA orders")
@@ -355,7 +355,7 @@ def main() -> None:
 
     print()
     print("=" * 64)
-    print("  qa_orders.py — NexGen FTF Pipeline QA Utility")
+    print("  qa_orders.py -- NexGen FTF Pipeline QA Utility")
     print("=" * 64)
 
     if args.command == "create":
