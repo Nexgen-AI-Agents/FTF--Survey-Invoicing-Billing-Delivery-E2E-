@@ -12,6 +12,7 @@ ESTIMATE_DELAY_MAX:   int = 780    # 13 minutes — upper bound of random send d
 SEND_HOUR_START:      int = int(os.getenv("SEND_HOUR_START", "8"))   # 8 AM ET
 SEND_HOUR_END:        int = int(os.getenv("SEND_HOUR_END", "18"))    # 6 PM ET
 AR_ESCALATION_DAYS:        int = 90
+AR_ALERT_DAYS_60:          int = 60
 APPROVAL_TIMEOUT_HOURS:    int = int(os.getenv("APPROVAL_TIMEOUT_HOURS", "24"))
 ELEVATION_CERT_PRICE: int = 225
 SERVICE_STATE:        str = "FL"
@@ -19,6 +20,11 @@ SERVICE_STATE:        str = "FL"
 # FTF API
 FTF_API_BASE_URL: str = os.getenv("FTF_API_BASE_URL", "https://stage.fieldtofinish.jobs/ftf-ai-api/v1")
 FTF_API_KEY:      str | None = os.getenv("FTF_API_KEY")
+
+# FTF Books (AR Excel download — session-cookie auth)
+FTF_BOOKS_BASE_URL: str      = os.getenv("FTF_BOOKS_BASE_URL", "https://stage.fieldtofinish.jobs")
+FTF_BOOKS_USER:     str | None = os.getenv("FTF_BOOKS_USER")
+FTF_BOOKS_PASSWORD: str | None = os.getenv("FTF_BOOKS_PASSWORD")
 
 # Anthropic
 ANTHROPIC_API_KEY: str | None = os.getenv("ANTHROPIC_API_KEY")

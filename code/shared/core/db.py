@@ -325,3 +325,78 @@ def get_unprocessed_reminder() -> Optional[dict]:
         )
         row = cur.fetchone()
         return dict(row) if row else None
+
+
+def upsert_ar_reminder(
+    order_id: str,
+    customer_email: str,
+    invoice_amount: float,
+    invoice_date,
+    days_overdue: int,
+) -> None:
+    """Insert ar_reminders row if not present; update days_overdue if already tracked."""
+    with _get_cursor() as cur:
+        cur.execute(
+            "SELECT id FROM ar_reminders WHERE order_id = %s LIMIT 1",
+            (order_id,),
+        )
+        row = cur.fetchone()
+        if row:
+            cur.execute(
+                """
+                UPDATE ar_reminders
+                SET days_overdue = %s, updated_at = NOW()
+                WHERE order_id = %s
+                """,
+                (days_overdue, order_id),
+            )
+        else:
+            cur.execute(
+                """
+                INSERT INTO ar_reminders
+                    (order_id, customer_email, invoice_amount, invoice_date,
+                     days_overdue, reminder_level, status)
+                VALUES (%s, %s, %s, %s, %s, 1, 'pending')
+                """,
+                (order_id, customer_email, invoice_amount, invoice_date, days_overdue),
+            )
+
+
+def get_invoices_due_for_escalation(min_days: int, max_level: int) -> list[dict]:
+    """Return ar_reminders rows that need an escalation alert.
+
+    Criteria: days_overdue >= min_days, reminder_level < max_level,
+    status not paid/excluded, and not in excluded_ar_clients by email.
+    """
+    with _get_cursor() as cur:
+        cur.execute(
+            """
+            SELECT r.*
+            FROM ar_reminders r
+            WHERE r.days_overdue >= %s
+              AND r.reminder_level < %s
+              AND r.status NOT IN ('paid', 'excluded')
+              AND r.customer_email NOT IN (
+                  SELECT client_email FROM excluded_ar_clients
+              )
+            ORDER BY r.days_overdue DESC
+            """,
+            (min_days, max_level),
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+
+def update_ar_escalation_level(order_id: str, new_level: int) -> None:
+    """Advance reminder_level and stamp last_reminder_sent_at for a given order."""
+    with _get_cursor() as cur:
+        cur.execute(
+            """
+            UPDATE ar_reminders
+            SET reminder_level = %s,
+                last_reminder_sent_at = NOW(),
+                status = 'sent',
+                updated_at = NOW()
+            WHERE order_id = %s
+            """,
+            (new_level, order_id),
+        )

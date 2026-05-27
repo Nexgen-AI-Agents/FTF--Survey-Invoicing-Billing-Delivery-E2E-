@@ -36,3 +36,9 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Large media — video recordings exceed GitHub 100 MB limit
+*.mp4
+*.mov
+*.avi
+Resources/Recordings from Robert/frames/
