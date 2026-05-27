@@ -21,21 +21,39 @@ def _get_client() -> anthropic.Anthropic:
     return _client
 
 
-def call(model: str, system: str, user: str, max_tokens: int = 1024) -> str:
-    """
-    Send a prompt to Claude and return the response text.
+def call(model: str, system: str, user: str, max_tokens: int = 1024,
+         cache_system: bool = True) -> str:
+    """Send a prompt to Claude and return the response text.
+
+    cache_system=True (default): marks the system prompt for prompt caching
+    (I-019). System prompts are static per agent run — caching saves cost at
+    scale (7,000+ Quote orders). Cache TTL is 5 minutes; re-use within that
+    window is free. Set False only for one-off dynamic system prompts.
+
     Retries up to _MAX_RETRIES times on rate limit or transient API errors.
     Raises LLMUnavailableError after all retries are exhausted.
     """
     client = _get_client()
     last_exc: Optional[Exception] = None
 
+    # Build system param — list format required for cache_control
+    if cache_system:
+        system_param = [
+            {
+                "type": "text",
+                "text": system,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ]
+    else:
+        system_param = system
+
     for attempt in range(1, _MAX_RETRIES + 1):
         try:
             message = client.messages.create(
                 model=model,
                 max_tokens=max_tokens,
-                system=system,
+                system=system_param,
                 messages=[{"role": "user", "content": user}],
             )
             return message.content[0].text

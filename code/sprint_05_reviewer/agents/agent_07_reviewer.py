@@ -105,6 +105,7 @@ def review_estimate(order_id: str) -> dict:
     clause = _load_clause()
 
     retry_count: int = int(db_row.get("retry_count") or 0)
+    pre_correction_draft: str | None = None  # I-028: capture first draft before any correction
 
     for attempt in range(1, MAX_REVIEWER_RETRIES + 1):
         # Use already-fetched db_row on first attempt; re-fetched below after each rewrite
@@ -114,6 +115,10 @@ def review_estimate(order_id: str) -> dict:
                 f"review_estimate: order {order_id} has no draft_estimate — Writer must run first"
             )
 
+        # I-028: capture the original draft before any correction loop begins
+        if attempt == 1:
+            pre_correction_draft = draft
+
         failures = _run_checks(draft, estimate_amount, customer_name, property_address, clause)
 
         if not failures:
@@ -122,17 +127,37 @@ def review_estimate(order_id: str) -> dict:
                 status="reviewed",
                 reviewed_at=datetime.now(timezone.utc).isoformat(),
             )
+            # I-028: log pre vs post correction for Sprint 7 demo side-by-side view
+            correction_applied = attempt > 1
+            if correction_applied:
+                log.info(
+                    "reviewer correction applied order=%s attempts=%s "
+                    "pre_draft_len=%s post_draft_len=%s",
+                    order_id, attempt,
+                    len(pre_correction_draft or ""),
+                    len(draft),
+                )
             log_decision(
                 agent_name=AGENT_NAME,
                 decision="reviewed",
                 order_id=order_id,
                 reason=f"all 4 checks passed on attempt {attempt}",
                 input_summary=f"amount={estimate_amount:.2f} customer={customer_name}",
-                output_summary="status=reviewed",
+                output_summary=(
+                    f"status=reviewed correction_applied={correction_applied} "
+                    f"pre_len={len(pre_correction_draft or '')} post_len={len(draft)}"
+                ),
                 model_used=REVIEWER_MODEL,
             )
             log.info("estimate reviewed order=%s attempt=%s", order_id, attempt)
-            return {"order_id": order_id, "status": "reviewed", "checks_passed": 4}
+            return {
+                "order_id": order_id,
+                "status": "reviewed",
+                "checks_passed": 4,
+                "correction_applied": correction_applied,
+                "pre_correction_draft": pre_correction_draft if correction_applied else None,
+                "post_correction_draft": draft if correction_applied else None,
+            }
 
         # Checks failed
         log.warning(

@@ -2,6 +2,8 @@ ALWAYS_FLAG_SERVICES: list[str] = [
     "ALTA Table A Survey",
     "Other Services",
     "Building Stake Out",  # I-042/I-052: NGE status ambiguous; flag until Robert confirms back in service
+    "Table Survey",        # I-071: no confirmed canonical mapping — Robert must confirm before Sprint 11
+    "B-II Title Review",   # I-055: Robert (Recording 1) said human review required; overrides I-004 auto-quote decision
 ]
 
 # Bootstrapped 2026-05-25 by Competitor Analyst AI (web research).
