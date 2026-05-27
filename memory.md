@@ -110,7 +110,10 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | FEMA flood zone | AI auto-adds Elevation Certificate ($225) — no flag required |
 | Monthly statement trigger | 1st of every calendar month |
 | Statement format | Excel + PDF via MS Teams + email to billing contact |
-| Refunds | Manual only — Jessica / Robert |
+| Refunds | Manual only — Jessica / Robert. AI never touches. |
+| AR reminder schedule | Day 30, 60, 90 automated email to client. Post-90: Jessica manual. |
+| AR internal escalation | Day 60 → alert Jessica. Day 90 → alert Jessica + all stakeholders. |
+| AR exclusion list | Empty on launch. System supports additions without rebuild. |
 | New customer | AI classifies; flags if unsure |
 | Alert channel | MS Teams + email to relevant stakeholders |
 | Post-approval send | AI sends automatically — no manual click needed |
