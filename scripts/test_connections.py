@@ -56,13 +56,14 @@ def check_warn(name: str, fn):
 check("FTF /health -> 200", lambda: health_check() or (_ for _ in ()).throw(AssertionError("returned False")))
 
 
-# ── 2. FTF /orders ───────────────────────────────────────────────────────────
+# ── 2. FTF /orders (single page, no full pagination) ─────────────────────────
 def _check_orders():
-    orders = get_orders(limit=1)
+    # max_results=5 prevents paginating 275K orders — just verifies the endpoint is live
+    orders = get_orders(limit=5, max_results=5)
     assert isinstance(orders, list) and len(orders) > 0, "Empty orders list"
-    return f"{len(orders)} order(s) returned"
+    return f"{len(orders)} order(s) returned (single page check)"
 
-check("FTF /orders?limit=1 -> data", _check_orders)
+check("FTF /orders -> data (5-order sample)", _check_orders)
 
 
 # ── 3. FTF /pricing ──────────────────────────────────────────────────────────

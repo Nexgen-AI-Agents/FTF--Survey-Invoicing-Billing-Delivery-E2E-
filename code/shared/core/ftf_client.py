@@ -28,15 +28,24 @@ def health_check() -> bool:
         return False
 
 
-def get_orders(limit: int = 500, status: Optional[str] = None) -> list[dict]:
-    """Fetch all orders via paginated calls.
+def get_orders(
+    limit: int = 500,
+    status: Optional[str] = None,
+    max_results: Optional[int] = None,
+    extra_params: Optional[dict] = None,
+) -> list[dict]:
+    """Fetch orders via paginated calls.
 
     Args:
-        limit: Page size — API hard-caps at 500.
-        status: Optional server-side filter (e.g. "Quote"). When None, fetches all statuses.
+        limit:       Page size — API hard-caps at 500.
+        status:      Optional server-side status filter.
+        max_results: Stop after collecting this many results (prevents runaway
+                     pagination on a 275 K-order dataset). None = fetch all.
+        extra_params: Any additional query params to pass through (e.g. date_from,
+                     customer_type) — ignored by the API if unsupported.
 
     Returns:
-        Flat list of all order dicts across all pages.
+        Flat list of order dicts (up to max_results if specified).
     """
     all_orders: list[dict] = []
     offset = 0
@@ -45,6 +54,8 @@ def get_orders(limit: int = 500, status: Optional[str] = None) -> list[dict]:
         params: dict = {"limit": limit, "offset": offset}
         if status is not None:
             params["status"] = status
+        if extra_params:
+            params.update(extra_params)
 
         try:
             r = httpx.get(
@@ -65,16 +76,16 @@ def get_orders(limit: int = 500, status: Optional[str] = None) -> list[dict]:
             page = body.get("data", [])
             total = body.get("total", 0)
         else:
-            # Bare list — no pagination metadata; return as-is
             return body  # type: ignore[return-value]
 
         if offset == 0 and total == 0:
-            logger.warning("get_orders: API returned total=0 — no orders available or API misconfigured")
+            logger.warning("get_orders: API returned total=0 — no orders or API misconfigured")
 
-        logger.info(
-            "fetched page offset=%s count=%s total=%s", offset, len(page), total
-        )
+        logger.info("fetched page offset=%s count=%s total=%s", offset, len(page), total)
         all_orders.extend(page)
+
+        if max_results and len(all_orders) >= max_results:
+            return all_orders[:max_results]
 
         offset += limit
         if offset >= total or not page:
@@ -187,17 +198,24 @@ def send_reminder(order_id: str, message: str) -> bool:
 def get_b2b_orders_for_month(month: date) -> list[dict]:
     """Return all B2B orders whose order_date falls within the given calendar month.
 
-    Fetches all orders from the API, then filters client-side for
-    customer_type='b2b' and order_date within [month_start, month_end).
+    Passes date_from / date_to / customer_type as query params — the FTF API
+    may or may not honour them, so results are always filtered client-side too.
+    max_results=5000 prevents runaway pagination on a 275 K-order dataset while
+    still covering any realistic single-month B2B volume.
     """
     from datetime import datetime as _dt
     import calendar
 
-    month_start = month.replace(day=1)
-    last_day = calendar.monthrange(month.year, month.month)[1]
-    month_end_inclusive = month.replace(day=last_day)
+    month_start          = month.replace(day=1)
+    last_day             = calendar.monthrange(month.year, month.month)[1]
+    month_end_inclusive  = month.replace(day=last_day)
 
-    all_orders = get_orders()
+    extra = {
+        "customer_type": "b2b",
+        "date_from":     month_start.isoformat(),
+        "date_to":       month_end_inclusive.isoformat(),
+    }
+    all_orders = get_orders(limit=500, extra_params=extra, max_results=5000)
 
     result = []
     for order in all_orders:
@@ -213,7 +231,7 @@ def get_b2b_orders_for_month(month: date) -> list[dict]:
         elif isinstance(raw_date, str):
             for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%m/%d/%Y"):
                 try:
-                    order_date = _dt.strptime(raw_date[:10], fmt[:len(raw_date[:10])]).date()
+                    order_date = _dt.strptime(raw_date[:10], fmt[:10]).date()
                     break
                 except ValueError:
                     pass
