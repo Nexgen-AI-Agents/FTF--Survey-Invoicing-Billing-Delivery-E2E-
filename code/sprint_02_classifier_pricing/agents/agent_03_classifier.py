@@ -42,29 +42,64 @@ _CANONICAL_SERVICES: frozenset[str] = frozenset({
     "Wetland Delineation",
 })
 
-# Deterministic informal-name -> canonical-name mappings (Robert, Recording 1, 2026-05-25)
+# Deterministic informal-name -> canonical-name mappings
+# Sources: Robert Recording 1 (2026-05-25), FTF UI recordings (2026-05-27),
+#          prod DB analysis of 23,353 invoices (2026-05-27)
 _SERVICE_TYPE_ALIASES: dict[str, str] = {
+    # High-volume prod aliases (confirmed from 12,119+ orders in production)
     "land survey only": "Boundary Survey",
+    "land survey and elevation": "Boundary Survey",   # bundled; Elevation Certificate added separately
+    "property survey and elevation": "Boundary Survey",
     "land survey": "Boundary Survey",
-    "special purpose survey": "Specific Purpose Survey",
-    "construction survey": "Topography Survey",
+    "boundary": "Boundary Survey",
     "permitting survey": "Boundary Survey",
+
+    # Update/Re-survey variants (391 orders in prod)
+    "re-survey": "Update Survey",
+    "resurvey": "Update Survey",
+    "resurvey ": "Update Survey",
+    "update/topographic survey": "Update Survey",
+    "update/topo": "Update Survey",
+
+    # Spot survey variants (106 orders — new client = Foundation Tie-In)
+    "spot survey (new client)": "Foundation Tie-In",
+    "spot survey (prior nexgen survey)": "Foundation Tie-In",
     "spot survey": "Foundation Tie-In",
+
+    # Topography variants
+    "construction survey": "Topography Survey",
     "topo survey": "Topography Survey",
     "topographic survey": "Topography Survey",
     "topographic boundary survey": "Topography Survey",
-    "update/topographic survey": "Update Survey",
-    "re-survey": "Update Survey",
-    "resurvey": "Update Survey",
-    "as-built survey": "Final Survey",
-    "boundary": "Boundary Survey",
+    "topo upgrade": "Topography Survey",
+    "topo per markup": "Topography Survey",
+    "construction survey update": "Topography Survey",
+
+    # CAD/Re-draw variants (67 orders in prod)
+    "cad file": "Survey Re-draw",
+    "cad": "Survey Re-draw",
+    "cad release": "Survey Re-draw",
+
+    # Elevation variants
     "elevation cert": "Elevation Certificate",
-    # From FTF order form UI (recordings 2026-05-27)
-    "elevation code only": "Elevation Only",   # I-072: UI label maps to canonical
+    "elevation code only": "Elevation Only",   # I-072: FTF UI label
     "elevation only": "Elevation Only",
-    "alta survey": "ALTA Table A Survey",       # UI shows "ALTA Survey" → canonical is "ALTA Table A Survey"
-    # "Table Survey" UI label has no confirmed canonical — flagged via I-071
-    # Any unrecognised value falls through to LLM normalization
+    "finished floor elevation on survey": "Elevation Certificate",
+
+    # Other confirmed mappings
+    "as-built survey": "Final Survey",
+    "special purpose survey": "Specific Purpose Survey",
+    "site specific survey": "Specific Purpose Survey",
+    "lot split survey": "Lot Split",
+    "re-flag corners": "Property Flagging",
+    "line stake out": "Building Stake Out",
+    "offset staking": "Building Stake Out",
+    "alta survey": "ALTA Table A Survey",
+    "alta conversion": "ALTA Table A Survey",
+    "optional alta table a": "ALTA Table A Survey",
+    "abstract survey (includes b-ii review)": "B-II Title Review",
+    "add topo to existing survey": "Topography Survey",
+    # "Table Survey" UI label — no confirmed canonical (I-071); falls to LLM
 }
 
 # customer_type values from FTF API that map to b2b pricing tier

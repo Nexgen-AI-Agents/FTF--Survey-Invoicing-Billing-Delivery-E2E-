@@ -1,38 +1,74 @@
 # Florida Land Surveying — Pricing Intelligence
-# Researched 2026-05-27 | Sources: apex survey, promatcher, firstchoicesurveying, angi
-# Purpose: AI pricing reference for NexGen estimate generation
+# Updated 2026-05-27 with PRODUCTION DATA: 23,353 NexGen invoices (May 2025–May 2026)
+# Source: nexgen_ftf_db prod DB — actual prices NexGen charged, not market estimates
 
-## Market Price Ranges by Service Type (2026)
+## ACTUAL NexGen Prices by Service Type (production 1-year data)
 
-| Service | Low | Typical | High | Notes |
-|---|---|---|---|---|
-| Boundary Survey (residential) | $400 | $500–$2,000 | $3,000+ | Platted lot starts ~$425–$500 |
-| Topographic Survey | $800 | $1,200–$3,500 | $6,500+ | Residential 1 ac; per-acre for larger |
-| ALTA Table A Survey | $2,500 | $3,000–$6,000 | $10,000+ | Table A items add $500–$2,000+ |
-| Elevation Certificate | $300 | $400–$700 | $900 | Standalone; $175 with survey order |
-| Form Board / Foundation Survey | $400 | $400–$900 | $1,200 | Same-day delivery; required pre-pour |
-| Final Survey / As-Built | $500 | $500–$1,500 | $2,500 | Required for CO |
-| Update Survey / Recertification | $300 | $350–$700 | $1,000 | 40-60% less than new survey |
-| Boundary Survey baseline (ProMatcher FL avg) | — | $648 | — | Range $429–$868, up to 0.5 ac |
+| Service | Orders | Avg Actual | Min | Max | Catalogue | Notes |
+|---|---|---|---|---|---|---|
+| Land Survey Only (= Boundary Survey) | 13,260 | $616 | $0.01 | $35,000 | $350 | Most common service (57% of volume) |
+| Land Survey and Elevation (bundle) | 5,654 | $400 | $0.01 | $12,500 | N/A | 49% billed <$300 (partial/EC portion) |
+| Boundary Survey | 992 | $567 | $50 | $10,000 | $350 | Explicit catalogue name |
+| Re-Survey / Update Survey | 406 | $397 | $0.01 | $2,800 | $250 | Alias for Update Survey |
+| Elevation Certificate | 365 | $271 | $0.01 | $1,500 | $225 | |
+| ALTA Table A Survey | 16 | $5,075 | $1,500 | $12,500 | $1,500 | Always custom-priced |
+| Topography Survey | 61 | $484 | $75 | $1,800 | $225 | |
+| Spot Survey (New client) | 106 | $589 | $350 | $2,500 | N/A | = Foundation Tie-In |
+| CAD file | 67 | $250 | $250 | $250 | N/A | Fixed add-on |
+| Final Survey | 10 | $465 | $250 | $750 | $300 | |
+| Commercial orders (all types) | 642 | $2,159 | — | — | — | 4.1x residential avg |
 
 ---
 
-## County / Regional Pricing Modifiers
+## County Pricing — PRODUCTION ACTUALS (Land Survey Only, 1yr, n≥10)
 
-| County | Region | Modifier | Boundary Range | ALTA Range | Notes |
-|---|---|---|---|---|---|
-| Miami-Dade | South FL | +15–25% | $600–$2,500 | $3,000–$7,000+ | Dense records, flood zone ubiquity |
-| Broward | South FL | +15–20% | $575–$2,200 | $3,000–$6,500 | Similar to Miami-Dade |
-| Palm Beach | South FL | +10–20% | $550–$2,500 | $3,000–$7,000+ | Large lots in western areas |
-| Monroe (Keys) | South FL | +20–30% est. | $700–$3,000+ | $3,500–$8,000+ | Island access, tidal, CCCL |
-| Hillsborough | Central FL | +5–15% | $500–$2,000 | $2,500–$6,000 | Tampa; active construction |
-| Orange | Central FL | +5–15% | $500–$2,000 | $2,500–$6,000 | Orlando; strong residential |
-| Pinellas | Central FL | +10–15% | $550–$2,000 | $2,500–$5,500 | Waterfront complexity |
-| Duval | North FL | Baseline | $450–$1,800 | $2,200–$5,000 | Jacksonville baseline |
-| Lee | SW FL | +5–10% | $500–$1,900 | $2,500–$5,500 | Post-Ian rebuild demand |
-| Collier | SW FL | +10–15% | $550–$2,000 | $2,500–$5,500 | Naples premium |
-| Polk | Central FL | Baseline | $450–$1,700 | $2,000–$4,500 | Lower density; rural common |
-| Panhandle | NW FL | At or below | $400–$1,600 | $2,000–$4,500 | Lowest cost region |
+These are real NexGen prices, not market estimates.
+
+| County | Orders | Avg Price | Tier |
+|--------|--------|-----------|------|
+| OKEECHOBEE | 20 | $1,797 | Remote/Rural |
+| HIGHLANDS | 35 | $1,337 | Remote/Rural |
+| MARION | 77 | $1,052 | Remote/Rural |
+| CITRUS | 37 | $954 | Remote/Rural |
+| CLAY | 47 | $779 | North FL |
+| VOLUSIA | 92 | $734 | North FL |
+| LAKE | 71 | $740 | Central FL |
+| POLK | 304 | $743 | Central FL |
+| ST LUCIE | 114 | $702 | Treasure Coast |
+| DUVAL | 175 | $654 | North FL |
+| OSCEOLA | 71 | $685 | Central FL |
+| COLLIER | 225 | $643 | SW FL (Naples) |
+| MARTIN | 284 | $631 | Treasure Coast |
+| ORANGE | 213 | $607 | Central FL |
+| PASCO | 350 | $608 | Central FL |
+| INDIAN RIVER | 285 | $595 | Treasure Coast |
+| CHARLOTTE | 234 | $591 | SW FL |
+| MANATEE | 380 | $584 | Gulf Coast |
+| PALM BEACH | 3,310 | $571 | South FL |
+| HILLSBOROUGH | 680 | $575 | Central FL |
+| BREVARD | 347 | $560 | Space Coast |
+| SARASOTA | 502 | $555 | Gulf Coast |
+| MIAMI-DADE | 587 | $547 | South FL |
+| HERNANDO | 199 | $540 | Central FL |
+| PINELLAS | 418 | $527 | Gulf Coast |
+| ST. LUCIE | 595 | $464 | Treasure Coast |
+| LEE | 947 | $500 | SW FL |
+| BROWARD | 1,398 | $512 | South FL |
+| SEMINOLE | 63 | $479 | Central FL |
+
+### Monroe County (Florida Keys) — Land Survey and Elevation
+Monroe avg: **$1,735** (35 orders). Premium pricing confirmed. Always flag for human review.
+
+### Pricing Tiers for AI Reference
+| Tier | Counties | Use For Estimates |
+|------|----------|-------------------|
+| Remote/rural | Okeechobee, Highlands, Marion, Citrus | $950–$1,800 |
+| North FL / inland | Clay, Volusia, Lake, Polk, Duval, Osceola | $685–$779 |
+| Treasure Coast | Martin, Indian River, Collier, Charlotte | $590–$643 |
+| Central FL | Orange, Pasco, Hillsborough, Brevard, Hernando | $540–$608 |
+| South FL core | Palm Beach, Broward, Miami-Dade | $512–$571 |
+| Gulf coast | Lee, Sarasota, Manatee, Pinellas | $500–$555 |
+| Monroe (Keys) | Monroe | $1,500–$2,500 |
 
 ---
 
