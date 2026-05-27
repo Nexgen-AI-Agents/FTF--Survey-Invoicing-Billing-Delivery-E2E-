@@ -2,7 +2,7 @@
 """
 QA Order Seeding Utility
 Usage:
-  python scripts/qa_orders.py create              # insert all 8 test scenarios
+  python scripts/qa_orders.py create              # insert all 10 test scenarios
   python scripts/qa_orders.py create --id boundary-flood   # one scenario
   python scripts/qa_orders.py list                # show QA orders + pipeline status
   python scripts/qa_orders.py cleanup             # delete all QA orders from DB
@@ -136,6 +136,30 @@ QA_SCENARIOS: list[dict] = [
         "status": "flagged",
         "flag_reason": "service requires human review: ALTA Table A Survey",
         "note": "ALWAYS_FLAG service -- human gate required before pricing",
+    },
+    {
+        "id": "prateek-test-1",
+        "service_type": "Boundary Survey",
+        "customer_email": "prateek.test1@nexgen-qa.invalid",
+        "property_lat": 28.5383,
+        "property_lng": -81.3792,
+        "is_flood_zone": False,
+        "customer_type": "individual",
+        "status": "classified",
+        "flag_reason": None,
+        "note": "Prateek Test 1 -- FTF order 1000276115 (100 Test Lane, Orlando, Orange County)",
+    },
+    {
+        "id": "prateek-test-2",
+        "service_type": "Elevation Certificate",
+        "customer_email": "prateek.test2@nexgen-qa.invalid",
+        "property_lat": 25.7617,
+        "property_lng": -80.1918,
+        "is_flood_zone": True,
+        "customer_type": "individual",
+        "status": "flagged",
+        "flag_reason": "service requires human review: Elevation Certificate",
+        "note": "Prateek Test 2 -- FTF order 1000276116 (200 Test Blvd, Miami, Miami-Dade) -- ALWAYS_FLAG + AE flood zone",
     },
 ]
 
