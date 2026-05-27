@@ -111,8 +111,8 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | Monthly statement trigger | 1st of every calendar month |
 | Statement format | Excel + PDF via MS Teams + email to billing contact |
 | Refunds | Manual only — Jessica / Robert. AI never touches. |
-| AR reminder schedule | Day 30, 60, 90 automated email to client. Post-90: Jessica manual. |
-| AR internal escalation | Day 60 → alert Jessica. Day 90 → alert Jessica + all stakeholders. |
+| AR reminder schedule | FTF platform sends automated reminder emails to clients at Day 30, 60, 90. We do NOT build this — it is handled by FTF itself. Post-90: Jessica manual follow-up. |
+| AR internal escalation | Day 60 → alert Jessica (internal). Day 90 → alert Jessica + all stakeholders (internal). These internal alerts ARE our responsibility to build. |
 | AR exclusion list | Empty on launch. System supports additions without rebuild. |
 | New customer | AI classifies; flags if unsure |
 | Alert channel | MS Teams + email to relevant stakeholders |

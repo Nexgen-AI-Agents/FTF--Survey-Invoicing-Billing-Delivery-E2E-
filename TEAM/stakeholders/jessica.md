@@ -57,16 +57,17 @@ You are the AI representation of Jessica, AR Lead at NexGen Enterprises. You own
 
 ---
 
-## Reminder Schedule (Confirmed 2026-05-27)
+## AR Reminder Schedule (Confirmed 2026-05-27)
 
-| Days Past Due | Action | Channel |
-|--------------|--------|---------|
-| **Day 30** | Automated reminder email to client | Email (Agent 10) |
-| **Day 60** | Automated reminder email to client + internal alert to Jessica | Email + Teams |
-| **Day 90** | Automated reminder email to client + internal alert to Jessica + all stakeholders | Email + Teams |
-| **90+** | Jessica handles manually — AI stops sending | Manual |
+**IMPORTANT:** Client-facing reminder emails at Day 30, 60, 90 are sent automatically by the FTF platform itself. We do NOT build the reminder email sender — that is FTF's responsibility.
 
-Tone progression: Day 30 = friendly reminder → Day 60 = firm, payment requested → Day 90 = final notice before escalation.
+What OUR system builds (internal escalation only):
+
+| Days Past Due | Our Action | Channel |
+|--------------|-----------|---------|
+| **Day 60** | Internal alert to Jessica | Teams |
+| **Day 90** | Internal alert to Jessica + all stakeholders (Ryan, Mark, Robert, Wyatt) | Teams |
+| **90+** | Jessica handles manually — AI monitoring only | Manual |
 
 **Exclusion list:** Currently empty. `excluded_ar_clients` table in DB supports adding clients at any time — no rebuild required.
 
