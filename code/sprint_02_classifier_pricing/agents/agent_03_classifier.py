@@ -88,17 +88,50 @@ _SERVICE_TYPE_ALIASES: dict[str, str] = {
 
     # Other confirmed mappings
     "as-built survey": "Final Survey",
+    "as-built": "Final Survey",
+    "sign as-built": "Final Survey",
     "special purpose survey": "Specific Purpose Survey",
     "site specific survey": "Specific Purpose Survey",
+    "condo survey (interior unit)": "Specific Purpose Survey",
     "lot split survey": "Lot Split",
     "re-flag corners": "Property Flagging",
+    "re-stake": "Property Flagging",
     "line stake out": "Building Stake Out",
     "offset staking": "Building Stake Out",
+    "boundary staking": "Building Stake Out",
+    "stake corners and lines": "Building Stake Out",
+    "property line staking": "Building Stake Out",
+    "bldg pinning": "Building Stake Out",
+    "spot/formboard survey": "Foundation Tie-In",
     "alta survey": "ALTA Table A Survey",
     "alta conversion": "ALTA Table A Survey",
     "optional alta table a": "ALTA Table A Survey",
     "abstract survey (includes b-ii review)": "B-II Title Review",
     "add topo to existing survey": "Topography Survey",
+    "topographic add-on": "Topography Survey",
+    "topo add-on": "Topography Survey",
+    "topographic survey refresh": "Update Survey",
+    "topo/re-survey": "Update Survey",
+    "topo / update": "Update Survey",
+    "survey refresh": "Update Survey",
+    "update / recert": "Update Survey",
+    "update & recertify": "Update Survey",
+    "update / recertification": "Update Survey",
+    "recertification": "Update Survey",
+    "re-certify survey only": "Update Survey",
+    "re-surv": "Update Survey",
+    "update / esign": "Update Survey",
+    "cad files": "Survey Re-draw",
+    "cad release": "Survey Re-draw",
+    "survey update / cad release": "Survey Re-draw",
+    "shoot elevations": "Elevation Certificate",
+    "pre-construction elevation certificate": "Elevation Certificate",
+    "go back for ffe": "Elevation Certificate",
+    "ec under construction": "Elevation Certificate",
+    "pre-construction survey": "Topography Survey",
+    # Cancellation billing — these are partial invoices, flag for human
+    # "cancel after office prep (10%)" -> falls to _INFORMAL_SERVICE_TYPES
+    # "cancel after field work (50%)" -> falls to _INFORMAL_SERVICE_TYPES
     # "Table Survey" UI label — no confirmed canonical (I-071); falls to LLM
 }
 
@@ -106,8 +139,13 @@ _SERVICE_TYPE_ALIASES: dict[str, str] = {
 _B2B_TYPES = frozenset({"b2b", "company", "business"})
 
 # Informal survey type labels used in FTF CRM that are NOT in the pricing catalogue.
-# Bundle descriptors, not priced services — flag for human to confirm scope.
-_INFORMAL_SERVICE_TYPES = frozenset({"construction/permitting"})
+# Bundle descriptors, cancellations, or ambiguous — flag for human to confirm scope.
+_INFORMAL_SERVICE_TYPES = frozenset({
+    "construction/permitting",
+    "cancel after office prep (10%)",     # partial cancellation billing
+    "cancel after field work (50%)",      # partial cancellation billing
+    "additional services (base rate)",    # custom add-on pricing
+})
 
 
 def _load_classifier_prompt() -> str:
