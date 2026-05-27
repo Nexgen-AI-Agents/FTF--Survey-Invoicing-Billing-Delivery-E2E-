@@ -1,5 +1,6 @@
 # Environment — never commit
 .env
+.mcp.json
 
 # Python
 __pycache__/
