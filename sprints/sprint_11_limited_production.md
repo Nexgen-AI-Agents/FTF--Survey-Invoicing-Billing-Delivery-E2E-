@@ -5,18 +5,22 @@
 | Field | Value |
 |-------|-------|
 | Goal | Estimate loop goes live on real FTF. Robert/Mark monitor first 5 estimates. 1-week observation before expanding. |
-| Status | 🔲 Not Started |
-| Dates | TBD |
-| Reads From | [sprint_10_staging_test.md](sprint_10_staging_test.md) — GO/NO-GO from Ryan + cost approved |
+| Status | 🔄 In Progress — started 2026-05-27 |
+| Dates | 2026-05-27 → TBD (1-week observation window) |
+| Reads From | [sprint_10_staging_test.md](sprint_10_staging_test.md) — GO from Ryan ✅ |
 | Outputs | First 5 real estimates sent to real customers, Robert/Mark sign-off, GO/NO-GO for Sprint 12 |
 
 ---
 
 ## Tasks
 
-- [ ] Deploy estimate loop only to production FTF
-- [ ] Robert/Mark monitor first 5 real estimates within 24 hours
-- [ ] Report any issues within 24 hours of first estimate
+- [x] Blocker cleared — Sprint 10 complete, Ryan issued GO/NO-GO: GO
+- [x] `scripts/monitor_first5_estimates.py` — Robert/Mark review tool built
+- [x] `estimate_generation.yml` — `FTF_API_BASE_URL` secret added so production URL swap requires no code change
+- [ ] Set `FTF_API_BASE_URL` GitHub Actions secret to production FTF URL
+- [ ] Confirm `FTF_API_KEY` secret is production key (not staging)
+- [ ] Trigger first production estimate loop run (workflow_dispatch or wait for hourly cron)
+- [ ] Robert/Mark monitor first 5 real estimates — run `python scripts/monitor_first5_estimates.py --teams`
 - [ ] 1-week observation period — flag any edge cases
 - [ ] AR loop + Statement loop remain on staging during this sprint
 
@@ -26,7 +30,7 @@
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| First real estimate delivered to real customer | 🔲 | |
+| First real estimate delivered to real customer | 🔲 | Awaiting production credential swap |
 | Robert/Mark: estimate correct and professional | 🔲 | |
 | 5/5 estimates pass Robert/Mark review | 🔲 | |
 | No critical failures in 1-week period | 🔲 | |
@@ -41,15 +45,38 @@
 
 ---
 
+## Production Credential Swap Instructions
+
+To go live, set these GitHub Actions repository secrets:
+
+| Secret | Value |
+|--------|-------|
+| `FTF_API_BASE_URL` | `https://app.fieldtofinish.jobs/ftf-ai-api/v1` (production) |
+| `FTF_API_KEY` | Production API key from FTF admin panel |
+| `FTF_BOOKS_BASE_URL` | `https://app.fieldtofinish.jobs` (production) |
+| `FTF_BOOKS_USER` | Production FTF Books login email |
+| `FTF_BOOKS_PASSWORD` | Production FTF Books login password |
+
+_All other secrets (DB, Anthropic, Teams) remain unchanged._
+
+After setting secrets:
+1. Go to GitHub Actions → "Estimate Generation Loop" → Run workflow (workflow_dispatch)
+2. Watch the run logs for the first estimate
+3. Run `python scripts/monitor_first5_estimates.py` to verify and optionally notify Robert/Mark
+
+---
+
 ## Blockers
 
-_Sprint 10 go/no-go required._
+_None — blocker cleared (Sprint 10 GO from Ryan)._
 
 ---
 
 ## Decisions Made
 
-_Log here as they happen._
+- AR Loop and Statement Loop remain on staging during Sprint 11 to limit blast radius
+- Robert/Mark review all 5 estimates before Sprint 12 gate — not just a spot check
+- `monitor_first5_estimates.py --teams` sends a Teams card to reviewers with order details + FTF links
 
 ---
 
@@ -67,7 +94,7 @@ _Log here as they happen._
 
 ## Completion Brief
 
-- **Built:**
-- **Tests:**
-- **Changed from plan:**
-- **Carry forward for Sprint 12:**
+- **Built:** `scripts/monitor_first5_estimates.py` (console report + Teams card), `estimate_generation.yml` updated with `FTF_API_BASE_URL` secret support
+- **Tests:** 239/239 passing (no new agent code — tooling only)
+- **Changed from plan:** Production credential swap documented as secret configuration only — no code changes required
+- **Carry forward for Sprint 12:** Full production for all 3 loops (estimate + AR + statements)

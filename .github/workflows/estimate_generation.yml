@@ -23,6 +23,10 @@ jobs:
       - name: Run estimate generation
         env:
           FTF_API_KEY:       ${{ secrets.FTF_API_KEY }}
+          FTF_API_BASE_URL:  ${{ secrets.FTF_API_BASE_URL }}   # override to production URL for Sprint 11+
+          FTF_BOOKS_BASE_URL: ${{ secrets.FTF_BOOKS_BASE_URL }}
+          FTF_BOOKS_USER:    ${{ secrets.FTF_BOOKS_USER }}
+          FTF_BOOKS_PASSWORD: ${{ secrets.FTF_BOOKS_PASSWORD }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DATABASE_URL:      ${{ secrets.DATABASE_URL }}
           TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
