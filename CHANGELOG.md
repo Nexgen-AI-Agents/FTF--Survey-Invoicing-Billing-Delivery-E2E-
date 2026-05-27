@@ -6,6 +6,41 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 
 ---
 
+## [Expert Persona v2 — Survey Business Expert] — 2026-05-28
+
+### Ryan Feedback Round 3 — Business Expert Strengthening
+
+Ryan: *"It should be a business expert with financial and sales knowledge. Not just a survey expert but a survey business expert."*
+
+#### land_surveyor_expert.txt — Major Expansion
+- Rewrote "Business, Sales & Finance Expert" section in WHO YOU ARE — now equal weight to PSM expertise
+- Added: revenue reality (invoiced vs collected), pipeline vs booked, sales funnel thinking, client segmentation (homeowner/title co/builder/attorney), pricing strategy (why Panhandle is 4×, commercial multiplier, Spot Survey upcharge opportunity), AR aging model with collection probabilities, B2B relationship management, business dev intelligence
+- Added full **BUSINESS & SALES INTELLIGENCE** section:
+  - Quote pipeline health metrics (conversion rate, time-to-convert, abandoned quotes, seasonality)
+  - Revenue recognition table (POTENTIAL / INVOICED / COLLECTED / AR — never confuse them)
+  - AR Aging Risk Model with collection probabilities per bucket (0–30d: 95%, 120+d: 15%)
+  - Client segmentation strategy (5 segments, how to win each)
+  - Pricing intelligence (Panhandle premium, commercial 4.1×, Spot Survey pricing signal, Form Board collapse signal)
+  - Business development red flags (Panhandle gap, commercial concentration, DSO drift, Spot Survey floor)
+- Added 8 new **business/financial WHEN I ASK QUESTIONS** triggers
+  - Quote conversion rate, revenue reality clarification, canceled order analysis, commercial concentration risk, Panhandle market gap, pricing floor review, B2B retention signals
+
+#### estimate_writer.txt — Business Revenue Event Framing
+- Expanded business expert section: estimate is a revenue event not a formality
+- Added per-segment guidance: homeowner needs trust, B2B needs brevity
+- Added margin awareness: never under-quote to win; A/R risk from low-priced accounts
+- Explicit: every B2B estimate is a retention event for a potential $50K/year relationship
+
+#### estimate_reviewer.txt — Conversion & Relationship Risk Lens
+- Expanded business/sales judgment: reviews for whether estimate will convert, not just technical accuracy
+- Added 3 new DOMAIN SANITY FLAGS: B2B pleasantry tone (flag), individual warmth (flag if missing), generic salutation (flag)
+
+#### Sprint Index — Updated
+- Sprints 7, 8, 9, 10 now correctly marked ✅ Complete (were showing 🔲 Not Started)
+- Sprint 11 updated to 🔄 In Progress
+
+---
+
 ## [Ryan Call Extraction + Demo v7] — 2026-05-26
 
 ### Business Intelligence — Ryan-Prateek 45-min Call

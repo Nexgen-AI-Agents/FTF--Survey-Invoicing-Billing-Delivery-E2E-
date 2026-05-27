@@ -15,11 +15,11 @@
 | [sprint_04_writer.md](sprint_04_writer.md) | Sprint 4 | Agent 6 Writer + Change Order Clause | Sprint 3 ✓ | ✅ Complete | 2026-05-26 |
 | [sprint_05_reviewer.md](sprint_05_reviewer.md) | Sprint 5 | Agent 7 Reviewer (self-correction loop) | Sprint 4 ✓ | ✅ Complete | 2026-05-26 |
 | [sprint_06_sender_reporter.md](sprint_06_sender_reporter.md) | Sprint 6 ⭐ | Agent 8 Sender + Agent 9 Reporter — **first full estimate loop** | Sprint 5 ✓ | ✅ Complete | 2026-05-26 |
-| [sprint_07_ar_followup.md](sprint_07_ar_followup.md) | Sprint 7 | Agents 10–14 AR Follow-Up Loop | Sprint 6 ✓ + Jessica recording | 🔲 Not Started | — |
-| [sprint_08_monthly_statements.md](sprint_08_monthly_statements.md) | Sprint 8 | Agents 15–17 Monthly Statement Loop | Sprint 7 ✓ + Wyatt/Jessica recording | 🔲 Not Started | — |
-| [sprint_09_memory_loop.md](sprint_09_memory_loop.md) | Sprint 9 | Agent 1 — Orchestrator (top-level loop controller) | Sprint 8 ✓ | 🔲 Not Started | — |
-| [sprint_10_staging_test.md](sprint_10_staging_test.md) | Sprint 10 ⭐ | Full staging test — all 3 loops + cost benchmark | Sprint 9 ✓ | 🔲 Not Started | — |
-| [sprint_11_limited_production.md](sprint_11_limited_production.md) | Sprint 11 ⭐ | Limited production — estimate loop live, team monitors | Sprint 10 go/no-go | 🔲 Not Started | — |
+| [sprint_07_ar_followup.md](sprint_07_ar_followup.md) | Sprint 7 | Agents 10–11 AR Internal Escalation Alerts | Sprint 6 ✓ | ✅ Complete | 2026-05-27 |
+| [sprint_08_monthly_statements.md](sprint_08_monthly_statements.md) | Sprint 8 | Agents 15–17 Monthly Statement Loop | Sprint 7 ✓ | ✅ Complete | 2026-05-27 |
+| [sprint_09_memory_loop.md](sprint_09_memory_loop.md) | Sprint 9 | Agent 1 Orchestrator + Memory/Dream loops + Agent 18 Business Analyst | Sprint 8 ✓ | ✅ Complete | 2026-05-27 |
+| [sprint_10_staging_test.md](sprint_10_staging_test.md) | Sprint 10 ⭐ | Full staging test — all 3 loops + cost benchmark | Sprint 9 ✓ | ✅ Complete | 2026-05-27 |
+| [sprint_11_limited_production.md](sprint_11_limited_production.md) | Sprint 11 ⭐ | Limited production — estimate loop live, team monitors | Sprint 10 go/no-go ✓ | 🔄 In Progress | — |
 | [sprint_12_full_production.md](sprint_12_full_production.md) | Sprint 12 ⭐ | Full production — all 3 loops live, 24/7 autonomous | Sprint 11 clear | 🔲 Not Started | — |
 
 ⭐ = Milestone sprint — requires stakeholder sign-off before proceeding

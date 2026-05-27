@@ -63,9 +63,9 @@ Automates 3 workflows that are currently manual and 9-to-5:
 |---------|-------|-------|
 | Acreage | $250 | — |
 | ALTA Table A Survey | $1,500 | Always flag |
-| B-II Title Review | $450 | Pending confirmation |
+| B-II Title Review | $450 | ALWAYS FLAG (I-055) |
 | Boundary Survey | $350 | — |
-| Building Stake Out | $225 | — |
+| Building Stake Out | $225 | ALWAYS FLAG until Robert confirms (I-042) |
 | Elevation Certificate | $225 | Auto-add if FEMA flood zone |
 | Elevation Only | $250 | — |
 | Final Survey | $300 | — |
@@ -84,21 +84,24 @@ Automates 3 workflows that are currently manual and 9-to-5:
 | Topography Survey | $225 | — |
 | Tree Location | $225 | — |
 | Update Survey | $250 | — |
-| Wetland Delineation | $300 | Pending confirmation |
+| Wetland Delineation | $300 | NEVER AUTO-QUOTE (I-005 confirmed, Robert) |
 
 ---
 
-## Agent 4 — 9 Flag Triggers
+## Agent 4 — Flag Triggers (Current — Production Code)
 
-1. Service in ALWAYS_FLAG_SERVICES (ALTA Table A Survey, Other Services)
-2. Service in NEVER_AUTO_QUOTE list (Robert/Mark to provide)
-3. Company name matches competitor list (Robert/Mark to provide)
-4. Email domain matches competitor domain list
-5. Unusual property — large acreage, tidal, special site conditions
-6. New customer — uncertain genuine vs. competitor classification
-7. Reviewer failure after 3 correction loops
-8. FEMA API unavailable — cannot determine flood zone
-9. **Property outside Florida** — NGE is FL-only (confirmed via nexgensurveying.com)
+1. Service in ALWAYS_FLAG_SERVICES: ALTA Table A Survey, Other Services, B-II Title Review, Building Stake Out, Table Survey
+2. Service in NEVER_AUTO_QUOTE: Specific Purpose Survey, Lot Split, Wetland Delineation, Topography Survey
+3. Company name matches competitor list (30 names confirmed)
+4. Email domain matches competitor domain list (14 domains confirmed)
+5. Monroe County order — always flag
+6. VE coastal flood zone — always flag
+7. Missing county — cannot price without it
+8. property_lat outside FL bounds when state=FL — data entry error flag
+9. **Property outside Florida** — NGE is FL-only
+10. Reviewer failure after 3 correction loops
+11. FEMA API unavailable — cannot determine flood zone
+12. Refund keyword detected — stop, alert Jessica immediately (I-063)
 
 ---
 
