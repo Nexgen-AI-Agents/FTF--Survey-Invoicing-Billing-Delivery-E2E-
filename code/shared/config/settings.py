@@ -39,6 +39,19 @@ DB_PASSWORD: str | None = os.getenv("DB_PASSWORD")
 # MS Teams
 TEAMS_WEBHOOK_URL: str | None = os.getenv("TEAMS_WEBHOOK_URL")
 
+# SMTP — monthly statement email delivery
+SMTP_HOST:     str | None = os.getenv("SMTP_HOST")
+SMTP_PORT:     int        = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER:     str | None = os.getenv("SMTP_USER")
+SMTP_PASSWORD: str | None = os.getenv("SMTP_PASSWORD")
+SMTP_FROM:     str        = os.getenv("SMTP_FROM", "statements@nexgensurveying.com")
+
+# Monthly statements — file output
+STATEMENT_OUTPUT_DIR: str = os.getenv(
+    "STATEMENT_OUTPUT_DIR",
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "docs", "statements"),
+)
+
 # OpenAI
 OPENAI_API_KEY:     str | None = os.getenv("OpenAI_API_KEY")
 OPENAI_CHAT_MODEL:  str        = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")

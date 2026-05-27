@@ -1,4 +1,5 @@
 import httpx
+from datetime import date
 from typing import Optional
 
 from config.settings import FTF_API_BASE_URL, FTF_API_KEY
@@ -181,6 +182,47 @@ def send_reminder(order_id: str, message: str) -> bool:
         return True
     except Exception as exc:
         raise AgentError(f"send_reminder({order_id}) failed") from exc
+
+
+def get_b2b_orders_for_month(month: date) -> list[dict]:
+    """Return all B2B orders whose order_date falls within the given calendar month.
+
+    Fetches all orders from the API, then filters client-side for
+    customer_type='b2b' and order_date within [month_start, month_end).
+    """
+    from datetime import datetime as _dt
+    import calendar
+
+    month_start = month.replace(day=1)
+    last_day = calendar.monthrange(month.year, month.month)[1]
+    month_end_inclusive = month.replace(day=last_day)
+
+    all_orders = get_orders()
+
+    result = []
+    for order in all_orders:
+        if str(order.get("customer_type", "")).lower() != "b2b":
+            continue
+
+        raw_date = order.get("order_date") or order.get("service_date") or order.get("created_at")
+        order_date = None
+        if isinstance(raw_date, date) and not isinstance(raw_date, _dt):
+            order_date = raw_date
+        elif isinstance(raw_date, _dt):
+            order_date = raw_date.date()
+        elif isinstance(raw_date, str):
+            for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%m/%d/%Y"):
+                try:
+                    order_date = _dt.strptime(raw_date[:10], fmt[:len(raw_date[:10])]).date()
+                    break
+                except ValueError:
+                    pass
+
+        if order_date and month_start <= order_date <= month_end_inclusive:
+            result.append(order)
+
+    logger.info("get_b2b_orders_for_month: %d B2B orders for %s", len(result), month)
+    return result
 
 
 def mark_estimate_sent(order_id: str) -> bool:

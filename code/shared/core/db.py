@@ -400,3 +400,73 @@ def update_ar_escalation_level(order_id: str, new_level: int) -> None:
             """,
             (new_level, order_id),
         )
+
+
+def upsert_monthly_statement(
+    client_email: str,
+    statement_month,
+    order_count: int,
+    total_amount: float,
+    excel_path: str,
+    pdf_path: str,
+) -> None:
+    """Insert or update a monthly_statements row for the given client + month."""
+    with _get_cursor() as cur:
+        cur.execute(
+            "SELECT id FROM monthly_statements WHERE client_email = %s AND statement_month = %s LIMIT 1",
+            (client_email, statement_month),
+        )
+        row = cur.fetchone()
+        if row:
+            cur.execute(
+                """
+                UPDATE monthly_statements
+                SET order_count = %s, total_amount = %s,
+                    excel_path = %s, pdf_path = %s,
+                    status = 'generated', updated_at = NOW()
+                WHERE client_email = %s AND statement_month = %s
+                """,
+                (order_count, total_amount, excel_path, pdf_path, client_email, statement_month),
+            )
+        else:
+            cur.execute(
+                """
+                INSERT INTO monthly_statements
+                    (client_email, statement_month, order_count, total_amount,
+                     excel_path, pdf_path, status)
+                VALUES (%s, %s, %s, %s, %s, %s, 'generated')
+                """,
+                (client_email, statement_month, order_count, total_amount, excel_path, pdf_path),
+            )
+
+
+def get_generated_statements(statement_month) -> list[dict]:
+    """Return all monthly_statements rows with status='generated' for a given month."""
+    with _get_cursor() as cur:
+        cur.execute(
+            """
+            SELECT * FROM monthly_statements
+            WHERE statement_month = %s AND status = 'generated'
+            ORDER BY client_email ASC
+            """,
+            (statement_month,),
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+
+def update_statement_status(
+    client_email: str,
+    statement_month,
+    status: str,
+    sent_at=None,
+) -> None:
+    """Update status (and optionally sent_at) on a monthly_statements row."""
+    with _get_cursor() as cur:
+        cur.execute(
+            """
+            UPDATE monthly_statements
+            SET status = %s, sent_at = %s, updated_at = NOW()
+            WHERE client_email = %s AND statement_month = %s
+            """,
+            (status, sent_at, client_email, statement_month),
+        )

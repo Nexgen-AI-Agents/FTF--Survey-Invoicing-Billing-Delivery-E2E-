@@ -18,16 +18,23 @@ def _mask_pii(text: str) -> str:
     return text
 
 
+def _safe_mask(value) -> object:
+    """Mask PII in strings; leave non-string values (int, float, etc.) unchanged."""
+    if isinstance(value, str):
+        return _mask_pii(value)
+    return value
+
+
 class _PIIFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         record.msg = _mask_pii(str(record.msg))
         if record.args:
             if isinstance(record.args, tuple):
-                record.args = tuple(_mask_pii(str(a)) for a in record.args)
+                record.args = tuple(_safe_mask(a) for a in record.args)
             elif isinstance(record.args, dict):
-                record.args = {k: _mask_pii(str(v)) for k, v in record.args.items()}
+                record.args = {k: _safe_mask(v) for k, v in record.args.items()}
             else:
-                record.args = _mask_pii(str(record.args))
+                record.args = _safe_mask(record.args)
         return True
 
 
