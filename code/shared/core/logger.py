@@ -2,14 +2,20 @@ import logging
 import os
 import re
 
-_PII_PATTERN = re.compile(r'[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}')
+_EMAIL_RE = re.compile(r'[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}')
+_PHONE_RE = re.compile(r'\(?\d{3}\)?[\s.\-]\d{3}[\s.\-]\d{4}')
+# Masks known sensitive field values in structured log lines: field=value
+_FIELD_RE = re.compile(
+    r'((?:property_address|customer_name|customer_phone|full_name)\s*=\s*)([^\n,|]+)',
+    re.IGNORECASE,
+)
 
 
 def _mask_pii(text: str) -> str:
-    def _replace(match: re.Match) -> str:
-        value = match.group()
-        return value[:3] + "***"
-    return _PII_PATTERN.sub(_replace, text)
+    text = _EMAIL_RE.sub(lambda m: m.group()[:3] + "***", text)
+    text = _PHONE_RE.sub("***-***-****", text)
+    text = _FIELD_RE.sub(lambda m: m.group(1) + "[REDACTED]", text)
+    return text
 
 
 class _PIIFilter(logging.Filter):

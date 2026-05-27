@@ -35,3 +35,32 @@ def test_mask_pii_handles_multiple_emails():
 def test_logger_has_one_handler():
     logger = get_logger("test.handler_count")
     assert len(logger.handlers) == 1
+
+
+def test_mask_pii_masks_phone_dashes():
+    result = _mask_pii("Call 561-508-6272 for info")
+    assert "561-508-6272" not in result
+    assert "***-***-****" in result
+
+
+def test_mask_pii_masks_phone_parens():
+    result = _mask_pii("Phone: (561) 508-6272")
+    assert "(561) 508-6272" not in result
+    assert "***-***-****" in result
+
+
+def test_mask_pii_masks_property_address_field():
+    result = _mask_pii("property_address=123 Main Street, county=Palm Beach")
+    assert "123 Main Street" not in result
+    assert "[REDACTED]" in result
+
+
+def test_mask_pii_masks_customer_name_field():
+    result = _mask_pii("customer_name=John Martinez, service=Boundary Survey")
+    assert "John Martinez" not in result
+    assert "[REDACTED]" in result
+
+
+def test_mask_pii_preserves_order_ids():
+    text = "order_id=ORD-2026-1001 processed successfully"
+    assert _mask_pii(text) == text
