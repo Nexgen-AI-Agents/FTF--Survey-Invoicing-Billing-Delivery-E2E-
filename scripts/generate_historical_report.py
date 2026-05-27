@@ -865,6 +865,337 @@ def build_ai_actions(wb):
     ws.freeze_panes = "A4"
 
 
+def build_analyst_questions(wb):
+    """Tab: Questions the AI analyst asks about the business — Ryan's request."""
+    ws = wb.create_sheet("Analyst Questions")
+    ws.sheet_view.showGridLines = False
+    ws.column_dimensions["A"].width = 10
+    ws.column_dimensions["B"].width = 46
+    ws.column_dimensions["C"].width = 36
+    ws.column_dimensions["D"].width = 36
+
+    title_row(ws, 1, "AI Analyst Questions — Business, Sales & Finance Intelligence", 4, C["navy"])
+
+    ws.merge_cells("A2:D2")
+    intro = ws["A2"]
+    intro.value = (
+        "I am your AI business analyst. I have read 2 years of NexGen invoices (47,825 records, $25.6M). "
+        "Before I can help you run the business better, I need answers to the questions below. "
+        "Where I already have the data, I've answered it myself. Where data is missing, I flag it for you."
+    )
+    intro.fill = fill(C["ltblue"]); intro.font = font(False, "000000", 11)
+    intro.alignment = left(); ws.row_dimensions[2].height = 36
+
+    hdr(ws, 3, ["#", "My Question", "What the Data Says", "What I Need / Action"], C["blue"])
+    ws.row_dimensions[3].height = 22
+
+    questions = [
+        # ── Revenue Reality ──
+        ("CATEGORY", "REVENUE REALITY — Potential vs Actual", "", ""),
+        ("1",
+         "What is the difference between your order revenue numbers and your actual business revenue?",
+         "Yr2: $13.2M INVOICED (potential). Only ~$6.65M actually collected (paid). "
+         "$6.57M is still outstanding — 49.7% of revenue is uncollected. "
+         "Every time someone says '$13M revenue' they are quoting POTENTIAL, not cash.",
+         "Confirm: does the team track COLLECTED revenue separately? "
+         "Jessica's AR agent should report both numbers on every digest."),
+        ("2",
+         "How much revenue is locked in 'Quote' orders that were never converted?",
+         "Yr2: 1,721 Quote orders at avg $926 = $1.59M in potential revenue sitting unclassified. "
+         "Yr1 had 3,379 Quotes at avg $853 = $2.88M. "
+         "If even 40% of Yr2 Quotes were converted and paid = $636K additional revenue.",
+         "What is the actual Quote-to-Paid conversion rate? "
+         "I need: how many Quote orders eventually became Delivered/Complete. "
+         "This is the single most valuable number for sales planning."),
+        ("3",
+         "How much revenue was lost to canceled orders?",
+         "I can see partial cancellation billing in the data ('Cancel after office prep 10%', "
+         "'Cancel after field work 50%') but I do not have total cancellation counts or lost revenue. "
+         "These show up as informal service types — they are NOT in the canonical catalogue.",
+         "Pull all orders with status=Cancelled from FTF API. "
+         "How many? What service types? What was the original quote? "
+         "Cancel rate and lost revenue are metrics the team should review monthly."),
+        # ── Quote Pipeline ──
+        ("CATEGORY", "QUOTE PIPELINE — Where Does Revenue Die?", "", ""),
+        ("4",
+         "What happens to a Quote order after it arrives? What are the drop-off points?",
+         "Current pipeline: Quote arrives -> Classifier flags it -> Human Gate -> awaiting approval. "
+         "If human does not approve within 24h, escalation to Ryan/Wyatt. "
+         "But I do NOT know: how many Quotes expire (60-day auto-cancel per FTF portal)? "
+         "How many are rejected vs converted?",
+         "I need a funnel report: Quotes received -> Classified -> Approved -> Sent -> Paid. "
+         "Each stage where orders drop off = lost revenue opportunity. "
+         "BUILD: Quote pipeline funnel as a monthly KPI."),
+        ("5",
+         "Why did Quote volume drop 49% from Yr1 to Yr2 (3,379 -> 1,721)?",
+         "Two possible explanations: (A) FTF staff are classifying orders faster so fewer arrive as Quote, "
+         "or (B) overall new-order intake dropped 49%. "
+         "Revenue grew +6.5% despite this drop — so explanation A is more likely (better classification, same or higher quality orders).",
+         "Confirm with Robert: is the team entering service types more carefully in Yr2? "
+         "If yes, this is a positive data quality improvement. "
+         "If no, new-order intake may have actually declined — which is a sales problem."),
+        # ── AR Risk ──
+        ("CATEGORY", "AR RISK — $6.57M Uncollected", "", ""),
+        ("6",
+         "Which clients owe the most money? Are the largest AR balances B2B or individual?",
+         "I know: 49.7% of Yr2 revenue ($6.57M) is unpaid. "
+         "8,212 invoices unpaid. Avg unpaid invoice = $799. "
+         "But I do NOT have: a client-level AR aging breakdown. "
+         "B2B clients (title companies, builders) tend to have larger balances.",
+         "Jessica needs: a top-50 AR aging report by client, sorted by total owed. "
+         "This is the #1 collection priority. "
+         "If even the top 10 clients pay, that could be $500K-$1M recovered."),
+        ("7",
+         "Are invoices getting paid faster or slower year over year?",
+         "Payment volume shifted: check payments -31% (15K->10K), CC payments +71% (2.6K->4.5K). "
+         "CC payments are typically faster (same-day authorization vs check clearing). "
+         "BUT: unpaid invoices grew +21% despite more CC volume — suggesting more invoices "
+         "are never paid at all (not just slow payers).",
+         "Track: avg days-to-payment by payment type. "
+         "If CC avg = 2 days and check avg = 30 days, push CC in all estimate emails. "
+         "Also: how many invoices have been unpaid >90 days? >180 days? >1 year?"),
+        # ── Growth Opportunities ──
+        ("CATEGORY", "GROWTH OPPORTUNITIES — Where Is the Money?", "", ""),
+        ("8",
+         "Commercial is 2.8% of volume but 10.5% of revenue. Are we maximizing commercial?",
+         "Yr2: 642 commercial orders, avg $2,159. If NexGen could add 100 more commercial jobs "
+         "at $2,159 avg = $215,900 additional revenue. "
+         "Commercial multiplier grew from 3.1x to 4.1x — NexGen is pricing commercial work correctly now.",
+         "How many commercial quotes are being rejected or expiring? "
+         "Commercial pipeline needs priority handling. "
+         "Every lost commercial job = 4 lost residential jobs in revenue value."),
+        ("9",
+         "Panhandle counties averaged $1,720-$2,466 per job in Yr1. Why did they disappear in Yr2?",
+         "Santa Rosa ($2,466 avg), Escambia ($2,210), Bay ($2,000), Leon ($1,720) — "
+         "all appeared in Yr1, ZERO orders in Yr2. "
+         "Combined Yr1 Panhandle revenue: ~$165K from 85 orders (avg ~$1,940). "
+         "If these counties are no longer being served, that is $165K/year lost.",
+         "Bobby/Robert: are we still taking Panhandle jobs? "
+         "If crew coverage is the issue, can we use contract surveyors? "
+         "These are the highest-priced jobs in the state — worth solving."),
+        ("10",
+         "Spot Survey surged from 10 to 106 orders (+960%). What is driving this?",
+         "Spot Survey (New Client) = Foundation Tie-In in canonical terms. "
+         "Avg price $589. 106 orders x $589 = $62K in Yr2. "
+         "This surge suggests either a new client vertical or more new clients being onboarded "
+         "needing foundation surveys before construction.",
+         "Who are the new Spot Survey clients? Is this from one builder/developer relationship? "
+         "If one client is driving 100 jobs, that is a strategic relationship to protect. "
+         "If it is many new clients, what marketing channel brought them in?"),
+        # ── Operational Gaps ──
+        ("CATEGORY", "OPERATIONAL GAPS — What I Cannot See But Need To", "", ""),
+        ("11",
+         "What is NexGen's actual cash position month-to-month? I only see invoiced amounts.",
+         "I can see what was billed ($13.2M) and what is unpaid ($6.57M). "
+         "But I cannot see: when payments cleared, what were operating costs, "
+         "payroll, or net profit. The $6.65M collected is gross — not net.",
+         "For real financial health monitoring, AI needs access to QuickBooks or "
+         "the actual cash accounts. The FTF Books data I have is accounts receivable only. "
+         "Jessica or Ryan: can QuickBooks data be connected?"),
+        ("12",
+         "B-II Title Review billed 11 times in Yr1 and ZERO in Yr2. What happened?",
+         "B-II Title Review ($450 catalogue price) completely disappeared from Yr2 billing. "
+         "Either: (A) NexGen stopped offering it, (B) it is being billed under another name, "
+         "or (C) those clients went elsewhere. Also conflicts with I-055 (auto-quote vs flag debate).",
+         "Robert must confirm: is B-II Title Review still offered? "
+         "If yes, why is it not appearing? If no, remove from catalogue. "
+         "This is an unanswered question that has been open since I-055 (2026-05-26)."),
+        ("13",
+         "Are seasonal staffing levels matched to the March-April peak?",
+         "March-April 2026 = busiest months: 2,219 and 2,212 orders respectively. "
+         "Nov 2025 = slowest at 1,564 orders. Peak/trough ratio = 1.42x. "
+         "If crew size is fixed, March-April will have backlogs and customer delays.",
+         "Bobby: what is current crew headcount? "
+         "Do we add contract surveyors in March-April? "
+         "Weather monitoring agent (I-070) should alert on peak months + bad weather together "
+         "— that combination is highest delay risk."),
+    ]
+
+    cat_color = C["navy"]
+    row_num = 4
+    for item in questions:
+        q_num, question, data_answer, action = item
+        if q_num == "CATEGORY":
+            ws.merge_cells(f"A{row_num}:D{row_num}")
+            c = ws.cell(row=row_num, column=1, value=question)
+            c.fill = fill(C["teal"]); c.font = font(True, "FFFFFF", 11)
+            c.alignment = center(); c.border = thin()
+            ws.row_dimensions[row_num].height = 22
+        else:
+            bg = C["ltblue"] if int(q_num) % 2 == 0 else C["white"]
+            dc(ws, row_num, 1, q_num, bg=C["blue"], bold=True, color="FFFFFF", size=11, align="center")
+            dc(ws, row_num, 2, question, bg=bg, bold=True, size=10)
+            dc(ws, row_num, 3, data_answer, bg=bg, size=9)
+            dc(ws, row_num, 4, action, bg=C["ltamber"], size=9)
+            ws.row_dimensions[row_num].height = 72
+        row_num += 1
+
+    ws.freeze_panes = "A4"
+
+
+def build_ai_thoughts_today(wb):
+    """Tab: What the AI would do if it had to invoice today's jobs — Ryan's request."""
+    ws = wb.create_sheet("AI Thoughts - Today")
+    ws.sheet_view.showGridLines = False
+    ws.column_dimensions["A"].width = 26
+    ws.column_dimensions["B"].width = 14
+    ws.column_dimensions["C"].width = 16
+    ws.column_dimensions["D"].width = 14
+    ws.column_dimensions["E"].width = 16
+    ws.column_dimensions["F"].width = 38
+
+    title_row(ws, 1, "AI Thoughts — What Would I Do If I Had to Invoice Today's Jobs?", 6, C["navy"])
+
+    ws.merge_cells("A2:F2")
+    intro = ws["A2"]
+    intro.value = (
+        "TODAY: 2026-05-28 (Wednesday, May). Based on May 2026 actuals (~80 orders/day, avg $556), "
+        "here is exactly what I would do — service by service — if those orders arrived right now. "
+        "I am thinking as a FL PSM expert + business analyst. This is my live reasoning."
+    )
+    intro.fill = fill(C["ltblue"]); intro.font = font(False, "000000", 11)
+    intro.alignment = left(); ws.row_dimensions[2].height = 36
+
+    # Section 1: Expected order mix
+    title_row(ws, 3, "SECTION 1 — Expected Order Mix Today (Based on May 2026 Actuals)", 6, C["blue"])
+    hdr(ws, 4, ["Service Type", "Expected Today", "Avg Price", "Auto-Quote?", "Est. Revenue", "My Reasoning"], C["teal"])
+    ws.row_dimensions[4].height = 20
+
+    todays_mix = [
+        ("Boundary Survey\n(Land Survey Only / Land Survey & Elevation)",
+         "~46 orders", "$556", "YES — if county known, no VE zone",
+         "~$25,600",
+         "The dominant service at 57% of volume. I use county-based pricing: Palm Beach $572, Broward $512, Hillsborough $575. "
+         "If flood zone = AE, I add Elevation Certificate ($225). If county is MISSING, I flag for human — cannot price without it. "
+         "If flood zone = VE, I flag regardless of service type."),
+        ("Quote (Unclassified orders from FTF)",
+         "~6 orders", "$926 avg", "NO — always flag",
+         "$0 auto-quoted\n$5,556 potential",
+         "These arrive with service_type='Quote' — FTF staff did not classify them yet. "
+         "My classifier cannot guess what survey is needed. Average value is HIGH ($926) — these are likely complex or commercial. "
+         "I send all 6 to human gate immediately with flag: 'service_type=Quote — unclassified by FTF staff.'"),
+        ("Elevation Certificate (standalone)",
+         "~2 orders", "$271", "YES — if individual, no VE zone",
+         "~$540",
+         "These are simpler standalone certs. I check: is it AE zone (standard EC) or VE zone (flag for specialist)? "
+         "Individual client + AE zone = auto-quote $271. Commercial or VE = flag. "
+         "I note on the estimate: FEMA flood zone designation, why the EC is needed, and that NexGen is a licensed FL PSM."),
+        ("ALTA Table A Survey",
+         "~1 order", "$5,075 avg", "NO — always flag",
+         "$0 auto-quoted\n$5,075 potential",
+         "ALTA is always human review. No exceptions. Avg Yr2 price is $5,075 but every ALTA is custom-scoped. "
+         "I cannot auto-quote without knowing: table A items requested, acreage, encumbrances, title commitment. "
+         "I flag immediately: 'ALTA — custom scope required, Bobby/Robert must review.'"),
+        ("Update Survey / Re-Survey",
+         "~2 orders", "$398", "YES — if prior survey on file",
+         "~$796",
+         "Update surveys recertify a prior NexGen survey. "
+         "I check: is there a prior survey on file? If yes, price at $398 (Yr2 avg). "
+         "If this is a competitor's prior survey, I flag — we may need to do a full boundary instead. "
+         "Important: recertification is 40-60% less cost than a new survey — I make sure this is reflected in the estimate."),
+        ("Commercial / B2B (any service type)",
+         "~2 orders", "$2,159 avg", "NO — always flag",
+         "$0 auto-quoted\n$4,318 potential",
+         "Commercial multiplier is 4.1x residential in Yr2. I flag ALL commercial orders for Bobby/Robert. "
+         "I do not auto-quote commercial even for simple services — complexity factors (walls, pools, drainage, site access) "
+         "are not captured in the order form and can double the price. Human judgment is required."),
+        ("Monroe County (any service)",
+         "~0-1 orders", "$1,735 avg", "NO — always flag",
+         "$0 auto-quoted",
+         "Monroe County = Florida Keys. Non-standard pricing due to island access, tidal flood complexity, and CCCL (Coastal Construction Control Line) regulations. "
+         "I flag every Monroe County order regardless of service type with: 'Monroe County — non-standard pricing, human review required.' "
+         "This is a hard rule from the classifier."),
+    ]
+
+    for i, row_data in enumerate(todays_mix):
+        svc, count, price, auto, est_rev, reasoning = row_data
+        r = 5 + i
+        is_flag = "NO" in auto
+        bg = C["ltred"] if is_flag else C["ltgreen"]
+        dc(ws, r, 1, svc, bg=bg, bold=True, size=10)
+        dc(ws, r, 2, count, bg=bg, size=10, align="center")
+        dc(ws, r, 3, price, bg=bg, size=10, align="center")
+        auto_c = ws.cell(row=r, column=4, value=auto)
+        auto_c.fill = fill(C["ltred"] if is_flag else C["ltgreen"])
+        auto_c.font = font(True, C["red"] if is_flag else "2D6A2D", 10)
+        auto_c.alignment = center(); auto_c.border = thin()
+        dc(ws, r, 5, est_rev, bg=bg, bold=True, size=10, align="center")
+        dc(ws, r, 6, reasoning, bg=bg, size=9)
+        ws.row_dimensions[r].height = 72
+
+    # Section 2: End-of-day summary
+    sum_r = 5 + len(todays_mix) + 1
+    title_row(ws, sum_r, "SECTION 2 — My End-of-Day Summary (If I Run the Pipeline Today)", 6, C["blue"])
+    hdr(ws, sum_r + 1, ["Outcome", "Count", "Revenue", "", "Status", "Notes"], C["teal"])
+    ws.row_dimensions[sum_r + 1].height = 20
+
+    eod = [
+        ("Auto-quoted & sent to clients", "~50", "~$26,936", "", "DONE", "Boundary surveys, ECs, update surveys in known counties. Estimates sent 8 AM-6 PM ET only."),
+        ("Flagged — sent to human gate (Bobby/Robert)", "~12", "$0 (held)", "", "PENDING HUMAN", "Quotes, ALTA, commercial, Monroe County, VE zones. Batch digest sent every hour per I-064."),
+        ("Refund requests intercepted", "0 expected", "$0", "", "JESSICA ONLY", "Hard rule (I-063): any refund mentioned in email or order notes -> Jessica immediately. AI never touches."),
+        ("Estimate emails queued (outside hours)", "~3", "~$1,680", "", "QUEUED", "Orders received after 6 PM ET. Will send tomorrow 8 AM. No sends outside business hours."),
+    ]
+    for i, row_data in enumerate(eod):
+        outcome, count, rev, _, status, notes = row_data
+        r = sum_r + 2 + i
+        s_colors = {"DONE": C["ltgreen"], "PENDING HUMAN": C["ltamber"], "JESSICA ONLY": C["ltred"], "QUEUED": C["ltblue"]}
+        bg = s_colors.get(status, C["white"])
+        dc(ws, r, 1, outcome, bg=bg, bold=True, size=10)
+        dc(ws, r, 2, count, bg=bg, size=10, align="center")
+        dc(ws, r, 3, rev, bg=bg, bold=True, size=10, align="center")
+        dc(ws, r, 4, "", bg=bg)
+        sc = ws.cell(row=r, column=5, value=status)
+        sc.fill = fill(bg); sc.font = font(True, "000000", 10)
+        sc.alignment = center(); sc.border = thin()
+        dc(ws, r, 6, notes, bg=bg, size=9)
+        ws.row_dimensions[r].height = 36
+
+    # Section 3: What I still need
+    need_r = sum_r + 2 + len(eod) + 2
+    title_row(ws, need_r, "SECTION 3 — What I Still Need to Invoice Better (Knowledge Gaps)", 6, C["red"])
+    ws.row_dimensions[need_r].height = 22
+    hdr(ws, need_r + 1, ["Gap", "Impact", "Who Resolves", "", "Priority", "Detail"], C["red"])
+    ws.row_dimensions[need_r + 1].height = 20
+
+    gaps = [
+        ("Property complexity data not in order form",
+         "I cannot price pools, sheds, wall count, driveways, or lot shape — all major price factors per Ryan's call",
+         "Robert / FTF developer", "", "HIGH",
+         "Ryan: 'Same half-acre with pool, 3 walls, shed = $700. Plain house = $350.' "
+         "Until FTF order form captures complexity, I use county averages only. I may under-quote complex jobs."),
+        ("Quote-to-paid conversion rate unknown",
+         "I cannot optimize the quote pipeline without knowing how many Quotes convert",
+         "Jessica / FTF data pull", "", "HIGH",
+         "If 1,721 Yr2 Quotes have 40% conversion = $636K recovered. "
+         "If 20% = $318K. This one number changes the AR strategy completely."),
+        ("Crew location / schedule not available to me",
+         "I cannot factor travel cost into pricing for remote counties",
+         "Bobby / FieldPack", "", "MEDIUM",
+         "Ryan: 'Far from crew = charge more.' I have no access to crew schedule. "
+         "Near-term: add county-based distance tier to pricing (Panhandle = always high, Central FL = baseline)."),
+        ("Florida PSM standards wired in but not tested on real disputes",
+         "My FL PSM persona was built from regulations — not from NexGen's actual field decisions",
+         "Robert / Mark", "", "MEDIUM",
+         "Feed me 5-10 real NexGen estimate examples that were disputed or revised. "
+         "I will learn the gap between the FL standard and what NexGen actually does in the field."),
+    ]
+    for i, row_data in enumerate(gaps):
+        gap, impact, who, _, pri, detail = row_data
+        r = need_r + 2 + i
+        bg = C["ltred"] if i % 2 == 0 else C["ltamber"]
+        dc(ws, r, 1, gap, bg=bg, bold=True, size=10)
+        dc(ws, r, 2, impact, bg=bg, size=9)
+        dc(ws, r, 3, who, bg=bg, size=10, align="center")
+        dc(ws, r, 4, "", bg=bg)
+        pc = ws.cell(row=r, column=5, value=pri)
+        pc.fill = fill(C["red"] if pri == "HIGH" else C["amber"])
+        pc.font = font(True, "FFFFFF", 10); pc.alignment = center(); pc.border = thin()
+        dc(ws, r, 6, detail, bg=bg, size=9)
+        ws.row_dimensions[r].height = 54
+
+    ws.freeze_panes = "A4"
+
+
 def main():
     wb = Workbook()
     wb.remove(wb.active)
@@ -878,6 +1209,8 @@ def main():
     build_ar_analysis(wb)
     build_commercial(wb)
     build_ai_actions(wb)
+    build_analyst_questions(wb)
+    build_ai_thoughts_today(wb)
 
     wb.save(OUTPUT)
     print(f"Saved -> {OUTPUT}")
