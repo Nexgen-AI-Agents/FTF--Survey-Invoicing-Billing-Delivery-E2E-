@@ -2,7 +2,7 @@ name: AR Follow-Up Loop
 
 on:
   schedule:
-    - cron: "0 7 * * *"   # 07:00 UTC daily — Sprint 14+ activates the full AR loop
+    - cron: "0 7 * * *"   # 07:00 UTC daily
   workflow_dispatch:
 
 jobs:
@@ -20,12 +20,26 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run AR follow-up
+      - name: Run AR Scanner (Agent 10)
         env:
-          FTF_API_KEY:        ${{ secrets.FTF_API_KEY }}
-          ANTHROPIC_API_KEY:  ${{ secrets.ANTHROPIC_API_KEY }}
-          DATABASE_URL:       ${{ secrets.DATABASE_URL }}
-          TEAMS_WEBHOOK_URL:  ${{ secrets.TEAMS_WEBHOOK_URL }}
-        run: |
-          echo "Stub — AR agents built in Sprint 7"
-          echo "Activate by replacing this step with: python code/sprint_07_ar_followup/agents/agent_10_ar_scanner.py"
+          FTF_API_KEY:          ${{ secrets.FTF_API_KEY }}
+          FTF_BOOKS_BASE_URL:   ${{ secrets.FTF_BOOKS_BASE_URL }}
+          FTF_BOOKS_USER:       ${{ secrets.FTF_BOOKS_USER }}
+          FTF_BOOKS_PASSWORD:   ${{ secrets.FTF_BOOKS_PASSWORD }}
+          DB_HOST:              ${{ secrets.DB_HOST }}
+          DB_PORT:              ${{ secrets.DB_PORT }}
+          DB_NAME:              ${{ secrets.DB_NAME }}
+          DB_USER:              ${{ secrets.DB_USER }}
+          DB_PASSWORD:          ${{ secrets.DB_PASSWORD }}
+          TEAMS_WEBHOOK_URL:    ${{ secrets.TEAMS_WEBHOOK_URL }}
+        run: python code/sprint_07_ar_followup/agents/agent_10_ar_scanner.py
+
+      - name: Run AR Escalation Alerts (Agent 11)
+        env:
+          DB_HOST:              ${{ secrets.DB_HOST }}
+          DB_PORT:              ${{ secrets.DB_PORT }}
+          DB_NAME:              ${{ secrets.DB_NAME }}
+          DB_USER:              ${{ secrets.DB_USER }}
+          DB_PASSWORD:          ${{ secrets.DB_PASSWORD }}
+          TEAMS_WEBHOOK_URL:    ${{ secrets.TEAMS_WEBHOOK_URL }}
+        run: python code/sprint_07_ar_followup/agents/agent_11_ar_escalation.py

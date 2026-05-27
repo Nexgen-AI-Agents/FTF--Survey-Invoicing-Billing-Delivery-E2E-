@@ -2,7 +2,7 @@ name: Monthly Statements Loop
 
 on:
   schedule:
-    - cron: "0 8 1 * *"   # 08:00 UTC on the 1st of every month — Sprint 8+ activates
+    - cron: "0 8 1 * *"   # 08:00 UTC on the 1st of every month
   workflow_dispatch:
 
 jobs:
@@ -20,12 +20,40 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run monthly statements
+      - name: Generate Statements (Agent 15)
         env:
-          FTF_API_KEY:        ${{ secrets.FTF_API_KEY }}
-          ANTHROPIC_API_KEY:  ${{ secrets.ANTHROPIC_API_KEY }}
-          DATABASE_URL:       ${{ secrets.DATABASE_URL }}
-          TEAMS_WEBHOOK_URL:  ${{ secrets.TEAMS_WEBHOOK_URL }}
-        run: |
-          echo "Stub — statement agents built in Sprint 8"
-          echo "Activate by replacing this step with: python code/sprint_08_monthly_statements/agents/agent_15_statement_compiler.py"
+          FTF_API_KEY:          ${{ secrets.FTF_API_KEY }}
+          DB_HOST:              ${{ secrets.DB_HOST }}
+          DB_PORT:              ${{ secrets.DB_PORT }}
+          DB_NAME:              ${{ secrets.DB_NAME }}
+          DB_USER:              ${{ secrets.DB_USER }}
+          DB_PASSWORD:          ${{ secrets.DB_PASSWORD }}
+          STATEMENT_OUTPUT_DIR: /tmp/statements
+        run: python code/sprint_08_monthly_statements/agents/agent_15_statement_generator.py
+
+      - name: Review Statements (Agent 16)
+        env:
+          DB_HOST:              ${{ secrets.DB_HOST }}
+          DB_PORT:              ${{ secrets.DB_PORT }}
+          DB_NAME:              ${{ secrets.DB_NAME }}
+          DB_USER:              ${{ secrets.DB_USER }}
+          DB_PASSWORD:          ${{ secrets.DB_PASSWORD }}
+          TEAMS_WEBHOOK_URL:    ${{ secrets.TEAMS_WEBHOOK_URL }}
+          STATEMENT_OUTPUT_DIR: /tmp/statements
+        run: python code/sprint_08_monthly_statements/agents/agent_16_statement_reviewer.py
+
+      - name: Send Statements (Agent 17)
+        env:
+          DB_HOST:              ${{ secrets.DB_HOST }}
+          DB_PORT:              ${{ secrets.DB_PORT }}
+          DB_NAME:              ${{ secrets.DB_NAME }}
+          DB_USER:              ${{ secrets.DB_USER }}
+          DB_PASSWORD:          ${{ secrets.DB_PASSWORD }}
+          TEAMS_WEBHOOK_URL:    ${{ secrets.TEAMS_WEBHOOK_URL }}
+          SMTP_HOST:            ${{ secrets.SMTP_HOST }}
+          SMTP_PORT:            ${{ secrets.SMTP_PORT }}
+          SMTP_USER:            ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD:        ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM:            ${{ secrets.SMTP_FROM }}
+          STATEMENT_OUTPUT_DIR: /tmp/statements
+        run: python code/sprint_08_monthly_statements/agents/agent_17_statement_sender.py
