@@ -156,6 +156,14 @@ def _make_order_id(scenario_id: str) -> str:
     return f"QA-{today}-{scenario_id}"
 
 
+def _slugify(name: str) -> str:
+    """Convert a free-form name to a URL-safe slug for use in order IDs."""
+    import re
+    slug = name.lower().strip()
+    slug = re.sub(r"[^a-z0-9]+", "-", slug)
+    return slug.strip("-")
+
+
 def insert_qa_order(scenario: dict, dry_run: bool = False) -> str:
     """Insert one QA scenario into processed_orders. Returns order_id."""
     order_id = _make_order_id(scenario["id"])
@@ -267,7 +275,14 @@ def cleanup_qa_orders(dry_run: bool = False) -> int:
 # --- CLI ---------------------------------------------------------------------
 
 def cmd_create(args) -> None:
-    if args.id:
+    if getattr(args, "name", None):
+        # Free-form named order -- use boundary-individual as base, override id
+        slug = _slugify(args.name)
+        base = dict(_SCENARIO_MAP.get(args.id or "boundary-individual"))
+        base["id"] = slug
+        base["note"] = f"Named test order: {args.name}"
+        scenarios = [base]
+    elif args.id:
         scenario = _SCENARIO_MAP.get(args.id)
         if not scenario:
             valid = ", ".join(_SCENARIO_MAP.keys())
@@ -347,6 +362,8 @@ def main() -> None:
     )
     parser.add_argument("command", choices=["create", "list", "cleanup"],
                         help="create: seed test orders | list: show QA orders | cleanup: delete all QA orders")
+    parser.add_argument("--name", metavar="NAME",
+                        help="(create) free-form order name; creates a named test order with a slugified ID")
     parser.add_argument("--id", metavar="SCENARIO_ID",
                         help="(create) insert only this scenario; omit for all 8")
     parser.add_argument("--dry-run", action="store_true",
