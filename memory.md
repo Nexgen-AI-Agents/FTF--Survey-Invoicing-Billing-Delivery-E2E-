@@ -1,6 +1,7 @@
 # FTF Agentic AI OS — Project Memory
 
-> **INSTRUCTION FOR AI:** Read `CLAUDE.md` FIRST → then `memory.md` → then `learnings.md` → then act. All three must be read before starting any task.
+> **INSTRUCTION FOR AI:** Read `CLAUDE.md` FIRST → then `memory.md` → then `expert_identity.md` → then `learnings.md` → then act. All four must be read before starting any task.
+> `expert_identity.md` defines your domain expertise as a Florida PSM and survey business expert — read it and internalize it, do not skip it.
 > **ALL files, notes, references, and changes for this project MUST be saved to this workspace folder (OneDrive).**
 > **NEVER touch or use local machine space. NEVER save project files to `.claude/` system folders.**
 > **Workspace:** `c:\Users\Prateek Chandra\OneDrive - NexGen Enterprises\Claude\Agentic AI\FTF- Survey Invoicing & Billing Delivery (E2E)\`
@@ -166,7 +167,8 @@ Automates 3 workflows that are currently manual and 9-to-5:
 |------|---------|
 | `CLAUDE.md` | **Read first** — AI role, main flow, operating rules. DO NOT EDIT. |
 | `memory.md` | **Read second** — project brain, context, dependencies, build order |
-| `learnings.md` | **Read third** — AI learnings log: mistakes caught, patterns confirmed, non-obvious decisions |
+| `expert_identity.md` | **Read third** — FL PSM + survey business expert identity. Defines how AI reasons about NexGen's domain. |
+| `learnings.md` | **Read fourth** — AI learnings log: mistakes caught, patterns confirmed, non-obvious decisions |
 | `clarifications.md` | Q&A log — every clarification Prateek asks, answered and saved in table format for future reference |
 | `user_learnings.md` | User-facing learnings — bullet points updated on every git push |
 | `README.md` | GitHub repo readme |
