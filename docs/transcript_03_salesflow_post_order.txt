@@ -1,0 +1,6 @@
+Recording: How saleslfow member can post an order.mp4
+Transcribed: 2026-05-27 via Whisper base model
+
+---
+
+Hello, Brithik. In this video, I'm going to show you how our internal team of sales flow can place an order. So here again on home page, we have an order survey from there. We can create a code order and here as well, we have a request code section and then we have an order now section. So if I go to order now section, I just need to put that address. Here we have other option if we want to select a service. Elevation code only, acreage, elevation certificate, boundary survey, ALTA survey, table survey and here we can mention the file number. Here we can mention the agent or contact info. Then access details. These fields are not mandatory, but if you want to put it, then you can then we need to place the priority. For example, I am putting it for 28 and 29 and then submit order. Data successfully saved and order is placed. If I go to the home page again, reload the page. I can see the pending order because I was placed at order from order now section. So if I go to the open order again, I can see the order details like the service I ask for that property information. And if I go to the code order section and go to order, I did not select any kind of services. So it will show you over here as in code.

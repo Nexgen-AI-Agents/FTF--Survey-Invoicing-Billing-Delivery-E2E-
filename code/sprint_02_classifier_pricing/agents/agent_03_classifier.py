@@ -59,6 +59,12 @@ _SERVICE_TYPE_ALIASES: dict[str, str] = {
     "as-built survey": "Final Survey",
     "boundary": "Boundary Survey",
     "elevation cert": "Elevation Certificate",
+    # From FTF order form UI (recordings 2026-05-27)
+    "elevation code only": "Elevation Only",   # I-072: UI label maps to canonical
+    "elevation only": "Elevation Only",
+    "alta survey": "ALTA Table A Survey",       # UI shows "ALTA Survey" → canonical is "ALTA Table A Survey"
+    # "Table Survey" UI label has no confirmed canonical — flagged via I-071
+    # Any unrecognised value falls through to LLM normalization
 }
 
 # customer_type values from FTF API that map to b2b pricing tier

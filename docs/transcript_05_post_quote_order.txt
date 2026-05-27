@@ -1,0 +1,6 @@
+Recording: How to post a Quote order.mp4
+Transcribed: 2026-05-27 via Whisper base model
+
+---
+
+Hello Pratik, so in this video I am going to show you how we can order a survey from our website. So on home page we have an option for order survey and also on order now page we have the same option. So if we go if we can order from here as well we can order from here as well. So let's just start it with home page. So if I click on it it will redirect us to the page where we can order survey. So let me just order one survey. So here this order will convert into the code order. You can see the order is successfully placed and if I go to home page it will come as it is encoded over here. You can see. Thank you.
