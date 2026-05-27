@@ -80,11 +80,12 @@ YR1_LABEL = "May 2024 – May 2025"
 YR2_LABEL = "May 2025 – May 2026"
 
 HEADLINE = {
-    "records":   (24472, 23353),
-    "revenue":   (12402869.98, 13205323.54),
-    "avg":       (506.82, 565.47),
-    "unpaid":    (6786, 8212),
-    "ar":        (5200844.0, 6565086.14),
+    "records":     (24472, 23353),
+    "invoiced":    (12402869.98, 13205323.54),   # what was BILLED — NOT cash received
+    "collected":   (7202025.98, 6640237.40),      # invoiced minus AR outstanding = actual cash
+    "avg":         (506.82, 565.47),
+    "unpaid":      (6786, 8212),
+    "ar":          (5200844.0, 6565086.14),
 }
 
 MONTHLY = {
@@ -286,17 +287,20 @@ def build_cover(wb):
 
     ws.merge_cells("A3:F3")
     c = ws["A3"]
-    c.value = f"Source: nexgen_ftf_db (AWS RDS production)  |  Generated: {datetime.now().strftime('%B %d, %Y')}"
-    c.fill = fill(C["teal"]); c.font = font(False, "FFFFFF", 11)
+    c.value = (
+        f"Source: nexgen_ftf_db (AWS RDS production)  |  Generated: {datetime.now().strftime('%B %d, %Y')}  |  "
+        "NOTE: 'Invoiced' = what NexGen billed. 'Collected' = actual cash received (invoiced minus AR). These are NOT the same number."
+    )
+    c.fill = fill(C["red"]); c.font = font(True, "FFFFFF", 10)
     c.alignment = center()
 
     # KPI comparison cards
     kpis = [
-        ("Total Revenue",  "$12.4M",  "$13.2M",  "+6.5%",  C["green"]),
-        ("Invoices",       "24,472",  "23,353",  "-4.6%",  C["amber"]),
-        ("Avg Price",      "$506.82", "$565.47", "+11.6%", C["green"]),
-        ("AR Outstanding", "$5.20M",  "$6.57M",  "+26.3%", C["red"]),
-        ("Unpaid Invoices","6,786",   "8,212",   "+21.0%", C["red"]),
+        ("Invoiced (Billed)",    "$12.4M",  "$13.2M",  "+6.5%",  C["amber"]),
+        ("Collected (Cash In)",  "$7.2M",   "$6.64M",  "-7.8%",  C["red"]),
+        ("Avg Invoice Price",    "$506.82", "$565.47", "+11.6%", C["green"]),
+        ("AR Outstanding",       "$5.20M",  "$6.57M",  "+26.3%", C["red"]),
+        ("Unpaid Invoices",      "6,786",   "8,212",   "+21.0%", C["red"]),
         ("LSO Avg Price",  "$474.94", "$616.20", "+29.7%", C["green"]),
     ]
     for i, (metric, v1, v2, chg, color) in enumerate(kpis):
@@ -328,16 +332,16 @@ def build_cover(wb):
     ws.row_dimensions[insight_row].height = 22
 
     insights = [
-        ("1", "Price surge", "Land Survey Only avg jumped from $474 to $616 (+29.7%) YoY. The $400-449 bucket is now dominant (was $350-399 in yr1). NexGen raised prices significantly."),
-        ("2", "Revenue up, volume down", "Revenue grew +6.5% despite -4.6% fewer invoices, confirming higher prices per job — not more jobs."),
-        ("3", "Panhandle = extreme premium", "Santa Rosa ($2,466), Escambia ($2,210), Bay ($2,000), Leon ($1,720) avg in yr1. These counties did not appear in yr2 — crew coverage gap?"),
-        ("4", "Quote orders halved", "Quote (unclassified) orders dropped from 3,379 to 1,721 (-49%). Likely more orders are being properly classified now."),
-        ("5", "Commercial premium growing", "Commercial multiplier grew from 3.1x to 4.1x residential. Higher-value commercial work is being priced more aggressively."),
-        ("6", "Spot Survey surged", "Spot Survey (New client) volume went from 10 to 106 orders (+960%). New client acquisition or service renaming."),
-        ("7", "AR growing faster than revenue", "AR outstanding grew +26.3% vs revenue +6.5%. Collection efficiency is declining — AR agent is critical."),
-        ("8", "ALTA volume dropped, price rose", "16 orders in yr2 vs 43 in yr1 (-62.8%), but avg price rose from $3,616 to $5,075 (+40.2%). Fewer but bigger jobs."),
-        ("9", "Form Board collapsed", "Form Board Survey dropped from 60 to 6 orders (-90%). B-II Title Review disappeared entirely. Investigate."),
-        ("10", "32 new alias names found", "Prior year revealed 32 additional service aliases (Survey Refresh, Topo/Update, Boundary Staking, Bldg Pinning, etc.) not in current classifier."),
+        ("1", "Price surge", "Land Survey Only avg jumped from $474 to $616 (+29.7%) YoY. The $400-449 bucket is now dominant. NexGen raised prices significantly."),
+        ("2", "INVOICED up, COLLECTED down", "Invoiced grew +6.5% but actual cash collected FELL -7.8% ($7.2M -> $6.64M). NexGen is billing more but receiving less. See 'AR Analysis' tab."),
+        ("3", "Panhandle = extreme premium", "Santa Rosa ($2,466), Escambia ($2,210), Bay ($2,000), Leon ($1,720) avg in yr1. Zero orders in yr2 — crew coverage gap or deliberate exit?"),
+        ("4", "Quote orders halved", "Quote (unclassified) orders dropped from 3,379 to 1,721 (-49%). Better FTF staff classification. But avg Quote value rose to $926 — high-value unknowns still need human review."),
+        ("5", "Commercial premium growing", "Commercial multiplier grew from 3.1x to 4.1x residential. Each commercial job = 4 residential jobs in value. Never auto-quote commercial."),
+        ("6", "Spot Survey surged", "Spot Survey (New client) volume went from 10 to 106 orders (+960%). New client vertical or service renaming — investigate which client is driving this."),
+        ("7", "AR growing faster than invoiced", "AR outstanding grew +26.3% vs invoiced +6.5%. Collection efficiency declining. Collected cash actually dropped. AR agent is not optional — it is urgent."),
+        ("8", "ALTA volume dropped, price rose", "16 orders in yr2 vs 43 in yr1 (-62.8%), but avg price rose from $3,616 to $5,075 (+40.2%). Fewer but bigger, always custom-scoped jobs."),
+        ("9", "Form Board collapsed", "Form Board Survey dropped from 60 to 6 orders (-90%). B-II Title Review disappeared entirely in yr2. Robert must confirm what happened."),
+        ("10", "32 new alias names found", "Prior year revealed 32 additional service aliases (Survey Refresh, Topo/Update, Boundary Staking, Bldg Pinning, etc.) added to classifier in Sprint 2."),
     ]
     for i, (num, title, text) in enumerate(insights):
         r = insight_row + 1 + i
@@ -676,16 +680,28 @@ def build_ar_analysis(wb):
     ws.column_dimensions["D"].width = 18
     ws.column_dimensions["E"].width = 24
 
-    title_row(ws, 1, "Accounts Receivable Analysis — Both Years", 5, C["navy"])
-    hdr(ws, 2, ["Metric", YR1_LABEL, YR2_LABEL, "YoY Change", "Risk Level"], C["blue"])
-    ws.row_dimensions[2].height = 22
+    title_row(ws, 1, "Accounts Receivable Analysis — INVOICED vs COLLECTED vs OUTSTANDING", 5, C["navy"])
+
+    ws.merge_cells("A2:E2")
+    warn = ws["A2"]
+    warn.value = (
+        "CRITICAL DISTINCTION: 'Invoiced' = what NexGen billed customers. "
+        "'Collected' = actual cash received (invoiced minus AR). "
+        "Ryan's note: viewing invoiced as revenue is incorrect — only paid orders are business revenue."
+    )
+    warn.fill = fill(C["red"]); warn.font = font(True, "FFFFFF", 11)
+    warn.alignment = left(); ws.row_dimensions[2].height = 40
+
+    hdr(ws, 3, ["Metric", YR1_LABEL, YR2_LABEL, "YoY Change", "Risk Level"], C["blue"])
+    ws.row_dimensions[3].height = 22
 
     ar_data = [
-        ("Total Invoiced", "$12,402,869", "$13,205,323", "+6.5%", "—"),
+        ("INVOICED (billed to customers — NOT cash)", "$12,402,869", "$13,205,323", "+6.5%", "—"),
+        ("COLLECTED (actual cash received)", "$7,202,026", "$6,640,237", "-7.8%", "CRITICAL"),
+        ("AR Outstanding = Invoiced - Collected", "$5,200,844", "$6,565,086", "+26.3%", "HIGH"),
         ("Total Invoice Records", "24,472", "23,353", "-4.6%", "—"),
-        ("AR Outstanding (unpaid)", "$5,200,844", "$6,565,086", "+26.3%", "HIGH"),
         ("Unpaid Invoice Count", "6,786", "8,212", "+21.0%", "HIGH"),
-        ("AR as % of Revenue", "41.9%", "49.7%", "+7.8pp", "CRITICAL"),
+        ("AR as % of Invoiced", "41.9%", "49.7%", "+7.8pp", "CRITICAL"),
         ("Avg Invoice Amount", "$506.82", "$565.47", "+11.6%", "Positive"),
         ("Payment Type 1 (Check) — Paid", "15,011 / $6.05M", "10,307 / $4.45M", "Volume -31%", "Monitor"),
         ("Payment Type 2 (CC) — Paid", "2,626 / $1.12M", "4,492 / $2.16M", "Volume +71%", "Positive"),
@@ -695,7 +711,7 @@ def build_ar_analysis(wb):
                    "Monitor": C["ltamber"], "—": C["white"]}
     for i, row_data in enumerate(ar_data):
         metric, v1, v2, chg, risk = row_data
-        r = 3 + i
+        r = 4 + i  # shifted by 1 for warning banner at row 2
         bg = risk_colors.get(risk, C["white"])
         dc(ws, r, 1, metric, bg=bg, bold=(risk in ("HIGH","CRITICAL")), size=10)
         dc(ws, r, 2, v1, bg=bg, size=10)
@@ -708,15 +724,19 @@ def build_ar_analysis(wb):
         ws.row_dimensions[r].height = 18
 
     # Insight
-    ir = 3 + len(ar_data) + 2
+    ir = 4 + len(ar_data) + 2  # shifted by 1 for warning banner
     title_row(ws, ir, "AR INSIGHTS FOR JESSICA'S AGENT", 5, C["red"])
     ar_insights = [
-        ("AR as % of Revenue is 49.7% in Yr2",
-         "Nearly HALF of all invoiced revenue is uncollected. This is above industry norm for surveying (~25-35%). AR agent is not optional — it is urgent."),
+        ("COLLECTED revenue dropped -7.8% YoY ($7.2M -> $6.64M)",
+         "Even though NexGen invoiced MORE in Yr2 (+6.5%), actual cash collected FELL. "
+         "The business is billing more but collecting less. This is the real story behind the numbers."),
+        ("AR as % of Invoiced is 49.7% in Yr2 (was 41.9%)",
+         "Nearly HALF of all invoiced amounts are uncollected. Industry norm for surveying is ~25-35%. "
+         "AR agent is not optional — it is critical to business health."),
         ("Check payments declining (-31%)",
          "Fewer customers paying by check. Credit card volume up +71%. Consider optimizing payment links in estimate emails."),
         ("Yr1 AR outstanding: $5.2M",
-         "If Yr1 AR was also ~40%+, then cumulative multi-year AR could be $10M+. Jessica should audit aging invoices beyond 1 year."),
+         "If Yr1 AR remains uncollected, cumulative multi-year AR could be $10M+. Jessica should audit aging invoices beyond 1 year."),
         ("8,128 invoices NULL payment type + unpaid",
          "These are the most at-risk — no payment method on file means no easy way to collect. Prioritize outreach to these accounts."),
         ("Escalation timing (confirmed from ops)",
@@ -879,9 +899,11 @@ def build_analyst_questions(wb):
     ws.merge_cells("A2:D2")
     intro = ws["A2"]
     intro.value = (
-        "I am your AI business analyst. I have read 2 years of NexGen invoices (47,825 records, $25.6M). "
-        "Before I can help you run the business better, I need answers to the questions below. "
-        "Where I already have the data, I've answered it myself. Where data is missing, I flag it for you."
+        "Ryan's feedback (2026-05-28): 'The agent seems to not have thought behind this — just a data pull. "
+        "Viewing every order as revenue, not paid orders as revenue.' "
+        "He is right. A real analyst distinguishes: INVOICED ($13.2M billed) vs COLLECTED ($6.64M cash received) vs POTENTIAL (all orders x price). "
+        "Below are the 13 questions I — as your AI business/sales/finance analyst — am asking about this data. "
+        "I have answered what I can. Where I need human input, I say so clearly."
     )
     intro.fill = fill(C["ltblue"]); intro.font = font(False, "000000", 11)
     intro.alignment = left(); ws.row_dimensions[2].height = 36
@@ -1049,9 +1071,11 @@ def build_ai_thoughts_today(wb):
     ws.merge_cells("A2:F2")
     intro = ws["A2"]
     intro.value = (
-        "TODAY: 2026-05-28 (Wednesday, May). Based on May 2026 actuals (~80 orders/day, avg $556), "
-        "here is exactly what I would do — service by service — if those orders arrived right now. "
-        "I am thinking as a FL PSM expert + business analyst. This is my live reasoning."
+        "TODAY: 2026-05-28 (Wednesday, May). Ryan's feedback (2026-05-28): "
+        "'The agent seems to not have thought behind this — just a data pull. Viewing every order as revenue, not paid orders.' "
+        "He is correct. The prior analysis conflated INVOICED with COLLECTED. Below is my corrected reasoning — "
+        "as a FL PSM + business/sales/finance expert. I distinguish: COLLECTED (cash) vs INVOICED (billed) vs POTENTIAL (all orders incl. quotes). "
+        "Based on May 2026 actuals (~80 orders/day, ~$556 avg invoiced, ~$280 avg collected after AR haircut)."
     )
     intro.fill = fill(C["ltblue"]); intro.font = font(False, "000000", 11)
     intro.alignment = left(); ws.row_dimensions[2].height = 36
