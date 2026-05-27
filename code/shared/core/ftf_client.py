@@ -255,3 +255,32 @@ def mark_estimate_sent(order_id: str) -> bool:
         return True
     except Exception as exc:
         raise AgentError(f"mark_estimate_sent({order_id}) failed") from exc
+
+
+def create_order(payload: dict) -> dict:
+    """Attempt to create an order via POST /orders.
+
+    FTF does not expose a public order-creation endpoint — orders originate from
+    the FTF CRM and cannot be injected via the AI API.  This function tries the
+    endpoint anyway (in case it becomes available) and raises AgentError if it
+    gets a 404 or 405, which is the expected production behaviour.
+
+    For QA / testing: use scripts/qa_orders.py which injects directly into
+    processed_orders at status='classified', bypassing the FTF API dependency.
+    """
+    try:
+        r = httpx.post(
+            f"{FTF_API_BASE_URL}/orders",
+            headers=_headers(),
+            json=payload,
+            timeout=_TIMEOUT,
+        )
+        r.raise_for_status()
+        return r.json()
+    except httpx.HTTPStatusError as exc:
+        raise AgentError(
+            f"create_order HTTP {exc.response.status_code} — "
+            "FTF does not support order creation via AI API; use qa_orders.py for testing"
+        ) from exc
+    except Exception as exc:
+        raise AgentError("create_order failed") from exc

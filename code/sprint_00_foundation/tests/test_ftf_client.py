@@ -4,6 +4,7 @@ from unittest.mock import patch, MagicMock
 from core.ftf_client import (
     health_check, get_orders, get_order, get_pricing,
     create_invoice, send_invoice, send_reminder, mark_estimate_sent,
+    create_order,
 )
 from core.exceptions import AgentError, PricingError
 
@@ -70,3 +71,17 @@ def test_send_invoice_returns_true(mock_post):
 def test_mark_estimate_sent_returns_true(mock_patch):
     mock_patch.return_value = _mock_response(200)
     assert mark_estimate_sent("ORD-001") is True
+
+
+@patch("core.ftf_client.httpx.post")
+def test_create_order_returns_dict_on_success(mock_post):
+    mock_post.return_value = _mock_response(201, {"order_id": "12345"})
+    result = create_order({"service_type": "Boundary Survey"})
+    assert result["order_id"] == "12345"
+
+
+@patch("core.ftf_client.httpx.post")
+def test_create_order_raises_agent_error_on_404(mock_post):
+    mock_post.return_value = _mock_response(404)
+    with pytest.raises(AgentError, match="does not support order creation"):
+        create_order({"service_type": "Boundary Survey"})
