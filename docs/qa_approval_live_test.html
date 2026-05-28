@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FTF Approval Flow — Live QA Tracker</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f9;color:#1a1a2e;padding:24px}
+  h1{font-size:22px;font-weight:700;margin-bottom:4px}
+  .meta{font-size:12px;color:#666;margin-bottom:20px}
+  .summary{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+  .stat{background:#fff;border-radius:8px;padding:14px 20px;min-width:110px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .stat .n{font-size:28px;font-weight:700}
+  .stat .lbl{font-size:11px;color:#888;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+  .pass .n{color:#16a34a} .fail .n{color:#dc2626} .pend .n{color:#d97706} .skip .n{color:#6b7280}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.1);font-size:13px}
+  thead tr{background:#1a1a2e;color:#fff}
+  th{padding:11px 14px;text-align:left;font-weight:600;white-space:nowrap}
+  td{padding:10px 14px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#fafbff}
+  .badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:.4px}
+  .PASS{background:#dcfce7;color:#15803d}
+  .FAIL{background:#fee2e2;color:#b91c1c}
+  .PENDING{background:#fef3c7;color:#92400e}
+  .SKIP{background:#f3f4f6;color:#6b7280}
+  .cmd{font-family:'Cascadia Code','Consolas',monospace;background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;white-space:nowrap}
+  .notes{font-size:11px;color:#555;margin-top:3px}
+  .section-header td{background:#f8fafc;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:#475569;padding:8px 14px}
+  .ts{font-size:11px;color:#94a3b8}
+  h2{font-size:15px;margin:28px 0 10px;font-weight:700;color:#334155}
+</style>
+</head>
+<body>
+
+<h1>FTF Approval Flow — Live QA Tracker</h1>
+<div class="meta">Live test session &nbsp;|&nbsp; Date: 2026-05-28 &nbsp;|&nbsp; Tester: Prateek Chandra &nbsp;|&nbsp; Channel: FTF-Approvals</div>
+
+<div class="summary">
+  <div class="stat pass"><div class="n" id="nPass">0</div><div class="lbl">Pass</div></div>
+  <div class="stat fail"><div class="n" id="nFail">0</div><div class="lbl">Fail</div></div>
+  <div class="stat pend"><div class="n" id="nPend">0</div><div class="lbl">Pending</div></div>
+  <div class="stat skip"><div class="n" id="nSkip">0</div><div class="lbl">Skip</div></div>
+</div>
+
+<table id="qaTable">
+  <thead>
+    <tr>
+      <th>TC</th>
+      <th>Scenario</th>
+      <th>Command to type in Teams</th>
+      <th>Expected bot response</th>
+      <th>Actual result</th>
+      <th>Status</th>
+      <th>Time (UTC)</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <tr><td class="section-header" colspan="7">GROUP A — Approve (single &amp; multi)</td></tr>
+
+    <tr>
+      <td><strong>A-01</strong></td>
+      <td>Bare APPROVE — 1 order pending</td>
+      <td><span class="cmd">APPROVE</span> (reply to notification)</td>
+      <td>[APPROVED] Prateek approved order QA-LIVE-TEST-A01. Estimate will be sent.</td>
+      <td id="a-A01-actual">—</td>
+      <td><span class="badge" id="a-A01">PENDING</span></td>
+      <td class="ts" id="t-A01">—</td>
+    </tr>
+
+    <tr>
+      <td><strong>A-02</strong></td>
+      <td>APPROVE with explicit order ID</td>
+      <td><span class="cmd">APPROVE QA-LIVE-TEST-A02</span></td>
+      <td>[APPROVED] Prateek approved order QA-LIVE-TEST-A02. Estimate will be sent.</td>
+      <td id="a-A02-actual">—</td>
+      <td><span class="badge" id="a-A02">PENDING</span></td>
+      <td class="ts" id="t-A02">—</td>
+    </tr>
+
+    <tr>
+      <td><strong>A-03</strong></td>
+      <td>APPROVE ALL — 2 orders pending</td>
+      <td><span class="cmd">APPROVE ALL</span></td>
+      <td>[APPROVED] Prateek approved ALL 2 order(s): QA-LIVE-TEST-A03a, QA-LIVE-TEST-A03b. Estimates will be sent.</td>
+      <td id="a-A03-actual">—</td>
+      <td><span class="badge" id="a-A03">PENDING</span></td>
+      <td class="ts" id="t-A03">—</td>
+    </tr>
+
+    <tr>
+      <td><strong>A-04</strong></td>
+      <td>APPROVE two specific IDs</td>
+      <td><span class="cmd">APPROVE QA-LIVE-TEST-A04a QA-LIVE-TEST-A04b</span></td>
+      <td>Pre-confirm → then [APPROVED] Prateek approved 2 order(s)...</td>
+      <td id="a-A04-actual">—</td>
+      <td><span class="badge" id="a-A04">PENDING</span></td>
+      <td class="ts" id="t-A04">—</td>
+    </tr>
+
+    <tr>
+      <td><strong>A-05</strong></td>
+      <td>Bare APPROVE — multiple pending (should warn)</td>
+      <td><span class="cmd">APPROVE</span> (when 2 orders exist)</td>
+      <td>[WARNING] 2 orders pending — specify: APPROVE ALL or APPROVE &lt;ids&gt;</td>
+      <td id="a-A05-actual">—</td>
+      <td><span class="badge" id="a-A05">PENDING</span></td>
+      <td class="ts" id="t-A05">—</td>
+    </tr>
+
+    <tr><td class="section-header" colspan="7">GROUP B — Reject</td></tr>
+
+    <tr>
+      <td><strong>B-01</strong></td>
+      <td>REJECT with order ID and reason</td>
+      <td><span class="cmd">REJECT QA-LIVE-TEST-B01 pricing too high</span></td>
+      <td>[REJECTED] Prateek rejected order QA-LIVE-TEST-B01. Reason: pricing too high</td>
+      <td id="a-B01-actual">—</td>
+      <td><span class="badge" id="a-B01">PENDING</span></td>
+      <td class="ts" id="t-B01">—</td>
+    </tr>
+
+    <tr>
+      <td><strong>B-02</strong></td>
+      <td>Bare REJECT — 1 order pending</td>
+      <td><span class="cmd">REJECT</span></td>
+      <td>[REJECTED] Prateek rejected order QA-LIVE-TEST-B02.</td>
+      <td id="a-B02-actual">—</td>
+      <td><span class="badge" id="a-B02">PENDING</span></td>
+      <td class="ts" id="t-B02">—</td>
+    </tr>
+
+    <tr>
+      <td><strong>B-03</strong></td>
+      <td>REJECT ALL with reason</td>
+      <td><span class="cmd">REJECT ALL scope changed</span></td>
+      <td>[REJECTED] Prateek rejected ALL N order(s). Reason: scope changed</td>
+      <td id="a-B03-actual">—</td>
+      <td><span class="badge" id="a-B03">PENDING</span></td>
+      <td class="ts" id="t-B03">—</td>
+    </tr>
+
+    <tr><td class="section-header" colspan="7">GROUP C — Security &amp; Validation</td></tr>
+
+    <tr>
+      <td><strong>C-01</strong></td>
+      <td>Unauthorized sender (not Robert/Ryan/Prateek)</td>
+      <td>Any APPROVE (typed by non-whitelisted person)</td>
+      <td>[WARNING] '&lt;name&gt;' is not authorized. Only Robert, Ryan, Prateek can use APPROVE/REJECT.</td>
+      <td id="a-C01-actual">—</td>
+      <td><span class="badge" id="a-C01">SKIP</span></td>
+      <td class="ts" id="t-C01">—</td>
+    </tr>
+
+    <tr>
+      <td><strong>C-02</strong></td>
+      <td>Invalid order ID (typo)</td>
+      <td><span class="cmd">APPROVE QA-LIVE-TEST-FAKE</span></td>
+      <td>[WARNING] Cannot process: QA-LIVE-TEST-FAKE (not found — check spelling)</td>
+      <td id="a-C02-actual">—</td>
+      <td><span class="badge" id="a-C02">PENDING</span></td>
+      <td class="ts" id="t-C02">—</td>
+    </tr>
+
+    <tr>
+      <td><strong>C-03</strong></td>
+      <td>Already-approved order re-approved</td>
+      <td><span class="cmd">APPROVE QA-LIVE-TEST-A01</span> (after A-01 passes)</td>
+      <td>[WARNING] status=approved — not pending approval</td>
+      <td id="a-C03-actual">—</td>
+      <td><span class="badge" id="a-C03">PENDING</span></td>
+      <td class="ts" id="t-C03">—</td>
+    </tr>
+
+    <tr>
+      <td><strong>C-04</strong></td>
+      <td>Bare APPROVE — zero orders pending</td>
+      <td><span class="cmd">APPROVE</span> (nothing in DB)</td>
+      <td>[INFO] No orders are currently pending approval.</td>
+      <td id="a-C04-actual">—</td>
+      <td><span class="badge" id="a-C04">PENDING</span></td>
+      <td class="ts" id="t-C04">—</td>
+    </tr>
+
+    <tr><td class="section-header" colspan="7">GROUP D — Thread Reply Routing</td></tr>
+
+    <tr>
+      <td><strong>D-01</strong></td>
+      <td>Confirmation posted as thread reply</td>
+      <td><span class="cmd">APPROVE</span> typed as reply to bot notification</td>
+      <td>Bot confirmation appears in the SAME thread (not a new top-level message)</td>
+      <td id="a-D01-actual">—</td>
+      <td><span class="badge" id="a-D01">PENDING</span></td>
+      <td class="ts" id="t-D01">—</td>
+    </tr>
+
+    <tr>
+      <td><strong>D-02</strong></td>
+      <td>Top-level command → confirmation as new message</td>
+      <td><span class="cmd">APPROVE QA-LIVE-TEST-A02</span> typed in channel (not a reply)</td>
+      <td>Bot confirmation appears as a NEW top-level message</td>
+      <td id="a-D02-actual">—</td>
+      <td><span class="badge" id="a-D02">PENDING</span></td>
+      <td class="ts" id="t-D02">—</td>
+    </tr>
+
+  </tbody>
+</table>
+
+<script>
+function updateSummary(){
+  var rows = document.querySelectorAll('.badge');
+  var counts = {PASS:0,FAIL:0,PENDING:0,SKIP:0};
+  rows.forEach(function(b){ var s = b.textContent.trim(); if(counts[s]!==undefined) counts[s]++; });
+  document.getElementById('nPass').textContent = counts.PASS;
+  document.getElementById('nFail').textContent = counts.FAIL;
+  document.getElementById('nPend').textContent = counts.PENDING;
+  document.getElementById('nSkip').textContent = counts.SKIP;
+}
+updateSummary();
+</script>
+</body>
+</html>
