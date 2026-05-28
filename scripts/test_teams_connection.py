@@ -90,25 +90,44 @@ def run_tests(read_only: bool = False) -> dict:
         results["send"] = "SKIPPED"
         return results
 
-    # 4. Send test
-    print("\n4. Send test message (ChannelMessage.Send — Application permission)")
+    # 4. Webhook config check
+    from config.settings import TEAMS_INCOMING_WEBHOOK_URL
+    print("\n4. Incoming webhook config (for sending messages)")
+    if not TEAMS_INCOMING_WEBHOOK_URL:
+        print(f"   {FAIL} TEAMS_INCOMING_WEBHOOK_URL not set in .env")
+        print("   -> Option A (no license needed):")
+        print("      Teams -> FTF-Approvals channel -> ... -> Manage channel -> Connectors")
+        print("      -> Incoming Webhook -> Configure -> name 'FTF Bot' -> Create -> copy URL")
+        print("   -> Option B (needs Power Automate Plan 1):")
+        print("      Teams -> channel -> ... -> Workflows -> 'Post to channel when webhook received'")
+        print("   Then add TEAMS_INCOMING_WEBHOOK_URL=<url> to .env and re-run")
+        results["send"] = "FAIL: TEAMS_INCOMING_WEBHOOK_URL not set"
+        return results
+
+    webhook_type = "O365 Incoming Webhook connector" if "webhook.office.com" in TEAMS_INCOMING_WEBHOOK_URL else "Teams Workflows"
+    print(f"   {PASS} TEAMS_INCOMING_WEBHOOK_URL set (type: {webhook_type})")
+
+    if read_only:
+        print("\n   (--read-only flag set — skipping send test)")
+        results["send"] = "SKIPPED"
+        return results
+
+    # 5. Send test
+    print(f"\n5. Send test message via {webhook_type}")
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     html = (
-        f"<p><b>FTF Estimate Bot — Connection Test</b></p>"
-        f"<p>Graph API connection verified at {now_str}.<br>"
-        f"This message confirms the bot can post to the FTF-Approvals channel.<br>"
-        f"<i>You can delete this message.</i></p>"
+        f"<p><b>FTF Estimate Bot -- Connection Test</b></p>"
+        f"<p>Webhook verified at {now_str}. "
+        f"Type: {webhook_type}. "
+        f"You can delete this message.</p>"
     )
     try:
-        result = send_channel_message(html, subject="FTF Bot — Connection Test")
-        print(f"   {PASS} Message sent — id={result.get('id')}")
-        print(f"   -> Check the #FTF-Approvals channel in Teams to confirm it appeared")
+        result = send_channel_message(html, subject="FTF Bot -- Connection Test")
+        print(f"   {PASS} Message sent via {result.get('method')}")
+        print(f"   -> Check the FTF-Approvals channel in Teams to confirm it appeared")
         results["send"] = "PASS"
     except Exception as exc:
         print(f"   {FAIL} Send failed: {exc}")
-        print("   -> Ensure ChannelMessage.Send Application permission is granted + admin consent")
-        print("   -> If HTTP 403: the app may need to be installed in the Teams team:")
-        print("      Teams -> your team -> Manage Team -> Apps -> Upload a custom app")
         results["send"] = f"FAIL: {exc}"
 
     # Summary

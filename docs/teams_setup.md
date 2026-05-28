@@ -11,169 +11,174 @@ estimates directly in the chat. Agent 4 posts an hourly digest; Robert/Ryan repl
 ```
 Agent 4 (hourly batch digest)
   │
-  └─► TEAMS_APPROVAL_WEBHOOK_URL ──► Teams #approvals channel
+  └─► TEAMS_INCOMING_WEBHOOK_URL ──► Teams #ftf-approvals channel
                                            │
-                                    Robert/Ryan type command
+                                    Robert/Ryan type:
+                                    APPROVE <order_id>
+                                    REJECT  <order_id> reason
                                            │
-                          Teams Outgoing Webhook (registered by admin)
-                                           │
-                                           ▼
-                          Flask server  /teams/webhook  (port 5001)
-                                           │
-                                    HMAC-SHA256 verified
+                          poll_teams_approvals.py (runs every cycle)
+                                    reads via Graph API
                                            │
                                     process_approval_reply()
                                            │
                                     DB status updated
                                            │
-                          Confirmation card ──► #approvals channel
+                          Confirmation message ──► #ftf-approvals channel
 ```
+
+**No public URL. No Flask server. No ngrok required.**
+The pipeline polls the channel directly via Microsoft Graph API.
 
 ---
 
-## Step 1 — Start the Approval Receiver (Server Side)
+## Step 1 — Create the FTF-Approvals Channel
 
-The receiver must be running BEFORE you register the webhook in Teams.
-
-### Local dev (ngrok)
-
-```bash
-# Terminal 1 — start Flask receiver
-cd code
-python scripts/run_approval_receiver.py
-
-# Terminal 2 — expose it publicly
-ngrok http 5001
-# Note the HTTPS URL: https://abc123.ngrok.io
-```
-
-### Production (VPS + nginx)
-
-1. Run the receiver as a service (systemd, PM2, etc.)
-2. Reverse-proxy HTTPS → `localhost:5001` via nginx
-3. Your public endpoint will be `https://yourdomain.com/teams/webhook`
-
----
-
-## Step 2 — Create the Approval Teams Channel
-
-1. In Teams, open your NexGen workspace
-2. Create a **private channel** named `#ftf-approvals` (or similar)
+1. Open Teams → your NexGen workspace
+2. Create a **private channel** named `FTF-Approvals`
 3. Add Robert and Ryan as members
 
 ---
 
-## Step 3 — Register an Incoming Webhook (Outbound → Teams)
+## Step 2 — Create Incoming Webhook (for sending messages TO Teams)
 
-This is for Agent 4 to **POST** the hourly digest INTO Teams.
+### Option A — O365 Incoming Webhook Connector (RECOMMENDED — no license needed)
 
-1. Open `#ftf-approvals` channel → **Connectors**
-2. Add **Incoming Webhook** → name it `FTF Estimate Bot`
-3. Copy the webhook URL
-4. Set in `.env`:
+This works with any Microsoft 365 / Teams subscription. No Power Automate license required.
 
+1. Open the `FTF-Approvals` channel
+2. Click `...` (three dots next to channel name) → **Manage channel**
+3. Scroll to **Connectors** → click **Edit**
+4. Search for **Incoming Webhook** → click **Configure**
+5. Name: `FTF Estimate Bot` → click **Create**
+6. Copy the webhook URL (looks like `https://nexgen.webhook.office.com/webhookb2/...`)
+7. Click **Done**
+
+Add to `.env`:
 ```
-TEAMS_APPROVAL_WEBHOOK_URL=https://nexgen.webhook.office.com/webhookb2/...
+TEAMS_INCOMING_WEBHOOK_URL=https://nexgen.webhook.office.com/webhookb2/...
+```
+
+The code automatically detects the `webhook.office.com` URL and sends MessageCard format.
+
+---
+
+### Option B — Teams Workflows (requires Power Automate Plan 1)
+
+If Option A is unavailable, and you have Power Automate:
+
+1. Open the `FTF-Approvals` channel → `...` → **Workflows**
+2. Search for **"Post to a channel when a webhook request is received"**
+3. Click it → follow the setup → copy the webhook URL
+4. Add to `.env` as `TEAMS_INCOMING_WEBHOOK_URL=<url>`
+
+The code automatically detects Logic Apps / Workflows URLs and sends Adaptive Card format.
+
+---
+
+## Step 3 — Graph API Credentials (for reading approval commands)
+
+These are already configured in `.env`. The app uses `ChannelMessage.Read.All`
+application permission to poll the channel for APPROVE/REJECT commands.
+
+Required (already set):
+```
+TEAMS_TENANT_ID=<your Azure AD tenant ID>
+TEAMS_APP_ID=<your app client ID>
+TEAMS_CLIENT_SECRET=<your app client secret>
+TEAMS_TEAM_ID=<Teams group ID>
+TEAMS_CHANNEL_ID=<channel ID>
 ```
 
 ---
 
-## Step 4 — Register an Outgoing Webhook (Teams → Server)
+## Step 4 — Test the Connection
 
-This lets Robert/Ryan's APPROVE/REJECT commands reach the Flask server.
-
-1. Go to **Teams Admin Center** (or channel settings if you have permission):
-   - Teams channel → **...** menu → **Manage channel** → **Connectors**
-   - Add **Outgoing Webhook**
-
-2. Fill in:
-   - **Name:** `FTF Estimate Bot`
-   - **Callback URL:** `https://yourdomain.com/teams/webhook` (or ngrok URL)
-   - **Description:** `FTF estimate approve/reject commands`
-
-3. Teams will display a **Security token** (base64-encoded HMAC secret).
-   Copy it and set in `.env`:
-
-```
-TEAMS_OUTGOING_WEBHOOK_SECRET=<paste the token here>
-```
-
-4. Restart the Flask receiver after adding the secret.
-
----
-
-## Step 5 — Set All Environment Variables
-
-Add these to your `.env` (never commit to git):
-
-```
-# Approval channel (incoming webhook URL for Agent 4 to post the digest)
-TEAMS_APPROVAL_WEBHOOK_URL=https://nexgen.webhook.office.com/webhookb2/...
-
-# HMAC secret from the Outgoing Webhook registration (Teams admin panel)
-TEAMS_OUTGOING_WEBHOOK_SECRET=<base64 token from Step 4>
-
-# Flask receiver bind settings (defaults work for most deployments)
-APPROVAL_RECEIVER_HOST=0.0.0.0
-APPROVAL_RECEIVER_PORT=5001
-
-# General Teams webhook (for non-approval alerts — can be same channel or different)
-TEAMS_WEBHOOK_URL=https://nexgen.webhook.office.com/webhookb2/...
-```
-
----
-
-## Step 6 — Test the Connection
-
-### Health check
 ```bash
-curl http://localhost:5001/health
-# Expected: {"status": "ok", "service": "teams_approval_receiver"}
+cd "path\to\FTF- Survey Invoicing & Billing Delivery (E2E)"
+python scripts/test_teams_connection.py
 ```
 
-### Manual approve test (CLI)
+Expected output:
+```
+1. Config check         [PASS]
+2. Authentication       [PASS]
+3. Read channel         [PASS]
+4. Webhook config       [PASS]  (type: O365 Incoming Webhook connector)
+5. Send test message    [PASS]
+```
+
+Check the `FTF-Approvals` channel in Teams — a test message should appear.
+
+To test read + auth only (no send):
 ```bash
-cd code
-python -m sprint_03_human_gate.agents.agent_04_human_gate --approve ORD-001
-# Expected: approved=ORD-001
+python scripts/test_teams_connection.py --read-only
 ```
-
-### End-to-end Teams test
-1. Post a message in `#ftf-approvals`: `APPROVE 1000276115`
-2. The bot should reply: `✅ [YourName] approved order 1000276115. Estimate will be sent.`
-3. Check DB: `SELECT status FROM processed_orders WHERE order_id = '1000276115';`
-   — should be `approved`
 
 ---
 
-## Commands Robert/Ryan Can Use
+## Step 5 — How Approvals Work (Polling Model)
+
+Robert or Ryan types in the `FTF-Approvals` channel:
 
 | Command | What it does |
-|---|---|
+|---------|-------------|
 | `APPROVE 1000276115` | Approve one estimate → status = approved |
 | `APPROVE ALL` | Approve everything currently awaiting review |
 | `REJECT 1000276115` | Reject one estimate → status = rejected |
-| `REJECT 1000276115 wrong county` | Reject with reason logged |
+| `REJECT 1000276115 wrong county` | Reject with reason logged to DB |
 
-Teams automatically prepends the `@EstimateBot` mention — the server strips it.
+The pipeline polls the channel every run cycle via Graph API. No @mentions or bots required.
+Commands work even if typed anywhere in the message — the parser finds APPROVE/REJECT anywhere in the text.
+
+### Manual poll (test commands immediately):
+```bash
+python scripts/poll_teams_approvals.py --since-hours 1
+```
+
+### Dry run (see what would be processed without writing to DB):
+```bash
+python scripts/poll_teams_approvals.py --dry-run
+```
+
+---
+
+## Step 6 — Getting Channel + Team IDs
+
+If you need to find the Team ID and Channel ID:
+
+**In Teams (browser):**
+1. Open Teams in browser (teams.microsoft.com)
+2. Navigate to the channel
+3. Click `...` → **Get link to channel**
+4. The URL contains the IDs:
+   `https://teams.microsoft.com/l/channel/<channelId>/...?groupId=<teamId>&...`
+
+**Via Graph API:**
+```
+GET https://graph.microsoft.com/v1.0/me/joinedTeams
+GET https://graph.microsoft.com/v1.0/teams/{teamId}/channels
+```
 
 ---
 
 ## Troubleshooting
 
 | Problem | Fix |
-|---|---|
-| Bot doesn't respond | Check receiver is running (`/health`); check ngrok/public URL is live |
-| `401 Unauthorized` | Wrong `TEAMS_OUTGOING_WEBHOOK_SECRET` — re-copy from Teams admin |
-| `⚠️ Could not approve ORD-001: order not found` | Order ID not in DB; check with `--check ORD-001` |
-| `⚠️ Could not approve ORD-001: not awaiting approval` | Order already approved/rejected or not yet in human gate |
-| Digest not posting to Teams | Check `TEAMS_APPROVAL_WEBHOOK_URL` in `.env`; test with `--run` flag |
+|---------|-----|
+| "Post to channel when webhook received" not in Workflows | Use Option A (O365 Incoming Webhook Connector) instead |
+| Connector not available | Check Teams admin hasn't disabled connectors; or use Power Automate |
+| HTTP 400 on webhook POST | Wrong payload format — code auto-detects, but verify URL is copied correctly |
+| HTTP 401 on Graph API | Check TEAMS_CLIENT_SECRET not expired; regenerate in Azure portal |
+| HTTP 403 on Graph API | Ensure ChannelMessage.Read.All is an **Application** permission (not Delegated) and admin consent granted |
+| No commands found in poll | Messages older than `--since-hours` window; or Graph API permissions issue |
+| "TEAMS_TEAM_ID and TEAMS_CHANNEL_ID must be set" | Add both to .env; see Step 6 above |
 
 ---
 
 ## Security Notes
 
-- HMAC-SHA256 verification is active when `TEAMS_OUTGOING_WEBHOOK_SECRET` is set
-- Without the secret (dev mode), any POST to `/teams/webhook` is accepted — set the secret before production
-- The Flask server must be behind HTTPS in production (Teams rejects plain HTTP callback URLs)
-- Secret is stored only in `.env` — never in git, never in source code
+- All credentials are stored only in `.env` — never in git (`.env` is gitignored)
+- The Graph API uses `client_credentials` flow — no user sign-in required
+- The incoming webhook URL is a secret — treat it like a password
+- Rotate `TEAMS_CLIENT_SECRET` in Azure portal if compromised; update `.env` immediately
