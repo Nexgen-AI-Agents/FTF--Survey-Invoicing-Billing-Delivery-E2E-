@@ -219,23 +219,23 @@ def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
         _save_last_polled(newest_dt)
 
     # ── Batch summary: report any orders still pending after this poll cycle ──
+    # Always posted as a NEW top-level message (no parent_message_id) so it is
+    # visible in the channel feed regardless of which thread the user replied to.
+    # This handles the case where pending orders span multiple notification threads.
     if not dry_run and (summary["approved"] > 0 or summary["rejected"] > 0):
         still_pending = _get_all_pending()
         if still_pending:
-            # Reply in the last active thread (if commands came via thread replies)
-            last_thread = next(
-                (c.get("parent_message_id") for c in reversed(commands)
-                 if c.get("parent_message_id")),
-                None,
-            )
             id_list = "<br>".join(f"&nbsp;&nbsp;<strong>{oid}</strong>" for oid in still_pending[:10])
             suffix  = f"<br>&nbsp;&nbsp;...+{len(still_pending)-10} more" if len(still_pending) > 10 else ""
             msg = (
                 f"<strong>{len(still_pending)} order(s) still pending — action required:</strong><br>"
                 f"{id_list}{suffix}<br><br>"
-                f"Reply with <strong>APPROVE &lt;id&gt;</strong> or <strong>REJECT &lt;id&gt; &lt;reason&gt;</strong>"
+                f"Reply to any notification thread or type here:<br>"
+                f"&nbsp;&nbsp;<strong>APPROVE &lt;id&gt;</strong> &nbsp;or&nbsp; "
+                f"<strong>REJECT &lt;id&gt; &lt;reason&gt;</strong>"
             )
-            send_confirmation(msg, "blue", parent_message_id=last_thread)
+            # parent_message_id=None → top-level post, always visible in channel feed
+            send_confirmation(msg, "blue", parent_message_id=None)
             log.info("batch summary: %d still pending after this cycle", len(still_pending))
 
     log.info("poll complete found=%d approved=%d rejected=%d failed=%d",
