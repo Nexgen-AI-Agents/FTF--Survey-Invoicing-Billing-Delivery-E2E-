@@ -1,0 +1,38 @@
+name: Teams Approval Monitor
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # every 5 minutes — GitHub Actions minimum interval
+  workflow_dispatch:          # manual trigger from GitHub UI
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Poll Teams channel for APPROVE/REJECT commands
+        env:
+          DATABASE_URL:               ${{ secrets.DATABASE_URL }}
+          TEAMS_INCOMING_WEBHOOK_URL: ${{ secrets.TEAMS_INCOMING_WEBHOOK_URL }}
+          TEAMS_TENANT_ID:            ${{ secrets.TEAMS_TENANT_ID }}
+          TEAMS_APP_ID:               ${{ secrets.TEAMS_APP_ID }}
+          TEAMS_CLIENT_SECRET:        ${{ secrets.TEAMS_CLIENT_SECRET }}
+          TEAMS_TEAM_ID:              ${{ secrets.TEAMS_TEAM_ID }}
+          TEAMS_CHANNEL_ID:           ${{ secrets.TEAMS_CHANNEL_ID }}
+          NOTIFICATION_FROM_EMAIL:    ${{ secrets.NOTIFICATION_FROM_EMAIL }}
+          NOTIFICATION_TO_EMAILS:     ${{ secrets.NOTIFICATION_TO_EMAILS }}
+          APPROVED_SENDERS:           ${{ secrets.APPROVED_SENDERS }}
+          FTF_ORDER_URL:              ${{ secrets.FTF_ORDER_URL }}
+          FTF_API_BASE_URL:           ${{ secrets.FTF_API_BASE_URL }}
+          FTF_API_KEY:                ${{ secrets.FTF_API_KEY }}
+        run: python scripts/poll_teams_approvals.py --since-hours 1

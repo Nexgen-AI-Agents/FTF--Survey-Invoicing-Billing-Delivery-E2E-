@@ -29,8 +29,8 @@ from poll_teams_approvals import run_poll
 log = get_logger("run_approval_monitor")
 
 LOOP_NAME = "approval_monitor"
-ACTIVE_POLL_SECS = 60
-IDLE_CHECK_SECS = 300
+ACTIVE_POLL_SECS = 30    # poll Teams every 30s while orders are pending
+IDLE_CHECK_SECS  = 120   # check DB every 2 min when nothing pending
 
 
 def _get_awaiting_count() -> int:
@@ -49,22 +49,32 @@ def run_monitor(dry_run: bool = False, once: bool = False) -> None:
         count = _get_awaiting_count()
         now = datetime.now(timezone.utc)
 
+        def _try_save(status: str) -> None:
+            try:
+                save_loop_state(LOOP_NAME, status, last_run_at=now)
+            except Exception:
+                pass  # loop_state table may not exist yet — non-fatal
+
         if count > 0:
             if was_active is not True:
-                log.info("ACTIVE: %d order(s) awaiting approval — polling Teams every %ds",
+                log.info("ACTIVE: %d order(s) pending — polling every %ds",
                          count, ACTIVE_POLL_SECS)
-            save_loop_state(LOOP_NAME, "running", last_run_at=now)
+                print(f"\n[{now.strftime('%H:%M:%S')}] {count} order(s) pending — polling Teams...", flush=True)
+            _try_save("running")
             result = run_poll(since_hours=2, dry_run=dry_run)
-            log.info("poll result: %s", result)
+            if result["approved"] or result["rejected"] or result["failed"]:
+                print(f"[{datetime.now(timezone.utc).strftime('%H:%M:%S')}] "
+                      f"approved={result['approved']} rejected={result['rejected']} "
+                      f"failed={result['failed']}", flush=True)
             was_active = True
             if once:
                 break
             time.sleep(ACTIVE_POLL_SECS)
         else:
             if was_active is not False:
-                log.info("IDLE: no orders awaiting approval — sleeping %ds between DB checks",
-                         IDLE_CHECK_SECS)
-            save_loop_state(LOOP_NAME, "idle", last_run_at=now)
+                log.info("IDLE: no pending orders — checking every %ds", IDLE_CHECK_SECS)
+                print(f"\n[{now.strftime('%H:%M:%S')}] No pending orders — checking every {IDLE_CHECK_SECS}s", flush=True)
+            _try_save("idle")
             was_active = False
             if once:
                 log.info("--once: no pending orders, exiting")
@@ -80,11 +90,19 @@ def main() -> None:
                         help="Run one cycle then exit")
     args = parser.parse_args()
 
+    print("FTF Approval Monitor — running (Ctrl+C to stop)")
+    print(f"  Active interval : {ACTIVE_POLL_SECS}s (when orders are pending)")
+    print(f"  Idle interval   : {IDLE_CHECK_SECS}s (when nothing pending)")
+    print("")
     try:
         run_monitor(dry_run=args.dry_run, once=args.once)
     except KeyboardInterrupt:
+        print("\nMonitor stopped.")
         log.info("Monitor stopped by user (Ctrl+C)")
-        save_loop_state(LOOP_NAME, "idle")
+        try:
+            save_loop_state(LOOP_NAME, "idle")
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":
