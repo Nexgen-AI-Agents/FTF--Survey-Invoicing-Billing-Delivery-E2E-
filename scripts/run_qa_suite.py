@@ -402,10 +402,12 @@ def run_rejection_auto(results: Results, dry_run: bool) -> None:
     else:
         results.record(tc, "TC-REJECTION", "SKIP", "dry-run", "")
 
-    # REJ-014: REJECT ALL (unsupported)
+    # REJ-014: REJECT ALL — now supported; routes to _do_reject_all in poll_teams_approvals
     tc = "REJ-014"
-    results.record(tc, "TC-REJECTION", "SKIP",
-                   "_parse_command returns (unknown, None, None) for 'REJECT ALL' — test via poll_teams_approvals --dry-run", "")
+    from core.teams_graph_client import _parse_command as _pc
+    action, oid, reason = _pc("REJECT ALL bad scope")
+    results.record(tc, "TC-REJECTION", "PASS" if action == "reject_all" and oid is None else "FAIL",
+                   f"REJECT ALL <reason> -> action={action} order_ids={oid} reason={reason}")
 
 
 # ── TC-NEGATIVE Automated Tests ───────────────────────────────────────────────
@@ -427,16 +429,16 @@ def run_negative_auto(results: Results, dry_run: bool) -> None:
     results.record(tc, "TC-NEGATIVE", "PASS" if action == "unknown" else "FAIL",
                    f"_parse_command returned action={action}")
 
-    # NEG-003: APPROVE with no ID
+    # NEG-003: Bare APPROVE (no ID) → approve_bare (bot auto-detects single pending order)
     tc = "NEG-003"
     action, oid, _ = _parse_command("APPROVE")
-    results.record(tc, "TC-NEGATIVE", "PASS" if action == "unknown" else "FAIL",
+    results.record(tc, "TC-NEGATIVE", "PASS" if action == "approve_bare" and oid is None else "FAIL",
                    f"_parse_command returned action={action} order_id={oid}")
 
-    # NEG-004: REJECT with no ID
+    # NEG-004: Bare REJECT (no ID) → reject_bare (bot auto-detects single pending order)
     tc = "NEG-004"
     action, oid, _ = _parse_command("REJECT")
-    results.record(tc, "TC-NEGATIVE", "PASS" if action == "unknown" else "FAIL",
+    results.record(tc, "TC-NEGATIVE", "PASS" if action == "reject_bare" and oid is None else "FAIL",
                    f"_parse_command returned action={action} order_id={oid}")
 
     # NEG-006: Code block HTML stripped
@@ -469,17 +471,17 @@ def run_negative_auto(results: Results, dry_run: bool) -> None:
     tc = "NEG-013"
     results.record(tc, "TC-NEGATIVE", "SKIP", "Covered by APP-004 in TC-APPROVAL suite", "")
 
-    # NEG-014: REJECT ALL — parser returns ("reject", ["ALL"], None); safety is "ALL" not in DB
+    # NEG-014: REJECT ALL → reject_all (now a supported action; rejects every pending order)
     tc = "NEG-014"
-    action, oid, _ = _parse_command("REJECT ALL")
-    # _parse_command treats "ALL" as the order_id — protection is validation (not found) + AgentError
-    if action == "reject" and oid == ["ALL"]:
-        results.record(tc, "TC-NEGATIVE", "PASS",
-                       f"REJECT ALL -> action={action} order_ids={oid}; "
-                       f"_validate_order_ids rejects 'ALL' as not found in DB")
-    else:
-        results.record(tc, "TC-NEGATIVE", "FAIL",
-                       f"Unexpected parse: action={action} order_ids={oid}")
+    action, oid, reason = _parse_command("REJECT ALL")
+    results.record(tc, "TC-NEGATIVE", "PASS" if action == "reject_all" and oid is None else "FAIL",
+                   f"REJECT ALL -> action={action} order_ids={oid} reason={reason}")
+
+    # NEG-015: REJECT ALL with reason
+    tc = "NEG-015"
+    action, oid, reason = _parse_command("REJECT ALL scope changed")
+    results.record(tc, "TC-NEGATIVE", "PASS" if action == "reject_all" and reason == "scope changed" else "FAIL",
+                   f"REJECT ALL <reason> -> action={action} reason={reason}")
 
     # NEG-020: Zero-dollar estimate flagged
     tc = "NEG-020"

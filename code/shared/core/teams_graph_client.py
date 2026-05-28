@@ -123,16 +123,24 @@ def _read_headers() -> dict:
 #      Retired by Microsoft Aug 2024; returns 403 in most tenants.
 #      Kept for reference only.
 
-def _build_logic_app_payload(text: str, subject: str) -> dict:
+def _build_logic_app_payload(
+    text: str,
+    subject: str,
+    parent_message_id: str | None = None,
+) -> dict:
     """HTML payload for Azure Logic App HTTP trigger relay.
 
     Teams renders messageBody as HTML. We:
     - Prepend bold subject header
     - Replace newlines with <br> (existing HTML tags like <strong> pass through)
+    - Include parent_message_id when posting a thread reply
     """
     header = f"<strong>{subject}</strong><br><br>" if subject else ""
     body   = text.replace("\n", "<br>")
-    return {"subject": subject, "text": header + body}
+    result: dict = {"subject": subject, "text": header + body}
+    if parent_message_id:
+        result["parent_message_id"] = parent_message_id
+    return result
 
 
 def _build_adaptive_card_payload(plain: str, subject: str) -> dict:
@@ -236,8 +244,15 @@ def send_email_notification(text_or_html: str, subject: str = "") -> dict:
     return {"ok": True, "method": "graph_email"}
 
 
-def send_channel_message(text_or_html: str, subject: str = "") -> dict:
+def send_channel_message(
+    text_or_html: str,
+    subject: str = "",
+    parent_message_id: str | None = None,
+) -> dict:
     """Send a Teams notification — webhook primary, email fallback.
+
+    parent_message_id — when set, the Logic App will post as a thread reply
+    (requires Logic App to have a Reply action configured; see docs/teams_setup.md).
 
     Primary: Logic App webhook (if TEAMS_INCOMING_WEBHOOK_URL set) -> posts to Teams channel
     Fallback: Graph API Mail.Send (if NOTIFICATION_FROM_EMAIL + NOTIFICATION_TO_EMAILS set)
@@ -246,9 +261,9 @@ def send_channel_message(text_or_html: str, subject: str = "") -> dict:
     """
     # Primary: Teams channel via Logic App webhook
     if TEAMS_INCOMING_WEBHOOK_URL:
-        return _send_via_webhook(text_or_html, subject)
+        return _send_via_webhook(text_or_html, subject, parent_message_id=parent_message_id)
 
-    # Fallback: email via Graph API
+    # Fallback: email via Graph API (thread replies not applicable for email)
     if NOTIFICATION_FROM_EMAIL and NOTIFICATION_TO_EMAILS:
         return send_email_notification(text_or_html, subject)
 
@@ -260,14 +275,18 @@ def send_channel_message(text_or_html: str, subject: str = "") -> dict:
     )
 
 
-def _send_via_webhook(text_or_html: str, subject: str = "") -> dict:
+def _send_via_webhook(
+    text_or_html: str,
+    subject: str = "",
+    parent_message_id: str | None = None,
+) -> dict:
     """Internal: post via configured incoming webhook."""
     wtype = _detect_webhook_type(TEAMS_INCOMING_WEBHOOK_URL)
 
     if wtype == "logic_app":
         # Preserve HTML (bold etc.) and newlines — only strip @mention tags
         text = _MENTION_RE.sub("", text_or_html)
-        payload = _build_logic_app_payload(text, subject)
+        payload = _build_logic_app_payload(text, subject, parent_message_id=parent_message_id)
     else:
         # Adaptive Card / O365 connector: collapse to plain text
         plain = _MENTION_RE.sub(" ", text_or_html)
@@ -293,13 +312,31 @@ def _send_via_webhook(text_or_html: str, subject: str = "") -> dict:
     return {"ok": True, "method": wtype}
 
 
-def send_confirmation(text: str, color: str = "green") -> None:
-    """Send a short confirmation reply to the approval channel."""
-    prefix_map = {"green": "[APPROVED]", "red": "[REJECTED]", "orange": "[WARNING]"}
-    prefix = prefix_map.get(color, "")
+def send_confirmation(
+    text: str,
+    color: str = "green",
+    parent_message_id: str | None = None,
+) -> None:
+    """Send a short confirmation reply to the approval channel.
+
+    color:
+      "green"  → [APPROVED] prefix
+      "red"    → [REJECTED] prefix
+      "orange" → [WARNING]  prefix
+      "blue"   → [INFO]     prefix
+      ""       → no prefix
+    parent_message_id — when set, posted as a thread reply (Logic App must support Reply action).
+    """
+    prefix_map = {
+        "green":  "[APPROVED]",
+        "red":    "[REJECTED]",
+        "orange": "[WARNING]",
+        "blue":   "[INFO]",
+    }
+    prefix    = prefix_map.get(color, "")
     full_text = f"{prefix} {text}" if prefix else text
     try:
-        send_channel_message(full_text)
+        send_channel_message(full_text, parent_message_id=parent_message_id)
     except AgentError as exc:
         log.warning("confirmation send failed: %s", exc)
 
@@ -429,17 +466,24 @@ def check_for_approvals(since: datetime | None = None) -> list[dict]:
     messages  = get_recent_messages(limit=50)
     commands: list[dict] = []
 
-    def _parse_and_append(text: str, sender: str, msg_id: str, created_dt) -> None:
+    def _parse_and_append(
+        text: str,
+        sender: str,
+        msg_id: str,
+        created_dt,
+        parent_message_id: str | None = None,
+    ) -> None:
         action, order_ids, reason = _parse_command(text)
         if action == "unknown":
             return
         commands.append({
-            "action":        action,
-            "order_ids":     order_ids,
-            "reason":        reason,
-            "sender":        sender,
-            "message_id":    msg_id,
-            "created_at_dt": created_dt,
+            "action":            action,
+            "order_ids":         order_ids,
+            "reason":            reason,
+            "sender":            sender,
+            "message_id":        msg_id,
+            "parent_message_id": parent_message_id,
+            "created_at_dt":     created_dt,
         })
         log.info("approval command found action=%s order_ids=%s sender=%s",
                  action, order_ids, sender)
@@ -459,7 +503,11 @@ def check_for_approvals(since: datetime | None = None) -> list[dict]:
             for reply in _get_thread_replies(msg["id"]):
                 if since and reply["created_at_dt"] <= since:
                     continue
-                _parse_and_append(reply["text"], reply["sender"], reply["id"], reply["created_at_dt"])
+                # Pass the top-level message ID so confirmations can be posted as replies
+                _parse_and_append(
+                    reply["text"], reply["sender"], reply["id"], reply["created_at_dt"],
+                    parent_message_id=msg["id"],
+                )
 
     return commands
 
@@ -473,17 +521,28 @@ def _clean_message_body(html: str) -> str:
 
 
 def _parse_command(text: str) -> tuple[str, list[str] | None, str | None]:
-    """Parse APPROVE / APPROVE ALL / REJECT from plain Teams message text.
+    """Parse APPROVE / APPROVE ALL / REJECT / REJECT ALL from plain Teams message text.
 
     Searches for the keyword anywhere (handles @mention prefix Teams inserts).
     Returns (action, order_ids, reason).
-      action     : "approve" | "approve_all" | "reject" | "unknown"
-      order_ids  : list of order ID strings (approve), [order_id] (reject), None (approve_all)
-      reason     : str or None (reject reason only)
 
-    APPROVE 123 456 789   -> ("approve", ["123","456","789"], None)
-    APPROVE ALL           -> ("approve_all", None, None)
-    REJECT 123 bad reason -> ("reject", ["123"], "bad reason")
+    action values:
+      "approve"      — APPROVE <id> [<id2> ...]   — approve specific order(s)
+      "approve_all"  — APPROVE ALL                 — approve all pending orders
+      "approve_bare" — APPROVE (alone)             — approve the single pending order
+      "reject"       — REJECT <id> [reason]        — reject a specific order
+      "reject_all"   — REJECT ALL [reason]         — reject all pending orders
+      "reject_bare"  — REJECT (alone)              — reject the single pending order
+      "unknown"      — unrecognised input
+
+    Examples:
+      APPROVE               -> ("approve_bare", None, None)
+      APPROVE ALL           -> ("approve_all", None, None)
+      APPROVE 123 456 789   -> ("approve", ["123","456","789"], None)
+      REJECT                -> ("reject_bare", None, None)
+      REJECT ALL            -> ("reject_all", None, None)
+      REJECT ALL bad scope  -> ("reject_all", None, "bad scope")
+      REJECT 123 bad reason -> ("reject",  ["123"], "bad reason")
     """
     upper = text.upper()
 
@@ -494,16 +553,19 @@ def _parse_command(text: str) -> tuple[str, list[str] | None, str | None]:
         after  = text[approve_m.end():].strip()
         tokens = after.split()
         if not tokens:
-            return "unknown", None, None
+            return "approve_bare", None, None       # bare APPROVE → auto-detect single pending
         if tokens[0].upper() == "ALL":
             return "approve_all", None, None
-        return "approve", tokens, None   # all tokens are treated as order IDs
+        return "approve", tokens, None              # all tokens are treated as order IDs
 
     if reject_m:
         after  = text[reject_m.end():].strip()
         tokens = after.split()
         if not tokens:
-            return "unknown", None, None
+            return "reject_bare", None, None        # bare REJECT → auto-detect single pending
+        if tokens[0].upper() == "ALL":
+            reason = " ".join(tokens[1:]) if len(tokens) > 1 else None
+            return "reject_all", None, reason
         order_id = tokens[0]
         reason   = " ".join(tokens[1:]) if len(tokens) > 1 else None
         return "reject", [order_id], reason
