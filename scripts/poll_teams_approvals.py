@@ -1,37 +1,38 @@
 """
 poll_teams_approvals.py — Poll the FTF-Approvals Teams channel for APPROVE/REJECT commands.
 
-Reads the last 50 messages from the channel via Microsoft Graph API.
-Processes any new APPROVE / APPROVE ALL / REJECT commands since the last run.
-Sends a confirmation back to the channel for each command processed.
+Reads recent messages + thread replies via Microsoft Graph API.
+Processes APPROVE / REJECT commands and manages a confirmation state machine
+for decision overrides (approve→reject or reject→approve).
 
 Security:
-  - Only Robert, Ryan, or Prateek (first-name match, case-insensitive) can approve/reject.
-  - Unauthorized senders get a warning posted to the channel.
-  - Invalid or misspelled order IDs get a warning per ID.
-  - Multiple order IDs: bot confirms (pre + post) before processing.
+  - Only Robert, Ryan, or Prateek (first-name, case-insensitive) can approve/reject.
+  - Unauthorized senders get a channel warning.
+  - Invalid/misspelled order IDs warned per ID.
+  - Multiple IDs: bot confirms before + after.
+  - Comma OR space separated IDs both work.
+  - Multiple commands in one message supported (APPROVE A, B REJECT C reason).
 
-Supported commands (typed in Teams channel or as reply to a bot notification):
-  APPROVE                         — approve the single pending order (error if 0 or >1)
-  APPROVE ALL                     — approve every pending order
-  APPROVE <id> [<id2> ...]        — approve one or more specific orders
-  REJECT                          — reject the single pending order (error if 0 or >1)
-  REJECT ALL [reason]             — reject every pending order with optional reason
-  REJECT <id> [reason]            — reject a specific order with optional reason
+Decision reversal (I-088):
+  - Trying to reject an already-approved order → confirmation required.
+  - Trying to approve an already-rejected order → confirmation required.
+  - Bot posts: "Order X was approved. Change to REJECTED? Reply YES or NO."
+  - Confirmation waits in pending_confirmations.json (TTL = 24h).
+  - YES synonyms: yeah, yep, yup, sure, ok, go ahead, do it, proceed, ...
+  - NO synonyms: nope, nah, cancel, keep it, never mind, don't, ...
+  - Can repeat: if decision flips again, same confirmation flow repeats.
 
 Usage:
     python scripts/poll_teams_approvals.py
-    python scripts/poll_teams_approvals.py --since-hours 2   # look back 2h if no state
-    python scripts/poll_teams_approvals.py --dry-run          # parse without DB writes
-
-State: last processed timestamp stored in loop_state DB table (primary) and
-       poll_state.json (backup/fallback).
+    python scripts/poll_teams_approvals.py --since-hours 2
+    python scripts/poll_teams_approvals.py --dry-run
 """
 
 import argparse
 import json
 import os
 import sys
+import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -42,26 +43,31 @@ from config.settings import APPROVED_SENDERS
 from core.db import get_all_awaiting_orders, get_all_flagged_orders, get_order_by_id
 from core.exceptions import AgentError
 from core.logger import get_logger
-from core.teams_graph_client import check_for_approvals, send_confirmation
+from core.teams_graph_client import (
+    _get_thread_replies,
+    check_for_approvals,
+    parse_confirmation_reply,
+    send_confirmation,
+)
 
 log = get_logger("poll_teams_approvals")
 
-_STATE_FILE     = Path(__file__).parent / "poll_state.json"
-_POLL_LOOP_NAME = "poll_teams_approvals"
+_STATE_FILE        = Path(__file__).parent / "poll_state.json"
+_PENDING_CONF_FILE = Path(__file__).parent / "pending_confirmations.json"
+_POLL_LOOP_NAME    = "poll_teams_approvals"
+_CONF_TTL_HOURS    = 24
 
-# Statuses that may be approved by a human reviewer
+# Statuses that can be approved/rejected immediately (no confirmation needed)
 _APPROVABLE_STATUSES = {"awaiting_approval", "flagged", "priced"}
+_REJECTABLE_STATUSES = {"awaiting_approval", "flagged", "priced"}
 
-# Statuses that may be rejected — includes "approved" so a prior approval can be
-# overridden (e.g. Ryan approved, Robert disagrees and rejects). An override
-# warning is posted to the channel before processing.
-_REJECTABLE_STATUSES = {"awaiting_approval", "flagged", "priced", "approved"}
+# Statuses that require an override confirmation before reversing
+_REVERSIBLE_STATUSES = {"approved", "rejected"}
 
 
-# ── State persistence (DB primary, file fallback) ─────────────────────────────
+# ── State persistence ─────────────────────────────────────────────────────────
 
 def _load_last_polled() -> datetime | None:
-    """Return datetime of last processed message. Checks DB first, then file."""
     try:
         from core.db import get_loop_state
         state = get_loop_state(_POLL_LOOP_NAME)
@@ -72,8 +78,7 @@ def _load_last_polled() -> datetime | None:
             dt = datetime.fromisoformat(str(lr))
             return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
     except Exception:
-        pass  # table may not exist on first run — fall through to file
-
+        pass
     if not _STATE_FILE.exists():
         return None
     try:
@@ -85,48 +90,232 @@ def _load_last_polled() -> datetime | None:
 
 
 def _save_last_polled(dt: datetime) -> None:
-    """Persist last processed timestamp to DB (primary) and file (fallback)."""
     try:
         from core.db import save_loop_state
         save_loop_state(_POLL_LOOP_NAME, "completed", last_run_at=dt)
     except Exception as exc:
         log.warning("could not save poll state to DB: %s", exc)
-
     try:
         _STATE_FILE.write_text(json.dumps({"last_processed_at": dt.isoformat()}))
     except Exception as exc:
         log.warning("could not save poll state file: %s", exc)
 
 
-# ── Order ID validation ───────────────────────────────────────────────────────
+# ── Pending confirmation state machine ───────────────────────────────────────
 
-def _validate_order_ids(
+def _load_pending_confirmations() -> list[dict]:
+    if not _PENDING_CONF_FILE.exists():
+        return []
+    try:
+        return json.loads(_PENDING_CONF_FILE.read_text()).get("confirmations", [])
+    except Exception:
+        return []
+
+
+def _save_pending_confirmations(confs: list[dict]) -> None:
+    try:
+        _PENDING_CONF_FILE.write_text(
+            json.dumps({"confirmations": confs}, indent=2, default=str)
+        )
+    except Exception as exc:
+        log.warning("could not save pending_confirmations: %s", exc)
+
+
+def _add_pending_confirmation(
     order_ids: list[str],
-    for_rejection: bool = False,
-) -> tuple[list[str], list[str]]:
-    """Split order_ids into (valid, invalid).
+    action: str,
+    reason: str | None,
+    sender: str,
+    parent_msg_id: str | None,
+    original_status: str,
+) -> None:
+    confs = _load_pending_confirmations()
+    # Remove any existing confirmation for the same order IDs (replace with latest)
+    confs = [c for c in confs if not any(o in c.get("order_ids", []) for o in order_ids)]
+    confs.append({
+        "id":                   str(uuid.uuid4()),
+        "order_ids":            order_ids,
+        "pending_action":       action,
+        "reason":               reason,
+        "sender":               sender,
+        "original_status":      original_status,
+        "parent_message_id":    parent_msg_id,
+        "confirmation_posted_at": datetime.now(timezone.utc).isoformat(),
+        "expires_at":           (datetime.now(timezone.utc) + timedelta(hours=_CONF_TTL_HOURS)).isoformat(),
+    })
+    _save_pending_confirmations(confs)
 
-    valid   — order exists in DB with an actionable status
-    invalid — not found or wrong status
 
-    for_rejection=True uses _REJECTABLE_STATUSES (includes "approved" for override).
+def _check_pending_confirmations(process_fn, summary: dict) -> None:
+    """Scan thread replies for yes/no responses to pending override confirmations."""
+    confs = _load_pending_confirmations()
+    if not confs:
+        return
+
+    remaining  = []
+    now        = datetime.now(timezone.utc)
+
+    for conf in confs:
+        order_ids      = conf["order_ids"]
+        action         = conf["pending_action"]
+        reason         = conf.get("reason")
+        sender         = conf["sender"]
+        parent_msg_id  = conf.get("parent_message_id")
+        original_status = conf.get("original_status", "unknown")
+        posted_at_str  = conf.get("confirmation_posted_at")
+        expires_at_str = conf.get("expires_at")
+
+        # Check expiry
+        expires_at = datetime.fromisoformat(expires_at_str) if expires_at_str else now
+        if now > expires_at:
+            send_confirmation(
+                f"Confirmation for <strong>{', '.join(order_ids)}</strong> expired "
+                f"(no response within 24h).<br>"
+                f"Decision remains <strong>{original_status}</strong>.<br>"
+                f"Re-submit your APPROVE / REJECT command if you still want to change it.",
+                "blue",
+                parent_message_id=parent_msg_id,
+            )
+            log.info("confirmation expired order_ids=%s", order_ids)
+            continue  # drop from list
+
+        # Scan thread replies since confirmation was posted
+        posted_at = datetime.fromisoformat(posted_at_str) if posted_at_str else now
+        response          = None
+        response_sender   = None
+
+        if parent_msg_id:
+            try:
+                for reply in _get_thread_replies(parent_msg_id):
+                    if reply["created_at_dt"] <= posted_at:
+                        continue
+                    parsed = parse_confirmation_reply(reply["text"])
+                    if parsed:
+                        response        = parsed
+                        response_sender = reply["sender"]
+                        break
+            except Exception as exc:
+                log.warning("could not scan replies for confirmation: %s", exc)
+
+        if response == "yes":
+            action_word = "approved" if action == "approve" else "rejected"
+            send_confirmation(
+                f"<strong>{response_sender}</strong> confirmed.<br>"
+                f"Changing <strong>{', '.join(order_ids)}</strong> from "
+                f"<strong>{original_status}</strong> → <strong>{action_word}</strong>...",
+                "orange",
+                parent_message_id=parent_msg_id,
+            )
+            done_ids, fail_ids = [], []
+            for oid in order_ids:
+                try:
+                    process_fn(oid, action)
+                    done_ids.append(oid)
+                    summary["approved" if action == "approve" else "rejected"] += 1
+                except AgentError as exc:
+                    fail_ids.append(f"{oid} ({exc})")
+                    summary["failed"] += 1
+
+            color = "green" if action == "approve" else "red"
+            msg = (
+                f"Decision changed: <strong>{', '.join(done_ids)}</strong> → "
+                f"<strong>{action_word}</strong>."
+            )
+            if fail_ids:
+                msg += f"<br><strong>Warnings:</strong> {', '.join(fail_ids)}"
+            send_confirmation(msg, color, parent_message_id=parent_msg_id)
+            log.info("override confirmed action=%s orders=%s by=%s", action, done_ids, response_sender)
+            # don't re-add to remaining
+
+        elif response == "no":
+            send_confirmation(
+                f"Decision kept as <strong>{original_status}</strong> for "
+                f"<strong>{', '.join(order_ids)}</strong>. No change made.",
+                "blue",
+                parent_message_id=parent_msg_id,
+            )
+            log.info("override cancelled order_ids=%s by=%s", order_ids, response_sender)
+            # don't re-add to remaining
+
+        else:
+            remaining.append(conf)   # still waiting for a response
+
+    _save_pending_confirmations(remaining)
+
+
+# ── Order validation & categorisation ────────────────────────────────────────
+
+def _validate_and_categorize(
+    order_ids: list[str],
+    action: str,            # "approve" or "reject"
+) -> tuple[list[str], list[str], list[str]]:
+    """Categorise order IDs into three buckets.
+
+    Returns (immediate, needs_confirmation, invalid):
+      immediate          — can be actioned right now (pending/flagged/priced status)
+      needs_confirmation — previously decided (opposite direction) — requires user YES/NO
+      invalid            — not found, already in same end-state, or wrong status
     """
-    allowed = _REJECTABLE_STATUSES if for_rejection else _APPROVABLE_STATUSES
-    valid, invalid = [], []
+    immediate         : list[str] = []
+    needs_confirmation: list[str] = []
+    invalid           : list[str] = []
+
     for oid in order_ids:
-        row = get_order_by_id(oid)
+        row    = get_order_by_id(oid)
+        status = (row or {}).get("status", "")
+
         if not row:
             invalid.append(f"{oid} (not found — check spelling)")
-        elif row.get("status") not in allowed:
-            status = row.get("status", "unknown")
-            invalid.append(f"{oid} (status={status} — cannot action)")
-        else:
-            valid.append(oid)
-    return valid, invalid
+            continue
+
+        if action == "approve":
+            if status in _APPROVABLE_STATUSES:
+                immediate.append(oid)
+            elif status == "rejected":            # flip: rejected → approve
+                needs_confirmation.append(oid)
+            elif status == "approved":
+                invalid.append(f"{oid} (already approved)")
+            else:
+                invalid.append(f"{oid} (status={status} — cannot approve)")
+
+        elif action == "reject":
+            if status in _REJECTABLE_STATUSES:
+                immediate.append(oid)
+            elif status == "approved":            # flip: approved → reject
+                needs_confirmation.append(oid)
+            elif status == "rejected":
+                invalid.append(f"{oid} (already rejected)")
+            else:
+                invalid.append(f"{oid} (status={status} — cannot reject)")
+
+    return immediate, needs_confirmation, invalid
+
+
+def _post_override_confirmation(
+    order_ids: list[str],
+    action: str,
+    reason: str | None,
+    sender: str,
+    original_status: str,
+    parent_msg_id: str | None,
+) -> None:
+    """Post a YES/NO confirmation request for a decision reversal."""
+    action_word    = "APPROVED" if action == "approve" else "REJECTED"
+    original_word  = original_status.upper()
+    ids_html       = ", ".join(f"<strong>{o}</strong>" for o in order_ids)
+    send_confirmation(
+        f"The following order(s) were previously <strong>{original_word}</strong>:<br>"
+        f"{ids_html}<br><br>"
+        f"Change decision to <strong>{action_word}</strong>?<br>"
+        f"Reply <strong>YES</strong> to confirm or <strong>NO</strong> to keep it as {original_word}.",
+        "orange",
+        parent_message_id=parent_msg_id,
+    )
+    _add_pending_confirmation(order_ids, action, reason, sender, parent_msg_id, original_status)
+    log.info("override confirmation requested action=%s orders=%s by=%s", action, order_ids, sender)
 
 
 def _get_all_pending() -> list[str]:
-    """Return all order IDs currently pending approval (flagged + awaiting_approval)."""
     flagged  = get_all_flagged_orders()
     awaiting = get_all_awaiting_orders()
     return [r["order_id"] for r in flagged + awaiting]
@@ -135,19 +324,9 @@ def _get_all_pending() -> list[str]:
 # ── Main poll ─────────────────────────────────────────────────────────────────
 
 def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
-    """Poll the channel and process APPROVE/REJECT commands.
-
-    since_hours — look-back window when no stored state
-    dry_run     — parse and log without writing to DB or sending confirmations
-    Returns summary: {found, approved, rejected, failed, dry_run}
-    """
     last_polled = _load_last_polled()
-    if last_polled:
-        since = last_polled
-        log.info("polling since last_processed=%s", since.isoformat())
-    else:
-        since = datetime.now(timezone.utc) - timedelta(hours=since_hours)
-        log.info("no stored state -- polling last %dh", since_hours)
+    since = last_polled or (datetime.now(timezone.utc) - timedelta(hours=since_hours))
+    log.info("polling since=%s", since.isoformat())
 
     try:
         commands = check_for_approvals(since=since)
@@ -157,21 +336,25 @@ def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
 
     summary = {"found": len(commands), "approved": 0, "rejected": 0, "failed": 0, "dry_run": dry_run}
 
+    from sprint_03_human_gate.agents.agent_04_human_gate import process_approval_reply  # type: ignore[import]
+
+    # ── Step 1: resolve any pending YES/NO confirmations first ───────────────
+    if not dry_run:
+        _check_pending_confirmations(process_approval_reply, summary)
+
     if not commands:
         log.info("poll complete: no approval commands found")
         return summary
 
-    from sprint_03_human_gate.agents.agent_04_human_gate import process_approval_reply  # type: ignore[import]
-
     newest_dt = since
 
     for cmd in commands:
-        action         = cmd["action"]
-        order_ids      = cmd["order_ids"]   # list[str] or None for bare/all variants
-        reason         = cmd["reason"]
-        sender         = cmd["sender"]
-        cmd_dt         = cmd["created_at_dt"]
-        parent_msg_id  = cmd.get("parent_message_id")  # set when command came as thread reply
+        action        = cmd["action"]
+        order_ids     = cmd["order_ids"]
+        reason        = cmd["reason"]
+        sender        = cmd["sender"]
+        cmd_dt        = cmd["created_at_dt"]
+        parent_msg_id = cmd.get("parent_message_id")
 
         log.info("cmd action=%s order_ids=%s sender=%s dry_run=%s",
                  action, order_ids, sender, dry_run)
@@ -182,7 +365,7 @@ def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
             authorized = ", ".join(s.capitalize() for s in APPROVED_SENDERS)
             warn = (
                 f"<strong>'{sender}'</strong> is not authorized to approve or reject estimates.<br>"
-                f"Only <strong>{authorized}</strong> can use APPROVE/REJECT commands in this channel."
+                f"Only <strong>{authorized}</strong> can use APPROVE/REJECT commands."
             )
             if not dry_run:
                 send_confirmation(warn, "orange", parent_message_id=parent_msg_id)
@@ -201,22 +384,16 @@ def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
         try:
             if action == "approve_bare":
                 _do_approve_bare(sender, summary, process_approval_reply, parent_msg_id)
-
             elif action == "approve_all":
                 _do_approve_all(sender, summary, process_approval_reply, parent_msg_id)
-
             elif action == "approve":
                 _do_approve_multi(order_ids or [], sender, summary, process_approval_reply, parent_msg_id)
-
             elif action == "reject_bare":
                 _do_reject_bare(sender, reason, summary, process_approval_reply, parent_msg_id)
-
             elif action == "reject_all":
                 _do_reject_all(sender, reason, summary, process_approval_reply, parent_msg_id)
-
             elif action == "reject":
                 _do_reject(order_ids or [], sender, reason, summary, process_approval_reply, parent_msg_id)
-
         except AgentError as exc:
             msg = f"Could not process <strong>{action}</strong>: {exc}"
             send_confirmation(msg, "orange", parent_message_id=parent_msg_id)
@@ -229,25 +406,20 @@ def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
     if not dry_run and newest_dt > since:
         _save_last_polled(newest_dt)
 
-    # ── Batch summary: report any orders still pending after this poll cycle ──
-    # Always posted as a NEW top-level message (no parent_message_id) so it is
-    # visible in the channel feed regardless of which thread the user replied to.
-    # This handles the case where pending orders span multiple notification threads.
+    # ── Step 3: still-pending summary (top-level, always visible) ────────────
     if not dry_run and (summary["approved"] > 0 or summary["rejected"] > 0):
         still_pending = _get_all_pending()
         if still_pending:
             id_list = "<br>".join(f"&nbsp;&nbsp;<strong>{oid}</strong>" for oid in still_pending[:10])
             suffix  = f"<br>&nbsp;&nbsp;...+{len(still_pending)-10} more" if len(still_pending) > 10 else ""
-            msg = (
+            send_confirmation(
                 f"<strong>{len(still_pending)} order(s) still pending — action required:</strong><br>"
                 f"{id_list}{suffix}<br><br>"
-                f"Reply to any notification thread or type here:<br>"
-                f"&nbsp;&nbsp;<strong>APPROVE &lt;id&gt;</strong> &nbsp;or&nbsp; "
-                f"<strong>REJECT &lt;id&gt; &lt;reason&gt;</strong>"
+                f"Reply <strong>APPROVE &lt;id&gt;</strong> or <strong>REJECT &lt;id&gt; &lt;reason&gt;</strong>",
+                "blue",
+                parent_message_id=None,   # top-level so it's always visible
             )
-            # parent_message_id=None → top-level post, always visible in channel feed
-            send_confirmation(msg, "blue", parent_message_id=None)
-            log.info("batch summary: %d still pending after this cycle", len(still_pending))
+            log.info("batch summary: %d still pending", len(still_pending))
 
     log.info("poll complete found=%d approved=%d rejected=%d failed=%d",
              summary["found"], summary["approved"], summary["rejected"], summary["failed"])
@@ -256,47 +428,34 @@ def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
 
 # ── Action handlers ───────────────────────────────────────────────────────────
 
-def _do_approve_bare(sender: str, summary: dict, process_fn, parent_msg_id: str | None) -> None:
-    """Handle bare APPROVE (no IDs specified) — auto-detect the single pending order."""
+def _do_approve_bare(sender, summary, process_fn, parent_msg_id):
     targets = _get_all_pending()
-
     if not targets:
         send_confirmation("No orders are currently pending approval.", "blue", parent_message_id=parent_msg_id)
-        log.info("approve_bare: nothing pending")
         return
-
     if len(targets) > 1:
         id_list = ", ".join(targets[:10])
-        suffix  = f" ... (+{len(targets) - 10} more)" if len(targets) > 10 else ""
-        msg = (
-            f"<strong>{len(targets)} orders</strong> are pending approval — please specify which ones:<br>"
-            f"&nbsp;&nbsp;<strong>APPROVE ALL</strong> — approve everything<br>"
-            f"&nbsp;&nbsp;<strong>APPROVE {id_list}{suffix}</strong> — approve specific orders"
+        suffix  = f" ...+{len(targets)-10} more" if len(targets) > 10 else ""
+        send_confirmation(
+            f"<strong>{len(targets)} orders</strong> pending — please specify:<br>"
+            f"&nbsp;&nbsp;<strong>APPROVE ALL</strong><br>"
+            f"&nbsp;&nbsp;<strong>APPROVE {id_list}{suffix}</strong>",
+            "orange", parent_message_id=parent_msg_id,
         )
-        send_confirmation(msg, "orange", parent_message_id=parent_msg_id)
-        log.info("approve_bare: %d pending — asked sender to specify", len(targets))
         return
-
-    # Exactly 1 pending — treat same as APPROVE <id>
     _do_approve_multi(targets, sender, summary, process_fn, parent_msg_id)
 
 
-def _do_approve_all(sender: str, summary: dict, process_fn, parent_msg_id: str | None) -> None:
+def _do_approve_all(sender, summary, process_fn, parent_msg_id):
     targets = _get_all_pending()
-
     if not targets:
         send_confirmation("No orders are currently pending approval.", "blue", parent_message_id=parent_msg_id)
-        log.info("approve_all: nothing pending")
         return
-
     send_confirmation(
         f"<strong>{sender}</strong> approving ALL <strong>{len(targets)}</strong> pending order(s):<br>"
-        f"<strong>{', '.join(targets)}</strong><br>"
-        f"Processing now...",
-        "green",
-        parent_message_id=parent_msg_id,
+        f"<strong>{', '.join(targets)}</strong><br>Processing now...",
+        "green", parent_message_id=parent_msg_id,
     )
-
     approved_ids, failed_ids = [], []
     for oid in targets:
         try:
@@ -306,51 +465,40 @@ def _do_approve_all(sender: str, summary: dict, process_fn, parent_msg_id: str |
         except AgentError as exc:
             failed_ids.append(f"{oid} ({exc})")
             summary["failed"] += 1
-
     msg = (
         f"<strong>{sender}</strong> approved ALL <strong>{len(approved_ids)}</strong> order(s):<br>"
-        f"<strong>{', '.join(approved_ids)}</strong><br>"
-        f"Estimates will be sent."
+        f"<strong>{', '.join(approved_ids)}</strong><br>Estimates will be sent."
     )
     if failed_ids:
         msg += f"<br><strong>Warnings:</strong> {', '.join(failed_ids)}"
     send_confirmation(msg, "green", parent_message_id=parent_msg_id)
-    log.info("approve_all done approved=%d failed=%d", len(approved_ids), len(failed_ids))
 
 
-def _do_approve_multi(
-    order_ids: list[str],
-    sender: str,
-    summary: dict,
-    process_fn,
-    parent_msg_id: str | None,
-) -> None:
+def _do_approve_multi(order_ids, sender, summary, process_fn, parent_msg_id):
     if not order_ids:
         send_confirmation("APPROVE command received but no order IDs provided.", "orange", parent_message_id=parent_msg_id)
         return
 
-    valid, invalid = _validate_order_ids(order_ids)
+    immediate, needs_conf, invalid = _validate_and_categorize(order_ids, "approve")
 
     if invalid:
-        warn = "Cannot process the following IDs:<br>" + "<br>".join(f"&nbsp;&nbsp;{e}" for e in invalid)
-        send_confirmation(warn, "orange", parent_message_id=parent_msg_id)
-        log.warning("invalid order_ids=%s", invalid)
-
-    if not valid:
+        send_confirmation(
+            "Cannot process:<br>" + "<br>".join(f"&nbsp;&nbsp;{e}" for e in invalid),
+            "orange", parent_message_id=parent_msg_id,
+        )
+    if needs_conf:
+        _post_override_confirmation(needs_conf, "approve", None, sender, "rejected", parent_msg_id)
+    if not immediate:
         return
 
-    # Double confirmation for multiple orders: announce intent before processing
-    if len(valid) > 1:
+    if len(immediate) > 1:
         send_confirmation(
-            f"<strong>{sender}</strong> approving <strong>{len(valid)}</strong> order(s):<br>"
-            f"<strong>{', '.join(valid)}</strong><br>"
-            f"Processing now...",
-            "green",
-            parent_message_id=parent_msg_id,
+            f"<strong>{sender}</strong> approving <strong>{len(immediate)}</strong> order(s):<br>"
+            f"<strong>{', '.join(immediate)}</strong><br>Processing now...",
+            "green", parent_message_id=parent_msg_id,
         )
-
     approved_ids, failed_ids = [], []
-    for oid in valid:
+    for oid in immediate:
         try:
             process_fn(oid, "approve")
             approved_ids.append(oid)
@@ -358,85 +506,55 @@ def _do_approve_multi(
         except AgentError as exc:
             failed_ids.append(f"{oid} ({exc})")
             summary["failed"] += 1
-            log.error("approve failed order=%s error=%s", oid, exc)
 
     if len(approved_ids) == 1 and not failed_ids:
         send_confirmation(
             f"<strong>{sender}</strong> approved order <strong>{approved_ids[0]}</strong>.<br>"
             f"Estimate will be sent.",
-            "green",
-            parent_message_id=parent_msg_id,
+            "green", parent_message_id=parent_msg_id,
         )
     elif approved_ids:
         msg = (
             f"<strong>{sender}</strong> approved <strong>{len(approved_ids)}</strong> order(s):<br>"
-            f"<strong>{', '.join(approved_ids)}</strong><br>"
-            f"Estimates will be sent."
+            f"<strong>{', '.join(approved_ids)}</strong><br>Estimates will be sent."
         )
         if failed_ids:
             msg += f"<br><strong>Warnings:</strong> {', '.join(failed_ids)}"
         send_confirmation(msg, "green", parent_message_id=parent_msg_id)
     else:
-        msg = "Could not approve any orders.<br><strong>Issues:</strong> " + ", ".join(failed_ids)
-        send_confirmation(msg, "orange", parent_message_id=parent_msg_id)
-
-    log.info("approve_multi done approved=%d failed=%d", len(approved_ids), len(failed_ids))
-
-
-def _do_reject_bare(
-    sender: str,
-    reason: str | None,
-    summary: dict,
-    process_fn,
-    parent_msg_id: str | None,
-) -> None:
-    """Handle bare REJECT (no ID specified) — auto-detect the single pending order."""
-    targets = _get_all_pending()
-
-    if not targets:
-        send_confirmation("No orders are currently pending approval.", "blue", parent_message_id=parent_msg_id)
-        log.info("reject_bare: nothing pending")
-        return
-
-    if len(targets) > 1:
-        id_list = ", ".join(targets[:10])
-        suffix  = f" ... (+{len(targets) - 10} more)" if len(targets) > 10 else ""
-        msg = (
-            f"<strong>{len(targets)} orders</strong> are pending — please specify which one to reject:<br>"
-            f"&nbsp;&nbsp;<strong>REJECT ALL [reason]</strong> — reject everything<br>"
-            f"&nbsp;&nbsp;<strong>REJECT {targets[0]} [reason]</strong> — reject a specific order"
+        send_confirmation(
+            "Could not approve any orders.<br><strong>Issues:</strong> " + ", ".join(failed_ids),
+            "orange", parent_message_id=parent_msg_id,
         )
-        send_confirmation(msg, "orange", parent_message_id=parent_msg_id)
-        log.info("reject_bare: %d pending — asked sender to specify", len(targets))
-        return
-
-    _do_reject(targets[0], sender, reason, summary, process_fn, parent_msg_id)
 
 
-def _do_reject_all(
-    sender: str,
-    reason: str | None,
-    summary: dict,
-    process_fn,
-    parent_msg_id: str | None,
-) -> None:
+def _do_reject_bare(sender, reason, summary, process_fn, parent_msg_id):
     targets = _get_all_pending()
-
     if not targets:
         send_confirmation("No orders are currently pending approval.", "blue", parent_message_id=parent_msg_id)
-        log.info("reject_all: nothing pending")
         return
+    if len(targets) > 1:
+        send_confirmation(
+            f"<strong>{len(targets)} orders</strong> pending — please specify which to reject:<br>"
+            f"&nbsp;&nbsp;<strong>REJECT ALL [reason]</strong><br>"
+            f"&nbsp;&nbsp;<strong>REJECT {targets[0]} [reason]</strong>",
+            "orange", parent_message_id=parent_msg_id,
+        )
+        return
+    _do_reject(targets, sender, reason, summary, process_fn, parent_msg_id)
 
-    reason_str = f"<strong>Reason:</strong> {reason}<br>" if reason else ""
+
+def _do_reject_all(sender, reason, summary, process_fn, parent_msg_id):
+    targets = _get_all_pending()
+    if not targets:
+        send_confirmation("No orders are currently pending approval.", "blue", parent_message_id=parent_msg_id)
+        return
+    reason_html = f"<strong>Reason:</strong> {reason}<br>" if reason else ""
     send_confirmation(
         f"<strong>{sender}</strong> rejecting ALL <strong>{len(targets)}</strong> pending order(s):<br>"
-        f"<strong>{', '.join(targets)}</strong><br>"
-        f"{reason_str}"
-        f"Processing now...",
-        "orange",
-        parent_message_id=parent_msg_id,
+        f"<strong>{', '.join(targets)}</strong><br>{reason_html}Processing now...",
+        "orange", parent_message_id=parent_msg_id,
     )
-
     rejected_ids, failed_ids = [], []
     for oid in targets:
         try:
@@ -446,7 +564,6 @@ def _do_reject_all(
         except AgentError as exc:
             failed_ids.append(f"{oid} ({exc})")
             summary["failed"] += 1
-
     msg = (
         f"<strong>{sender}</strong> rejected ALL <strong>{len(rejected_ids)}</strong> order(s):<br>"
         f"<strong>{', '.join(rejected_ids)}</strong>."
@@ -456,45 +573,27 @@ def _do_reject_all(
     if failed_ids:
         msg += f"<br><strong>Warnings:</strong> {', '.join(failed_ids)}"
     send_confirmation(msg, "red", parent_message_id=parent_msg_id)
-    log.info("reject_all done rejected=%d failed=%d", len(rejected_ids), len(failed_ids))
 
 
-def _do_reject(
-    order_ids: list[str] | None,
-    sender: str,
-    reason: str | None,
-    summary: dict,
-    process_fn,
-    parent_msg_id: str | None,
-) -> None:
+def _do_reject(order_ids, sender, reason, summary, process_fn, parent_msg_id):
     if not order_ids:
         send_confirmation("REJECT command missing order ID.", "orange", parent_message_id=parent_msg_id)
         return
 
-    valid, invalid = _validate_order_ids(order_ids, for_rejection=True)
+    immediate, needs_conf, invalid = _validate_and_categorize(order_ids, "reject")
 
     if invalid:
-        warn = "Cannot process:<br>" + "<br>".join(f"&nbsp;&nbsp;{e}" for e in invalid)
-        send_confirmation(warn, "orange", parent_message_id=parent_msg_id)
-
-    if not valid:
+        send_confirmation(
+            "Cannot process:<br>" + "<br>".join(f"&nbsp;&nbsp;{e}" for e in invalid),
+            "orange", parent_message_id=parent_msg_id,
+        )
+    if needs_conf:
+        _post_override_confirmation(needs_conf, "reject", reason, sender, "approved", parent_msg_id)
+    if not immediate:
         return
 
-    # Warn before overriding any already-approved orders
-    overrides = [oid for oid in valid if (get_order_by_id(oid) or {}).get("status") == "approved"]
-    if overrides:
-        send_confirmation(
-            f"<strong>Override:</strong> "
-            f"{', '.join(f'<strong>{o}</strong>' for o in overrides)} "
-            f"{'was' if len(overrides) == 1 else 'were'} previously <strong>approved</strong>.<br>"
-            f"<strong>{sender}</strong> is overriding — rejecting now.",
-            "orange",
-            parent_message_id=parent_msg_id,
-        )
-        log.warning("reject override: %s previously approved, overridden by %s", overrides, sender)
-
     rejected_ids, failed_ids = [], []
-    for oid in valid:
+    for oid in immediate:
         try:
             process_fn(oid, "reject")
             rejected_ids.append(oid)
@@ -502,7 +601,6 @@ def _do_reject(
         except AgentError as exc:
             failed_ids.append(f"{oid} ({exc})")
             summary["failed"] += 1
-            log.error("reject failed order=%s error=%s", oid, exc)
 
     if len(rejected_ids) == 1 and not failed_ids:
         msg = f"<strong>{sender}</strong> rejected order <strong>{rejected_ids[0]}</strong>."
@@ -520,9 +618,10 @@ def _do_reject(
             msg += f"<br><strong>Warnings:</strong> {', '.join(failed_ids)}"
         send_confirmation(msg, "red", parent_message_id=parent_msg_id)
     else:
-        msg = "Could not reject any orders.<br><strong>Issues:</strong> " + ", ".join(failed_ids)
-        send_confirmation(msg, "orange", parent_message_id=parent_msg_id)
-
+        send_confirmation(
+            "Could not reject any orders.<br><strong>Issues:</strong> " + ", ".join(failed_ids),
+            "orange", parent_message_id=parent_msg_id,
+        )
     log.info("reject done rejected=%d failed=%d", len(rejected_ids), len(failed_ids))
 
 
@@ -530,12 +629,9 @@ def _do_reject(
 
 def main(argv=None) -> None:
     parser = argparse.ArgumentParser(description="Poll FTF-Approvals Teams channel")
-    parser.add_argument("--since-hours", type=int, default=2,
-                        help="Hours to look back when no stored state (default: 2)")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Parse and log commands without writing to DB")
+    parser.add_argument("--since-hours", type=int, default=2)
+    parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
-
     result = run_poll(since_hours=args.since_hours, dry_run=args.dry_run)
     print(result)
 

@@ -634,6 +634,37 @@ def _parse_command(text: str) -> tuple[str, list[str] | None, str | None]:
     return _parse_all_commands(text)[0]
 
 
+def parse_confirmation_reply(text: str) -> str | None:
+    """Parse a yes/no confirmation reply from a Teams message.
+
+    Returns "yes", "no", or None if the message is not a clear yes/no.
+
+    Handles natural language synonyms:
+      yes → yes, yeah, yep, yup, sure, ok, okay, confirm, do it, go ahead, proceed, absolutely
+      no  → no, nope, nah, cancel, stop, keep it, don't, negative, abort, never mind
+    """
+    cleaned = re.sub(r"<[^>]+>", " ", text)   # strip HTML
+    word = cleaned.strip().lower().split()[0] if cleaned.strip() else ""
+    phrase = " ".join(cleaned.strip().lower().split()[:2])
+
+    YES = {"yes", "yeah", "yep", "yup", "sure", "ok", "okay", "confirm", "confirmed",
+           "absolutely", "definitely", "proceed", "affirmative", "correct"}
+    NO  = {"no", "nope", "nah", "cancel", "stop", "negative", "abort", "skip",
+           "dont", "don't", "keep"}
+    YES_PHRASES = {"do it", "go ahead", "go for it", "yes please", "change it"}
+    NO_PHRASES  = {"keep it", "never mind", "no change", "leave it", "no thanks", "don't change"}
+
+    if phrase in YES_PHRASES:
+        return "yes"
+    if phrase in NO_PHRASES:
+        return "no"
+    if word in YES:
+        return "yes"
+    if word in NO:
+        return "no"
+    return None
+
+
 # ── Message builders ──────────────────────────────────────────────────────────
 
 def build_digest_html(orders: list[dict], ftf_order_url: str) -> str:
