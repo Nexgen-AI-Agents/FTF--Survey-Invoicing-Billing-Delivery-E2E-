@@ -5,14 +5,19 @@ Reads the last 50 messages from the channel via Microsoft Graph API.
 Processes any new APPROVE / APPROVE ALL / REJECT commands since the last run.
 Sends a confirmation back to the channel for each command processed.
 
-No public URL. No ngrok. No Flask server. The pipeline calls this every cycle.
+Security:
+  - Only Robert, Ryan, or Prateek (first-name match, case-insensitive) can approve/reject.
+  - Unauthorized senders get a warning posted to the channel.
+  - Invalid or misspelled order IDs get a warning per ID.
+  - Multiple order IDs: bot confirms (pre + post) before processing.
 
 Usage:
     python scripts/poll_teams_approvals.py
-    python scripts/poll_teams_approvals.py --since-hours 2   # only look at last 2h of messages
-    python scripts/poll_teams_approvals.py --dry-run          # show commands without processing
+    python scripts/poll_teams_approvals.py --since-hours 2   # look back 2h if no state
+    python scripts/poll_teams_approvals.py --dry-run          # parse without DB writes
 
-State: last processed timestamp is stored in poll_state.json (gitignored).
+State: last processed timestamp stored in loop_state DB table (primary) and
+       poll_state.json (backup/fallback).
 """
 
 import argparse
@@ -23,21 +28,39 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code", "shared"))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))  # for sprint_03_human_gate
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from core.db import get_all_awaiting_orders, get_all_flagged_orders
+from config.settings import APPROVED_SENDERS
+from core.db import get_all_awaiting_orders, get_all_flagged_orders, get_order_by_id
 from core.exceptions import AgentError
 from core.logger import get_logger
 from core.teams_graph_client import check_for_approvals, send_confirmation
 
 log = get_logger("poll_teams_approvals")
 
-# State file — tracks last processed message timestamp to avoid re-processing
-_STATE_FILE = Path(__file__).parent / "poll_state.json"
+_STATE_FILE     = Path(__file__).parent / "poll_state.json"
+_POLL_LOOP_NAME = "poll_teams_approvals"
 
+# Statuses that may be approved by a human reviewer
+_APPROVABLE_STATUSES = {"awaiting_approval", "flagged", "priced"}
+
+
+# ── State persistence (DB primary, file fallback) ─────────────────────────────
 
 def _load_last_polled() -> datetime | None:
-    """Return the datetime of the last successfully processed message, or None."""
+    """Return datetime of last processed message. Checks DB first, then file."""
+    try:
+        from core.db import get_loop_state
+        state = get_loop_state(_POLL_LOOP_NAME)
+        if state and state.get("last_run_at"):
+            lr = state["last_run_at"]
+            if isinstance(lr, datetime):
+                return lr if lr.tzinfo else lr.replace(tzinfo=timezone.utc)
+            dt = datetime.fromisoformat(str(lr))
+            return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    except Exception:
+        pass  # table may not exist on first run — fall through to file
+
     if not _STATE_FILE.exists():
         return None
     try:
@@ -49,30 +72,57 @@ def _load_last_polled() -> datetime | None:
 
 
 def _save_last_polled(dt: datetime) -> None:
-    """Persist the last processed message timestamp."""
+    """Persist last processed timestamp to DB (primary) and file (fallback)."""
+    try:
+        from core.db import save_loop_state
+        save_loop_state(_POLL_LOOP_NAME, "completed", last_run_at=dt)
+    except Exception as exc:
+        log.warning("could not save poll state to DB: %s", exc)
+
     try:
         _STATE_FILE.write_text(json.dumps({"last_processed_at": dt.isoformat()}))
     except Exception as exc:
-        log.warning("could not save poll state: %s", exc)
+        log.warning("could not save poll state file: %s", exc)
 
+
+# ── Order ID validation ───────────────────────────────────────────────────────
+
+def _validate_order_ids(order_ids: list[str]) -> tuple[list[str], list[str]]:
+    """Split order_ids into (valid, invalid).
+
+    valid   — order exists in DB with an approvable status
+    invalid — not found or wrong status (with reason appended as ":reason")
+    """
+    valid, invalid = [], []
+    for oid in order_ids:
+        row = get_order_by_id(oid)
+        if not row:
+            invalid.append(f"{oid} (not found -- check spelling)")
+        elif row.get("status") not in _APPROVABLE_STATUSES:
+            status = row.get("status", "unknown")
+            invalid.append(f"{oid} (status={status} -- not pending approval)")
+        else:
+            valid.append(oid)
+    return valid, invalid
+
+
+# ── Main poll ─────────────────────────────────────────────────────────────────
 
 def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
-    """Poll the channel and process any APPROVE/REJECT commands.
+    """Poll the channel and process APPROVE/REJECT commands.
 
-    since_hours — look back this many hours for new messages (fallback if no state file)
-    dry_run     — parse and log commands but do not write to DB or send confirmations
+    since_hours — look-back window when no stored state
+    dry_run     — parse and log without writing to DB or sending confirmations
     Returns summary: {found, approved, rejected, failed, dry_run}
     """
-    # Determine the cutoff datetime
     last_polled = _load_last_polled()
     if last_polled:
         since = last_polled
         log.info("polling since last_processed=%s", since.isoformat())
     else:
         since = datetime.now(timezone.utc) - timedelta(hours=since_hours)
-        log.info("no state file — polling last %dh", since_hours)
+        log.info("no stored state -- polling last %dh", since_hours)
 
-    # Fetch commands from Teams channel
     try:
         commands = check_for_approvals(since=since)
     except AgentError as exc:
@@ -85,93 +135,199 @@ def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
         log.info("poll complete: no approval commands found")
         return summary
 
-    # Import here to avoid circular imports at module level
     from sprint_03_human_gate.agents.agent_04_human_gate import process_approval_reply  # type: ignore[import]
 
     newest_dt = since
 
     for cmd in commands:
-        action   = cmd["action"]
-        order_id = cmd["order_id"]
-        reason   = cmd["reason"]
-        sender   = cmd["sender"]
-        cmd_dt   = cmd["created_at_dt"]
+        action    = cmd["action"]
+        order_ids = cmd["order_ids"]   # list[str] or None for approve_all
+        reason    = cmd["reason"]
+        sender    = cmd["sender"]
+        cmd_dt    = cmd["created_at_dt"]
 
-        log.info("processing command action=%s order=%s sender=%s dry_run=%s",
-                 action, order_id, sender, dry_run)
+        log.info("cmd action=%s order_ids=%s sender=%s dry_run=%s",
+                 action, order_ids, sender, dry_run)
 
-        if dry_run:
-            print(f"[DRY RUN] {action} | order={order_id} | sender={sender}")
+        # ── Sender whitelist ──────────────────────────────────────────────────
+        sender_first = (sender or "").split()[0].lower()
+        if sender_first not in APPROVED_SENDERS:
+            authorized = ", ".join(s.capitalize() for s in APPROVED_SENDERS)
+            warn = (
+                f"[WARNING] '{sender}' is not authorized to approve or reject estimates. "
+                f"Only {authorized} can use APPROVE/REJECT commands in this channel."
+            )
+            if not dry_run:
+                send_confirmation(warn, "orange")
+            log.warning("unauthorized sender=%s", sender)
             if cmd_dt > newest_dt:
                 newest_dt = cmd_dt
             continue
 
+        if dry_run:
+            print(f"[DRY RUN] {action} | order_ids={order_ids} | sender={sender}")
+            if cmd_dt > newest_dt:
+                newest_dt = cmd_dt
+            continue
+
+        # ── Process command ───────────────────────────────────────────────────
         try:
             if action == "approve_all":
-                flagged  = get_all_flagged_orders()
-                awaiting = get_all_awaiting_orders()
-                targets  = [r["order_id"] for r in flagged + awaiting]
-
-                if not targets:
-                    send_confirmation(f"✅ {sender}: No orders pending approval right now.", "green")
-                    log.info("approve_all: no orders pending")
-                else:
-                    approved_ids, failed_ids = [], []
-                    for oid in targets:
-                        try:
-                            process_approval_reply(oid, "approve")
-                            approved_ids.append(oid)
-                            summary["approved"] += 1
-                        except AgentError as exc:
-                            failed_ids.append(f"{oid} ({exc})")
-                            summary["failed"] += 1
-
-                    msg = f"✅ {sender} approved ALL {len(approved_ids)} order(s): {', '.join(approved_ids)}"
-                    if failed_ids:
-                        msg += f"<br>⚠️ Could not approve: {', '.join(failed_ids)}"
-                    send_confirmation(msg, "green")
-                    log.info("approve_all complete approved=%d failed=%d", len(approved_ids), len(failed_ids))
+                _do_approve_all(sender, summary, process_approval_reply)
 
             elif action == "approve":
-                process_approval_reply(order_id, "approve")
-                msg = f"✅ {sender} approved order {order_id}. Estimate will be sent."
-                send_confirmation(msg, "green")
-                summary["approved"] += 1
-                log.info("approved order=%s", order_id)
+                _do_approve_multi(order_ids or [], sender, summary, process_approval_reply)
 
             elif action == "reject":
-                process_approval_reply(order_id, "reject")
-                msg = f"🚫 {sender} rejected order {order_id}."
-                if reason:
-                    msg += f" Reason: {reason}"
-                send_confirmation(msg, "red")
-                summary["rejected"] += 1
-                log.info("rejected order=%s reason=%s", order_id, reason)
+                oid = (order_ids or [None])[0]
+                _do_reject(oid, sender, reason, summary, process_approval_reply)
 
         except AgentError as exc:
-            msg = f"⚠️ Could not process {action} for {order_id}: {exc}"
+            msg = f"[WARNING] Could not process {action}: {exc}"
             send_confirmation(msg, "orange")
             summary["failed"] += 1
-            log.error("command failed action=%s order=%s error=%s", action, order_id, exc)
+            log.error("command failed action=%s error=%s", action, exc)
 
         if cmd_dt > newest_dt:
             newest_dt = cmd_dt
 
-    # Persist the timestamp of the newest message processed
     if not dry_run and newest_dt > since:
         _save_last_polled(newest_dt)
 
-    log.info(
-        "poll complete found=%d approved=%d rejected=%d failed=%d",
-        summary["found"], summary["approved"], summary["rejected"], summary["failed"],
-    )
+    log.info("poll complete found=%d approved=%d rejected=%d failed=%d",
+             summary["found"], summary["approved"], summary["rejected"], summary["failed"])
     return summary
 
+
+# ── Action handlers ───────────────────────────────────────────────────────────
+
+def _do_approve_all(sender: str, summary: dict, process_fn) -> None:
+    flagged  = get_all_flagged_orders()
+    awaiting = get_all_awaiting_orders()
+    targets  = [r["order_id"] for r in flagged + awaiting]
+
+    if not targets:
+        send_confirmation(f"[INFO] {sender}: no orders are pending approval right now.", "green")
+        log.info("approve_all: nothing pending")
+        return
+
+    send_confirmation(
+        f"[CONFIRM] {sender} approved ALL {len(targets)} pending order(s): "
+        f"{', '.join(targets)}. Processing now...",
+        "green",
+    )
+
+    approved_ids, failed_ids = [], []
+    for oid in targets:
+        try:
+            process_fn(oid, "approve")
+            approved_ids.append(oid)
+            summary["approved"] += 1
+        except AgentError as exc:
+            failed_ids.append(f"{oid} ({exc})")
+            summary["failed"] += 1
+
+    msg = f"[APPROVED] {sender} approved ALL {len(approved_ids)} order(s): {', '.join(approved_ids)}."
+    if failed_ids:
+        msg += f" Warnings: {', '.join(failed_ids)}"
+    send_confirmation(msg, "green")
+    log.info("approve_all done approved=%d failed=%d", len(approved_ids), len(failed_ids))
+
+
+def _do_approve_multi(order_ids: list[str], sender: str, summary: dict, process_fn) -> None:
+    if not order_ids:
+        send_confirmation("[WARNING] APPROVE command received but no order IDs provided.", "orange")
+        return
+
+    valid, invalid = _validate_order_ids(order_ids)
+
+    if invalid:
+        warn = "[WARNING] Cannot process: " + ", ".join(invalid)
+        send_confirmation(warn, "orange")
+        log.warning("invalid order_ids=%s", invalid)
+
+    if not valid:
+        return
+
+    # Double confirmation for multiple orders: announce intent before processing
+    if len(valid) > 1:
+        send_confirmation(
+            f"[CONFIRM] {sender} is approving {len(valid)} order(s): "
+            f"{', '.join(valid)}. Processing now...",
+            "green",
+        )
+
+    approved_ids, failed_ids = [], []
+    for oid in valid:
+        try:
+            process_fn(oid, "approve")
+            approved_ids.append(oid)
+            summary["approved"] += 1
+        except AgentError as exc:
+            failed_ids.append(f"{oid} ({exc})")
+            summary["failed"] += 1
+            log.error("approve failed order=%s error=%s", oid, exc)
+
+    # Final confirmation (second confirmation for multi, only confirmation for single)
+    if len(approved_ids) == 1 and not failed_ids:
+        send_confirmation(
+            f"[APPROVED] {sender} approved order {approved_ids[0]}. Estimate will be sent.",
+            "green",
+        )
+    elif approved_ids:
+        msg = f"[APPROVED] {sender} approved {len(approved_ids)} order(s): {', '.join(approved_ids)}. Estimates will be sent."
+        if failed_ids:
+            msg += f" Warnings: {', '.join(failed_ids)}"
+        send_confirmation(msg, "green")
+    else:
+        send_confirmation(
+            f"[WARNING] Could not approve any orders. Issues: {', '.join(failed_ids)}",
+            "orange",
+        )
+
+    log.info("approve_multi done approved=%d failed=%d", len(approved_ids), len(failed_ids))
+
+
+def _do_reject(order_id: str | None, sender: str, reason: str | None, summary: dict, process_fn) -> None:
+    if not order_id:
+        send_confirmation("[WARNING] REJECT command missing order ID.", "orange")
+        return
+
+    row = get_order_by_id(order_id)
+    if not row:
+        send_confirmation(
+            f"[WARNING] Order '{order_id}' not found -- check spelling and try again.",
+            "orange",
+        )
+        log.warning("reject: order not found order_id=%s", order_id)
+        summary["failed"] += 1
+        return
+
+    if row.get("status") not in _APPROVABLE_STATUSES:
+        status = row.get("status", "unknown")
+        send_confirmation(
+            f"[WARNING] Order {order_id} cannot be rejected -- current status is '{status}'.",
+            "orange",
+        )
+        log.warning("reject: wrong status order=%s status=%s", order_id, status)
+        summary["failed"] += 1
+        return
+
+    process_fn(order_id, "reject")
+    msg = f"[REJECTED] {sender} rejected order {order_id}."
+    if reason:
+        msg += f" Reason: {reason}"
+    send_confirmation(msg, "red")
+    summary["rejected"] += 1
+    log.info("rejected order=%s reason=%s", order_id, reason)
+
+
+# ── CLI ───────────────────────────────────────────────────────────────────────
 
 def main(argv=None) -> None:
     parser = argparse.ArgumentParser(description="Poll FTF-Approvals Teams channel")
     parser.add_argument("--since-hours", type=int, default=2,
-                        help="Hours to look back for messages if no state file (default: 2)")
+                        help="Hours to look back when no stored state (default: 2)")
     parser.add_argument("--dry-run", action="store_true",
                         help="Parse and log commands without writing to DB")
     args = parser.parse_args(argv)

@@ -119,6 +119,13 @@ def run_estimate_loop() -> dict:
     log_decision(AGENT_NAME, "loop_start",
                  reason=f"estimate loop started at {started_at.isoformat()}")
 
+    # Escalation check — runs every cycle; escalates orders stuck >24h in awaiting_approval
+    try:
+        _run_step("escalation_check", _human_gate.run_escalation_check)
+    except AgentError as exc:
+        summary["errors"] += 1
+        log.warning("escalation_check failed (non-critical): %s", exc)
+
     steps = [
         ("email_monitor", _email_monitor.run),   # Gap 4: check info@ for customer quote approvals
         ("monitor",       _monitor.run),

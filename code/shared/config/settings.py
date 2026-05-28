@@ -49,6 +49,12 @@ TEAMS_INCOMING_WEBHOOK_URL: str | None = os.getenv("TEAMS_INCOMING_WEBHOOK_URL")
 # FROM must be a valid licensed mailbox in the same Azure AD tenant.
 NOTIFICATION_FROM_EMAIL:  str | None = os.getenv("NOTIFICATION_FROM_EMAIL")
 NOTIFICATION_TO_EMAILS:   str        = os.getenv("NOTIFICATION_TO_EMAILS", "")  # comma-sep
+# Approved senders for Teams APPROVE/REJECT commands (first-name match, case-insensitive)
+APPROVED_SENDERS: list[str] = [
+    s.strip().lower()
+    for s in os.getenv("APPROVED_SENDERS", "robert,ryan,prateek").split(",")
+    if s.strip()
+]
 
 # MS Teams — legacy webhook vars (kept for backward compat; unused once Graph API is live)
 TEAMS_WEBHOOK_URL:             str | None = os.getenv("TEAMS_WEBHOOK_URL")

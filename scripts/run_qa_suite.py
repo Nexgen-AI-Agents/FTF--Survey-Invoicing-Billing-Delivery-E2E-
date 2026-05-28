@@ -444,42 +444,42 @@ def run_negative_auto(results: Results, dry_run: bool) -> None:
     raw_html = "<pre><code>APPROVE QA-001</code></pre>"
     cleaned = _clean_message_body(raw_html)
     action, oid, _ = _parse_command(cleaned)
-    results.record(tc, "TC-NEGATIVE", "PASS" if action == "approve" and oid == "QA-001" else "FAIL",
-                   f"after clean: '{cleaned}' -> action={action} order_id={oid}")
+    results.record(tc, "TC-NEGATIVE", "PASS" if action == "approve" and oid == ["QA-001"] else "FAIL",
+                   f"after clean: '{cleaned}' -> action={action} order_ids={oid}")
 
     # NEG-007: Emoji prefix (Teams unicode)
     tc = "NEG-007"
     action, oid, _ = _parse_command("APPROVE QA-001")
-    results.record(tc, "TC-NEGATIVE", "PASS" if action == "approve" and oid == "QA-001" else "FAIL",
-                   f"action={action} order_id={oid}")
+    results.record(tc, "TC-NEGATIVE", "PASS" if action == "approve" and oid == ["QA-001"] else "FAIL",
+                   f"action={action} order_ids={oid}")
 
-    # NEG-008: Two IDs on one line — only first parsed
+    # NEG-008: Multi-ID on one line — both IDs parsed (multi-approve supported)
     tc = "NEG-008"
     action, oid, _ = _parse_command("APPROVE QA-001 QA-002")
-    results.record(tc, "TC-NEGATIVE", "PASS" if action == "approve" and oid == "QA-001" else "FAIL",
-                   f"first ID only: action={action} order_id={oid}")
+    results.record(tc, "TC-NEGATIVE", "PASS" if action == "approve" and oid == ["QA-001", "QA-002"] else "FAIL",
+                   f"multi-ID: action={action} order_ids={oid}")
 
     # NEG-009: All lowercase
     tc = "NEG-009"
     action, oid, _ = _parse_command("approve qa-001")
-    results.record(tc, "TC-NEGATIVE", "PASS" if action == "approve" and oid == "qa-001" else "FAIL",
-                   f"case-insensitive: action={action} order_id={oid}")
+    results.record(tc, "TC-NEGATIVE", "PASS" if action == "approve" and oid == ["qa-001"] else "FAIL",
+                   f"case-insensitive: action={action} order_ids={oid}")
 
     # NEG-013: APPROVE ALL with 0 awaiting
     tc = "NEG-013"
     results.record(tc, "TC-NEGATIVE", "SKIP", "Covered by APP-004 in TC-APPROVAL suite", "")
 
-    # NEG-014: REJECT ALL — parser returns ("reject", "ALL", None); safety is "ALL" not in DB
+    # NEG-014: REJECT ALL — parser returns ("reject", ["ALL"], None); safety is "ALL" not in DB
     tc = "NEG-014"
     action, oid, _ = _parse_command("REJECT ALL")
-    # _parse_command treats "ALL" as the order_id — protection is AgentError at execution time
-    if action == "reject" and oid == "ALL":
+    # _parse_command treats "ALL" as the order_id — protection is validation (not found) + AgentError
+    if action == "reject" and oid == ["ALL"]:
         results.record(tc, "TC-NEGATIVE", "PASS",
-                       f"REJECT ALL -> action={action} order_id={oid}; "
-                       f"process_approval_reply('ALL','reject') raises AgentError (no such order)")
+                       f"REJECT ALL -> action={action} order_ids={oid}; "
+                       f"_validate_order_ids rejects 'ALL' as not found in DB")
     else:
         results.record(tc, "TC-NEGATIVE", "FAIL",
-                       f"Unexpected parse: action={action} order_id={oid}")
+                       f"Unexpected parse: action={action} order_ids={oid}")
 
     # NEG-020: Zero-dollar estimate flagged
     tc = "NEG-020"

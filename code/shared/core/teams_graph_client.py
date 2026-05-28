@@ -359,8 +359,9 @@ def get_recent_messages(limit: int = 50) -> list[dict]:
 def check_for_approvals(since: datetime | None = None) -> list[dict]:
     """Return parsed APPROVE / REJECT commands posted since `since` (UTC).
 
-    Each returned dict: {action, order_id, reason, sender, message_id, created_at_dt}
+    Each returned dict: {action, order_ids, reason, sender, message_id, created_at_dt}
     action values: "approve" | "approve_all" | "reject"
+    order_ids: list[str] for approve/reject; None for approve_all
     """
     messages = get_recent_messages(limit=50)
     commands: list[dict] = []
@@ -369,21 +370,21 @@ def check_for_approvals(since: datetime | None = None) -> list[dict]:
         if since and msg["created_at_dt"] <= since:
             continue
 
-        action, order_id, reason = _parse_command(msg["text"])
+        action, order_ids, reason = _parse_command(msg["text"])
         if action == "unknown":
             continue
 
         commands.append({
             "action":        action,
-            "order_id":      order_id,
+            "order_ids":     order_ids,
             "reason":        reason,
             "sender":        msg["sender"],
             "message_id":    msg["id"],
             "created_at_dt": msg["created_at_dt"],
         })
         log.info(
-            "approval command found action=%s order_id=%s sender=%s",
-            action, order_id, msg["sender"],
+            "approval command found action=%s order_ids=%s sender=%s",
+            action, order_ids, msg["sender"],
         )
 
     return commands
@@ -397,11 +398,18 @@ def _clean_message_body(html: str) -> str:
     return " ".join(text.split())
 
 
-def _parse_command(text: str) -> tuple[str, str | None, str | None]:
+def _parse_command(text: str) -> tuple[str, list[str] | None, str | None]:
     """Parse APPROVE / APPROVE ALL / REJECT from plain Teams message text.
 
     Searches for the keyword anywhere (handles @mention prefix Teams inserts).
-    Returns (action, order_id, reason).
+    Returns (action, order_ids, reason).
+      action     : "approve" | "approve_all" | "reject" | "unknown"
+      order_ids  : list of order ID strings (approve), [order_id] (reject), None (approve_all)
+      reason     : str or None (reject reason only)
+
+    APPROVE 123 456 789   -> ("approve", ["123","456","789"], None)
+    APPROVE ALL           -> ("approve_all", None, None)
+    REJECT 123 bad reason -> ("reject", ["123"], "bad reason")
     """
     upper = text.upper()
 
@@ -410,20 +418,21 @@ def _parse_command(text: str) -> tuple[str, str | None, str | None]:
 
     if approve_m:
         after  = text[approve_m.end():].strip()
-        tokens = after.split(None, 1)
+        tokens = after.split()
         if not tokens:
             return "unknown", None, None
         if tokens[0].upper() == "ALL":
             return "approve_all", None, None
-        return "approve", tokens[0], None
+        return "approve", tokens, None   # all tokens are treated as order IDs
 
     if reject_m:
         after  = text[reject_m.end():].strip()
-        tokens = after.split(None, 1)
+        tokens = after.split()
         if not tokens:
             return "unknown", None, None
-        reason = tokens[1] if len(tokens) == 2 else None
-        return "reject", tokens[0], reason
+        order_id = tokens[0]
+        reason   = " ".join(tokens[1:]) if len(tokens) > 1 else None
+        return "reject", [order_id], reason
 
     return "unknown", None, None
 
@@ -468,12 +477,15 @@ def build_digest_html(orders: list[dict], ftf_order_url: str) -> str:
 
     lines += [
         "",
-        "Commands -- type in this channel:",
-        "  APPROVE <order_id>          -- approve one estimate",
+        "Commands -- type in this channel (only Robert, Ryan, or Prateek):",
+        "  APPROVE <id> [<id2> ...]    -- approve one or more estimates",
         "  APPROVE ALL                 -- approve everything in this list",
         "  REJECT <order_id> <reason>  -- reject and hold",
         "",
-        "Example: APPROVE 1000276115",
+        "Examples:",
+        "  APPROVE 1000276115",
+        "  APPROVE 1000276115 1000276116 1000276117",
+        "  REJECT 1000276115 client requested scope change",
     ]
 
     return "\n".join(lines)
