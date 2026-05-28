@@ -307,10 +307,10 @@ def send_confirmation(text: str, color: str = "green") -> None:
 # ── Read / poll for approvals (via Graph API) ─────────────────────────────────
 
 def get_recent_messages(limit: int = 50) -> list[dict]:
-    """Fetch the most recent messages from the approval channel via Graph API.
+    """Fetch the most recent top-level messages from the approval channel.
 
-    Returns list of dicts: {id, sender, sender_is_app, text, created_at_dt}
-    Filters out our own bot/app messages.
+    Returns list of dicts: {id, sender, text, created_at_dt, reply_count}
+    Skips all app/bot messages — only returns human user messages.
     Requires ChannelMessage.Read.All application permission.
     """
     if not all([TEAMS_TEAM_ID, TEAMS_CHANNEL_ID]):
@@ -337,23 +337,8 @@ def get_recent_messages(limit: int = 50) -> list[dict]:
         app_ref  = from_obj.get("application") or {}
         user_ref = from_obj.get("user") or {}
 
-        # Skip ALL app/bot messages — only human user messages can issue commands.
-        # This prevents the poller from reading back our own bot notifications
-        # (e.g. Logic App / Workflows posts that contain "APPROVE" in the text).
-        if app_ref:
-            continue
-        # Skip system messages (joins, topic changes, etc.)
         if msg.get("messageType") != "message":
             continue
-        # Skip if no real user sender
-        if not user_ref.get("id"):
-            continue
-
-        sender_name  = user_ref.get("displayName") or "Unknown"
-        sender_is_app = False
-
-        raw_body = (msg.get("body") or {}).get("content", "")
-        plain    = _clean_message_body(raw_body)
 
         created_raw = msg.get("createdDateTime", "")
         try:
@@ -361,10 +346,69 @@ def get_recent_messages(limit: int = 50) -> list[dict]:
         except Exception:
             created_dt = datetime.now(timezone.utc)
 
+        # Include ALL messages (app + human) at top level — we need app messages
+        # so we can fetch their thread replies (user approvals come in as replies).
+        # App/bot messages are filtered later so they don't trigger commands themselves.
+        is_app = bool(app_ref) or not bool(user_ref.get("id"))
+        sender_name = user_ref.get("displayName") or app_ref.get("displayName") or "Unknown"
+        raw_body    = (msg.get("body") or {}).get("content", "")
+        plain       = _clean_message_body(raw_body)
+        reply_count = int(msg.get("replyCount") or 0)
+
         results.append({
             "id":            msg.get("id", ""),
             "sender":        sender_name,
-            "sender_is_app": sender_is_app,
+            "is_app":        is_app,
+            "text":          plain,
+            "created_at_dt": created_dt,
+            "reply_count":   reply_count,
+        })
+
+    return results
+
+
+def _get_thread_replies(message_id: str) -> list[dict]:
+    """Fetch human replies to a specific channel message (thread replies).
+
+    Returns list of dicts: {id, sender, text, created_at_dt}
+    Only returns replies from real users (skips bot/app replies).
+    """
+    url = (
+        f"{_GRAPH_READ}/teams/{TEAMS_TEAM_ID}/channels/{TEAMS_CHANNEL_ID}"
+        f"/messages/{message_id}/replies?$top=20"
+    )
+    try:
+        r = httpx.get(url, headers=_read_headers(), timeout=20.0)
+        r.raise_for_status()
+    except Exception as exc:
+        log.warning("could not fetch replies for message=%s: %s", message_id, exc)
+        return []
+
+    results: list[dict] = []
+    for reply in r.json().get("value", []):
+        from_obj = reply.get("from") or {}
+        app_ref  = from_obj.get("application") or {}
+        user_ref = from_obj.get("user") or {}
+
+        # Only human replies — skip bot/app replies
+        if app_ref or not user_ref.get("id"):
+            continue
+        if reply.get("messageType") != "message":
+            continue
+
+        sender_name = user_ref.get("displayName") or "Unknown"
+        raw_body    = (reply.get("body") or {}).get("content", "")
+        plain       = _clean_message_body(raw_body)
+
+        created_raw = reply.get("createdDateTime", "")
+        try:
+            created_dt = datetime.fromisoformat(created_raw.replace("Z", "+00:00"))
+        except Exception:
+            created_dt = datetime.now(timezone.utc)
+
+        results.append({
+            "id":            reply.get("id", ""),
+            "sender":        sender_name,
             "text":          plain,
             "created_at_dt": created_dt,
         })
@@ -375,33 +419,47 @@ def get_recent_messages(limit: int = 50) -> list[dict]:
 def check_for_approvals(since: datetime | None = None) -> list[dict]:
     """Return parsed APPROVE / REJECT commands posted since `since` (UTC).
 
+    Scans both top-level channel messages AND thread replies — approvals will
+    typically come as replies to the bot's order notification message.
+
     Each returned dict: {action, order_ids, reason, sender, message_id, created_at_dt}
     action values: "approve" | "approve_all" | "reject"
     order_ids: list[str] for approve/reject; None for approve_all
     """
-    messages = get_recent_messages(limit=50)
+    messages  = get_recent_messages(limit=50)
     commands: list[dict] = []
 
-    for msg in messages:
-        if since and msg["created_at_dt"] <= since:
-            continue
-
-        action, order_ids, reason = _parse_command(msg["text"])
+    def _parse_and_append(text: str, sender: str, msg_id: str, created_dt) -> None:
+        action, order_ids, reason = _parse_command(text)
         if action == "unknown":
-            continue
-
+            return
         commands.append({
             "action":        action,
             "order_ids":     order_ids,
             "reason":        reason,
-            "sender":        msg["sender"],
-            "message_id":    msg["id"],
-            "created_at_dt": msg["created_at_dt"],
+            "sender":        sender,
+            "message_id":    msg_id,
+            "created_at_dt": created_dt,
         })
-        log.info(
-            "approval command found action=%s order_ids=%s sender=%s",
-            action, order_ids, msg["sender"],
-        )
+        log.info("approval command found action=%s order_ids=%s sender=%s",
+                 action, order_ids, sender)
+
+    for msg in messages:
+        # ── Check top-level human messages ────────────────────────────────────
+        if not msg["is_app"]:
+            if not (since and msg["created_at_dt"] <= since):
+                _parse_and_append(msg["text"], msg["sender"], msg["id"], msg["created_at_dt"])
+
+        # ── Check thread replies (where approvals typically arrive) ──────────
+        # Graph API does NOT return replyCount in the messages list response,
+        # so we always fetch replies for messages within our time window.
+        # Only check messages that could have recent replies (not too old).
+        cutoff = since or (datetime.now(timezone.utc) - __import__("datetime").timedelta(hours=48))
+        if msg["created_at_dt"] >= cutoff:
+            for reply in _get_thread_replies(msg["id"]):
+                if since and reply["created_at_dt"] <= since:
+                    continue
+                _parse_and_append(reply["text"], reply["sender"], reply["id"], reply["created_at_dt"])
 
     return commands
 
