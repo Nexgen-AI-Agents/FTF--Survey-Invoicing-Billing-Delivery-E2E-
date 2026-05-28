@@ -17,7 +17,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code", "shared
 
 from core.teams_graph_client import (
     _get_token,
-    check_for_approvals,
     get_recent_messages,
     send_channel_message,
 )
@@ -26,8 +25,13 @@ from config.settings import (
     TEAMS_TEAM_ID, TEAMS_TENANT_ID,
 )
 
+PASS = "[PASS]"
+FAIL = "[FAIL]"
+INFO = "      "
 
-def run_tests(read_only: bool = False) -> None:
+
+def run_tests(read_only: bool = False) -> dict:
+    results = {}
     print("\n=== FTF Teams Graph API Connection Test ===\n")
 
     # 1. Config check
@@ -42,61 +46,80 @@ def run_tests(read_only: bool = False) -> None:
         ] if not val
     ]
     if missing:
-        print(f"   ❌ Missing env vars: {', '.join(missing)}")
-        print("   → Add them to .env and re-run.")
-        return
-    print(f"   ✅ All 5 env vars set")
-    print(f"      Tenant:  {TEAMS_TENANT_ID}")
-    print(f"      App ID:  {TEAMS_APP_ID}")
-    print(f"      Team:    {TEAMS_TEAM_ID}")
-    print(f"      Channel: {TEAMS_CHANNEL_ID}")
+        print(f"   {FAIL} Missing env vars: {', '.join(missing)}")
+        print("   -> Add them to .env and re-run.")
+        results["config"] = "FAIL"
+        return results
+    print(f"   {PASS} All 5 env vars set")
+    print(f"   {INFO} Tenant:  {TEAMS_TENANT_ID}")
+    print(f"   {INFO} App ID:  {TEAMS_APP_ID}")
+    print(f"   {INFO} Team:    {TEAMS_TEAM_ID}")
+    print(f"   {INFO} Channel: {TEAMS_CHANNEL_ID}")
+    results["config"] = "PASS"
 
     # 2. Auth test
     print("\n2. Authentication (client_credentials token)")
     try:
         token = _get_token()
-        print(f"   ✅ Token obtained — {token[:20]}...{token[-10:]}")
+        print(f"   {PASS} Token obtained — {token[:20]}...{token[-10:]}")
+        results["auth"] = "PASS"
     except Exception as exc:
-        print(f"   ❌ Auth failed: {exc}")
-        print("   → Check TEAMS_APP_ID, TEAMS_TENANT_ID, TEAMS_CLIENT_SECRET in .env")
-        return
+        print(f"   {FAIL} Auth failed: {exc}")
+        print("   -> Check TEAMS_APP_ID, TEAMS_TENANT_ID, TEAMS_CLIENT_SECRET in .env")
+        results["auth"] = f"FAIL: {exc}"
+        return results
 
     # 3. Read test
-    print("\n3. Read channel messages (ChannelMessage.Read.All)")
+    print("\n3. Read channel messages (ChannelMessage.Read.All — Application permission)")
     try:
         messages = get_recent_messages(limit=5)
-        print(f"   ✅ Retrieved {len(messages)} recent message(s)")
+        print(f"   {PASS} Retrieved {len(messages)} recent message(s)")
         for m in messages[:3]:
-            print(f"      [{m['created_at_dt'].strftime('%H:%M')}] {m['sender']}: {m['text'][:60]}")
+            sender = m["sender"][:20]
+            text   = m["text"][:55]
+            print(f"   {INFO} [{m['created_at_dt'].strftime('%H:%M')}] {sender}: {text}")
+        results["read"] = "PASS"
     except Exception as exc:
-        print(f"   ❌ Read failed: {exc}")
-        print("   → Ensure ChannelMessage.Read.All is granted (admin consent in Azure portal)")
-        print("   → The app may also need to be added to the Teams team as a member")
+        print(f"   {FAIL} Read failed: {exc}")
+        print("   -> Ensure ChannelMessage.Read.All Application permission is granted")
+        print("      (portal.azure.com -> App registrations -> API permissions)")
+        results["read"] = f"FAIL: {exc}"
 
     if read_only:
         print("\n   (--read-only flag set — skipping send test)")
-        return
+        results["send"] = "SKIPPED"
+        return results
 
     # 4. Send test
-    print("\n4. Send test message (ChannelMessage.Send)")
+    print("\n4. Send test message (ChannelMessage.Send — Application permission)")
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    html    = (
+    html = (
         f"<p><b>FTF Estimate Bot — Connection Test</b></p>"
-        f"<p>✅ Graph API connection verified at {now_str}.<br>"
+        f"<p>Graph API connection verified at {now_str}.<br>"
         f"This message confirms the bot can post to the FTF-Approvals channel.<br>"
         f"<i>You can delete this message.</i></p>"
     )
     try:
         result = send_channel_message(html, subject="FTF Bot — Connection Test")
-        print(f"   ✅ Message sent — id={result.get('id')}")
-        print(f"   → Check the #FTF-Approvals channel in Teams to confirm it appeared")
+        print(f"   {PASS} Message sent — id={result.get('id')}")
+        print(f"   -> Check the #FTF-Approvals channel in Teams to confirm it appeared")
+        results["send"] = "PASS"
     except Exception as exc:
-        print(f"   ❌ Send failed: {exc}")
-        print("   → Ensure ChannelMessage.Send is granted (admin consent in Azure portal)")
-        print("   → The app may need to be installed in the Teams team:")
-        print("      Teams > your team > Manage Team > Apps > Upload custom app")
+        print(f"   {FAIL} Send failed: {exc}")
+        print("   -> Ensure ChannelMessage.Send Application permission is granted + admin consent")
+        print("   -> If HTTP 403: the app may need to be installed in the Teams team:")
+        print("      Teams -> your team -> Manage Team -> Apps -> Upload a custom app")
+        results["send"] = f"FAIL: {exc}"
 
+    # Summary
+    print("\n--- Summary ---")
+    overall = "PASS" if all(v == "PASS" for v in results.values()) else "PARTIAL/FAIL"
+    for step, status in results.items():
+        marker = PASS if status == "PASS" else FAIL
+        print(f"   {marker} {step}: {status}")
+    print(f"\n   Overall: {overall}")
     print("\n=== Test complete ===\n")
+    return results
 
 
 def main(argv=None) -> None:
