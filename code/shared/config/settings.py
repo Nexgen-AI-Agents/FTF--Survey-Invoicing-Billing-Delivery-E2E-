@@ -43,8 +43,12 @@ TEAMS_APP_ID:        str | None = os.getenv("TEAMS_APP_ID")
 TEAMS_CLIENT_SECRET: str | None = os.getenv("TEAMS_CLIENT_SECRET")
 TEAMS_TEAM_ID:       str | None = os.getenv("TEAMS_TEAM_ID")
 TEAMS_CHANNEL_ID:    str | None = os.getenv("TEAMS_CHANNEL_ID")
-# O365 Incoming Webhook connector (or Workflows webhook) — for sending messages
+# Incoming webhook URL (Logic App / Workflows) — for posting TO Teams channel
 TEAMS_INCOMING_WEBHOOK_URL: str | None = os.getenv("TEAMS_INCOMING_WEBHOOK_URL")
+# Graph API email notifications (Mail.Send application permission)
+# FROM must be a valid licensed mailbox in the same Azure AD tenant.
+NOTIFICATION_FROM_EMAIL:  str | None = os.getenv("NOTIFICATION_FROM_EMAIL")
+NOTIFICATION_TO_EMAILS:   str        = os.getenv("NOTIFICATION_TO_EMAILS", "")  # comma-sep
 
 # MS Teams — legacy webhook vars (kept for backward compat; unused once Graph API is live)
 TEAMS_WEBHOOK_URL:             str | None = os.getenv("TEAMS_WEBHOOK_URL")

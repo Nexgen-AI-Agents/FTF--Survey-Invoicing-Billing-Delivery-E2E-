@@ -1,27 +1,29 @@
 """
 teams_graph_client.py — Microsoft Teams client (hybrid architecture).
 
-SEND  -> Teams Workflows incoming webhook (TEAMS_INCOMING_WEBHOOK_URL)
-         Adaptive Card POST. No app installation. No migration permissions needed.
-         Setup: Teams channel -> Workflows -> "Post to a channel when a webhook
-         request is received" -> copy the URL to TEAMS_INCOMING_WEBHOOK_URL in .env
+SEND  -> Graph API Mail.Send (primary, application permission)
+         Emails notification to NOTIFICATION_TO_EMAILS from NOTIFICATION_FROM_EMAIL.
+         Requires Mail.Send application permission + admin consent on the Azure AD app.
+         Falls back to TEAMS_INCOMING_WEBHOOK_URL if webhook is configured.
+
+         Webhook fallback types (auto-detected from URL):
+           logic.azure.com    -> Azure Logic App relay (plain JSON)
+           webhook.office.com -> O365 connector MessageCard (deprecated — 403)
+           other              -> Teams Workflows Adaptive Card
 
 READ  -> Microsoft Graph API ChannelMessage.Read.All (application permission)
-         Polls channel for APPROVE / REJECT commands from Robert / Ryan.
+         Polls FTF-Approvals channel for APPROVE / REJECT commands.
          Application permission granted; admin consent confirmed 2026-05-28.
 
-Why hybrid:
-  ChannelMessage.Send as Application permission requires Teamwork.Migrate.All
-  (Teams Migration API only). Workflows webhook is the official Microsoft path
-  for app-to-channel posting without a Bot Framework registration.
-
 Required env vars:
-  TEAMS_INCOMING_WEBHOOK_URL  -- from Teams Workflows setup (for sending)
-  TEAMS_TENANT_ID             -- Azure AD tenant ID (for reading)
-  TEAMS_APP_ID                -- Azure AD app client ID (for reading)
-  TEAMS_CLIENT_SECRET         -- Azure AD app secret (for reading)
-  TEAMS_TEAM_ID               -- Teams group ID (for reading)
-  TEAMS_CHANNEL_ID            -- Teams channel ID (for reading)
+  NOTIFICATION_FROM_EMAIL   -- licensed M365 mailbox in tenant (for sending email)
+  NOTIFICATION_TO_EMAILS    -- comma-separated recipient emails
+  TEAMS_INCOMING_WEBHOOK_URL -- optional webhook fallback
+  TEAMS_TENANT_ID            -- Azure AD tenant ID
+  TEAMS_APP_ID               -- Azure AD app client ID
+  TEAMS_CLIENT_SECRET        -- Azure AD app secret
+  TEAMS_TEAM_ID              -- Teams group ID
+  TEAMS_CHANNEL_ID           -- Teams channel ID
 """
 
 import re
@@ -32,6 +34,8 @@ from typing import Any
 import httpx
 
 from config.settings import (
+    NOTIFICATION_FROM_EMAIL,
+    NOTIFICATION_TO_EMAILS,
     TEAMS_APP_ID,
     TEAMS_CHANNEL_ID,
     TEAMS_CLIENT_SECRET,
@@ -167,27 +171,89 @@ def _detect_webhook_type(url: str) -> str:
     return "workflows"   # power automate / teams workflows
 
 
-def send_channel_message(text_or_html: str, subject: str = "") -> dict:
-    """Post a message to the FTF-Approvals channel via incoming webhook.
+# ── Send via Graph API email (Mail.Send application permission) ───────────────
 
-    Webhook type is detected automatically from TEAMS_INCOMING_WEBHOOK_URL:
-      * logic.azure.com  -> Azure Logic App relay (plain JSON)
-      * webhook.office.com -> O365 connector MessageCard (deprecated, likely 403)
-      * other           -> Teams Workflows Adaptive Card
+def send_email_notification(text_or_html: str, subject: str = "") -> dict:
+    """Send an HTML email to NOTIFICATION_TO_EMAILS via Graph API Mail.Send.
 
-    text_or_html -- message body; HTML is stripped before sending.
-    subject      -- optional bold title.
-    Returns {"ok": True, "method": "<type>"} on success.
-    Raises AgentError if URL not configured or POST fails.
+    Requires Mail.Send application permission on the Azure AD app + admin consent.
+    NOTIFICATION_FROM_EMAIL must be a licensed M365 mailbox in the same tenant.
+
+    Returns {"ok": True, "method": "graph_email"} on success.
+    Raises AgentError if not configured or send fails.
     """
-    if not TEAMS_INCOMING_WEBHOOK_URL:
+    if not NOTIFICATION_FROM_EMAIL:
         raise AgentError(
-            "TEAMS_INCOMING_WEBHOOK_URL not set.\n"
-            "Recommended: Azure Logic App (Consumption) with HTTP trigger -> Teams post.\n"
-            "See docs/teams_setup.md for step-by-step instructions."
+            "NOTIFICATION_FROM_EMAIL not set in .env -- "
+            "set to a licensed M365 mailbox in your tenant (e.g. pchandra@nexgensurveying.com)"
+        )
+    recipients_raw = [e.strip() for e in NOTIFICATION_TO_EMAILS.split(",") if e.strip()]
+    if not recipients_raw:
+        raise AgentError(
+            "NOTIFICATION_TO_EMAILS not set in .env -- "
+            "comma-separated list of recipient emails"
         )
 
-    # Strip HTML/mentions
+    subj = subject or "FTF Estimates — Action Required"
+
+    # Keep HTML body if provided; Graph API supports HTML content
+    html_body = text_or_html if "<" in text_or_html else text_or_html.replace("\n", "<br>")
+
+    payload = {
+        "message": {
+            "subject": subj,
+            "body": {"contentType": "HTML", "content": html_body},
+            "toRecipients": [
+                {"emailAddress": {"address": addr}} for addr in recipients_raw
+            ],
+        },
+        "saveToSentItems": False,
+    }
+
+    url = f"{_GRAPH_READ}/users/{NOTIFICATION_FROM_EMAIL}/sendMail"
+    try:
+        r = httpx.post(url, headers=_read_headers(), json=payload, timeout=20.0)
+        r.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        raise AgentError(
+            f"Graph API email send failed: HTTP {exc.response.status_code} -- "
+            f"{exc.response.text[:300]}"
+        ) from exc
+    except Exception as exc:
+        raise AgentError(f"Graph API email send failed: {exc}") from exc
+
+    log.info("email notification sent from=%s to=%s subject=%r",
+             NOTIFICATION_FROM_EMAIL, recipients_raw, subj)
+    return {"ok": True, "method": "graph_email"}
+
+
+def send_channel_message(text_or_html: str, subject: str = "") -> dict:
+    """Send a Teams notification — email via Graph API, webhook as fallback.
+
+    Primary: Graph API Mail.Send (if NOTIFICATION_FROM_EMAIL + NOTIFICATION_TO_EMAILS set)
+    Fallback: incoming webhook (if TEAMS_INCOMING_WEBHOOK_URL set)
+
+    Raises AgentError if neither is configured.
+    """
+    # Primary: email via Graph API
+    if NOTIFICATION_FROM_EMAIL and NOTIFICATION_TO_EMAILS:
+        return send_email_notification(text_or_html, subject)
+
+    # Fallback: webhook
+    if TEAMS_INCOMING_WEBHOOK_URL:
+        return _send_via_webhook(text_or_html, subject)
+
+    raise AgentError(
+        "No notification method configured.\n"
+        "Option A (recommended): set NOTIFICATION_FROM_EMAIL and NOTIFICATION_TO_EMAILS in .env\n"
+        "  Requires Mail.Send application permission on the Azure AD app.\n"
+        "Option B: set TEAMS_INCOMING_WEBHOOK_URL (Logic App or Workflows webhook).\n"
+        "See docs/teams_setup.md for instructions."
+    )
+
+
+def _send_via_webhook(text_or_html: str, subject: str = "") -> dict:
+    """Internal: post via configured incoming webhook."""
     plain = _MENTION_RE.sub(" ", text_or_html)
     plain = _HTML_RE.sub(" ", plain)
     plain = " ".join(plain.split())
