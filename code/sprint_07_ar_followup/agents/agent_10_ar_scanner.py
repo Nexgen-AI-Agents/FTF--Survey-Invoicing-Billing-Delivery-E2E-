@@ -7,6 +7,10 @@ I-063 hard rule: if any invoice notes contain refund intent, alert Jessica
 immediately and skip the AR reminder flow for that order.
 """
 
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
+
+from config.settings import AR_EXCLUSION_LIST
 from core.db import get_order_by_id, upsert_ar_reminder
 from core.ftf_books_client import get_unpaid_invoices
 from core.logger import get_logger
@@ -38,8 +42,16 @@ def run() -> dict:
 
     tracked = 0
     refund_stopped = 0
+    excluded = 0
     for inv in invoices:
         if inv["days_overdue"] >= MIN_DAYS_OVERDUE:
+            # AR exclusion list — Jessica manages via AR_EXCLUSION_LIST env var
+            email = (inv.get("customer_email") or "").strip().lower()
+            if AR_EXCLUSION_LIST and email in AR_EXCLUSION_LIST:
+                logger.info("ar_scanner: skipping excluded customer email=%s order=%s",
+                            email, inv["order_id"])
+                excluded += 1
+                continue
             if _check_refund(inv):
                 refund_stopped += 1
                 continue
@@ -53,10 +65,15 @@ def run() -> dict:
             tracked += 1
 
     logger.info(
-        "agent_10_ar_scanner: %d/%d invoices >=60d upserted, %d stopped-refund",
-        tracked, len(invoices), refund_stopped,
+        "agent_10_ar_scanner: %d/%d invoices >=60d upserted, %d refund-stopped, %d excluded",
+        tracked, len(invoices), refund_stopped, excluded,
     )
-    return {"scanned": len(invoices), "tracked": tracked, "refund_stopped": refund_stopped}
+    return {
+        "scanned":       len(invoices),
+        "tracked":       tracked,
+        "refund_stopped": refund_stopped,
+        "excluded":      excluded,
+    }
 
 
 if __name__ == "__main__":

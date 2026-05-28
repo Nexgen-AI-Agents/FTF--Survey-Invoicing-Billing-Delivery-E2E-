@@ -573,7 +573,7 @@ def _parse_all_commands(text: str) -> list[tuple[str, list[str] | None, str | No
     upper = text.upper()
     results: list[tuple[str, list[str] | None, str | None]] = []
 
-    keyword_matches = list(re.finditer(r"\bAPPROVE\b|\bREJECT\b", upper))
+    keyword_matches = list(re.finditer(r"\bAPPROVE\b|\bREJECT\b|\bDEFER\b", upper))
     if not keyword_matches:
         return [("unknown", None, None)]
 
@@ -625,6 +625,18 @@ def _parse_all_commands(text: str) -> list[tuple[str, list[str] | None, str | No
                 results.append(("reject_bare", None, None))
             else:
                 results.append(("unknown", None, None))  # conversational text, not order IDs
+
+        elif keyword == "DEFER":
+            if not after:
+                results.append(("unknown", None, None))
+                continue
+            tokens = after.split()
+            if tokens and _looks_like_order_id(tokens[0]):
+                defer_id = tokens[0]
+                defer_reason = " ".join(tokens[1:]) or None
+                results.append(("defer", [defer_id], defer_reason))
+            else:
+                results.append(("unknown", None, None))
 
     return results if results else [("unknown", None, None)]
 
@@ -699,8 +711,20 @@ def build_digest_html(orders: list[dict], ftf_order_url: str) -> str:
         flag_reason = (rec.get("flag_reason") or "see order")[:60]
         service     = rec.get("service_type") or "Unknown"
         link        = f"{ftf_order_url}/{oid}"
+        # ⚠ visual indicator for orders stuck >= 4 hours
+        age_hours = 0
+        if rec.get("flagged_at"):
+            try:
+                fa = datetime.fromisoformat(str(rec["flagged_at"]))
+                if fa.tzinfo is None:
+                    fa = fa.replace(tzinfo=timezone.utc)
+                age_hours = int((now - fa).total_seconds() / 3600)
+            except Exception:
+                pass
+        overdue_flag = " *** OVERDUE ***" if age_hours >= 4 else ""
+        age_str_val  = f" | {age_hours}h in queue{overdue_flag}" if age_hours else age_str
         lines.append(
-            f"  Order {oid} ({link}) | {service} | {amount_str} | {flag_reason}{age_str}"
+            f"  Order {oid} ({link}) | {service} | {amount_str} | {flag_reason}{age_str_val}"
         )
 
     lines += [
@@ -709,11 +733,13 @@ def build_digest_html(orders: list[dict], ftf_order_url: str) -> str:
         "  APPROVE <id> [<id2> ...]    -- approve one or more estimates",
         "  APPROVE ALL                 -- approve everything in this list",
         "  REJECT <order_id> <reason>  -- reject and hold",
+        "  DEFER <order_id> [reason]   -- hold for tomorrow without rejecting",
         "",
         "Examples:",
         "  APPROVE 1000276115",
         "  APPROVE 1000276115 1000276116 1000276117",
         "  REJECT 1000276115 client requested scope change",
+        "  DEFER 1000276115 waiting on client callback",
     ]
 
     return "\n".join(lines)

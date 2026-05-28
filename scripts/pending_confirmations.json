@@ -1,0 +1,17 @@
+{
+  "confirmations": [
+    {
+      "id": "4815e9f2-217d-4606-b6e4-aa41c14b2be7",
+      "order_ids": [
+        "QA-LIVE-TEST-A03a"
+      ],
+      "pending_action": "reject",
+      "reason": null,
+      "sender": "Prateek Chandra",
+      "original_status": "approved",
+      "parent_message_id": "1779975909119",
+      "confirmation_posted_at": "2026-05-28T14:54:47.882935+00:00",
+      "expires_at": "2026-05-29T14:54:47.882947+00:00"
+    }
+  ]
+}

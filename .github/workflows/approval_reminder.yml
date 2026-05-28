@@ -33,3 +33,19 @@ jobs:
           NOTIFICATION_TO_EMAILS:      ${{ secrets.NOTIFICATION_TO_EMAILS }}
           FTF_ORDER_URL:               ${{ secrets.FTF_ORDER_URL }}
         run: python scripts/send_daily_approval_reminder.py
+
+      - name: Notify Teams on failure
+        if: failure()
+        env:
+          TEAMS_INCOMING_WEBHOOK_URL:  ${{ secrets.TEAMS_INCOMING_WEBHOOK_URL }}
+          TEAMS_TENANT_ID:             ${{ secrets.TEAMS_TENANT_ID }}
+          TEAMS_APP_ID:                ${{ secrets.TEAMS_APP_ID }}
+          TEAMS_CLIENT_SECRET:         ${{ secrets.TEAMS_CLIENT_SECRET }}
+          TEAMS_TEAM_ID:               ${{ secrets.TEAMS_TEAM_ID }}
+          TEAMS_CHANNEL_ID:            ${{ secrets.TEAMS_CHANNEL_ID }}
+          NOTIFICATION_FROM_EMAIL:     ${{ secrets.NOTIFICATION_FROM_EMAIL }}
+          NOTIFICATION_TO_EMAILS:      ${{ secrets.NOTIFICATION_TO_EMAILS }}
+        run: >
+          python scripts/notify_workflow_failure.py
+          --workflow "Daily Approval Reminder"
+          --run-url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"

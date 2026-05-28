@@ -123,6 +123,11 @@ Full rules, commands, edge cases, and state machine documented in:
 | Statement format | Excel + PDF via MS Teams + email to billing contact |
 | Refunds | Manual only — Jessica / Robert. AI never touches. |
 | AR reminder schedule | FTF platform sends automated reminder emails to clients at Day 30, 60, 90. We do NOT build this — it is handled by FTF itself. Post-90: Jessica manual follow-up. |
+| AR exclusion list | Managed via `AR_EXCLUSION_LIST` env var (comma-separated emails). Empty by default. Jessica to provide before AR loop goes live. |
+| DEFER command | `DEFER <order_id> [reason]` — holds approval for 24h without rejecting. Order reappears in next digest. For use when awaiting client callback. |
+| Overdue approval alert | Batch digest marks orders aged ≥4h with `*** OVERDUE ***`. No separate alert sent — just the visual flag. |
+| Dynamic pricing complexity | PRICING_COMPLEXITY_ENABLED=false (default). Factors defined in settings.py. Enable only after Robert confirms weights. |
+| Workflow failure alerts | Both poll_approval_monitor.yml and approval_reminder.yml post a Teams alert when the workflow itself fails. |
 | AR internal escalation | Day 60 → alert Jessica (internal). Day 90 → alert Jessica + all stakeholders (internal). These internal alerts ARE our responsibility to build. |
 | AR exclusion list | Empty on launch. System supports additions without rebuild. |
 | New customer | AI classifies; flags if unsure |
@@ -222,6 +227,10 @@ Full rules, commands, edge cases, and state machine documented in:
 | `TEAM/ar/jessica_ar_specialist.md` | Jessica — AR Specialist role card — AR loop ownership post-implementation, reminder + escalation |
 | `TEAM/dev/TEAM.md` | Dev team overview — roles, model rules, review flow, spawn rules |
 | `TEAM/dev/CODE_STANDARDS.md` | Python coding standards — naming, imports, security, testing rules |
+| `scripts/notify_workflow_failure.py` | Posts Teams alert on GitHub Actions workflow failure — called by `if: failure()` in both monitoring workflows |
+| `scripts/run_email_monitor.py` | Continuous runner for Agent 12 (email monitor) — IMAP polling, configurable interval, deployment instructions inside |
+| `scripts/build_approval_dashboard.py` | Generates `docs/approval_dashboard.html` — live approval queue, KPIs, flag trigger stats |
+| `scripts/export_flag_stats.py` | Flag calibration report — trigger breakdown, approval rates, instant-approval candidates, avg decision time |
 | `TEAM/dev/PR_CHECKLIST.md` | Pre-merge checklist — all code must pass before Senior Dev review |
 | `TEAM/dev/ONBOARDING.md` | New dev onboarding — get up to speed in <10 minutes |
 | `TEAM/dev/developer_review.md` | Shared dev learnings log — all 3 devs read and append |

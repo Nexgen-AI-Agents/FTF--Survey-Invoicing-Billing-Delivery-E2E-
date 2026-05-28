@@ -13,6 +13,14 @@ SEND_HOUR_START:      int = int(os.getenv("SEND_HOUR_START", "8"))   # 8 AM ET
 SEND_HOUR_END:        int = int(os.getenv("SEND_HOUR_END", "18"))    # 6 PM ET
 AR_ESCALATION_DAYS:        int = 90
 AR_ALERT_DAYS_60:          int = 60
+# AR reminder exclusion list — comma-separated customer emails that should NEVER
+# receive automated AR reminders (e.g. large B2B accounts with custom payment terms).
+# Jessica manages this list. Empty by default — confirm with Jessica before AR loop goes live.
+AR_EXCLUSION_LIST: list[str] = [
+    e.strip().lower()
+    for e in os.getenv("AR_EXCLUSION_LIST", "").split(",")
+    if e.strip()
+]
 APPROVAL_TIMEOUT_HOURS:    int = int(os.getenv("APPROVAL_TIMEOUT_HOURS", "24"))
 ELEVATION_CERT_PRICE: int = 225
 SERVICE_STATE:        str = "FL"
@@ -92,6 +100,22 @@ OBSIDIAN_API_KEY:  str | None = os.getenv("Obsidian")
 OBSIDIAN_BASE_URL: str        = os.getenv("OBSIDIAN_BASE_URL", "http://localhost:27123")
 
 LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+
+# Dynamic pricing complexity factors (I-065)
+# Set PRICING_COMPLEXITY_ENABLED=true to activate upcharges based on property features.
+# Robert must confirm exact weights before enabling in production.
+# Features are passed as order properties (pool, shed_count, driveway_count, etc.)
+PRICING_COMPLEXITY_ENABLED: bool = os.getenv("PRICING_COMPLEXITY_ENABLED", "false").lower() == "true"
+
+# Upcharge ranges (midpoints used by default; Robert to tune)
+COMPLEXITY_FACTORS: dict = {
+    "pool":            150,   # swimming pool — midpoint of $100-$200
+    "shed":            112,   # per shed — midpoint of $75-$150
+    "driveway_extra":  150,   # per extra driveway beyond 1 — midpoint of $100-$200
+    "walls_per_10":     75,   # per 10 corners/walls above baseline of 4 — midpoint of $50-$150
+    "patio_large":      75,   # large back patio — moderate upcharge
+    "remote_rural":    100,   # rural/remote location surcharge (% of base applied separately)
+}
 
 # FTF API status keyword map (confirmed 2026-05-27 — Prateek)
 # Keys = FTF API query param values; values = CRM display labels.

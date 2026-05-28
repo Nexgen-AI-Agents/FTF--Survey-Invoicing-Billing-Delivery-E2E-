@@ -399,6 +399,8 @@ def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
                 _do_reject_all(sender, reason, summary, process_approval_reply, parent_msg_id)
             elif action == "reject":
                 _do_reject(order_ids or [], sender, reason, summary, process_approval_reply, parent_msg_id)
+            elif action == "defer":
+                _do_defer(order_ids or [], sender, reason, summary, parent_msg_id)
         except AgentError as exc:
             msg = f"Could not process <strong>{action}</strong>: {exc}"
             send_confirmation(msg, "orange", parent_message_id=parent_msg_id)
@@ -628,6 +630,48 @@ def _do_reject(order_ids, sender, reason, summary, process_fn, parent_msg_id):
             "orange", parent_message_id=parent_msg_id,
         )
     log.info("reject done rejected=%d failed=%d", len(rejected_ids), len(failed_ids))
+
+
+def _do_defer(order_ids, sender, reason, summary, parent_msg_id):
+    """DEFER <id> [reason] — hold order until tomorrow without rejecting it."""
+    if not order_ids:
+        send_confirmation("DEFER command missing order ID.", "orange", parent_message_id=parent_msg_id)
+        return
+
+    deferred_ids, failed_ids = [], []
+    for oid in order_ids:
+        row = get_order_by_id(oid)
+        if not row:
+            failed_ids.append(f"{oid} (not found)")
+            continue
+        status = row.get("status", "")
+        if status not in {"awaiting_approval", "flagged", "priced"}:
+            failed_ids.append(f"{oid} (status={status} — cannot defer)")
+            continue
+        try:
+            from datetime import timedelta
+            deferred_until = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+            save_order_state(oid, status="deferred", deferred_until=deferred_until)
+            deferred_ids.append(oid)
+        except Exception as exc:
+            failed_ids.append(f"{oid} ({exc})")
+            summary["failed"] += 1
+
+    if deferred_ids:
+        reason_html = f"<br><strong>Reason:</strong> {reason}" if reason else ""
+        msg = (
+            f"<strong>{sender}</strong> deferred <strong>{', '.join(deferred_ids)}</strong> "
+            f"for 24 hours.{reason_html}<br>"
+            f"Order(s) will reappear in tomorrow's digest. Not rejected — status preserved."
+        )
+        send_confirmation(msg, "blue", parent_message_id=parent_msg_id)
+        log.info("deferred order_ids=%s by=%s reason=%s", deferred_ids, sender, reason)
+
+    if failed_ids:
+        send_confirmation(
+            "Could not defer:<br>" + "<br>".join(f"&nbsp;&nbsp;{e}" for e in failed_ids),
+            "orange", parent_message_id=parent_msg_id,
+        )
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────

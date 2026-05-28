@@ -6,6 +6,37 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 
 ---
 
+## [Gap Fix — E2E Review Fixes] — 2026-05-28
+
+### GitHub Actions Failure Alerting
+- **`scripts/notify_workflow_failure.py`** (new): posts a Teams channel alert when any GitHub Actions workflow fails. Called from `if: failure()` step.
+- **`.github/workflows/poll_approval_monitor.yml`**: added `Notify Teams on failure` step — fires on any failure, posts to FTF-Approvals channel with run URL.
+- **`.github/workflows/approval_reminder.yml`**: same failure notification step added.
+
+### DEFER Command — Teams Approval Flow
+- **`code/shared/core/teams_graph_client.py`**: `_parse_all_commands()` now parses `DEFER <id> [reason]` → action `"defer"`. `build_digest_html()` updated: (1) `*** OVERDUE ***` marker on orders aged ≥4h in queue; (2) DEFER added to command list and examples.
+- **`scripts/poll_teams_approvals.py`**: `_do_defer()` handler added — sets order status to `deferred` + `deferred_until` (24h from now), posts blue confirmation; order reappears in next day's digest.
+- **`docs/teams_approval_flow.md`**: DEFER command documented with DEFER vs REJECT explanation and overdue warning section.
+
+### Agent 12 Email Monitor — Deployment Script
+- **`scripts/run_email_monitor.py`** (new): continuous IMAP polling runner for Agent 12. Configurable interval (default 120s), `--once` / `--dry-run` flags. Documents all 3 deployment options: local/VPS, GitHub Actions workflow, Docker.
+
+### Approval Visibility Dashboard
+- **`scripts/build_approval_dashboard.py`** (new): generates `docs/approval_dashboard.html` — live queue table, overdue indicator (≥4h), KPI row (queue depth, overdue count, approved 30d, avg queue time), top flag triggers bar chart. Auto-refresh every 5 min.
+
+### Flag Calibration Export
+- **`scripts/export_flag_stats.py`** (new): queries DB for flag trigger breakdown, approval rate per trigger, instant-approval list (< 15 min → over-aggressive trigger candidates), avg/min/max decision time. Outputs to console, CSV, or JSON. Run after 1 week of production data for calibration review.
+
+### Dynamic Pricing Complexity Factors (I-065)
+- **`code/shared/config/settings.py`**: `PRICING_COMPLEXITY_ENABLED` (env bool, default false) + `COMPLEXITY_FACTORS` dict (pool $150, shed $112, extra driveway $150, walls/10 $75, large patio $75, remote $100).
+- **`code/sprint_02_classifier_pricing/agents/agent_05_pricing_engine.py`**: complexity upcharge block added — fires only when `PRICING_COMPLEXITY_ENABLED=true` and `property_features` dict present in classification. Robert must confirm factor weights before enabling.
+
+### AR Exclusion List
+- **`code/shared/config/settings.py`**: `AR_EXCLUSION_LIST` — comma-separated customer emails from `AR_EXCLUSION_LIST` env var (default empty). Jessica manages via env var.
+- **`code/sprint_07_ar_followup/agents/agent_10_ar_scanner.py`**: exclusion check before `upsert_ar_reminder()` — skips and logs excluded customers. `excluded` count added to return dict.
+
+---
+
 ## [Gap Fix — Teams Approval + Pricing Engine + Orchestrator] — 2026-05-28
 
 ### Gap 1 Closed — Teams Approval Inbound (I-083)

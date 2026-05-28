@@ -37,9 +37,15 @@ Comma, space, or mixed separators all work for order IDs.
 | `REJECT ALL [reason]` | Reject every pending order with optional reason. |
 | `REJECT <id> [reason]` | Reject one order with optional reason. |
 | `REJECT <id1>, <id2> [reason]` | Reject multiple; trailing words after last ID = reason. |
+| `DEFER <id> [reason]` | Hold order for 24h without rejecting. Excluded from digest until tomorrow. Use when waiting on a callback or client clarification. |
 
 **Mixed commands in one message are supported:**
 `APPROVE QA-001, QA-002 REJECT QA-003 bad scope` → approves 2, rejects 1.
+
+**DEFER vs REJECT:**
+- `REJECT` closes the order — estimate not sent; team must re-trigger manually.
+- `DEFER` is a 24h hold — order stays in the system and reappears in tomorrow's digest.
+- Use DEFER when you need more info before deciding; use REJECT when you know the answer is no.
 
 ---
 
@@ -58,9 +64,14 @@ Each token after APPROVE / REJECT is checked to see if it looks like a real orde
 | Action | Statuses that can be actioned immediately |
 |--------|------------------------------------------|
 | APPROVE | `awaiting_approval`, `flagged`, `priced` |
-| REJECT | `awaiting_approval`, `flagged`, `priced` |
+| REJECT  | `awaiting_approval`, `flagged`, `priced` |
+| DEFER   | `awaiting_approval`, `flagged`, `priced` → moves to `deferred` for 24h |
 
 Orders in any other status (e.g. `sent`, `on_hold`) cannot be actioned — bot warns.
+
+### Overdue Warning
+The batch digest marks orders that have been in queue **≥ 4 hours** with `*** OVERDUE ***`.
+If you see this, it means an order arrived and nobody actioned it — please action before end of day.
 
 ---
 

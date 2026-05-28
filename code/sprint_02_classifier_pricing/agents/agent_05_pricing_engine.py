@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared")
 from datetime import datetime, timezone
 
 from config.models import PRICING_MODEL
-from config.settings import ELEVATION_CERT_PRICE
+from config.settings import COMPLEXITY_FACTORS, ELEVATION_CERT_PRICE, PRICING_COMPLEXITY_ENABLED
 from core.db import get_classified_order, log_decision, save_order_state
 from core.exceptions import AgentError, PricingError
 from core.ftf_client import get_pricing, get_pricing_overrides
@@ -120,6 +120,45 @@ def price_order(classification: dict) -> dict:
         else:
             result      = get_pricing(service_type, tier=pricing_tier)
             base_amount = float(result.get("price", result.get("amount", 0)))
+
+    # Complexity upcharges (I-065) — gated by PRICING_COMPLEXITY_ENABLED
+    # Robert must confirm factor weights before enabling. Features from order properties.
+    complexity_upcharge = 0.0
+    complexity_parts: list[str] = []
+    if PRICING_COMPLEXITY_ENABLED:
+        features = classification.get("property_features") or {}
+        if features.get("has_pool"):
+            complexity_upcharge += COMPLEXITY_FACTORS["pool"]
+            complexity_parts.append(f"pool +${COMPLEXITY_FACTORS['pool']}")
+        shed_count = int(features.get("shed_count") or 0)
+        if shed_count > 0:
+            upcharge = shed_count * COMPLEXITY_FACTORS["shed"]
+            complexity_upcharge += upcharge
+            complexity_parts.append(f"{shed_count} shed(s) +${upcharge}")
+        extra_driveways = max(0, int(features.get("driveway_count") or 1) - 1)
+        if extra_driveways > 0:
+            upcharge = extra_driveways * COMPLEXITY_FACTORS["driveway_extra"]
+            complexity_upcharge += upcharge
+            complexity_parts.append(f"{extra_driveways} extra driveway(s) +${upcharge}")
+        wall_count = int(features.get("wall_count") or 4)
+        if wall_count > 4:
+            extra_10s = (wall_count - 4) // 10
+            if extra_10s > 0:
+                upcharge = extra_10s * COMPLEXITY_FACTORS["walls_per_10"]
+                complexity_upcharge += upcharge
+                complexity_parts.append(f"{wall_count} walls +${upcharge}")
+        if features.get("large_patio"):
+            complexity_upcharge += COMPLEXITY_FACTORS["patio_large"]
+            complexity_parts.append(f"large patio +${COMPLEXITY_FACTORS['patio_large']}")
+        if features.get("remote_rural"):
+            complexity_upcharge += COMPLEXITY_FACTORS["remote_rural"]
+            complexity_parts.append(f"remote/rural +${COMPLEXITY_FACTORS['remote_rural']}")
+        if complexity_upcharge > 0:
+            base_amount += complexity_upcharge
+            if complexity_note:
+                complexity_note += f" Complexity upcharges: {', '.join(complexity_parts)}."
+            else:
+                complexity_note = f"Complexity upcharges: {', '.join(complexity_parts)}."
 
     # B2B / commercial multiplier (production data: commercial avg $2,159 vs residential avg $540)
     if pricing_tier == "b2b" and not override_applied:
