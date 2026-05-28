@@ -106,17 +106,10 @@ Automates 3 workflows that are currently manual and 9-to-5:
 
 ---
 
-## Teams Approval Flow — Edge Case Rules (Locked 2026-05-28)
+## Teams Approval Flow
 
-| Scenario | Rule | Status |
-|----------|------|--------|
-| **No reply by end of day** | Orders remain in `awaiting_approval` in DB — never lost or auto-approved. Escalation check fires at 24h, posts Teams warning. Daily digest (Agent 9) includes all pending. Morning re-notification is a gap — tracked as I-086. | Partial |
-| **Multiple users reply for same order** | First approval/rejection wins (DB write is atomic). Subsequent attempts on the same already-actioned order get `[WARNING] status=approved — cannot action`. No double-processing. | Implemented |
-| **Conflicting responses (approve then reject)** | Any whitelisted user can reject an already-approved order before the estimate email is sent. Bot posts `[WARNING] Override: order was previously approved — rejecting now` before processing. Last write wins. Full audit trail in `agent_decision_log`. | Implemented |
-| **Random conversation in thread** | Bot only responds to `APPROVE`/`REJECT` keywords followed by valid order IDs or `ALL`. Casual text like "I approve of this design" is ignored — `_looks_like_order_id()` filters out English words without digits or hyphens. Bot does not participate in general chat. | Implemented |
-| **Same order approved by two users** | First approval wins. Second user gets warning. No duplicate email sent. | Implemented |
-| **Command in wrong thread** | Bot detects commands from any thread reply OR top-level channel message. Confirmation goes back to same thread. "Still pending" summary always posted top-level. | Implemented |
-| **Order not found / typo** | `[WARNING] QA-001 (not found — check spelling)` posted per bad ID. Valid IDs in same command still processed. | Implemented |
+Full rules, commands, edge cases, and state machine documented in:
+**`docs/teams_approval_flow.md`** — read this file whenever working on approval/rejection logic.
 
 ---
 
