@@ -334,6 +334,11 @@ def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
         log.error("Teams channel poll failed: %s", exc)
         return {"found": 0, "approved": 0, "rejected": 0, "failed": 1, "dry_run": dry_run}
 
+    # ── Sort oldest-first so earlier commands are processed before later ones ─
+    # get_recent_messages returns newest first; without sorting, a later "APPROVE ALL"
+    # would run before earlier individual commands, producing false "already approved" warnings.
+    commands.sort(key=lambda c: c["created_at_dt"])
+
     summary = {"found": len(commands), "approved": 0, "rejected": 0, "failed": 0, "dry_run": dry_run}
 
     from sprint_03_human_gate.agents.agent_04_human_gate import process_approval_reply  # type: ignore[import]
