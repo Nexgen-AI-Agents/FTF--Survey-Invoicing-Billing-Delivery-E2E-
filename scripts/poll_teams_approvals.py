@@ -49,8 +49,13 @@ log = get_logger("poll_teams_approvals")
 _STATE_FILE     = Path(__file__).parent / "poll_state.json"
 _POLL_LOOP_NAME = "poll_teams_approvals"
 
-# Statuses that may be approved/rejected by a human reviewer
+# Statuses that may be approved by a human reviewer
 _APPROVABLE_STATUSES = {"awaiting_approval", "flagged", "priced"}
+
+# Statuses that may be rejected — includes "approved" so a prior approval can be
+# overridden (e.g. Ryan approved, Robert disagrees and rejects). An override
+# warning is posted to the channel before processing.
+_REJECTABLE_STATUSES = {"awaiting_approval", "flagged", "priced", "approved"}
 
 
 # ── State persistence (DB primary, file fallback) ─────────────────────────────
@@ -95,20 +100,26 @@ def _save_last_polled(dt: datetime) -> None:
 
 # ── Order ID validation ───────────────────────────────────────────────────────
 
-def _validate_order_ids(order_ids: list[str]) -> tuple[list[str], list[str]]:
+def _validate_order_ids(
+    order_ids: list[str],
+    for_rejection: bool = False,
+) -> tuple[list[str], list[str]]:
     """Split order_ids into (valid, invalid).
 
-    valid   — order exists in DB with an approvable status
+    valid   — order exists in DB with an actionable status
     invalid — not found or wrong status
+
+    for_rejection=True uses _REJECTABLE_STATUSES (includes "approved" for override).
     """
+    allowed = _REJECTABLE_STATUSES if for_rejection else _APPROVABLE_STATUSES
     valid, invalid = [], []
     for oid in order_ids:
         row = get_order_by_id(oid)
         if not row:
             invalid.append(f"{oid} (not found — check spelling)")
-        elif row.get("status") not in _APPROVABLE_STATUSES:
+        elif row.get("status") not in allowed:
             status = row.get("status", "unknown")
-            invalid.append(f"{oid} (status={status} — not pending approval)")
+            invalid.append(f"{oid} (status={status} — cannot action)")
         else:
             valid.append(oid)
     return valid, invalid
@@ -460,7 +471,7 @@ def _do_reject(
         send_confirmation("REJECT command missing order ID.", "orange", parent_message_id=parent_msg_id)
         return
 
-    valid, invalid = _validate_order_ids(order_ids)
+    valid, invalid = _validate_order_ids(order_ids, for_rejection=True)
 
     if invalid:
         warn = "Cannot process:<br>" + "<br>".join(f"&nbsp;&nbsp;{e}" for e in invalid)
@@ -468,6 +479,19 @@ def _do_reject(
 
     if not valid:
         return
+
+    # Warn before overriding any already-approved orders
+    overrides = [oid for oid in valid if (get_order_by_id(oid) or {}).get("status") == "approved"]
+    if overrides:
+        send_confirmation(
+            f"<strong>Override:</strong> "
+            f"{', '.join(f'<strong>{o}</strong>' for o in overrides)} "
+            f"{'was' if len(overrides) == 1 else 'were'} previously <strong>approved</strong>.<br>"
+            f"<strong>{sender}</strong> is overriding — rejecting now.",
+            "orange",
+            parent_message_id=parent_msg_id,
+        )
+        log.warning("reject override: %s previously approved, overridden by %s", overrides, sender)
 
     rejected_ids, failed_ids = [], []
     for oid in valid:

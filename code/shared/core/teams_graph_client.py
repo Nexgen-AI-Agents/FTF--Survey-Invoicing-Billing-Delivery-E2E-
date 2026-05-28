@@ -521,6 +521,22 @@ def _clean_message_body(html: str) -> str:
     return " ".join(text.split())
 
 
+def _looks_like_order_id(token: str) -> bool:
+    """True if token resembles an order ID rather than a conversational English word.
+
+    Order IDs are numeric (1000276115), contain hyphens (QA-001), or are
+    long uppercase strings. Short lowercase common words (of, this, the) return False
+    so "I approve of this" doesn't trigger the bot.
+    """
+    if any(c.isdigit() for c in token):
+        return True
+    if "-" in token:
+        return True
+    if len(token) >= 5 and token[0].isupper():
+        return True
+    return False
+
+
 def _parse_all_commands(text: str) -> list[tuple[str, list[str] | None, str | None]]:
     """Parse ALL APPROVE/REJECT commands from a single Teams message.
 
@@ -577,8 +593,10 @@ def _parse_all_commands(text: str) -> list[tuple[str, list[str] | None, str | No
                 results.append(("approve_bare", None, None))
             elif tokens[0].upper() == "ALL":
                 results.append(("approve_all", None, None))
-            else:
+            elif any(_looks_like_order_id(t) for t in tokens):
                 results.append(("approve", tokens, None))
+            else:
+                results.append(("unknown", None, None))  # conversational text, not order IDs
 
         elif keyword == "REJECT":
             if not after:
@@ -601,10 +619,12 @@ def _parse_all_commands(text: str) -> list[tuple[str, list[str] | None, str | No
                     order_ids.append(words[0])
                     if j == len(comma_parts) - 1 and len(words) > 1:
                         reason_str = " ".join(words[1:])
-            if order_ids:
+            if order_ids and any(_looks_like_order_id(oid) for oid in order_ids):
                 results.append(("reject", order_ids, reason_str))
-            else:
+            elif not order_ids:
                 results.append(("reject_bare", None, None))
+            else:
+                results.append(("unknown", None, None))  # conversational text, not order IDs
 
     return results if results else [("unknown", None, None)]
 
