@@ -8,7 +8,12 @@ from datetime import datetime, timezone
 import httpx
 
 from config.models import HUMAN_GATE_MODEL
-from config.settings import APPROVAL_TIMEOUT_HOURS, FTF_ORDER_URL, TEAMS_WEBHOOK_URL
+from config.settings import (
+    APPROVAL_TIMEOUT_HOURS,
+    FTF_ORDER_URL,
+    TEAMS_APPROVAL_WEBHOOK_URL,
+    TEAMS_WEBHOOK_URL,
+)
 from core.db import (
     get_all_awaiting_orders, get_all_flagged_orders, get_flagged_order,
     get_order_by_id, get_overdue_approvals, log_decision, save_order_state,
@@ -248,8 +253,10 @@ def send_batch_approval_digest() -> dict:
         log.info("batch digest: no orders to review")
         return {"flagged": 0, "awaiting": 0, "sent": False}
 
-    if not TEAMS_WEBHOOK_URL:
-        raise AgentError("TEAMS_WEBHOOK_URL not configured — cannot send batch digest")
+    # Use dedicated approval channel if configured; fall back to general webhook
+    _approval_url = TEAMS_APPROVAL_WEBHOOK_URL or TEAMS_WEBHOOK_URL
+    if not _approval_url:
+        raise AgentError("TEAMS_APPROVAL_WEBHOOK_URL not configured — cannot send batch digest")
 
     rows = []
     now = datetime.now(timezone.utc)
@@ -281,13 +288,16 @@ def send_batch_approval_digest() -> dict:
     order_count = len(all_orders)
     title = f"FTF Estimates Pending Review — {order_count} order{'s' if order_count != 1 else ''}"
     body = (
-        f"**Robert — please review and approve/deny the following estimates:**\n\n"
+        f"**@Robert @Ryan — please review and approve/deny the following estimates:**\n\n"
         f"| Order | Service | Amount | Flag Reason | Status | Age |\n"
         f"|---|---|---|---|---|---|\n"
         f"{chr(10).join('| ' + r.replace(' | ', ' | ') for r in rows)}\n\n"
-        f"**To approve:** Reply APPROVE [order_id]  \n"
-        f"**To deny:** Reply DENY [order_id]  \n"
-        f"**To bulk-approve all:** Reply APPROVE ALL"
+        f"---\n"
+        f"**Reply directly in this channel (Outgoing Webhook listens):**\n"
+        f"- `APPROVE <order_id>` — approve one estimate for sending\n"
+        f"- `APPROVE ALL` — approve everything in this list\n"
+        f"- `REJECT <order_id> [reason]` — reject and hold\n\n"
+        f"*Example:* `APPROVE 1000276115`"
     )
 
     payload = {
@@ -300,7 +310,7 @@ def send_batch_approval_digest() -> dict:
     }
 
     try:
-        r = httpx.post(TEAMS_WEBHOOK_URL, json=payload, timeout=15.0)
+        r = httpx.post(_approval_url, json=payload, timeout=15.0)
         r.raise_for_status()
     except Exception as exc:
         raise AgentError(f"batch digest Teams POST failed: {exc}") from exc

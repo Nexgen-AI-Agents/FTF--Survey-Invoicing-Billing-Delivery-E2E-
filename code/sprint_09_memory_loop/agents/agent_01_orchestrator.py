@@ -5,14 +5,15 @@ Runs the full estimate pipeline once per invocation (GitHub Actions calls this
 every 60 minutes via estimate_generation.yml).
 
 Pipeline sequence:
-    Agent 2  — Monitor       (detect new FTF orders)
-    Agent 3  — Classifier    (14 flag checks)
-    Agent 4  — Human Gate    (route flagged orders)
-    Agent 5  — Pricing       (fetch FTF price)
-    Agent 6  — Writer        (generate estimate email)
-    Agent 7  — Reviewer      (4-check validation)
-    Agent 8  — Sender        (send via FTF Books, 8 AM–6 PM ET only)
-    Agent 9  — Reporter      (daily Teams digest — runs once at end)
+    Agent 12 — Email Monitor  (check info@ for customer quote approvals; quote→pending)
+    Agent 2  — Monitor        (detect new FTF orders)
+    Agent 3  — Classifier     (14 flag checks)
+    Agent 4  — Human Gate     (route flagged orders)
+    Agent 5  — Pricing        (county-based + commercial pricing)
+    Agent 6  — Writer         (generate estimate email)
+    Agent 7  — Reviewer       (4-check validation)
+    Agent 8  — Sender         (send via FTF Books, 8 AM–6 PM ET only)
+    Agent 9  — Reporter       (daily Teams digest — runs once at end)
 
 AR Loop (Agents 10–14) and Statement Loop (Agents 15–17) are stubbed here;
 they have their own GitHub Actions workflows and will be wired in Sprint 7/8.
@@ -33,19 +34,20 @@ LOOP_NAME = "estimate_generation"
 log = get_logger(AGENT_NAME)
 
 # ── Pipeline agent placeholders (lazy-loaded; mocks replace these in tests) ──
-_monitor     = None
-_classifier  = None
-_pricing     = None
-_human_gate  = None
-_writer      = None
-_reviewer    = None
-_sender      = None
-_reporter    = None
+_email_monitor = None
+_monitor       = None
+_classifier    = None
+_pricing       = None
+_human_gate    = None
+_writer        = None
+_reviewer      = None
+_sender        = None
+_reporter      = None
 
 
 def _init_agents() -> None:
     """Load pipeline agents on first real run. Skipped when mocks are already in place."""
-    global _monitor, _classifier, _pricing, _human_gate
+    global _email_monitor, _monitor, _classifier, _pricing, _human_gate
     global _writer, _reviewer, _sender, _reporter
     if _monitor is not None:
         return  # already loaded or mocked by tests
@@ -58,16 +60,18 @@ def _init_agents() -> None:
     sys.path.insert(0, os.path.join(_code, "sprint_03_human_gate",         "agents"))
     sys.path.insert(0, os.path.join(_code, "sprint_04_writer",             "agents"))
     sys.path.insert(0, os.path.join(_code, "sprint_05_reviewer",           "agents"))
+    sys.path.insert(0, os.path.join(_code, "sprint_05_email_monitor",      "agents"))
     sys.path.insert(0, os.path.join(_code, "sprint_06_sender_reporter",    "agents"))
 
-    import agent_02_monitor        as m2;  _monitor    = m2   # noqa: E702
-    import agent_03_classifier     as m3;  _classifier = m3   # noqa: E702
-    import agent_05_pricing_engine as m5;  _pricing    = m5   # noqa: E702
-    import agent_04_human_gate   as m4;  _human_gate = m4   # noqa: E702
-    import agent_06_writer       as m6;  _writer     = m6   # noqa: E702
-    import agent_07_reviewer     as m7;  _reviewer   = m7   # noqa: E702
-    import agent_08_sender       as m8;  _sender     = m8   # noqa: E702
-    import agent_09_reporter     as m9;  _reporter   = m9   # noqa: E702
+    import agent_02_monitor          as m2;  _monitor       = m2   # noqa: E702
+    import agent_03_classifier       as m3;  _classifier    = m3   # noqa: E702
+    import agent_05_pricing_engine   as m5;  _pricing       = m5   # noqa: E702
+    import agent_04_human_gate       as m4;  _human_gate    = m4   # noqa: E702
+    import agent_06_writer           as m6;  _writer        = m6   # noqa: E702
+    import agent_07_reviewer         as m7;  _reviewer      = m7   # noqa: E702
+    import agent_08_sender           as m8;  _sender        = m8   # noqa: E702
+    import agent_09_reporter         as m9;  _reporter      = m9   # noqa: E702
+    import agent_12_email_monitor    as m12; _email_monitor = m12  # noqa: E702
 
 
 # ── Step runners ─────────────────────────────────────────────────────────────
@@ -100,6 +104,7 @@ def run_estimate_loop() -> dict:
     summary = {
         "loop": LOOP_NAME,
         "started_at": started_at.isoformat(),
+        "email_monitor": 0,
         "monitor": 0,
         "classified": 0,
         "priced": 0,
@@ -115,13 +120,14 @@ def run_estimate_loop() -> dict:
                  reason=f"estimate loop started at {started_at.isoformat()}")
 
     steps = [
-        ("monitor",    _monitor.run),
-        ("classifier", _classifier.run),
-        ("pricing",    _pricing.run),
-        ("human_gate", _human_gate.run),
-        ("writer",     _writer.run),
-        ("reviewer",   _reviewer.run),
-        ("sender",     _sender.run),
+        ("email_monitor", _email_monitor.run),   # Gap 4: check info@ for customer quote approvals
+        ("monitor",       _monitor.run),
+        ("classifier",    _classifier.run),
+        ("pricing",       _pricing.run),
+        ("human_gate",    _human_gate.run),
+        ("writer",        _writer.run),
+        ("reviewer",      _reviewer.run),
+        ("sender",        _sender.run),
     ]
 
     for label, fn in steps:

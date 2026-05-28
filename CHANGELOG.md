@@ -6,6 +6,38 @@ Format: `## [Sprint N] — Sprint Name — YYYY-MM-DD`
 
 ---
 
+## [Gap Fix — Teams Approval + Pricing Engine + Orchestrator] — 2026-05-28
+
+### Gap 1 Closed — Teams Approval Inbound (I-083)
+- **`code/shared/core/teams_approval_receiver.py`** (new): Flask app on port 5001 — receives Teams Outgoing Webhook POSTs, verifies HMAC-SHA256 signature, parses APPROVE / APPROVE ALL / REJECT commands (strips @mention prefix), calls `process_approval_reply()`, sends confirmation card back to channel
+- **`scripts/run_approval_receiver.py`** (new): startup script; documents ngrok / nginx deployment options
+- **`docs/teams_setup.md`** (new): step-by-step Teams admin guide — Outgoing Webhook registration, HMAC secret, ngrok vs production, all env vars, troubleshooting table
+- **`code/shared/config/settings.py`**: added `TEAMS_APPROVAL_WEBHOOK_URL`, `TEAMS_OUTGOING_WEBHOOK_SECRET`, `APPROVAL_RECEIVER_HOST`, `APPROVAL_RECEIVER_PORT`
+- **`code/sprint_03_human_gate/agents/agent_04_human_gate.py`**: `send_batch_approval_digest()` now posts to `TEAMS_APPROVAL_WEBHOOK_URL`; card body now `@Robert @Ryan` with outgoing webhook reply instructions (`APPROVE <id>`, `APPROVE ALL`, `REJECT <id> [reason]`)
+
+### Gap 2 Closed — County-Based Pricing Engine (I-084)
+- **`code/sprint_02_classifier_pricing/agents/agent_05_pricing_engine.py`**: full rewrite
+  - `_COUNTY_AVG` dict: 29 FL counties with NexGen production avg prices (23k invoices)
+  - Boundary/Land Survey orders: county avg used directly as estimate base (e.g. Okeechobee $1,797, Palm Beach $571, Lee $500); unknown county → FL statewide avg $616
+  - B2B/commercial tier: base × 4.1 multiplier (production data: commercial avg $2,159 / residential avg ~$540)
+  - Monroe County: flagged for human review at pricing stage (double-safety with classifier)
+  - `complexity_note` added to return dict and `log_decision` — Writer agent context on what pricing basis was used and that Robert reviews before sending
+  - `_flag_order()` helper extracted; `run()` now passes `property_county` to `price_order()`
+
+### Gap 4 Closed — Agent 12 Wired into Orchestrator (I-085)
+- **`code/sprint_09_memory_loop/agents/agent_01_orchestrator.py`**: email monitor added as first pipeline step
+  - `_email_monitor` global + `sprint_05_email_monitor` path added in `_init_agents()`
+  - `email_monitor` step runs BEFORE agent_02 monitor — quote→pending conversions available same cycle
+  - Pipeline sequence docstring updated
+  - `email_monitor: 0` added to summary dict
+
+### New Issues Logged
+- **I-083**: Teams Outgoing Webhook receiver — CLOSED
+- **I-084**: County-based pricing engine — CLOSED
+- **I-085**: Agent 12 orchestration wiring — CLOSED
+
+---
+
 ## [Expert Persona v2 — Survey Business Expert] — 2026-05-28
 
 ### Ryan Feedback Round 3 — Business Expert Strengthening
