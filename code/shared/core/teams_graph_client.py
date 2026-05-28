@@ -207,7 +207,7 @@ def send_email_notification(text_or_html: str, subject: str = "") -> dict:
                 {"emailAddress": {"address": addr}} for addr in recipients_raw
             ],
         },
-        "saveToSentItems": False,
+        "saveToSentItems": True,
     }
 
     url = f"{_GRAPH_READ}/users/{NOTIFICATION_FROM_EMAIL}/sendMail"
