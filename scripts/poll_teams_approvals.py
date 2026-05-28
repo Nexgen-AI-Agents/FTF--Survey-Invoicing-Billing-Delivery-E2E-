@@ -204,8 +204,7 @@ def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
                 _do_reject_all(sender, reason, summary, process_approval_reply, parent_msg_id)
 
             elif action == "reject":
-                oid = (order_ids or [None])[0]
-                _do_reject(oid, sender, reason, summary, process_approval_reply, parent_msg_id)
+                _do_reject(order_ids or [], sender, reason, summary, process_approval_reply, parent_msg_id)
 
         except AgentError as exc:
             msg = f"Could not process <strong>{action}</strong>: {exc}"
@@ -218,6 +217,26 @@ def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
 
     if not dry_run and newest_dt > since:
         _save_last_polled(newest_dt)
+
+    # ── Batch summary: report any orders still pending after this poll cycle ──
+    if not dry_run and (summary["approved"] > 0 or summary["rejected"] > 0):
+        still_pending = _get_all_pending()
+        if still_pending:
+            # Reply in the last active thread (if commands came via thread replies)
+            last_thread = next(
+                (c.get("parent_message_id") for c in reversed(commands)
+                 if c.get("parent_message_id")),
+                None,
+            )
+            id_list = "<br>".join(f"&nbsp;&nbsp;<strong>{oid}</strong>" for oid in still_pending[:10])
+            suffix  = f"<br>&nbsp;&nbsp;...+{len(still_pending)-10} more" if len(still_pending) > 10 else ""
+            msg = (
+                f"<strong>{len(still_pending)} order(s) still pending — action required:</strong><br>"
+                f"{id_list}{suffix}<br><br>"
+                f"Reply with <strong>APPROVE &lt;id&gt;</strong> or <strong>REJECT &lt;id&gt; &lt;reason&gt;</strong>"
+            )
+            send_confirmation(msg, "blue", parent_message_id=last_thread)
+            log.info("batch summary: %d still pending after this cycle", len(still_pending))
 
     log.info("poll complete found=%d approved=%d rejected=%d failed=%d",
              summary["found"], summary["approved"], summary["rejected"], summary["failed"])
@@ -430,48 +449,57 @@ def _do_reject_all(
 
 
 def _do_reject(
-    order_id: str | None,
+    order_ids: list[str] | None,
     sender: str,
     reason: str | None,
     summary: dict,
     process_fn,
     parent_msg_id: str | None,
 ) -> None:
-    if not order_id:
+    if not order_ids:
         send_confirmation("REJECT command missing order ID.", "orange", parent_message_id=parent_msg_id)
         return
 
-    row = get_order_by_id(order_id)
-    if not row:
-        send_confirmation(
-            f"Order <strong>'{order_id}'</strong> not found.<br>"
-            f"Check spelling and try again.",
-            "orange",
-            parent_message_id=parent_msg_id,
-        )
-        log.warning("reject: order not found order_id=%s", order_id)
-        summary["failed"] += 1
+    valid, invalid = _validate_order_ids(order_ids)
+
+    if invalid:
+        warn = "Cannot process:<br>" + "<br>".join(f"&nbsp;&nbsp;{e}" for e in invalid)
+        send_confirmation(warn, "orange", parent_message_id=parent_msg_id)
+
+    if not valid:
         return
 
-    if row.get("status") not in _APPROVABLE_STATUSES:
-        status = row.get("status", "unknown")
-        send_confirmation(
-            f"Order <strong>{order_id}</strong> cannot be rejected.<br>"
-            f"Current status: <strong>{status}</strong> (not pending approval).",
-            "orange",
-            parent_message_id=parent_msg_id,
-        )
-        log.warning("reject: wrong status order=%s status=%s", order_id, status)
-        summary["failed"] += 1
-        return
+    rejected_ids, failed_ids = [], []
+    for oid in valid:
+        try:
+            process_fn(oid, "reject")
+            rejected_ids.append(oid)
+            summary["rejected"] += 1
+        except AgentError as exc:
+            failed_ids.append(f"{oid} ({exc})")
+            summary["failed"] += 1
+            log.error("reject failed order=%s error=%s", oid, exc)
 
-    process_fn(order_id, "reject")
-    msg = f"<strong>{sender}</strong> rejected order <strong>{order_id}</strong>."
-    if reason:
-        msg += f"<br><strong>Reason:</strong> {reason}"
-    send_confirmation(msg, "red", parent_message_id=parent_msg_id)
-    summary["rejected"] += 1
-    log.info("rejected order=%s reason=%s", order_id, reason)
+    if len(rejected_ids) == 1 and not failed_ids:
+        msg = f"<strong>{sender}</strong> rejected order <strong>{rejected_ids[0]}</strong>."
+        if reason:
+            msg += f"<br><strong>Reason:</strong> {reason}"
+        send_confirmation(msg, "red", parent_message_id=parent_msg_id)
+    elif rejected_ids:
+        msg = (
+            f"<strong>{sender}</strong> rejected <strong>{len(rejected_ids)}</strong> order(s):<br>"
+            f"<strong>{', '.join(rejected_ids)}</strong>."
+        )
+        if reason:
+            msg += f"<br><strong>Reason:</strong> {reason}"
+        if failed_ids:
+            msg += f"<br><strong>Warnings:</strong> {', '.join(failed_ids)}"
+        send_confirmation(msg, "red", parent_message_id=parent_msg_id)
+    else:
+        msg = "Could not reject any orders.<br><strong>Issues:</strong> " + ", ".join(failed_ids)
+        send_confirmation(msg, "orange", parent_message_id=parent_msg_id)
+
+    log.info("reject done rejected=%d failed=%d", len(rejected_ids), len(failed_ids))
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────

@@ -473,20 +473,21 @@ def check_for_approvals(since: datetime | None = None) -> list[dict]:
         created_dt,
         parent_message_id: str | None = None,
     ) -> None:
-        action, order_ids, reason = _parse_command(text)
-        if action == "unknown":
-            return
-        commands.append({
-            "action":            action,
-            "order_ids":         order_ids,
-            "reason":            reason,
-            "sender":            sender,
-            "message_id":        msg_id,
-            "parent_message_id": parent_message_id,
-            "created_at_dt":     created_dt,
-        })
-        log.info("approval command found action=%s order_ids=%s sender=%s",
-                 action, order_ids, sender)
+        parsed = _parse_all_commands(text)
+        for action, order_ids, reason in parsed:
+            if action == "unknown":
+                continue
+            commands.append({
+                "action":            action,
+                "order_ids":         order_ids,
+                "reason":            reason,
+                "sender":            sender,
+                "message_id":        msg_id,
+                "parent_message_id": parent_message_id,
+                "created_at_dt":     created_dt,
+            })
+            log.info("approval command found action=%s order_ids=%s sender=%s",
+                     action, order_ids, sender)
 
     for msg in messages:
         # ── Check top-level human messages ────────────────────────────────────
@@ -520,57 +521,97 @@ def _clean_message_body(html: str) -> str:
     return " ".join(text.split())
 
 
-def _parse_command(text: str) -> tuple[str, list[str] | None, str | None]:
-    """Parse APPROVE / APPROVE ALL / REJECT / REJECT ALL from plain Teams message text.
+def _parse_all_commands(text: str) -> list[tuple[str, list[str] | None, str | None]]:
+    """Parse ALL APPROVE/REJECT commands from a single Teams message.
 
-    Searches for the keyword anywhere (handles @mention prefix Teams inserts).
-    Returns (action, order_ids, reason).
+    Handles:
+    - Multiple commands in one message  (approve A, B  reject C reason)
+    - Comma-separated order IDs         (APPROVE QA-001, QA-002)
+    - Space-separated order IDs         (APPROVE QA-001 QA-002)
+    - Mixed separators                  (APPROVE QA-001, QA-002 QA-003)
+    - Multi-line input (collapsed to single line after HTML strip)
+    - For REJECT: last non-comma segment's trailing words become the reason
+
+    Returns list of (action, order_ids, reason) tuples.
 
     action values:
-      "approve"      — APPROVE <id> [<id2> ...]   — approve specific order(s)
-      "approve_all"  — APPROVE ALL                 — approve all pending orders
-      "approve_bare" — APPROVE (alone)             — approve the single pending order
-      "reject"       — REJECT <id> [reason]        — reject a specific order
-      "reject_all"   — REJECT ALL [reason]         — reject all pending orders
-      "reject_bare"  — REJECT (alone)              — reject the single pending order
-      "unknown"      — unrecognised input
+      "approve"      — APPROVE <id> [<id2> ...]   — approve specific orders
+      "approve_all"  — APPROVE ALL                 — approve all pending
+      "approve_bare" — APPROVE (alone)             — approve the one pending order
+      "reject"       — REJECT <id[s]> [reason]     — reject one or more orders
+      "reject_all"   — REJECT ALL [reason]         — reject all pending
+      "reject_bare"  — REJECT (alone)              — reject the one pending order
+      "unknown"      — unrecognised
 
     Examples:
-      APPROVE               -> ("approve_bare", None, None)
-      APPROVE ALL           -> ("approve_all", None, None)
-      APPROVE 123 456 789   -> ("approve", ["123","456","789"], None)
-      REJECT                -> ("reject_bare", None, None)
-      REJECT ALL            -> ("reject_all", None, None)
-      REJECT ALL bad scope  -> ("reject_all", None, "bad scope")
-      REJECT 123 bad reason -> ("reject",  ["123"], "bad reason")
+      "APPROVE QA-001, QA-002 REJECT QA-003 bad scope"
+        → [("approve", ["QA-001","QA-002"], None),
+           ("reject",  ["QA-003"], "bad scope")]
+
+      "REJECT QA-001, QA-002 pricing issue"
+        → [("reject", ["QA-001","QA-002"], "pricing issue")]
+
+      "APPROVE ALL"  → [("approve_all", None, None)]
+      "APPROVE"      → [("approve_bare", None, None)]
     """
     upper = text.upper()
+    results: list[tuple[str, list[str] | None, str | None]] = []
 
-    approve_m = re.search(r"\bAPPROVE\b", upper)
-    reject_m  = re.search(r"\bREJECT\b",  upper)
+    keyword_matches = list(re.finditer(r"\bAPPROVE\b|\bREJECT\b", upper))
+    if not keyword_matches:
+        return [("unknown", None, None)]
 
-    if approve_m:
-        after  = text[approve_m.end():].strip()
-        tokens = after.split()
-        if not tokens:
-            return "approve_bare", None, None       # bare APPROVE → auto-detect single pending
-        if tokens[0].upper() == "ALL":
-            return "approve_all", None, None
-        return "approve", tokens, None              # all tokens are treated as order IDs
+    for i, match in enumerate(keyword_matches):
+        keyword = match.group()
+        kw_end  = match.end()
 
-    if reject_m:
-        after  = text[reject_m.end():].strip()
-        tokens = after.split()
-        if not tokens:
-            return "reject_bare", None, None        # bare REJECT → auto-detect single pending
-        if tokens[0].upper() == "ALL":
-            reason = " ".join(tokens[1:]) if len(tokens) > 1 else None
-            return "reject_all", None, reason
-        order_id = tokens[0]
-        reason   = " ".join(tokens[1:]) if len(tokens) > 1 else None
-        return "reject", [order_id], reason
+        # Grab text from after keyword to next keyword (or end of string)
+        if i + 1 < len(keyword_matches):
+            after = text[kw_end : keyword_matches[i + 1].start()].strip().rstrip(",")
+        else:
+            after = text[kw_end:].strip().rstrip(",")
 
-    return "unknown", None, None
+        if keyword == "APPROVE":
+            tokens = [t for t in re.split(r"[\s,]+", after) if t]
+            if not tokens:
+                results.append(("approve_bare", None, None))
+            elif tokens[0].upper() == "ALL":
+                results.append(("approve_all", None, None))
+            else:
+                results.append(("approve", tokens, None))
+
+        elif keyword == "REJECT":
+            if not after:
+                results.append(("reject_bare", None, None))
+                continue
+
+            first = after.split()[0].upper()
+            if first == "ALL":
+                reason = after[3:].strip() or None
+                results.append(("reject_all", None, reason))
+                continue
+
+            # Comma-separated IDs; trailing words after last comma = reason
+            comma_parts = [p.strip() for p in after.split(",") if p.strip()]
+            order_ids: list[str] = []
+            reason_str: str | None = None
+            for j, part in enumerate(comma_parts):
+                words = part.split()
+                if words:
+                    order_ids.append(words[0])
+                    if j == len(comma_parts) - 1 and len(words) > 1:
+                        reason_str = " ".join(words[1:])
+            if order_ids:
+                results.append(("reject", order_ids, reason_str))
+            else:
+                results.append(("reject_bare", None, None))
+
+    return results if results else [("unknown", None, None)]
+
+
+def _parse_command(text: str) -> tuple[str, list[str] | None, str | None]:
+    """Backward-compatible wrapper — returns first command from _parse_all_commands."""
+    return _parse_all_commands(text)[0]
 
 
 # ── Message builders ──────────────────────────────────────────────────────────
