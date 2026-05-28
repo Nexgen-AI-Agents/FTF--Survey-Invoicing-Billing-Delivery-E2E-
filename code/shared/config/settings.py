@@ -37,12 +37,14 @@ DB_NAME:     str       = os.getenv("DB_NAME", "ftf_agentic_ai")
 DB_USER:     str | None = os.getenv("DB_USER")
 DB_PASSWORD: str | None = os.getenv("DB_PASSWORD")
 
-# MS Teams — Graph API (Azure AD app, no webhook URLs needed)
+# MS Teams — Graph API (Azure AD app, application permissions)
 TEAMS_TENANT_ID:     str | None = os.getenv("TEAMS_TENANT_ID")
 TEAMS_APP_ID:        str | None = os.getenv("TEAMS_APP_ID")
 TEAMS_CLIENT_SECRET: str | None = os.getenv("TEAMS_CLIENT_SECRET")
 TEAMS_TEAM_ID:       str | None = os.getenv("TEAMS_TEAM_ID")
 TEAMS_CHANNEL_ID:    str | None = os.getenv("TEAMS_CHANNEL_ID")
+# O365 Incoming Webhook connector (or Workflows webhook) — for sending messages
+TEAMS_INCOMING_WEBHOOK_URL: str | None = os.getenv("TEAMS_INCOMING_WEBHOOK_URL")
 
 # MS Teams — legacy webhook vars (kept for backward compat; unused once Graph API is live)
 TEAMS_WEBHOOK_URL:             str | None = os.getenv("TEAMS_WEBHOOK_URL")

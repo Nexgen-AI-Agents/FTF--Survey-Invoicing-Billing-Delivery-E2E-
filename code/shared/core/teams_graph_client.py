@@ -99,35 +99,31 @@ def _read_headers() -> dict:
     return {"Authorization": f"Bearer {_get_token()}", "Content-Type": "application/json"}
 
 
-# ── Send (via incoming webhook — auto-detects O365 connector vs Workflows) ────
+# ── Send (webhook — auto-detects format from URL) ────────────────────────────
 #
-# Two webhook types are supported:
-#   1. O365 Incoming Webhook connector  (URL contains "webhook.office.com")
-#      Setup: channel -> ... -> Manage channel -> Connectors -> Incoming Webhook
-#      Payload: MessageCard format  {"@type": "MessageCard", ...}
+# Three webhook types supported, detected from the URL:
 #
-#   2. Teams Workflows incoming webhook  (URL contains "logic.azure.com" or similar)
-#      Setup: channel -> ... -> Workflows -> "Post to channel when webhook received"
-#      Payload: Adaptive Card format
+#   1. Azure Logic App (logic.azure.com)           -- plain JSON relay
+#      Setup: portal.azure.com -> Logic App Consumption -> HTTP trigger
+#             -> Teams "Post message in a chat or channel" action
+#      Payload: {"subject": "...", "text": "..."}
+#      The Logic App composes + posts the Teams message itself.
 #
-# The code detects which URL you've configured and sends the right format.
+#   2. Teams Workflows (powerautomate.com flows)   -- Adaptive Card
+#      Setup: Teams channel -> Workflows -> "Post to channel when webhook received"
+#      Payload: Adaptive Card attachments format
+#
+#   3. O365 Incoming Webhook (webhook.office.com)  -- MessageCard (DEPRECATED)
+#      Retired by Microsoft Aug 2024; returns 403 in most tenants.
+#      Kept for reference only.
 
-def _build_o365_payload(plain: str, subject: str) -> dict:
-    """Build MessageCard payload for old O365 Incoming Webhook connector."""
-    payload: dict = {
-        "@type":    "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "themeColor": "0076D7",
-        "summary":  subject or plain[:80],
-    }
-    if subject:
-        payload["title"] = subject
-    payload["text"] = plain
-    return payload
+def _build_logic_app_payload(plain: str, subject: str) -> dict:
+    """Plain JSON for Azure Logic App HTTP trigger relay."""
+    return {"subject": subject, "text": plain}
 
 
 def _build_adaptive_card_payload(plain: str, subject: str) -> dict:
-    """Build Adaptive Card payload for Teams Workflows incoming webhook."""
+    """Adaptive Card for Teams Workflows incoming webhook."""
     body_blocks: list[dict] = []
     if subject:
         body_blocks.append({
@@ -149,38 +145,60 @@ def _build_adaptive_card_payload(plain: str, subject: str) -> dict:
     }
 
 
+def _build_o365_payload(plain: str, subject: str) -> dict:
+    """MessageCard for deprecated O365 connector (likely 403 in most tenants)."""
+    payload: dict = {
+        "@type":    "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "themeColor": "0076D7",
+        "summary":  subject or plain[:80],
+    }
+    if subject:
+        payload["title"] = subject
+    payload["text"] = plain
+    return payload
+
+
+def _detect_webhook_type(url: str) -> str:
+    if "logic.azure.com" in url:
+        return "logic_app"
+    if "webhook.office.com" in url:
+        return "o365_connector"
+    return "workflows"   # power automate / teams workflows
+
+
 def send_channel_message(text_or_html: str, subject: str = "") -> dict:
     """Post a message to the FTF-Approvals channel via incoming webhook.
 
-    Supports two webhook types — detected automatically from the URL:
-      * O365 Incoming Webhook connector  (webhook.office.com) -- MessageCard format
-      * Teams Workflows incoming webhook (logic.azure.com)    -- Adaptive Card format
+    Webhook type is detected automatically from TEAMS_INCOMING_WEBHOOK_URL:
+      * logic.azure.com  -> Azure Logic App relay (plain JSON)
+      * webhook.office.com -> O365 connector MessageCard (deprecated, likely 403)
+      * other           -> Teams Workflows Adaptive Card
 
     text_or_html -- message body; HTML is stripped before sending.
-    subject      -- optional bold title shown above the message body.
-    Returns {"ok": True, "method": "webhook"} on success.
-    Raises AgentError if webhook URL not configured or POST fails.
+    subject      -- optional bold title.
+    Returns {"ok": True, "method": "<type>"} on success.
+    Raises AgentError if URL not configured or POST fails.
     """
     if not TEAMS_INCOMING_WEBHOOK_URL:
         raise AgentError(
             "TEAMS_INCOMING_WEBHOOK_URL not set.\n"
-            "Option A (recommended — no license needed):\n"
-            "  Teams -> FTF-Approvals channel -> ... -> Manage channel -> Connectors\n"
-            "  -> Incoming Webhook -> Configure -> name it 'FTF Bot' -> Create -> copy URL\n"
-            "Option B (requires Power Automate Plan 1):\n"
-            "  Teams -> channel -> ... -> Workflows -> 'Post to channel when webhook received'\n"
-            "Then add TEAMS_INCOMING_WEBHOOK_URL=<url> to .env"
+            "Recommended: Azure Logic App (Consumption) with HTTP trigger -> Teams post.\n"
+            "See docs/teams_setup.md for step-by-step instructions."
         )
 
-    # Strip HTML/mentions for plain text rendering
+    # Strip HTML/mentions
     plain = _MENTION_RE.sub(" ", text_or_html)
     plain = _HTML_RE.sub(" ", plain)
     plain = " ".join(plain.split())
 
-    # Auto-detect webhook type from URL
-    is_o365 = "webhook.office.com" in TEAMS_INCOMING_WEBHOOK_URL
-    payload = _build_o365_payload(plain, subject) if is_o365 else _build_adaptive_card_payload(plain, subject)
-    method  = "o365_connector" if is_o365 else "workflows_adaptive_card"
+    wtype   = _detect_webhook_type(TEAMS_INCOMING_WEBHOOK_URL)
+    if wtype == "logic_app":
+        payload = _build_logic_app_payload(plain, subject)
+    elif wtype == "o365_connector":
+        payload = _build_o365_payload(plain, subject)
+    else:
+        payload = _build_adaptive_card_payload(plain, subject)
 
     try:
         r = httpx.post(TEAMS_INCOMING_WEBHOOK_URL, json=payload, timeout=20.0)
@@ -193,8 +211,8 @@ def send_channel_message(text_or_html: str, subject: str = "") -> dict:
     except Exception as exc:
         raise AgentError(f"Teams webhook POST failed: {exc}") from exc
 
-    log.info("teams message sent via %s subject=%r", method, subject or "(no subject)")
-    return {"ok": True, "method": method}
+    log.info("teams message sent via %s subject=%r", wtype, subject or "(no subject)")
+    return {"ok": True, "method": wtype}
 
 
 def send_confirmation(text: str, color: str = "green") -> None:
