@@ -97,7 +97,7 @@ def run_tests(read_only: bool = False) -> dict:
         print(f"   {PASS} Retrieved {len(messages)} recent message(s)")
         for m in messages[:3]:
             sender = m["sender"][:20]
-            text   = m["text"][:55]
+            text   = m["text"][:55].encode("ascii", "replace").decode("ascii")
             print(f"   {INFO} [{m['created_at_dt'].strftime('%H:%M')}] {sender}: {text}")
         results["read"] = "PASS"
     except Exception as exc:
