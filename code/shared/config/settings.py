@@ -37,15 +37,19 @@ DB_NAME:     str       = os.getenv("DB_NAME", "ftf_agentic_ai")
 DB_USER:     str | None = os.getenv("DB_USER")
 DB_PASSWORD: str | None = os.getenv("DB_PASSWORD")
 
-# MS Teams
-TEAMS_WEBHOOK_URL: str | None = os.getenv("TEAMS_WEBHOOK_URL")
-# Dedicated approval channel webhook — Robert + Ryan group; separate from general alerts
-TEAMS_APPROVAL_WEBHOOK_URL: str | None = os.getenv("TEAMS_APPROVAL_WEBHOOK_URL", os.getenv("TEAMS_WEBHOOK_URL"))
-# HMAC secret from Teams Outgoing Webhook registration (Teams admin panel)
+# MS Teams — Graph API (Azure AD app, no webhook URLs needed)
+TEAMS_TENANT_ID:     str | None = os.getenv("TEAMS_TENANT_ID")
+TEAMS_APP_ID:        str | None = os.getenv("TEAMS_APP_ID")
+TEAMS_CLIENT_SECRET: str | None = os.getenv("TEAMS_CLIENT_SECRET")
+TEAMS_TEAM_ID:       str | None = os.getenv("TEAMS_TEAM_ID")
+TEAMS_CHANNEL_ID:    str | None = os.getenv("TEAMS_CHANNEL_ID")
+
+# MS Teams — legacy webhook vars (kept for backward compat; unused once Graph API is live)
+TEAMS_WEBHOOK_URL:             str | None = os.getenv("TEAMS_WEBHOOK_URL")
+TEAMS_APPROVAL_WEBHOOK_URL:    str | None = os.getenv("TEAMS_APPROVAL_WEBHOOK_URL")
 TEAMS_OUTGOING_WEBHOOK_SECRET: str | None = os.getenv("TEAMS_OUTGOING_WEBHOOK_SECRET")
-# Approval receiver Flask service
-APPROVAL_RECEIVER_HOST: str = os.getenv("APPROVAL_RECEIVER_HOST", "0.0.0.0")
-APPROVAL_RECEIVER_PORT: int = int(os.getenv("APPROVAL_RECEIVER_PORT", "5001"))
+APPROVAL_RECEIVER_HOST:        str        = os.getenv("APPROVAL_RECEIVER_HOST", "0.0.0.0")
+APPROVAL_RECEIVER_PORT:        int        = int(os.getenv("APPROVAL_RECEIVER_PORT", "5001"))
 
 # SMTP — monthly statement email delivery
 SMTP_HOST:     str | None = os.getenv("SMTP_HOST")

@@ -28,6 +28,9 @@ htmlcov/
 logs/
 *.log
 
+# Teams approval polling state (local timestamp tracker)
+scripts/poll_state.json
+
 # IDE
 .vscode/
 .idea/
