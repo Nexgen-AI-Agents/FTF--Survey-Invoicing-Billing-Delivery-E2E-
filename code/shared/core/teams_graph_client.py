@@ -1,24 +1,26 @@
 """
 teams_graph_client.py — Microsoft Teams client (hybrid architecture).
 
-SEND  -> Graph API Mail.Send (primary, application permission)
-         Emails notification to NOTIFICATION_TO_EMAILS from NOTIFICATION_FROM_EMAIL.
-         Requires Mail.Send application permission + admin consent on the Azure AD app.
-         Falls back to TEAMS_INCOMING_WEBHOOK_URL if webhook is configured.
-
-         Webhook fallback types (auto-detected from URL):
+SEND  -> TEAMS_INCOMING_WEBHOOK_URL (primary — Azure Logic App relay)
+         Posts directly to FTF-Approvals Teams channel via Logic App HTTP trigger.
+         Webhook type auto-detected from URL:
            logic.azure.com    -> Azure Logic App relay (plain JSON)
            webhook.office.com -> O365 connector MessageCard (deprecated — 403)
            other              -> Teams Workflows Adaptive Card
+         Falls back to Graph API Mail.Send if webhook is not configured.
+
+SEND fallback -> Graph API Mail.Send (application permission)
+         Emails notification to NOTIFICATION_TO_EMAILS from NOTIFICATION_FROM_EMAIL.
+         Requires Mail.Send application permission + admin consent on the Azure AD app.
 
 READ  -> Microsoft Graph API ChannelMessage.Read.All (application permission)
          Polls FTF-Approvals channel for APPROVE / REJECT commands.
          Application permission granted; admin consent confirmed 2026-05-28.
 
 Required env vars:
-  NOTIFICATION_FROM_EMAIL   -- licensed M365 mailbox in tenant (for sending email)
-  NOTIFICATION_TO_EMAILS    -- comma-separated recipient emails
-  TEAMS_INCOMING_WEBHOOK_URL -- optional webhook fallback
+  TEAMS_INCOMING_WEBHOOK_URL -- Logic App webhook URL (primary send)
+  NOTIFICATION_FROM_EMAIL   -- licensed M365 mailbox in tenant (email fallback)
+  NOTIFICATION_TO_EMAILS    -- comma-separated recipient emails (email fallback)
   TEAMS_TENANT_ID            -- Azure AD tenant ID
   TEAMS_APP_ID               -- Azure AD app client ID
   TEAMS_CLIENT_SECRET        -- Azure AD app secret
@@ -228,26 +230,25 @@ def send_email_notification(text_or_html: str, subject: str = "") -> dict:
 
 
 def send_channel_message(text_or_html: str, subject: str = "") -> dict:
-    """Send a Teams notification — email via Graph API, webhook as fallback.
+    """Send a Teams notification — webhook primary, email fallback.
 
-    Primary: Graph API Mail.Send (if NOTIFICATION_FROM_EMAIL + NOTIFICATION_TO_EMAILS set)
-    Fallback: incoming webhook (if TEAMS_INCOMING_WEBHOOK_URL set)
+    Primary: Logic App webhook (if TEAMS_INCOMING_WEBHOOK_URL set) -> posts to Teams channel
+    Fallback: Graph API Mail.Send (if NOTIFICATION_FROM_EMAIL + NOTIFICATION_TO_EMAILS set)
 
     Raises AgentError if neither is configured.
     """
-    # Primary: email via Graph API
-    if NOTIFICATION_FROM_EMAIL and NOTIFICATION_TO_EMAILS:
-        return send_email_notification(text_or_html, subject)
-
-    # Fallback: webhook
+    # Primary: Teams channel via Logic App webhook
     if TEAMS_INCOMING_WEBHOOK_URL:
         return _send_via_webhook(text_or_html, subject)
 
+    # Fallback: email via Graph API
+    if NOTIFICATION_FROM_EMAIL and NOTIFICATION_TO_EMAILS:
+        return send_email_notification(text_or_html, subject)
+
     raise AgentError(
         "No notification method configured.\n"
-        "Option A (recommended): set NOTIFICATION_FROM_EMAIL and NOTIFICATION_TO_EMAILS in .env\n"
-        "  Requires Mail.Send application permission on the Azure AD app.\n"
-        "Option B: set TEAMS_INCOMING_WEBHOOK_URL (Logic App or Workflows webhook).\n"
+        "Option A (recommended): set TEAMS_INCOMING_WEBHOOK_URL (Logic App webhook) in .env\n"
+        "Option B: set NOTIFICATION_FROM_EMAIL and NOTIFICATION_TO_EMAILS for email fallback.\n"
         "See docs/teams_setup.md for instructions."
     )
 

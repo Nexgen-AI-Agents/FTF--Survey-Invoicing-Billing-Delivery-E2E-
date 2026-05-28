@@ -58,20 +58,23 @@ def run_tests(read_only: bool = False) -> dict:
     print(f"   {INFO} Team:    {TEAMS_TEAM_ID}")
     print(f"   {INFO} Channel: {TEAMS_CHANNEL_ID}")
 
-    # Notification method
-    if NOTIFICATION_FROM_EMAIL and NOTIFICATION_TO_EMAILS:
-        print(f"   {PASS} Notification: Graph API email")
-        print(f"   {INFO} From: {NOTIFICATION_FROM_EMAIL}")
-        print(f"   {INFO} To:   {NOTIFICATION_TO_EMAILS}")
-    elif TEAMS_INCOMING_WEBHOOK_URL:
+    # Notification method — webhook is primary, email is fallback
+    if TEAMS_INCOMING_WEBHOOK_URL:
         wtype = "O365 connector" if "webhook.office.com" in TEAMS_INCOMING_WEBHOOK_URL \
                 else "Logic App" if "logic.azure.com" in TEAMS_INCOMING_WEBHOOK_URL \
                 else "Workflows"
-        print(f"   {PASS} Notification: webhook ({wtype})")
+        print(f"   {PASS} Notification primary: Teams webhook ({wtype})")
+        print(f"   {INFO} URL: {TEAMS_INCOMING_WEBHOOK_URL[:60]}...")
+        if NOTIFICATION_FROM_EMAIL and NOTIFICATION_TO_EMAILS:
+            print(f"   {PASS} Notification fallback: Graph API email -> {NOTIFICATION_TO_EMAILS}")
+    elif NOTIFICATION_FROM_EMAIL and NOTIFICATION_TO_EMAILS:
+        print(f"   {PASS} Notification: Graph API email (no webhook configured)")
+        print(f"   {INFO} From: {NOTIFICATION_FROM_EMAIL}")
+        print(f"   {INFO} To:   {NOTIFICATION_TO_EMAILS}")
     else:
         print(f"   {FAIL} No notification method configured")
-        print(f"   {INFO} Set NOTIFICATION_FROM_EMAIL + NOTIFICATION_TO_EMAILS for email")
-        print(f"   {INFO} Or set TEAMS_INCOMING_WEBHOOK_URL for webhook")
+        print(f"   {INFO} Set TEAMS_INCOMING_WEBHOOK_URL for Teams channel (primary)")
+        print(f"   {INFO} Set NOTIFICATION_FROM_EMAIL + NOTIFICATION_TO_EMAILS for email fallback")
         results["config"] = "WARN"
 
     results["config"] = results.get("config", "PASS")
@@ -108,18 +111,35 @@ def run_tests(read_only: bool = False) -> dict:
         _print_summary(results)
         return results
 
-    # 4. Send test
+    # 4. Send test — webhook primary, email fallback
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
-    if NOTIFICATION_FROM_EMAIL and NOTIFICATION_TO_EMAILS:
-        print("\n4. Send test notification (Graph API email)")
+    if TEAMS_INCOMING_WEBHOOK_URL:
+        wtype = "O365 connector" if "webhook.office.com" in TEAMS_INCOMING_WEBHOOK_URL \
+                else "Logic App" if "logic.azure.com" in TEAMS_INCOMING_WEBHOOK_URL \
+                else "Workflows"
+        print(f"\n4. Send test notification (primary: Teams webhook via {wtype})")
+        msg = (
+            f"FTF Estimate Bot -- Connection Test | {now_str} | "
+            f"Teams channel posting confirmed via {wtype}. "
+            f"Type APPROVE <order_id> or REJECT <order_id> <reason> to action estimates."
+        )
+        try:
+            result = send_channel_message(msg, subject="FTF Bot -- Connection Test")
+            print(f"   {PASS} Message sent via {result.get('method')}")
+            print("   -> Check FTF-Approvals channel in Teams now")
+            results["send"] = "PASS"
+        except Exception as exc:
+            print(f"   {FAIL} Webhook send failed: {exc}")
+            print("   -> Check Logic App is saved and Teams action is configured")
+            results["send"] = f"FAIL: {exc}"
+
+    elif NOTIFICATION_FROM_EMAIL and NOTIFICATION_TO_EMAILS:
+        print("\n4. Send test notification (fallback: Graph API email — no webhook set)")
         html = (
             f"<h3>FTF Estimate Bot -- Connection Test</h3>"
-            f"<p>Graph API email verified at {now_str}.</p>"
-            f"<p>The bot can send approval notifications via email.<br>"
-            f"Robert/Ryan: type <code>APPROVE &lt;order_id&gt;</code> or "
-            f"<code>REJECT &lt;order_id&gt; reason</code> in the FTF-Approvals Teams channel.</p>"
-            f"<p><i>You can delete this email.</i></p>"
+            f"<p>Email fallback verified at {now_str}.</p>"
+            f"<p>Set TEAMS_INCOMING_WEBHOOK_URL in .env to enable Teams channel posting.</p>"
         )
         try:
             result = send_email_notification(html, subject="FTF Bot -- Connection Test")
@@ -128,26 +148,6 @@ def run_tests(read_only: bool = False) -> dict:
             results["send"] = "PASS"
         except Exception as exc:
             print(f"   {FAIL} Email send failed: {exc}")
-            print("   -> Check Mail.Send Application permission + admin consent on Azure AD app")
-            print("      portal.azure.com -> App registrations -> FTF Estimate Bot -> API permissions")
-            results["send"] = f"FAIL: {exc}"
-
-    elif TEAMS_INCOMING_WEBHOOK_URL:
-        wtype = "O365 connector" if "webhook.office.com" in TEAMS_INCOMING_WEBHOOK_URL \
-                else "Logic App" if "logic.azure.com" in TEAMS_INCOMING_WEBHOOK_URL \
-                else "Workflows"
-        print(f"\n4. Send test notification (webhook: {wtype})")
-        html = (
-            f"<p><b>FTF Estimate Bot -- Connection Test</b></p>"
-            f"<p>Webhook verified at {now_str}. Type: {wtype}.</p>"
-        )
-        try:
-            result = send_channel_message(html, subject="FTF Bot -- Connection Test")
-            print(f"   {PASS} Message sent via {result.get('method')}")
-            print("   -> Check FTF-Approvals channel in Teams")
-            results["send"] = "PASS"
-        except Exception as exc:
-            print(f"   {FAIL} Webhook send failed: {exc}")
             results["send"] = f"FAIL: {exc}"
 
     else:
