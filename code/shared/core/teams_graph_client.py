@@ -337,15 +337,20 @@ def get_recent_messages(limit: int = 50) -> list[dict]:
         app_ref  = from_obj.get("application") or {}
         user_ref = from_obj.get("user") or {}
 
-        # Skip messages posted by this app (workflow-posted messages appear as app)
-        if app_ref.get("id") == TEAMS_APP_ID:
+        # Skip ALL app/bot messages — only human user messages can issue commands.
+        # This prevents the poller from reading back our own bot notifications
+        # (e.g. Logic App / Workflows posts that contain "APPROVE" in the text).
+        if app_ref:
             continue
-        # Also skip system/bot messages with no meaningful text
+        # Skip system messages (joins, topic changes, etc.)
         if msg.get("messageType") != "message":
             continue
+        # Skip if no real user sender
+        if not user_ref.get("id"):
+            continue
 
-        sender_name  = user_ref.get("displayName") or app_ref.get("displayName") or "Unknown"
-        sender_is_app = bool(app_ref)
+        sender_name  = user_ref.get("displayName") or "Unknown"
+        sender_is_app = False
 
         raw_body = (msg.get("body") or {}).get("content", "")
         plain    = _clean_message_body(raw_body)
