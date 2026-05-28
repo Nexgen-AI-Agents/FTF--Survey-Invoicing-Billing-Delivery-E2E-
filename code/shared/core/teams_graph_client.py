@@ -123,24 +123,16 @@ def _read_headers() -> dict:
 #      Retired by Microsoft Aug 2024; returns 403 in most tenants.
 #      Kept for reference only.
 
-def _build_logic_app_payload(plain: str, subject: str) -> dict:
+def _build_logic_app_payload(text: str, subject: str) -> dict:
     """HTML payload for Azure Logic App HTTP trigger relay.
 
-    Teams renders the messageBody as HTML, so we convert plain text to HTML:
-    - Subject line is bold
-    - Newlines become <br> tags
-    - Blank lines become paragraph breaks
+    Teams renders messageBody as HTML. We:
+    - Prepend bold subject header
+    - Replace newlines with <br> (existing HTML tags like <strong> pass through)
     """
-    html_parts: list[str] = []
-    if subject:
-        html_parts.append(f"<strong>{subject}</strong><br><br>")
-    for line in plain.split("\n"):
-        stripped = line.strip()
-        if stripped:
-            html_parts.append(f"{stripped}<br>")
-        else:
-            html_parts.append("<br>")
-    return {"subject": subject, "text": "".join(html_parts)}
+    header = f"<strong>{subject}</strong><br><br>" if subject else ""
+    body   = text.replace("\n", "<br>")
+    return {"subject": subject, "text": header + body}
 
 
 def _build_adaptive_card_payload(plain: str, subject: str) -> dict:
@@ -273,9 +265,8 @@ def _send_via_webhook(text_or_html: str, subject: str = "") -> dict:
     wtype = _detect_webhook_type(TEAMS_INCOMING_WEBHOOK_URL)
 
     if wtype == "logic_app":
-        # Preserve newlines — _build_logic_app_payload converts them to <br> for Teams HTML
+        # Preserve HTML (bold etc.) and newlines — only strip @mention tags
         text = _MENTION_RE.sub("", text_or_html)
-        text = _HTML_RE.sub("", text)
         payload = _build_logic_app_payload(text, subject)
     else:
         # Adaptive Card / O365 connector: collapse to plain text
