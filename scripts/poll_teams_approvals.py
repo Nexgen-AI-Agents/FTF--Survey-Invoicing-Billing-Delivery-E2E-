@@ -23,6 +23,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code", "shared"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))  # for sprint_03_human_gate
 
 from core.db import get_all_awaiting_orders, get_all_flagged_orders
 from core.exceptions import AgentError

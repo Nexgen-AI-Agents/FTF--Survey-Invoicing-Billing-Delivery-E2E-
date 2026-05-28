@@ -304,7 +304,6 @@ def build_digest_html(orders: list[dict], ftf_order_url: str) -> str:
       order_id, service_type, estimate_amount, flag_reason, status, flagged_at
     ftf_order_url — base URL for clickable order links
     """
-    from datetime import datetime as _dt
     now = datetime.now(timezone.utc)
 
     rows_html = ""
@@ -315,7 +314,7 @@ def build_digest_html(orders: list[dict], ftf_order_url: str) -> str:
         age_str    = ""
         if rec.get("flagged_at"):
             try:
-                fa = _dt.fromisoformat(str(rec["flagged_at"]))
+                fa = datetime.fromisoformat(str(rec["flagged_at"]))
                 if fa.tzinfo is None:
                     fa = fa.replace(tzinfo=timezone.utc)
                 age_h   = int((now - fa).total_seconds() / 3600)

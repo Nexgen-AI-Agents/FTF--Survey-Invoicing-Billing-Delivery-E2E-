@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from config.models import HUMAN_GATE_MODEL
 from config.settings import APPROVAL_TIMEOUT_HOURS, FTF_ORDER_URL
 from core.db import (
-    get_all_awaiting_orders, get_all_flagged_orders, get_flagged_order,
+    get_all_awaiting_orders, get_all_flagged_orders,
     get_order_by_id, get_overdue_approvals, log_decision, save_order_state,
 )
 from core.exceptions import AgentError
@@ -272,7 +272,7 @@ def main(argv=None) -> None:
 
     if args.run:
         result = run()
-        print(f"notified={result['order_id']}" if result else "no flagged orders")
+        print(f"digest sent: flagged={result['flagged']} awaiting={result['awaiting']}" if result else "no flagged orders")
     elif args.approve:
         result = process_approval_reply(args.approve, "approve")
         print(f"approved={result['order_id']}")
