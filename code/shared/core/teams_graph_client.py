@@ -124,8 +124,23 @@ def _read_headers() -> dict:
 #      Kept for reference only.
 
 def _build_logic_app_payload(plain: str, subject: str) -> dict:
-    """Plain JSON for Azure Logic App HTTP trigger relay."""
-    return {"subject": subject, "text": plain}
+    """HTML payload for Azure Logic App HTTP trigger relay.
+
+    Teams renders the messageBody as HTML, so we convert plain text to HTML:
+    - Subject line is bold
+    - Newlines become <br> tags
+    - Blank lines become paragraph breaks
+    """
+    html_parts: list[str] = []
+    if subject:
+        html_parts.append(f"<strong>{subject}</strong><br><br>")
+    for line in plain.split("\n"):
+        stripped = line.strip()
+        if stripped:
+            html_parts.append(f"{stripped}<br>")
+        else:
+            html_parts.append("<br>")
+    return {"subject": subject, "text": "".join(html_parts)}
 
 
 def _build_adaptive_card_payload(plain: str, subject: str) -> dict:
@@ -255,17 +270,22 @@ def send_channel_message(text_or_html: str, subject: str = "") -> dict:
 
 def _send_via_webhook(text_or_html: str, subject: str = "") -> dict:
     """Internal: post via configured incoming webhook."""
-    plain = _MENTION_RE.sub(" ", text_or_html)
-    plain = _HTML_RE.sub(" ", plain)
-    plain = " ".join(plain.split())
+    wtype = _detect_webhook_type(TEAMS_INCOMING_WEBHOOK_URL)
 
-    wtype   = _detect_webhook_type(TEAMS_INCOMING_WEBHOOK_URL)
     if wtype == "logic_app":
-        payload = _build_logic_app_payload(plain, subject)
-    elif wtype == "o365_connector":
-        payload = _build_o365_payload(plain, subject)
+        # Preserve newlines — _build_logic_app_payload converts them to <br> for Teams HTML
+        text = _MENTION_RE.sub("", text_or_html)
+        text = _HTML_RE.sub("", text)
+        payload = _build_logic_app_payload(text, subject)
     else:
-        payload = _build_adaptive_card_payload(plain, subject)
+        # Adaptive Card / O365 connector: collapse to plain text
+        plain = _MENTION_RE.sub(" ", text_or_html)
+        plain = _HTML_RE.sub(" ", plain)
+        plain = " ".join(plain.split())
+        if wtype == "o365_connector":
+            payload = _build_o365_payload(plain, subject)
+        else:
+            payload = _build_adaptive_card_payload(plain, subject)
 
     try:
         r = httpx.post(TEAMS_INCOMING_WEBHOOK_URL, json=payload, timeout=20.0)
