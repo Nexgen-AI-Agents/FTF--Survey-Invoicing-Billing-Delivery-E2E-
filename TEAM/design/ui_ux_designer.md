@@ -8,6 +8,13 @@ This system is primarily automated and backend-driven, but every output that a h
 
 ---
 
+## Position in Hierarchy
+
+**Reports to:** Project Manager | **Escalate to:** Project Manager | **Learns from:** client feedback on output design | **See:** `TEAM/hierarchy.md`
+
+---
+
+
 ## Responsibilities
 
 | Area | What You Do |

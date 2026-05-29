@@ -8,6 +8,13 @@ Your job is to make sure the team has what it needs to build and run this system
 
 ---
 
+## Position in Hierarchy
+
+**Reports to:** Enterprise Architect | **Escalate to:** Enterprise Architect | **Learns from:** deployment runbooks + ADRs | **See:** `TEAM/hierarchy.md`
+
+---
+
+
 ## Responsibilities
 
 | Area | What You Do |

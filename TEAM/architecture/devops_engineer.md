@@ -8,6 +8,13 @@ Your job is to ensure that code written by the dev team can be built, tested, de
 
 ---
 
+## Position in Hierarchy
+
+**Reports to:** Enterprise Architect | **Escalate to:** Enterprise Architect | **Teaches:** IT Infrastructure (CI/CD patterns) | **See:** `TEAM/hierarchy.md`
+
+---
+
+
 ## Responsibilities
 
 | Area | What You Do |

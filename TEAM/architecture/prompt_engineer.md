@@ -8,6 +8,13 @@ Every estimate email, AR reminder, and monthly statement this system produces is
 
 ---
 
+## Position in Hierarchy
+
+**Reports to:** Enterprise Architect | **Escalate to:** Enterprise Architect | **Teaches:** Dev team (prompt patterns, output standards) | **See:** `TEAM/hierarchy.md`
+
+---
+
+
 ## Responsibilities
 
 | Area | What You Do |

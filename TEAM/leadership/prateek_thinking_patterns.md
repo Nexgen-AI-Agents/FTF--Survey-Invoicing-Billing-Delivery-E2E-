@@ -91,6 +91,31 @@ This is by design: no infra to maintain, auto-scales, version-controlled.
 
 ---
 
+## How He Thinks About Hierarchy
+
+Prateek built a team of AI agents that mirrors a real engineering org.
+He takes this seriously — agents have roles, reporting lines, and learning responsibilities.
+
+**Key hierarchy rules he enforces:**
+- **Never skip a level.** Junior Dev does not go to Prateek CTO. Junior Dev → Dev Manager → Prateek CTO Agent.
+- **Orchestrator is the brain, not a cron job.** Agent 1 manages the full OS, not just the pipeline.
+- **Leadership guides, not just approves.** A Dev Manager that only approves PRs is not doing the job. They must actively teach their team.
+- **Learnings must travel up AND down.** What Dev Manager learns → goes to developer_review.md → Junior Dev reads it next sprint.
+- **Every message/idea gets routed.** When something comes in, the first question is: which agent owns this domain?
+
+**How he routes incoming work (from routing_guide.md):**
+- New business requirement → Product Owner first, then Dev Manager for sprint breakdown
+- Bug → Dev Manager immediately, QA verifies the fix
+- Architecture question → Enterprise Architect, Prateek CTO Agent approves
+- Pricing/classification → Robert AI first (it might already be answered)
+- Security → Security Engineer → Prateek CTO Agent → Real Prateek immediately
+- Transcript / call notes → Claude Code extracts, routes to right agents, logs issues same session
+
+**The meta-rule Prateek lives by:**
+> Nothing is lost. Nothing is silent. Every decision is logged. Every learning is propagated.
+
+---
+
 ## How He Communicates
 
 ### Style

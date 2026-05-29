@@ -1,22 +1,31 @@
 """
-agent_01_orchestrator.py — Estimate Generation Loop Orchestrator
+agent_01_orchestrator.py — The Brain of the FTF Agentic AI OS
 
-Runs the full estimate pipeline once per invocation (GitHub Actions calls this
-every 60 minutes via estimate_generation.yml).
+HIERARCHY ROLE:
+    Reports to    : Real Prateek (human) via GitHub Actions / Claude Code
+    Manages       : All pipeline agents (2–18)
+    Guided by     : TEAM/orchestrator/orchestrator_brain.md
+    Routes work   : See TEAM/orchestrator/routing_guide.md
+    Never skips   : Failure → Teams alert → log → escalate
 
-Pipeline sequence:
+MODE 1 — Pipeline Runner (AUTO, GitHub Actions 24/7):
     Agent 12 — Email Monitor  (check info@ for customer quote approvals; quote→pending)
-    Agent 2  — Monitor        (detect new FTF orders)
-    Agent 3  — Classifier     (14 flag checks)
-    Agent 4  — Human Gate     (route flagged orders)
-    Agent 5  — Pricing        (county-based + commercial pricing)
-    Agent 6  — Writer         (generate estimate email)
-    Agent 7  — Reviewer       (4-check validation)
-    Agent 8  — Sender         (send via FTF Books, 8 AM–6 PM ET only)
-    Agent 9  — Reporter       (daily Teams digest — runs once at end)
+    Agent 2  — Monitor        (detect new FTF orders in Quote status)
+    Agent 3  — Classifier     (9 flag triggers: competitor, ALTA, Monroe, VE zone, etc.)
+    Agent 4  — Human Gate     (route flagged → Teams; APPROVE/REJECT/DEFER commands)
+    Agent 5  — Pricing        (county production avg + B2B multiplier + complexity if enabled)
+    Agent 6  — Writer         (estimate email — FL PSM persona + change order clause)
+    Agent 7  — Reviewer       (self-correction up to 3 loops)
+    Agent 8  — Sender         (send via FTF Books, 8 AM–6 PM ET only, 6–13 min delay)
+    Agent 9  — Reporter       (daily Teams digest at end of cycle)
 
-AR Loop (Agents 10–14) and Statement Loop (Agents 15–17) are stubbed here;
-they have their own GitHub Actions workflows and will be wired in Sprint 7/8.
+MODE 2 — Runtime Brain (routes non-pipeline work to the right agent/team):
+    See TEAM/orchestrator/routing_guide.md for dispatch logic.
+
+AR Loop   : Agents 10–11 (ar_followup.yml — separate workflow)
+Statements: Agents 15–17 (monthly_statements.yml — separate workflow)
+Memory    : Agent 13 Pricing Trainer + Memory Manager + Dream Processor (nightly)
+Analysis  : Agent 18 Business Analyst (on-demand)
 """
 
 import os
@@ -90,13 +99,32 @@ def _run_step(label: str, fn) -> bool:
         raise AgentError(f"{label} failed: {exc}") from exc
 
 
-def run_estimate_loop() -> dict:
+def _alert_on_anomaly(summary: dict) -> None:
+    """Post a Teams alert if the pipeline cycle shows concerning patterns.
+
+    Hierarchy rule: Orchestrator never silently fails. Any anomaly that the
+    human team should know about gets surfaced immediately.
     """
-    Execute one full cycle of the estimate generation pipeline.
+    from core.teams_graph_client import send_channel_message
+    try:
+        if summary["errors"] >= 3:
+            send_channel_message(
+                f"<h3>&#9888; Orchestrator — {summary['errors']} errors in estimate loop cycle</h3>"
+                f"<p>Multiple pipeline steps failed this cycle. Check logs.</p>",
+                subject="Orchestrator: multiple errors"
+            )
+    except Exception:
+        pass  # notification failure must not crash the loop itself
 
-    Processes one order per stage per call — the GitHub Actions cron runs this
-    every 60 minutes so the pipeline advances across cycles.
 
+def run_estimate_loop() -> dict:
+    """Execute one full cycle of the estimate generation pipeline.
+
+    Hierarchy: Orchestrator (Agent 1) manages pipeline agents 2–9 and 12.
+    Each step is a delegation to a specialist agent. Failures are logged,
+    counted, and surfaced — never silently dropped.
+
+    GitHub Actions runs this every 60 minutes via estimate_generation.yml.
     Returns a summary dict with counts of actions taken.
     """
     _init_agents()
@@ -168,11 +196,17 @@ def run_estimate_loop() -> dict:
         output_summary=str(summary),
     )
     log.info("estimate loop complete duration=%.1fs summary=%s", duration_s, summary)
+    _alert_on_anomaly(summary)
     return summary
 
 
 def run() -> dict:
-    """Entry point called by GitHub Actions and tests."""
+    """Entry point called by GitHub Actions and tests.
+
+    Hierarchy: this is the Orchestrator's main activation point.
+    GitHub Actions (estimate_generation.yml) calls this every 60 min.
+    Real Prateek can also trigger via workflow_dispatch for manual runs.
+    """
     return run_estimate_loop()
 
 

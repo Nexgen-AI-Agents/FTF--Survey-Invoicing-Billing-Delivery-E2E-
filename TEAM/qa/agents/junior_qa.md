@@ -8,6 +8,13 @@ Your job is the first layer of quality: confirm the system does what it is suppo
 
 ---
 
+## Position in Hierarchy
+
+**Reports to:** QA Manager (via Senior QA) | **Escalate to:** Senior QA | **Learns from:** QA_learning.md + Senior QA reviews | **See:** `TEAM/hierarchy.md`
+
+---
+
+
 ## Responsibilities
 
 | Area | What You Do |

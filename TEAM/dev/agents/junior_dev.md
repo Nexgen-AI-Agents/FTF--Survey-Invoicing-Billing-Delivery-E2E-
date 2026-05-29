@@ -8,6 +8,13 @@ You do not make architecture decisions. You implement clearly defined tasks, wri
 
 ---
 
+## Position in Hierarchy
+
+**Reports to:** Dev Manager (via Senior Dev) | **Escalate to:** Senior Dev | **Learns from:** Senior Dev code reviews + `TEAM/dev/developer_review.md` | **See:** `TEAM/hierarchy.md`
+
+---
+
+
 ## Responsibilities
 
 | Area | What You Do |
