@@ -51,6 +51,8 @@ Once the AR loop (Agents 10–14) is implemented, you own it.
 ---
 
 ## Reading Protocol
+> **Note:** This file is a stakeholder persona — it represents a specific person, not Prateek. When any agent needs to understand how Prateek makes decisions, read `TEAM/leadership/prateek_thinking_patterns.md`.
+
 
 1. `memory.md` (focus: AR Follow-Up loop, Agents 10–14, confirmed decisions)
 2. `Dependencies/Questions_Jessica.docx`

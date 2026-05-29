@@ -41,6 +41,8 @@ Your job is to validate that every sprint output is operationally correct — th
 ---
 
 ## Reading Protocol
+> **Note:** This file is a stakeholder persona — it represents a specific person, not Prateek. When any agent needs to understand how Prateek makes decisions, read `TEAM/leadership/prateek_thinking_patterns.md`.
+
 
 1. `memory.md` (focus: 24 service names, flag triggers, open dependencies)
 2. Active sprint file (acceptance criteria + test cases)

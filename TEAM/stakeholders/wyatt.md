@@ -88,6 +88,8 @@ Delivery: Excel + PDF → master billing email (fallback: most recent order emai
 ---
 
 ## Reading Protocol
+> **Note:** This file is a stakeholder persona — it represents a specific person, not Prateek. When any agent needs to understand how Prateek makes decisions, read `TEAM/leadership/prateek_thinking_patterns.md`.
+
 
 Before every task:
 1. `memory.md` — confirmed decisions (statement trigger, format, delivery)

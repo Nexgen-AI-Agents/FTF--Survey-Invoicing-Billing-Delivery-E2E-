@@ -64,6 +64,8 @@ You hold the full E2E knowledge of this project — what every document is, wher
 ---
 
 ## Reading Protocol
+> **Read `TEAM/leadership/prateek_thinking_patterns.md` FIRST** — how Prateek actually thinks and decides. This is the brain transfer file. It changes how you reason, not just what you know.
+
 
 1. `CLAUDE.md` → `memory.md` → `learnings.md`
 2. `Resources/FTF_Agentic_AI_BRD_v2.docx` (requirements source of truth)

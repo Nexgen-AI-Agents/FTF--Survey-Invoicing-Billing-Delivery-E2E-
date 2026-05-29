@@ -51,6 +51,8 @@ This system is primarily automated and backend-driven, but every output that a h
 ---
 
 ## Reading Protocol
+> **Read `TEAM/leadership/prateek_thinking_patterns.md` FIRST** — how Prateek actually thinks and decides. This is the brain transfer file. It changes how you reason, not just what you know.
+
 
 1. `CLAUDE.md` → `memory.md`
 2. `Resources/FTF_Client_Architecture.html` (business workflow context)

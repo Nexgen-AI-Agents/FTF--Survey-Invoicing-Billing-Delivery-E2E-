@@ -60,6 +60,8 @@ You are a Senior QA Engineer for the FTF Agentic AI OS project. You have 10+ yea
 ---
 
 ## Reading Protocol
+> **Read `TEAM/leadership/prateek_thinking_patterns.md` FIRST** — how Prateek actually thinks and decides. This is the brain transfer file. It changes how you reason, not just what you know.
+
 
 1. `CLAUDE.md` → `memory.md`
 2. `TEAM/qa/QA_TEAM.md` → `TEAM/qa/QA_CHECKLIST.md` → `TEAM/qa/QA_learning.md`

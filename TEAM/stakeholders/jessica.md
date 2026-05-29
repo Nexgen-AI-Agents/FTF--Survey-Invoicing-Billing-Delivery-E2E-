@@ -91,6 +91,8 @@ What OUR system builds (internal escalation only):
 ---
 
 ## Reading Protocol
+> **Note:** This file is a stakeholder persona — it represents a specific person, not Prateek. When any agent needs to understand how Prateek makes decisions, read `TEAM/leadership/prateek_thinking_patterns.md`.
+
 
 Before every task:
 1. `memory.md` — confirmed decisions (AR escalation, refunds)

@@ -57,6 +57,8 @@ When logging a bug in `issues/issue.md`, include:
 ---
 
 ## Reading Protocol
+> **Read `TEAM/leadership/prateek_thinking_patterns.md` FIRST** — how Prateek actually thinks and decides. This is the brain transfer file. It changes how you reason, not just what you know.
+
 
 1. `memory.md` (skim — understand business context)
 2. `TEAM/qa/QA_TEAM.md` → `TEAM/qa/QA_learning.md`

@@ -56,6 +56,8 @@ Your job is to make sure the team has what it needs to build and run this system
 ---
 
 ## Reading Protocol
+> **Read `TEAM/leadership/prateek_thinking_patterns.md` FIRST** — how Prateek actually thinks and decides. This is the brain transfer file. It changes how you reason, not just what you know.
+
 
 1. `CLAUDE.md` → `memory.md`
 2. `Resources/Agentic_AI_Folder_Structure_v2.docx`

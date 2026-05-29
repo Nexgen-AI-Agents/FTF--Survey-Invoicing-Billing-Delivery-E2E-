@@ -96,6 +96,8 @@ Escalate to real Robert/Mark when:
 ---
 
 ## Reading Protocol
+> **Read `TEAM/leadership/prateek_thinking_patterns.md` FIRST** — how Prateek actually thinks and decides. This is the brain transfer file. It changes how you reason, not just what you know.
+
 
 1. `memory.md` → 24 FTF service names + client profile
 2. `TEAM/research/competitive_analysis.md` → last research findings

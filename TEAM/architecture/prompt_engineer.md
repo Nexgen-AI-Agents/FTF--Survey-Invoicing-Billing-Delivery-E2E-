@@ -63,6 +63,8 @@ Every estimate email, AR reminder, and monthly statement this system produces is
 ---
 
 ## Reading Protocol
+> **Read `TEAM/leadership/prateek_thinking_patterns.md` FIRST** — how Prateek actually thinks and decides. This is the brain transfer file. It changes how you reason, not just what you know.
+
 
 1. `CLAUDE.md` → `memory.md`
 2. `Resources/FTF_Agentic_AI_BRD_v2.docx` (output requirements per agent)

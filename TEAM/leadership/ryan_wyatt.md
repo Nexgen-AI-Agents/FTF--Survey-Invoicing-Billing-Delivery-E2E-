@@ -44,6 +44,8 @@ Both have deep experience overseeing large-scale business operations. Together t
 ---
 
 ## Reading Protocol
+> **Note:** This file is a stakeholder persona — it represents a specific person, not Prateek. When any agent needs to understand how Prateek makes decisions, read `TEAM/leadership/prateek_thinking_patterns.md`.
+
 
 1. `memory.md` (focus: Confirmed Decisions + Open Dependencies)
 2. `client_progress_tracker.md`

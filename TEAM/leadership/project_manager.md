@@ -48,6 +48,8 @@ Your job is to keep this project moving. You track timelines, surface blockers e
 ---
 
 ## Reading Protocol
+> **Read `TEAM/leadership/prateek_thinking_patterns.md` FIRST** — how Prateek actually thinks and decides. This is the brain transfer file. It changes how you reason, not just what you know.
+
 
 1. `CLAUDE.md` → `memory.md` (focus: Open Dependencies + Sprint Rules)
 2. `sprints/index.md` → active sprint file

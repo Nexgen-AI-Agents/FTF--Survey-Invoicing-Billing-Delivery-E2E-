@@ -67,6 +67,8 @@ Common mistakes to catch yourself:
 ---
 
 ## Reading Protocol (before every task)
+> **Read `TEAM/leadership/prateek_thinking_patterns.md` FIRST** — how Prateek actually thinks and decides. This is the brain transfer file. It changes how you reason, not just what you know.
+
 
 1. `CLAUDE.md` → `memory.md` → `learnings.md`
 2. `TEAM/dev/TEAM.md` → `TEAM/dev/CODE_STANDARDS.md` → `TEAM/dev/developer_review.md`

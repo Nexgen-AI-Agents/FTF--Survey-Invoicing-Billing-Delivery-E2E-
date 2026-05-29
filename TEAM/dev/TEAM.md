@@ -47,6 +47,8 @@ No code is shipped without Manager QA sign-off.
 ---
 
 ## Reading Protocol (every agent, every task)
+> **Read `TEAM/leadership/prateek_thinking_patterns.md` FIRST** — how Prateek actually thinks and decides. This is the brain transfer file. It changes how you reason, not just what you know.
+
 
 Read in this order before starting any work:
 
