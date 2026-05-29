@@ -193,8 +193,10 @@ Full rules, commands, edge cases, and state machine documented in:
 | `docs/feedback_sprint_dependencies.md` | Sprint dependency rule — before every sprint, surface all blockers |
 | `Resources/FTF_Agentic_AI_BRD_v2.docx` | Full business requirements document v2 |
 | `Resources/Agentic_AI_Folder_Structure_v2.docx` | Codebase folder structure blueprint |
-| `Resources/FTF_Technical_Architecture.html` | 17-agent system diagram (dev view) |
-| `Resources/FTF_Client_Architecture.html` | Business workflow diagram (client view) |
+| `architecture/tech architecture/FTF_Technical_Architecture_v1.html` | Technical architecture v1 (Sprint 0-6 era — original) |
+| `architecture/tech architecture/FTF_Technical_Architecture_v2.html` | **Technical architecture v2 (Sprint 0-11 — current)** — 19 agents, GitHub Actions 24/7, Agent 12, DEFER, sprint status bar |
+| `architecture/client architecture/FTF_Client_Architecture_v1.html` | Client architecture v1 (Sprint 0-6 era — original) |
+| `architecture/client architecture/FTF_Client_Architecture_v2.html` | **Client architecture v2 (Sprint 0-11 — current)** — dual entry paths, DEFER branch, 24/7 badge, hard rules panel |
 | `Resources/FTF_API_Documentation.xlsx` | All 12 API endpoints, pricing, auth |
 | `Resources/FTF_Agile_Delivery_Plan.xlsx` | 14-sprint delivery timeline (Weeks 1–14) |
 | `Resources/FTF_Dependencies_For_Stakeholders.docx` | 38 dependency items + stakeholder answers |

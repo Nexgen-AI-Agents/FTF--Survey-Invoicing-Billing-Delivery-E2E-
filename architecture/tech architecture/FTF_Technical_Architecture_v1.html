@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>FTF Agentic AI OS — Technical Architecture</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0F0F1A; font-family:Arial,sans-serif; display:flex; flex-direction:column; align-items:center; padding:20px; min-height:100vh; }
+h1 { color:#A5B4FC; font-size:22px; margin-bottom:4px; }
+p { color:#818CF8; font-size:13px; margin-bottom:20px; }
+.canvas { background:#0F172A; border:1px solid #1E293B; border-radius:12px; padding:20px; overflow-x:auto; }
+</style>
+</head>
+<body>
+<h1>FTF Agentic AI OS — Technical Architecture</h1>
+<p>17 Agents · 3 Active Loops · 5 APIs · AUTO + MANUAL Modes · Phase 1: FTF Only</p>
+<div class="canvas">
+<svg viewBox="0 0 1360 960" xmlns="http://www.w3.org/2000/svg" width="1360" height="960">
+<defs>
+  <marker id="a1" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#4F46E5"/></marker>
+  <marker id="a2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#7C3AED"/></marker>
+  <marker id="a3" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#059669"/></marker>
+</defs>
+<!-- BG -->
+<rect width="1360" height="960" fill="#0F172A"/>
+<!-- Title -->
+<text x="680" y="26" text-anchor="middle" fill="#E2E8F0" font-size="17" font-weight="bold">FTF Agentic AI OS — Technical Architecture</text>
+<text x="680" y="44" text-anchor="middle" fill="#818CF8" font-size="11">17 Agents · 3 Loops · 5 APIs · AUTO + MANUAL Modes</text>
+<line x1="16" y1="52" x2="1344" y2="52" stroke="#4F46E5" stroke-width="1" opacity="0.5"/>
+
+<!-- ── LOOP 1 ── -->
+<rect x="12" y="60" width="740" height="320" rx="8" fill="#1E1B4B" stroke="#4F46E5" stroke-width="1.5"/>
+<rect x="12" y="60" width="740" height="26" rx="8" fill="#4F46E5"/>
+<rect x="12" y="78" width="740" height="8" fill="#4F46E5"/>
+<text x="22" y="76" fill="white" font-size="11" font-weight="bold">LOOP 1 — ESTIMATE GENERATION  (every 60 min)  |  Agents 1–9</text>
+
+<!-- Row 1 agents -->
+<rect x="26" y="96" width="96" height="48" rx="5" fill="#312E81" stroke="#6366F1" stroke-width="1"/>
+<text x="74" y="113" text-anchor="middle" fill="#A5B4FC" font-size="8" font-weight="bold">AGENT 2</text>
+<text x="74" y="126" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Monitor</text>
+<text x="74" y="138" text-anchor="middle" fill="#818CF8" font-size="7">FTF CRM</text>
+
+<rect x="134" y="96" width="96" height="48" rx="5" fill="#312E81" stroke="#6366F1" stroke-width="1"/>
+<text x="182" y="113" text-anchor="middle" fill="#A5B4FC" font-size="8" font-weight="bold">AGENT 3</text>
+<text x="182" y="126" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Classifier</text>
+<text x="182" y="138" text-anchor="middle" fill="#818CF8" font-size="7">CRM+FEMA+Claude</text>
+
+<rect x="242" y="96" width="96" height="48" rx="5" fill="#4C1D95" stroke="#7C3AED" stroke-width="1.5"/>
+<text x="290" y="113" text-anchor="middle" fill="#C4B5FD" font-size="8" font-weight="bold">AGENT 4</text>
+<text x="290" y="126" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Human Gate</text>
+<text x="290" y="138" text-anchor="middle" fill="#C4B5FD" font-size="7">8 flag triggers</text>
+
+<rect x="350" y="96" width="96" height="48" rx="5" fill="#312E81" stroke="#6366F1" stroke-width="1"/>
+<text x="398" y="113" text-anchor="middle" fill="#A5B4FC" font-size="8" font-weight="bold">AGENT 5</text>
+<text x="398" y="126" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Pricing Engine</text>
+<text x="398" y="138" text-anchor="middle" fill="#818CF8" font-size="7">SalesFlow API</text>
+
+<rect x="458" y="96" width="96" height="48" rx="5" fill="#312E81" stroke="#6366F1" stroke-width="1"/>
+<text x="506" y="113" text-anchor="middle" fill="#A5B4FC" font-size="8" font-weight="bold">AGENT 6</text>
+<text x="506" y="126" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Writer</text>
+<text x="506" y="138" text-anchor="middle" fill="#818CF8" font-size="7">Claude API</text>
+
+<rect x="566" y="96" width="96" height="48" rx="5" fill="#312E81" stroke="#6366F1" stroke-width="1"/>
+<text x="614" y="113" text-anchor="middle" fill="#A5B4FC" font-size="8" font-weight="bold">AGENT 7</text>
+<text x="614" y="126" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Reviewer</text>
+<text x="614" y="138" text-anchor="middle" fill="#818CF8" font-size="7">max 3 loops</text>
+<path d="M662 101 Q700 88 700 120 Q700 145 662 145" fill="none" stroke="#7C3AED" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#a1)"/>
+<text x="706" y="122" fill="#C4B5FD" font-size="7">retry</text>
+
+<rect x="26" y="162" width="96" height="48" rx="5" fill="#164E63" stroke="#0E7490" stroke-width="1"/>
+<text x="74" y="179" text-anchor="middle" fill="#67E8F9" font-size="8" font-weight="bold">AGENT 8</text>
+<text x="74" y="192" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Sender</text>
+<text x="74" y="205" text-anchor="middle" fill="#67E8F9" font-size="7">6-13 min delay</text>
+
+<rect x="134" y="162" width="96" height="48" rx="5" fill="#312E81" stroke="#6366F1" stroke-width="1"/>
+<text x="182" y="179" text-anchor="middle" fill="#A5B4FC" font-size="8" font-weight="bold">AGENT 9</text>
+<text x="182" y="192" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Reporter</text>
+<text x="182" y="205" text-anchor="middle" fill="#818CF8" font-size="7">MS Teams+Email</text>
+
+<rect x="250" y="164" width="488" height="44" rx="5" fill="#1E1B4B" stroke="#6366F1" stroke-width="1.5"/>
+<text x="494" y="183" text-anchor="middle" fill="#A5B4FC" font-size="8" font-weight="bold">AGENT 1 — Orchestrator</text>
+<text x="494" y="199" text-anchor="middle" fill="white" font-size="9">Master controller · entry point for AUTO and MANUAL modes</text>
+
+<!-- Loop1 arrows -->
+<line x1="122" y1="120" x2="132" y2="120" stroke="#4F46E5" stroke-width="1.5" marker-end="url(#a1)"/>
+<line x1="230" y1="120" x2="240" y2="120" stroke="#4F46E5" stroke-width="1.5" marker-end="url(#a1)"/>
+<line x1="338" y1="120" x2="348" y2="120" stroke="#4F46E5" stroke-width="1.5" marker-end="url(#a1)"/>
+<line x1="446" y1="120" x2="456" y2="120" stroke="#4F46E5" stroke-width="1.5" marker-end="url(#a1)"/>
+<line x1="554" y1="120" x2="564" y2="120" stroke="#4F46E5" stroke-width="1.5" marker-end="url(#a1)"/>
+
+<!-- Change order clause -->
+<rect x="26" y="224" width="712" height="26" rx="4" fill="#064E3B" stroke="#10B981" stroke-width="1"/>
+<text x="382" y="241" text-anchor="middle" fill="white" font-size="9" font-weight="bold">⚖  Change Order Clause — Agent 6 appends · Agent 7 verifies · stored in knowledge_base/change_order_clause.txt</text>
+
+<!-- Flag triggers -->
+<rect x="26" y="258" width="712" height="30" rx="4" fill="#1F1233" stroke="#7C3AED" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="36" y="272" fill="#C4B5FD" font-size="8" font-weight="bold">FLAG TRIGGERS (Agent 4):</text>
+<text x="36" y="283" fill="#A5B4FC" font-size="8">1.Competitor  2.Unknown service  3.Complex legal desc  4.Unusual property  5.New customer  6.Reviewer fail  7.ALTA Table A  8.Other Services</text>
+
+<!-- Post-approval note -->
+<rect x="26" y="296" width="712" height="22" rx="4" fill="#312E81" stroke="#4F46E5" stroke-width="0.5"/>
+<text x="382" y="311" text-anchor="middle" fill="#A5B4FC" font-size="8">Post-approval: AI auto-sends — no manual click needed  ·  Alerts via MS Teams + Email  ·  FEMA: AI auto-adds Elevation Cert if flood zone</text>
+
+<!-- ── LOOP 2 ── -->
+<rect x="12" y="390" width="740" height="155" rx="8" fill="#1A0533" stroke="#7C3AED" stroke-width="1.5"/>
+<rect x="12" y="390" width="740" height="26" rx="8" fill="#6D28D9"/>
+<rect x="12" y="408" width="740" height="8" fill="#6D28D9"/>
+<text x="22" y="406" fill="white" font-size="11" font-weight="bold">LOOP 2 — AR FOLLOW-UP  (daily)  |  Agents 10–14</text>
+
+<rect x="26" y="420" width="108" height="48" rx="5" fill="#2D1B69" stroke="#7C3AED" stroke-width="1"/>
+<text x="80" y="437" text-anchor="middle" fill="#C4B5FD" font-size="8" font-weight="bold">AGENT 10</text>
+<text x="80" y="450" text-anchor="middle" fill="white" font-size="9" font-weight="bold">AR Scanner</text>
+<text x="80" y="463" text-anchor="middle" fill="#C4B5FD" font-size="7">FTF Books</text>
+
+<rect x="148" y="420" width="108" height="48" rx="5" fill="#2D1B69" stroke="#7C3AED" stroke-width="1"/>
+<text x="202" y="437" text-anchor="middle" fill="#C4B5FD" font-size="8" font-weight="bold">AGENT 11</text>
+<text x="202" y="450" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Scheduler</text>
+<text x="202" y="463" text-anchor="middle" fill="#C4B5FD" font-size="7">Reminder timing</text>
+
+<rect x="270" y="420" width="108" height="48" rx="5" fill="#2D1B69" stroke="#7C3AED" stroke-width="1"/>
+<text x="324" y="437" text-anchor="middle" fill="#C4B5FD" font-size="8" font-weight="bold">AGENT 12</text>
+<text x="324" y="450" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Reminder Writer</text>
+<text x="324" y="463" text-anchor="middle" fill="#C4B5FD" font-size="7">Claude API</text>
+
+<rect x="392" y="420" width="108" height="48" rx="5" fill="#2D1B69" stroke="#7C3AED" stroke-width="1"/>
+<text x="446" y="437" text-anchor="middle" fill="#C4B5FD" font-size="8" font-weight="bold">AGENT 13</text>
+<text x="446" y="450" text-anchor="middle" fill="white" font-size="9" font-weight="bold">AR Reviewer</text>
+<text x="446" y="463" text-anchor="middle" fill="#C4B5FD" font-size="7">FTF Books</text>
+
+<rect x="514" y="420" width="108" height="48" rx="5" fill="#2D1B69" stroke="#7C3AED" stroke-width="1"/>
+<text x="568" y="437" text-anchor="middle" fill="#C4B5FD" font-size="8" font-weight="bold">AGENT 14</text>
+<text x="568" y="450" text-anchor="middle" fill="white" font-size="9" font-weight="bold">AR Sender</text>
+<text x="568" y="463" text-anchor="middle" fill="#C4B5FD" font-size="7">90d escalation</text>
+
+<line x1="134" y1="444" x2="146" y2="444" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#a2)"/>
+<line x1="256" y1="444" x2="268" y2="444" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#a2)"/>
+<line x1="378" y1="444" x2="390" y2="444" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#a2)"/>
+<line x1="500" y1="444" x2="512" y2="444" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#a2)"/>
+
+<rect x="26" y="477" width="712" height="22" rx="4" fill="#2D1B69" stroke="#7C3AED" stroke-width="0.5"/>
+<text x="382" y="492" text-anchor="middle" fill="#C4B5FD" font-size="8">5d before · 2-3d before · due date · every 3d after  ·  90d+ escalate to Ryan via MS Teams  ·  Jessica: Recording 10</text>
+
+<rect x="26" y="506" width="712" height="22" rx="4" fill="#2D1B69" stroke="#7C3AED" stroke-width="0.5"/>
+<text x="382" y="521" text-anchor="middle" fill="#A5B4FC" font-size="8">Refunds: manual only (Jessica/Bobby)  ·  Exclusions list: Jessica provides  ·  Scope: FTF Books only Phase 1</text>
+
+<!-- ── LOOP 3 ── -->
+<rect x="12" y="555" width="740" height="135" rx="8" fill="#052E16" stroke="#059669" stroke-width="1.5"/>
+<rect x="12" y="555" width="740" height="26" rx="8" fill="#065F46"/>
+<rect x="12" y="573" width="740" height="8" fill="#065F46"/>
+<text x="22" y="571" fill="white" font-size="11" font-weight="bold">LOOP 3 — MONTHLY STATEMENTS  (1st of month)  |  Agents 15–17</text>
+
+<rect x="26" y="585" width="194" height="48" rx="5" fill="#064E3B" stroke="#059669" stroke-width="1"/>
+<text x="123" y="602" text-anchor="middle" fill="#6EE7B7" font-size="8" font-weight="bold">AGENT 15 — Statement Generator</text>
+<text x="123" y="615" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Compile B2B orders</text>
+<text x="123" y="628" text-anchor="middle" fill="#6EE7B7" font-size="7">FTF Books · Claude API</text>
+
+<rect x="234" y="585" width="194" height="48" rx="5" fill="#064E3B" stroke="#059669" stroke-width="1"/>
+<text x="331" y="602" text-anchor="middle" fill="#6EE7B7" font-size="8" font-weight="bold">AGENT 16 — Statement Reviewer</text>
+<text x="331" y="615" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Validate accuracy</text>
+<text x="331" y="628" text-anchor="middle" fill="#6EE7B7" font-size="7">FTF Books · Claude API</text>
+
+<rect x="442" y="585" width="194" height="48" rx="5" fill="#064E3B" stroke="#059669" stroke-width="1"/>
+<text x="539" y="602" text-anchor="middle" fill="#6EE7B7" font-size="8" font-weight="bold">AGENT 17 — Statement Sender</text>
+<text x="539" y="615" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Deliver via MS Teams</text>
+<text x="539" y="628" text-anchor="middle" fill="#6EE7B7" font-size="7">FTF Books · MS Teams</text>
+
+<line x1="228" y1="609" x2="232" y2="609" stroke="#059669" stroke-width="1.5" marker-end="url(#a3)"/>
+<line x1="428" y1="609" x2="440" y2="609" stroke="#059669" stroke-width="1.5" marker-end="url(#a3)"/>
+
+<rect x="26" y="641" width="712" height="22" rx="4" fill="#064E3B" stroke="#059669" stroke-width="0.5"/>
+<text x="382" y="656" text-anchor="middle" fill="#6EE7B7" font-size="8">Sends to master billing email (or order email if none) · MS Teams report w/ Excel+PDF to Ryan·Wyatt·Jessica · Wyatt+Jessica: Recording 11</text>
+
+<!-- ── MEMORY LOOP ── -->
+<rect x="12" y="698" width="740" height="60" rx="8" fill="#1A1600" stroke="#CA8A04" stroke-width="1"/>
+<text x="22" y="716" fill="#FCD34D" font-size="10" font-weight="bold">MEMORY LOOP — Nightly</text>
+<rect x="22" y="724" width="332" height="28" rx="4" fill="#292100" stroke="#CA8A04" stroke-width="0.5"/>
+<text x="188" y="742" text-anchor="middle" fill="#FCD34D" font-size="8.5" font-weight="bold">Memory Manager — logs decisions · corrections</text>
+<rect x="368" y="724" width="332" height="28" rx="4" fill="#292100" stroke="#CA8A04" stroke-width="0.5"/>
+<text x="534" y="742" text-anchor="middle" fill="#FCD34D" font-size="8.5" font-weight="bold">Dream Processor — self-improvement · updates knowledge base</text>
+
+<!-- ── RIGHT PANEL ── -->
+<!-- APIs -->
+<rect x="766" y="60" width="278" height="290" rx="8" fill="#0F172A" stroke="#334155" stroke-width="1.5"/>
+<text x="905" y="80" text-anchor="middle" fill="#94A3B8" font-size="11" font-weight="bold">5 EXTERNAL APIs</text>
+<line x1="778" y1="86" x2="1032" y2="86" stroke="#334155" stroke-width="1"/>
+
+<rect x="778" y="94" width="254" height="40" rx="5" fill="#1E3A5F" stroke="#3B82F6" stroke-width="1"/>
+<text x="905" y="110" text-anchor="middle" fill="#93C5FD" font-size="9" font-weight="bold">FTF CRM API</text>
+<text x="905" y="124" text-anchor="middle" fill="#60A5FA" font-size="8">fieldtofinish.jobs/api · Agents 2,3,4,7,8</text>
+
+<rect x="778" y="140" width="254" height="40" rx="5" fill="#1E3A5F" stroke="#3B82F6" stroke-width="1"/>
+<text x="905" y="156" text-anchor="middle" fill="#93C5FD" font-size="9" font-weight="bold">FTF Books API</text>
+<text x="905" y="170" text-anchor="middle" fill="#60A5FA" font-size="8">fieldtofinish.jobs/api/books · Agents 8,10–17</text>
+
+<rect x="778" y="186" width="254" height="40" rx="5" fill="#1A2E1A" stroke="#22C55E" stroke-width="1"/>
+<text x="905" y="202" text-anchor="middle" fill="#86EFAC" font-size="9" font-weight="bold">Pricing API (SalesFlow)</text>
+<text x="905" y="216" text-anchor="middle" fill="#4ADE80" font-size="8">fieldtofinish.jobs/ftf-ai-api/v1 · Agent 5</text>
+
+<rect x="778" y="232" width="254" height="40" rx="5" fill="#2A1A3E" stroke="#A855F7" stroke-width="1"/>
+<text x="905" y="248" text-anchor="middle" fill="#D8B4FE" font-size="9" font-weight="bold">Anthropic Claude API</text>
+<text x="905" y="262" text-anchor="middle" fill="#C084FC" font-size="8">api.anthropic.com/v1 · Agents 3,5,6,7,9,12,13,15,16</text>
+
+<rect x="778" y="278" width="254" height="40" rx="5" fill="#1A2E2E" stroke="#14B8A6" stroke-width="1"/>
+<text x="905" y="294" text-anchor="middle" fill="#5EEAD4" font-size="9" font-weight="bold">FEMA Flood Map API</text>
+<text x="905" y="308" text-anchor="middle" fill="#2DD4BF" font-size="8">msc.fema.gov · Free · no auth · Agent 3</text>
+
+<!-- Single client pattern -->
+<rect x="778" y="320" width="254" height="24" rx="4" fill="#1A1A2E" stroke="#6366F1" stroke-width="1"/>
+<text x="905" y="336" text-anchor="middle" fill="#A5B4FC" font-size="8">core/ftf_client.py wraps all 3 FTF APIs</text>
+
+<!-- INFRA -->
+<rect x="766" y="360" width="278" height="192" rx="8" fill="#0F172A" stroke="#334155" stroke-width="1.5"/>
+<text x="905" y="378" text-anchor="middle" fill="#94A3B8" font-size="11" font-weight="bold">INFRASTRUCTURE</text>
+<line x1="778" y1="384" x2="1032" y2="384" stroke="#334155" stroke-width="1"/>
+<rect x="778" y="390" width="118" height="38" rx="4" fill="#1C1917" stroke="#78716C" stroke-width="1"/>
+<text x="837" y="406" text-anchor="middle" fill="#D6D3D1" font-size="9" font-weight="bold">PostgreSQL</text>
+<text x="837" y="420" text-anchor="middle" fill="#A8A29E" font-size="8">State DB</text>
+<rect x="904" y="390" width="118" height="38" rx="4" fill="#0C1A0C" stroke="#16A34A" stroke-width="1"/>
+<text x="963" y="406" text-anchor="middle" fill="#86EFAC" font-size="9" font-weight="bold">GitHub Actions</text>
+<text x="963" y="420" text-anchor="middle" fill="#4ADE80" font-size="8">AUTO mode cron</text>
+<rect x="778" y="434" width="118" height="38" rx="4" fill="#1A0F2E" stroke="#7C3AED" stroke-width="1"/>
+<text x="837" y="450" text-anchor="middle" fill="#C4B5FD" font-size="9" font-weight="bold">MCP Server</text>
+<text x="837" y="464" text-anchor="middle" fill="#A78BFA" font-size="8">MANUAL mode</text>
+<rect x="904" y="434" width="118" height="38" rx="4" fill="#1A1600" stroke="#CA8A04" stroke-width="1"/>
+<text x="963" y="450" text-anchor="middle" fill="#FCD34D" font-size="9" font-weight="bold">DigitalOcean VPS</text>
+<text x="963" y="464" text-anchor="middle" fill="#D97706" font-size="8">Cloud deployment</text>
+<rect x="778" y="478" width="118" height="38" rx="4" fill="#0F2027" stroke="#0EA5E9" stroke-width="1"/>
+<text x="837" y="494" text-anchor="middle" fill="#7DD3FC" font-size="9" font-weight="bold">MS Teams</text>
+<text x="837" y="508" text-anchor="middle" fill="#38BDF8" font-size="8">Alerts + Reports</text>
+<rect x="904" y="478" width="118" height="38" rx="4" fill="#1A0A00" stroke="#EA580C" stroke-width="1"/>
+<text x="963" y="494" text-anchor="middle" fill="#FDBA74" font-size="9" font-weight="bold">UptimeRobot</text>
+<text x="963" y="508" text-anchor="middle" fill="#FB923C" font-size="8">Monitoring</text>
+<rect x="778" y="522" width="254" height="24" rx="4" fill="#1C1917" stroke="#78716C" stroke-width="0.5"/>
+<text x="905" y="537" text-anchor="middle" fill="#D6D3D1" font-size="8">Logs all decisions · timestamps · agent versions</text>
+
+<!-- CLAUDE OS -->
+<rect x="766" y="560" width="278" height="198" rx="8" fill="#1A0A2E" stroke="#7C3AED" stroke-width="1.5"/>
+<text x="905" y="579" text-anchor="middle" fill="#C4B5FD" font-size="11" font-weight="bold">CLAUDE OS (.claude/)</text>
+<line x1="778" y1="585" x2="1032" y2="585" stroke="#7C3AED" stroke-width="1"/>
+<rect x="778" y="591" width="254" height="24" rx="3" fill="#2D1B69" stroke="#7C3AED" stroke-width="0.5"/>
+<text x="905" y="607" text-anchor="middle" fill="#C4B5FD" font-size="8">claude.md · identity.md · soul.md · user.md</text>
+<rect x="778" y="619" width="254" height="24" rx="3" fill="#2D1B69" stroke="#7C3AED" stroke-width="0.5"/>
+<text x="905" y="635" text-anchor="middle" fill="#C4B5FD" font-size="8">memory/ · reflection.md · feedback.md · goals.md</text>
+<rect x="778" y="647" width="254" height="24" rx="3" fill="#2D1B69" stroke="#7C3AED" stroke-width="0.5"/>
+<text x="905" y="663" text-anchor="middle" fill="#C4B5FD" font-size="8">skills/ · knowledge/ · projects/ · tools.md</text>
+<rect x="778" y="675" width="254" height="24" rx="3" fill="#2D1B69" stroke="#7C3AED" stroke-width="0.5"/>
+<text x="905" y="691" text-anchor="middle" fill="#C4B5FD" font-size="8">routines.md · CHANGELOG.md · templates/</text>
+<rect x="778" y="703" width="254" height="24" rx="3" fill="#064E3B" stroke="#10B981" stroke-width="1"/>
+<text x="905" y="719" text-anchor="middle" fill="#6EE7B7" font-size="8" font-weight="bold">knowledge_base/change_order_clause.txt  ⚖</text>
+<rect x="778" y="731" width="254" height="22" rx="3" fill="#2D1B69" stroke="#7C3AED" stroke-width="0.5"/>
+<text x="905" y="745" text-anchor="middle" fill="#A5B4FC" font-size="8">config/prompts/ · 24-service reference data</text>
+
+<!-- footer -->
+<rect x="12" y="770" width="1332" height="24" rx="4" fill="#0F172A" stroke="#1E293B" stroke-width="1"/>
+<text x="678" y="786" text-anchor="middle" fill="#475569" font-size="9">FTF Agentic AI OS · Technical Architecture · 17 Agents · 3 Active Loops + Memory · 5 APIs · Phase 1: FTF · Phase 2: POF + NGE · Prepared by Prateek · May 2026</text>
+
+<!-- legend -->
+<rect x="12" y="804" width="1332" height="80" rx="6" fill="#0F172A" stroke="#1E293B" stroke-width="1"/>
+<text x="678" y="820" text-anchor="middle" fill="#94A3B8" font-size="10" font-weight="bold">LEGEND</text>
+<rect x="28" y="830" width="12" height="10" rx="2" fill="#4F46E5"/><text x="44" y="840" fill="#E2E8F0" font-size="9">Loop 1 — Estimate Generation</text>
+<rect x="28" y="848" width="12" height="10" rx="2" fill="#6D28D9"/><text x="44" y="858" fill="#E2E8F0" font-size="9">Loop 2 — AR Follow-Up</text>
+<rect x="28" y="866" width="12" height="10" rx="2" fill="#065F46"/><text x="44" y="876" fill="#E2E8F0" font-size="9">Loop 3 — Monthly Statements</text>
+<rect x="220" y="830" width="12" height="10" rx="2" fill="#CA8A04"/><text x="236" y="840" fill="#E2E8F0" font-size="9">Memory / Dream Loop</text>
+<rect x="220" y="848" width="12" height="10" rx="2" fill="#0E7490"/><text x="236" y="858" fill="#E2E8F0" font-size="9">Sender (6-13 min random delay)</text>
+<rect x="220" y="866" width="12" height="10" rx="2" fill="#7C3AED"/><text x="236" y="876" fill="#E2E8F0" font-size="9">Human Gate (8 triggers)</text>
+<rect x="430" y="830" width="12" height="10" rx="2" fill="#3B82F6"/><text x="446" y="840" fill="#E2E8F0" font-size="9">FTF CRM + Books APIs</text>
+<rect x="430" y="848" width="12" height="10" rx="2" fill="#22C55E"/><text x="446" y="858" fill="#E2E8F0" font-size="9">SalesFlow Pricing API</text>
+<rect x="430" y="866" width="12" height="10" rx="2" fill="#A855F7"/><text x="446" y="876" fill="#E2E8F0" font-size="9">Anthropic Claude API</text>
+<rect x="620" y="830" width="12" height="10" rx="2" fill="#14B8A6"/><text x="636" y="840" fill="#E2E8F0" font-size="9">FEMA Flood Map API</text>
+<rect x="620" y="848" width="12" height="10" rx="2" fill="#10B981"/><text x="636" y="858" fill="#E2E8F0" font-size="9">Change Order Clause (Amendment 001)</text>
+<rect x="620" y="866" width="12" height="10" rx="2" fill="#0EA5E9"/><text x="636" y="876" fill="#E2E8F0" font-size="9">MS Teams Alerts + Reports</text>
+<rect x="860" y="830" width="12" height="10" rx="2" fill="#1C1917" stroke="#78716C" stroke-width="1"/><text x="876" y="840" fill="#E2E8F0" font-size="9">PostgreSQL State DB</text>
+<rect x="860" y="848" width="12" height="10" rx="2" fill="#16A34A"/><text x="876" y="858" fill="#E2E8F0" font-size="9">GitHub Actions (AUTO cron)</text>
+<rect x="860" y="866" width="12" height="10" rx="2" fill="#7C3AED"/><text x="876" y="876" fill="#E2E8F0" font-size="9">Claude OS Layer (.claude/)</text>
+<rect x="1050" y="830" width="12" height="10" rx="2" fill="#EA580C"/><text x="1066" y="840" fill="#E2E8F0" font-size="9">UptimeRobot Monitoring</text>
+<rect x="1050" y="848" width="12" height="10" rx="2" fill="#CA8A04"/><text x="1066" y="858" fill="#E2E8F0" font-size="9">DigitalOcean VPS</text>
+<rect x="1050" y="866" width="12" height="10" rx="2" fill="#1A0F2E" stroke="#7C3AED" stroke-width="1"/><text x="1066" y="876" fill="#E2E8F0" font-size="9">MCP Server (MANUAL mode)</text>
+</svg>
+</div>
+</body>
+</html>
