@@ -20,9 +20,7 @@
 
 | ID | Issue | Title | Type | Priority | Target Sprint | Owner | Source |
 |----|-------|-------|------|----------|--------------|-------|--------|
-| NF-01 | I-097 | NESA agent — NexGen Enterprises Surveying AI (blank slate, learns from Bobby) | FEATURE | P1 | Sprint 12 | Prateek | 2026-05-29 Ryan call — "next week" |
 | NF-02 | I-098 | Win-back email agent — customers inactive 1 year+, staggered sends | FEATURE | P2 | Sprint 13 | dev_manager | 2026-05-29 Ryan call |
-| NF-03 | I-099 | Hermes Agent integration for NESA — persistent, memory-enabled, multi-platform | FEATURE | P2 | Sprint 13 | Prateek | 2026-05-29 — Hermes Agent platform |
 | NF-04 | I-090 | Upsell campaigns on active orders (3-5 follow-up emails after estimate sent) | FEATURE | P3 | Sprint 13 | dev_manager | 2026-05-25 Ryan call |
 | NF-05 | I-091 | Re-engagement: email all customers not ordered in 1+ year | FEATURE | P3 | Sprint 13 | dev_manager | 2026-05-25 Ryan call |
 | NF-06 | I-062 | Website chat → order conversion (customer says "go ahead" → move quote to pending) | FEATURE | P3 | Sprint 14 | dev_manager | 2026-05-26 Ryan call |
@@ -38,8 +36,10 @@
 | FUT-03 | File ranking agent (daily order file rankings) | FEATURE | Sub-component of logistics agent |
 | FUT-04 | Marketing agent (follow up on no's/cancellations) | FEATURE | Depends on estimate OS logs |
 | FUT-05 | GHL full integration for win-back campaign tracking | FEATURE | Upgrade path from NF-02 |
-| FUT-06 | In-progress/in-revision status management agent | FEATURE | Requires Nessa first |
-| FUT-07 | Developer agent (modify FTF UI, hide buttons) | FEATURE | Long future |
+| FUT-06 | NESA agent (NexGen Enterprises Surveying AI) | FEATURE | Out of scope — concept only, not current project |
+| FUT-07 | Hermes Agent platform research (for NESA) | FEATURE | Out of scope — depends on NESA being in scope |
+| FUT-08 | In-progress/in-revision status management agent | FEATURE | Long future |
+| FUT-09 | Developer agent (modify FTF UI, hide buttons) | FEATURE | Long future |
 | FUT-08 | Weather monitoring agent | FEATURE | I-070 — post Sprint 12 |
 | FUT-09 | Post-transcript podcast generator (Whisperflow) | TASK | Nice to have, not project work |
 

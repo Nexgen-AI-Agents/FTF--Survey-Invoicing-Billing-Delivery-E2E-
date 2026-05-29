@@ -153,10 +153,9 @@ Full rules, commands, edge cases, and state machine documented in:
 | Post-invoice: estimate agent stops | Once the invoice is delivered and the flag is gone, the estimate agent stops caring. No post-invoice tracking. Any modification after delivery = manual by staff. (Ryan 2026-05-29) |
 | Approval flow: price adjustment | Human reviewer can ADJUST $X before approving. AI updates invoice price to adjusted amount before sending. AI stores adjustment as learning for future similar jobs. (Ryan 2026-05-29) |
 | Parallel/shadow mode | Launch in shadow mode first — AI suggests but does not send. End-of-day comparison report: AI estimate totals vs actual. Ryan/Bobby evaluate accuracy before enabling auto-send. (Ryan 2026-05-29) |
-| NESA | NexGen Enterprises Surveying AI. Blank slate agent with access to everything. Bobby trains it by talking to it. Starts next week (Sprint 12). Ryan: "Talk to it like it's your therapist." (Ryan 2026-05-29) |
-| Summit's future role | Summit will manage NESA + logistics agents. Summit may also learn AutoCAD + customer interaction over time. (Ryan 2026-05-29) |
+| NESA | OUT OF SCOPE for this project. Concept noted — NexGen Enterprises Surveying AI. Logged for future consideration. (2026-05-29) |
 | Small agents philosophy | Many small single-purpose agents managed by a high-level manager agent. NOT one big agent doing everything. If one breaks, manager keeps running with remaining agents. (Ryan 2026-05-29) |
-| Hermes Agent | MIT licensed autonomous agent platform (hermes-agent.nousresearch.com) — persistent memory, multi-platform, parallel subagents. Candidate architecture for NESA. Already use Hermes LLM (Ollama) for low-complexity tasks. (2026-05-29) |
+| Hermes Agent | OUT OF SCOPE — was being evaluated for NESA. Since NESA is out of scope, Hermes Agent research deferred too. Hermes LLM (Ollama local) still in use for low-complexity tasks. (2026-05-29) |
 
 ---
 
