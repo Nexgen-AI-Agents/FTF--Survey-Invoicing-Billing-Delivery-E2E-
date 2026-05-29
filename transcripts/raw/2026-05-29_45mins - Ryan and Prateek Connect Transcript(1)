@@ -1,0 +1,329 @@
+2:04 - Ryan Tisko
+Hey Mario, my phone wasn't it.
+
+2:09 - Prateek Chandra
+Here I am. I was just replying you that my head is spinning and I need your help here.
+
+2:16 - Ryan Tisko
+No, what's that?
+
+2:19 - Prateek Chandra
+So today this our operating system I was testing fully and it broke at multiple places. The reason was that our system is having like every person is having their own thing of handling the orders and the process. So the recording that Robert sent was not enough and I was expecting from Mark as well. So he wasn't available. Now at multiple scenarios, it's breaking because it's not able to get the proper step. So, when I started giving the scenarios to it, it stopped completely. So, I would like, like, I would start going through the scenarios and the steps. And wherever it's needed, you can stop me and you can provide me clarification. All right. Yeah. Cool. Thanks. All right, so first thing is, and also, yeah, there will be few of the questions related to the status I would like to know, but first I will go through this process, and in between, I will keep asking my consents. All right, so here is the process. Code comes to our system through multiple sources. First thing is a client can directly email us. Hey, I just want code and I want to get a survey done. So, in that case, we can create a code on behalf of the client, either it's an existing or non-existing client, or second thing is the client can directly create a code, either it's an existing or non-existing client. After that, it goes to pending and it goes to pending when. So, this is my my understanding. It goes to pending. When we get the clarification from client that they are good to go with the order and we provide them estimate, then it goes to pending. Is this part like this part correct or am I missing something?
+
+4:25 - Ryan Tisko
+It is correct. That's why I'd like on the quote, the email body, for them to be able to accept the quote from the email. Because there's a couple different places we want to start targeting them to use. So it's not all just through email where they send back an email, say approved, or go ahead and proceed. So a lot of our emails say stuff like that. Those are the go-ahead to move a quote from quote to pending. Users also, if they log in, they can go to. Their order history and convert a quote to pending from there. And that automatically, when they do it, moves it to pending manually. So those are the two places. Or if somebody calls over the phone and approves it, then whoever's on the phone with them just goes ahead and moves it from quote status to pending status.
+
+5:30 - Prateek Chandra
+Okay. All right. So till pending, I'm all here. Now, after pending, I came to know that the process can be a little different. However, the system tells the process should be after pending, it should go as a assigned, but I came to know that sometimes it can go to different other status, like it can go to cancellation status, also, it can go to drafting status, also, it can go to checking.
+
+5:58 - Ryan Tisko
+Yeah, why would that have to do with the quoting a pending job? It shouldn't look at what's happening next. It should only look at, I need to quote jobs that don't have invoices. It shouldn't matter what status is next to that agent, and that might be tripping it up.
+
+6:22 - Prateek Chandra
+Okay, all right.
+
+6:25 - Ryan Tisko
+Okay, so because the logistics agent would pick it up from there. So if it moves from pending or goes somewhere else, like this other agent we're talking about that needs to be able to like know where everything is in the system and have access to everything, but we can just ask it, it doesn't necessarily need to know anything other than have the ability to know where everything is. So when we ask it, it can go find stuff. But it doesn't necessarily know the We're not preloading it with questions, we're just preloading it with access. That agent would be the one that we would probably put in the middle of here in some of these aspects.
+
+7:12 - Unidentified Speaker
+Okay.
+
+7:15 - Prateek Chandra
+So I want to know here. Like agents should know, like what all status agents should be clear about. Quote is okay. After that, exactly?
+
+7:25 - Ryan Tisko
+Well, for an estimating operating system, it shouldn't be focused on status other than quote and pending as far as like where the majority of their jobs are going to be. That's where the jobs need to get invoiced right away. But outside of that, it's just looking through the system, making sure that there's no un-invoiced jobs. So it's focused on the flag more than the status. The flag that the dollar sign flag that if the invoice has been delivered, it goes away. But if the invoice has been generated but not delivered, it's still a little dollar sign still shows up in the flag section. That's what this, the estimate agent, its goal in life is to make sure that at the end of every day, there are none of those flags in the system of uninvoiced or unestimated delivered.
+
+8:35 - Prateek Chandra
+Okay, okay. So its only goal is to check whether the invoice is generated or not. That's it.
+
+8:43 - Ryan Tisko
+And its only goal is to make sure the invoices are generated and all the clients got their generated invoices. And if they haven't, they report it and get approval and bug the people on the team until it's done.
+
+9:07 - Unidentified Speaker
+Yeah.
+
+9:10 - Ryan Tisko
+So its goal is to make sure all the invoices go out. I mean, if it knows anything more than that, as far as statuses, we would want it to know whether it was delivered and paid or unpaid. So it would eventually be able to know the result of its estimating, right? So that would be the only thing I could see we could enhance it with is letting it know that on the back end. So, when it's thinking about what kind of work it did for the day, it can measure it against paid-for jobs. Because paid for jobs means that not only were they approved, but like they're finalized. So, whatever that quote was, that's something that's real, right? It went through the full process. That's a good number for whatever that job has inside of it. So, look at its notes, look at its size, look at the picture. Reference how many, you things are on the survey, you know, how many prop, like understand what that file is.
+
+10:16 - Unidentified Speaker
+Okay.
+
+10:18 - Ryan Tisko
+Um, you know, so this estimating operating system really just needs to be the smartest of all of us of knowing quotes, cancels. And delivered jobs, whether they and how much they were, how many of them got canceled, how many of them got denied. So, how many no's versus how many yeses on quotes, how many got delivered, and how many got paid for, and how many didn't, right? Like it, it just knows all of the estimating aspects of revenue. Now, we'll give it some friends over time to know more of the other stuff.
+
+11:18 - Prateek Chandra
+Okay. So, again, like if it's going to check the invoices whether they are existing and not or not and take the action accordingly. So in that case, is it going to estimate the things or not? Like is it will this be able to create the invoice and send it for approval or rejection or not?
+
+11:44 - Ryan Tisko
+Well that's what it's supposed to be doing in the chat that we talked about yesterday.
+
+11:48 - Prateek Chandra
+Yes, exactly. That's what like I'm just clearing out this this point.
+
+11:53 - Ryan Tisko
+Yeah. Yeah. It's right now, it's just, it's never just doing it.
+
+11:58 - Unidentified Speaker
+Yeah.
+
+11:59 - Ryan Tisko
+But if it does, if we do prompt it approved, it can.
+
+12:06 - Unidentified Speaker
+Understood.
+
+12:08 - Prateek Chandra
+Right. So, what will happen exactly here? It will estimate, it will provide it to the chat that, okay, my estimation for this order for this, this, this survey, and these services are this. If, if, as soon as Robert or Ian approves this, okay, it's approved, it's gonna create an invoice and it's gonna send it to the client, correct?
+
+12:29 - Unidentified Speaker
+Yes.
+
+12:30 - Prateek Chandra
+Okay, that's central.
+
+12:32 - Unidentified Speaker
+Got it.
+
+12:34 - Ryan Tisko
+Now, there's a couple steps in there. Just to be aware, like, yes, it's going to get approval. We do want the user to be able to adjust the approval, right? So it sends a message $400 estimate, and you say, make it $500. And it would be okay, I need to make an adjustment. So then the next time it does that same file, it's going to start at 500 probably because it's learning.
+
+13:09 - Prateek Chandra
+Sure, sure.
+
+13:10 - Ryan Tisko
+Right. But yeah. If so that that's one aspect. And then the second aspect is exactly what you said. If approved, go ahead and generate and send.
+
+13:26 - Unidentified Speaker
+Exactly.
+
+13:27 - Ryan Tisko
+Now, what I said yesterday was that was the second aspect of generate and send, but we want the AI to personalize everyone email body and subject line. When it sends the estimate. So, right now we can do it, and it's just gonna generate the invoice and it's gonna deliver it the way that the system has it already in place with the email body and the subject line that already is set, right? Yes. But we wanted to do better than that. So initially, yes, you're absolutely right. What I wanted to do is to deliver the invoice that was approved and just be personalized and try and maybe upsell and ask for a review on every email. Okay.
+
+14:38 - Prateek Chandra
+now I'm taking another scenario here. I'm little confused. Let's suppose invoice is sent to client and then like there is a direct thing. Suppose client says okay, like client paid and AI checked it came to know okay, invoice is paid. Now second scenario can be client can modify the order or maybe it can ask any other question which is irrelevant to AI. So, how should we handle it?
+
+15:14 - Ryan Tisko
+See, this is where your two smartness gets in the way. No, you're trying to solve for a problem that you know might happen, but we can't replicate.
+
+15:26 - Unidentified Speaker
+Okay.
+
+15:28 - Ryan Tisko
+So that's be, we have to. We have to experience what that would be.
+
+15:35 - Prateek Chandra
+Okay, no problem. I will, I will handle that scenario as well.
+
+15:39 - Ryan Tisko
+Because the biggest thing is, once they approve it, then we go, right? And there's, and then the manual aspect of like the people looking at the jobs and the crews going out to the field and all that stuff. If something else happens that we need to make an adjustment, we just go in there and make an adjustment. This AI is already out of the process, right? It's already been invoiced, so it's not looking at the file anymore because the flag's gone. It doesn't care at that point, right? Now, this other agent we're going to build, the marketing agent, the agent that does all the follow-ups, you know, so this other agent that we want to give Bobby and stuff, we want him to be able to ask it. Like, hey, how many no's did we get yesterday? Right. And it's go, okay, well, we converted this many, and this is many is we got confirmed no's, and this many were we're still prospecting, right? And Bobby could go, okay, let's make an automated email, but personalize it for everyone you send it out to, but let's make a generic version asking the customer, you know, what could we have done to one. To have won their job? Uh, any input would be helpful, right? For us to improve, yeah. So then and and be able to tell that that AI go ahead and send out the emails to that, right? Well, we do that a few times, we get a good feel for it, it's actually you know doing that, but it's not an agentic. AI. We prompted it to make an email. We approved an email. We told it to make it personal by naming names based on this. We just gave it the way to do it. But now we're like, okay, that was good. We can build that into the marketing agent and say, okay, marketing agent, you're an expert. You post every day for us. You're constantly analyzing the market. You're doing all these things. I want you to receive from this segentic system all the no's and email all the no's questions like this. So every time a job gets moved from quote to canceled because it's a no, that's where that other marketing agent is hooked in. In to sniff around and check in with the estimating operating system because it knows the estimating operating system has some information that it can work off of So every day it goes to the estimating operating system and says, Give me your nose so I can work on converting those or getting you information as to how you may have invoiced it wrong. So they start working together, but separate, right? They're focused.
+
+18:39 - Unidentified Speaker
+Yeah.
+
+18:43 - Prateek Chandra
+Ryan, I guess we are missing one more point here. Like, let's suppose invoice is sent. Of course, that flag is gone because invoice is sent for that order and bot is not looking anymore. But sometimes it also like confirmation from client also comes through. Okay, one second. So when dollar sign is gone, means that flag is gone. Is not gonna handle that scenario. It's not gonna care about that scenario anymore. Okay, that's it. Okay. Understood.
+
+19:24 - Unidentified Speaker
+Yeah.
+
+19:25 - Prateek Chandra
+All right, all right, all right. I got the clarity because few scenarios it missed and when I asked, it was not able to capture. Then I understood. Uh, okay, I need that's why I, when you were typing, I thought that I should connect with you, otherwise, I was spin my mind.
+
+19:40 - Ryan Tisko
+I was having so much, you're too smart, you're trying, you're seeing where it can go, and you're and you're trying to build it in, and and it's exciting and everything. But exactly, and this is also why I'm doing we're doing this the way I'm doing it with you is. Me learning and knowing the book way and everybody else's struggles and doing all that stuff. Like, it keeps me out of that, like, oh shit, you I'm going to notice this quicker than being in it, right? You're in the mix of it. What you need to get more comfortable with is if you get to a, if you get to any of these phases like that, just use this as a, as a reference, right? A trigger to go, okay, whatever this problem is, can I make it into another like little AI that just does this one thing, right? Because it's really about having a bunch of small, focused, dedicated to one thing AI and then manage them more than it is about having one AI that's really good. We want, you know, agentic systems are about high-level managing of agents, not high-level agents working, right? It's putting you make one or two high-level agents, but really their high-level is about making sure the other smaller agents are all accomplishing the task, right? So, very specific, you know, marketing agent, they're gonna have you know, it's gonna have its own agent that probably goes and asks for this information every day. From this person and then that person. Because once we have a logistics agent, then you have the full, you have what you were looking for. But we need what you were looking for is really the operating system that's estimating is running. Then what it did is available to be read and understood and thought about from the logistics. Agent, because the logistics agent is going to be estimating crew hours, posting jobs, the job's going to be posted to a job board, and then it's going to be looking to schedule that job if it's not taken from the job board. Right?
+
+22:11 - Unidentified Speaker
+Yeah.
+
+22:11 - Ryan Tisko
+So it needs to know how much did the estimate go out for, and how many hours based on that estimate should I, you know, pre-estimate the crew's time in the field for. So that when they accept the job, we don't have to make that adjustment. Rank the file, right? Based on pricing and all that stuff. And then that guy knows what's going on. So, like, if at some point we automate this thing to the level of where your head was kind of going, which is if somebody calls throughout the process and adjusts the invoice, changes the order, what does the OS system do? Right now, we do it and we will continue to do it. With these different agents running in smaller degrees as we grow them into their abilities, we will either discover that we can automate it. It and find a way for to allow them to communicate in that moment. But there's going to be so many aspects in that that you wouldn't even want to build it into one agent either.
+
+23:37 - Unidentified Speaker
+Right?
+
+23:38 - Ryan Tisko
+So it's really, it's really about if something changed throughout the process, the way to catch that. That is all these agents are doing their individual tasks, but they all talk with each other, can talk to each other as well. So say somebody gets a quote and then emails in, you know, changes something logistically. The logistic agent would then have to communicate to, you know, we would actually have a route to give it because it's like what happens in the office, is what we have to figure out, which is why we need to work through an org chart that has all of our real people, but also all of our assistants and agents and everything that we've assigned to the different things. And that'll help us really. See where this is.
+
+24:50 - Prateek Chandra
+All right. Ryan, one more question here. This is not related to agent DPI or anything. This is related to our system, field to finish.jobs. I was observing this status in progress. So, whenever I opened the system, I saw that in progress, we will. The counting of in progress will always be zero. The count will always be zero. Is it helpful anywhere? Like, so yeah.
+
+25:19 - Ryan Tisko
+Yeah, so as so, as this gets better and better, and um, and I can have, I can tell you and Wyatt and Bobby and stuff ways to work the system or processes to get done. And they're understood and then documented and put into the claw to do them is when some of these things are actually going to come to life. So, currently, somebody, if somebody clicks in revision, it highlights the file pink in track flow. They're currently using that for the purpose of what in progress is for. Because that was done before the in progress status was created to use, right? We just needed something to highlight something that if the job was in progress or there's something funny about it, but like we're working on it and somebody's touched it, what do you do? Well, hit in revision and then put a note as to what you're doing. Now, we have in progress and the highlight function. So the in revision function is completely useless for anybody outside of a drafter. So, what we'll do is once we have Nessa who's able to check in on everybody and work with us and know everything, and look at everybody's chats and tell us what they're talking about, whatever, on demand. Yeah, we can get through using a tool like that. Kind of lost my train of thought.
+
+27:33 - Prateek Chandra
+You were talking about Nessa will be able to see everything in the system.
+
+27:37 - Ryan Tisko
+Yeah, what was I talking about before that? Sorry.
+
+27:47 - Prateek Chandra
+We were talking about in progress status and you were telling that how it can be used. Yeah, okay.
+
+27:52 - Ryan Tisko
+Yeah. So then we start, we're able to tell that thing when to move things in progress. Right? So, yes, once we have that, then I can say, okay, Bobby, I can tell Bobby exactly that story, right? And then Bobby can tell that agent every day to move anything that's highlighted in revision to in progress, and we'll start making those adjustments, right? Anytime somebody clicks the in revision button, send me a notification of what file and who did it. Because I really got to break that habit. Because the in revision button is so much less useful than the highlight function. They're just sticking to their old ways. Now, what would be fun is if we have a developer agent that can do everything as well eventually, and then you can tell it, hey, hide that button for the next week. But yeah, some of those statuses and things, just like the ranking, right? Nobody's ever ranked the files, even though we put the ranking in there. Now we can have AI actually rank these files. And we can put one AI that just goes through and tells us what it would rank it. And we could talk to it, right? Make adjustments to it. And then once it gets some good ranks, once we have a set kind of formula for it to rank the files, that's all It does. That's all we need. You got one agent that doesn't cost us any real money, and it goes through and it ranks all the files every day. So that the other agent that does the signing, you know, maybe we make another agent that ranks the field crews every day. So then the logistic agent goes to those, each one of those agents and then kind of sets the schedule based off of the ranking of the file from this agent. And the ranking of the crews from this agent. But that, you know, but we don't necessarily want one agent that ranks the crews and ranks the files. And now, what's the potential of that agent getting messed up? Probably higher.
+
+30:34 - Prateek Chandra
+Okay.
+
+30:38 - Ryan Tisko
+And I bet it's easier if one agent in so that agent that you build is managing those other agents or in some capacity for that information. If one of those managed agents breaks, it can still go through the rest of the agents and finish the process without certain ones, versus if you build it into one agent and it breaks, it just stops. So, if you have one agent that is deploying these other individuals, if you know, you want that guy to be able to keep moving, right? So, if it breaks, they notify you of the break and what the result's going to be because of it, but that it keeps moving. So, you still end up with a result, it's just not as you maybe wanted it. And you could build in some sort of learned in that situation, fail safe, maybe build another agent that does something else that would have made it a little bit better. You know, so it's like, in case, so now we could put a in case of this breaks like we just experienced agent, do this. And then put that just in the mix of the manage agent so that the next time it experiences that. The agentic agent knows it has a skill or it has an agent in its pool of agents to pull from to handle that while you keep moving on again. Kind of just like the same as. Imagine if you had 15 hands instead of two. How much could you get done? Right. Yeah. But if you have 15 hands on one body versus 15 hands managed by the one body, how much more can you get done is a totally different thing because now you can send 15 hands to 15 different places. And get things done versus 15 hands on yourself. You still have to go to each place and manage all 15 hands every place you go, versus sending 15 hands all over the place, you get one at a time back. It's actually less. Information overload when you deal with many people on one prospect, if you're managing correctly than one person. Yeah, big kind of like the AI is teaching us it gets sick, right? So it's like every time it breaks, that's kind of like a sick day. So, when you have like a key employee and you're and if they get sick, you your business closes for the day or whatever. What do you do? You start hiring assistants for that key employee. So, if that person's sick and it breaks, some form of the system still runs. Yeah. So every time it breaks, it's just letting you know you're you're putting me in a position of too much authority or too much whatever. Like, I need, you know, yeah, give me, give me a backup for this, right?
+
+34:28 - Unidentified Speaker
+Exactly.
+
+34:34 - Unidentified Speaker
+Cool.
+
+34:34 - Ryan Tisko
+Well, it sounds like you're moving along there. Yeah, and I was just explaining to Robert that we're going to have it to where he's be in this chat. And at first, it's just going to be parallel, right? Everybody's going to be running everything exactly how it is. And this thing's be running and giving us suggestions on the estimates and all that stuff. And we're going to talk about it at first. And see how it's, you know, how we could be, you know, if we were saying approved all these things, what would that look like compared to what's actually happening? It'd be really cool to see at the end of a day of that estimating feature happening, you know, totalizing everything and having it kind of generate like an end-of-day report with us knowing that this is just like a suggestive operating system running parallel. It's kind of like looking at what we did versus what it did. And if we see that our daily stats report, the way we're running it is lower, right, as far as estimating direct orders, quote orders, then. It gives us a really clear idea of how close it is. And if it's way lower, then it gives us the ability in the beginning to just say, okay, whatever you're thinking, adjust your pricing up 20%. We don't have to try and teach it more. We just say, what you're doing is fine. You just need to be pricing in a way of this much percentage higher. That should be fine. So he's excited for that. And then he asked me, What do I do with Summit? I said, Well, that's why you're taking over the VAs and you're getting to know them and you're be doing the one-on-ones and all these things because you really need to like they need to do whatever you need them to do. I said, I would, I would tell you in the near future, maybe Summit gets like clogged. Right? Maybe that's something that we just go ahead and give Summit. And then Summit needs to be, and I said the intention is to have the whole team in the chat. So, you know, just understand that Summit would be in the chat reviewing too. But then Summit could have the chance of really dialing in a claw and helping critique on the logistics claud. I said, so there's something that Summit and then he'd be in charge of making sure that certain agentic systems are running and that he's going through and seeing, you know, and we can monitor it. You know, so at scale, you know, Summit should be probably in charge of the logistics and the estimating agents. And I think you do a better job potentially than anybody on the state side. So now maybe we can spend some time teaching Summit how to do a little bit of AutoCAD. You know, do a little bit of a couple different things, maybe talk to a customer or two or whatever, like give someone a chance to become something more than just an estimator.
+
+38:12 - Unidentified Speaker
+Yeah.
+
+38:25 - Ryan Tisko
+So, yeah, just let me know how it goes with the rest of that build out. And then, you know, next week, if we can, you know, start that the Nessa concept. Yeah.
+
+38:46 - Prateek Chandra
+So Nessa is going to be N ESSA or NESA SA NESA. Okay.
+
+38:55 - Ryan Tisko
+Next gen enterprises surveying AI.
+
+39:03 - Prateek Chandra
+All right, Ram. I am all clear. Actually, to be honest, see, the thing is, you are. Into AI, you adapted, you accepted that AI is the future and you are learning about it. So, when we are having the conversation every day, when we are seeing other people, other many YouTube things, outer world, we are accepting and we are going with the change. We are learning the things. But still, I believe many people are unable to accept the thing. And like how you spoke today so now I understood and even if I give the transcript to ai it will understand okay this is the process because we both we both spoke I I cleared out uh all my doubts you spoke with step by step and you even spoke okay this is the last step here I will stop so now I came to know that okay this is where I have to stop so this is how step by step people should be uh giving the uh videos and like if somebody is asking, okay, this is for the AI, you should provide these steps. So they should understand that we also we have to teach people that way, that okay, provide step by step. What process you do, just don't provide that, but provide that, okay, this is the step. So, how AI can treat. So, that's why it was very helpful when you spoke all those things.
+
+40:29 - Ryan Tisko
+Oh, good. I think, yeah, I mean, this has changed. And I agree, of people are doing it, and a lot of people aren't. Majority aren't. And we're definitely in a good place for it. I'll get you access to that those days. And you can do, and obviously, we just assume like Anusha is probably able to attend it at the same time if you guys are. Using computer potentially, but their AI is going to be more results. It's have probably operating system suggestions. But I'm pretty confident it's be a very simplified version of what we're working on. It's going to touch a lot of things that we're currently working on. It's probably bring some clarity. It'll probably simplify some of the thoughts that we have. Have, um, but I, but really, I am curious on how much it's give you the confidence in engaging it in a way that they have kind of figured out, which I'm unsure of, right? Um, I'm just assuming that they've come up with a way to package it for this two-day event that we'd be able to walk away with some very quickly actionable things. Um So, I'm curious what those things are, right? And it's probably going to motivate us to look at it maybe a little bit differently, but also it might just give us some tools, tricks, and concepts or things that's like, oh, shit, we wanted to get to that. We didn't realize it was that easy, right? And maybe, you know, you see something in the middle of one of these things that you can. Maybe they show us how to do it. We build it right there in class, right? And by the end of the class, we have something either sellable, duplicatable, usable every day. That's what I'm looking to get out of it.
+
+42:36 - Prateek Chandra
+Sure, sure. I'm looking forward to it.
+
+42:40 - Ryan Tisko
+Cool. So, yeah, that should be good. That'll be helpful. And yeah, we'll see how the other side goes. How long would it take to create this Nessa? And then, yeah, can we prompt it to do this and that and have it do some emailing and follow-ups and things like that? Just go from there.
+
+43:16 - Prateek Chandra
+Exactly. Gran, one thing what I'm very getting like, I'm getting clarity day by day about this thing. See, the conclusion, every time now I'm starting getting to know that you can develop a good operating system, but you, but for that, the direction, the inputs from the client, everything matters. They should provide you smallest part of their business or whatever process is there. If they miss anything, everything can get missed, or maybe the majority of things can get misplaced.
+
+43:59 - Ryan Tisko
+Yeah. Well, that's why, you know, that's why a lot of businesses get stuck at 3 million or less is because they get, you know, the business owner gets to know all of these little extra. Pieces of information. And then to be able to get it out in an organized manner or to trust other people or to lead and all stuff, those skill sets are not as common as somebody just like starting a company and needing to get money and having a job and then going, oh shit, I got something that could actually become something here. What do I do? Right. That happens to a lot of the small businesses is really they're just people that started. Owning their own job. And because of that, it's, you know, you can't document. You didn't, if you did document, do all these things and get through all that, you probably had partnerships, you probably got funded by somebody, you probably had all these other things that happened for you. The individual majority of businesses just get stuck because they can't. There's not enough time in the day the documentation and all the things they have to do. So, yeah, no, this is the same bottleneck AI has. Now, we give somebody, like I said, an agent, we get all their operating systems, we get all of their access, all the tools and things that their whole system works off of And we give this agent a, you know, we give them a Hermes version of their. System of their company that's just attached to everything. So when we give NASA to the team, NESA is going to be a highly capable blank slate. Right. Yeah. But as Bobby talks to it and asks it to, like, hey, can you go find this? It goes and finds something wrong. And it's, and Bobby goes, no, that's not it. This is what it is, and works through, you know, and it's learning. Then, what is it? A month, two months, three months. Like, we look at the thing, we can tell somebody confidently, that's how we can get all those little things out in a way that we can get into AI that'll work better the first time. Is by letting that customer actually kind of use this agent that we give them as like a therapist, right? It can do its emails, it can send out emails, it can draft emails for you, it can check your status and stuff and give you reports and all these things. Like you can do, you can ask it any question, you can find it anywhere in your company.
+
+47:00 - Unidentified Speaker
+Yeah.
+
+47:01 - Ryan Tisko
+That person's going to sit there and just dump into it. Most likely. If it's a paying customer, it's going to be a different experience than what we're currently getting. Yeah. So they're talk to that thing and tell them: like, talk to it like it's a human, talk to it like it's your therapist. Tell it about all the things that you do. Tell it about all the things that you don't do. Tell it about all the things you want to do. Tell it about all the problems you've had in the company. Tell it about all the good things you had in the company. And we don't know what the result of that is, but we can imagine it. So let's see, you know what happens. So you're going to actually practice this with yourself, right? For the CTO agent, has access to everything, but is the best CTO in the world, better than Steve Jobs, right? Like, but it has all of Steve Jobs biography. And yeah, it has maybe you let it reflect on. A couple different finance gurus. And just so it has like some really cool context and skills that we wish we had, right? If we have Warren Buffett's, you know, historical data in an AI and we want to be investors, that's probably a good person to let the AI figure out what it can from, right? So, in this circumstance, like if you have, if you know there's somebody that's in the market that's just a badass, let it reference that person. Be interesting. Now, if your AI starts talking like Elvis Presley, then I know you're fucking around. The wrong king. I told you to find the best of the best, but the king works for everybody, but Jesus. I'm just kidding.
+
+49:22 - Ryan Tisko
+All right.
+
+49:24 - Unidentified Speaker
+Cool.
+
+49:25 - Ryan Tisko
+Well, we'll, yeah, just kind of stimmer on some of that. And week, we'll see if we can do it. See what we can come up with. With.
+
+49:36 - Prateek Chandra
+Oh, yeah. Next week we are launching it for sure. I got a clear idea. Now, if there will be any questions, I'm gonna shoot all those questions over the chat. So you can just reply whenever you have time.
+
+49:49 - Ryan Tisko
+All right, cool. Yeah. It'd be nice to deploy some of these agents too that we conceptualize sometimes. Like how it sounds disruptive to throw in the mix of like all these bigger concepts that we're working on, but if we're working on this stuff and we got anybody else that's savvy, you know, you got Wyatt, you got developers, you got while we're trying to go through this, and there's still, I know, job board and all that stuff too, but like the idea of following up on every job that has, you know, any customer that hasn't ordered anything in a year or more. How long would it take? You that's that's a very simple concept, right? Very direct process. But with all the other bigger things going on, that's kind of like one of those things that we would bring up and then go, okay, look, we're going to do that as soon as we get a moment, right? How do we do those? In a non-distracting, non-disruptive way and continue to do these other projects at the same time? You know, is it something that's like, okay, the bigger projects are always the focus, but these kind of things, they take about an hour, right? So I'm going to dedicate an hour a day or two, whatever. You know, what do we want to? To understand about it? So that we could, I mean, that's how we want to treat our customers, right? What's a bigger project we can work on for you? And then how can we provide value now while we're providing you even more value later? And it's going to be, we're going to point things out like this. Can we email your customers, you know, right? So while we're building out a project plan, somebody, whether it's ourselves, like yourself in the mix of it, or a third-party vendor that we associate with that we can just hire to do it, kind of like field group, right? 90 bucks. Here it is. We charge 200, you know, and they just, and now there's, there's, AI implementation white label companies that have whole teams of people that we can hire for $10 an hour that know how to do these things. So we could do that, right? So before we do that, though, let's try and do it ourselves a little bit so that we know what it's like, like, what are we paying for? Is really what I want us to understand. And so just kind of keep that in mind. Throughout the day, or you may, and some of these things get kind of exhausting, where you get frustrated with the AI and you get to a point where you need to take a break or whatever. Like, these are great things to maybe have triggered somewhere where somebody on the team gets stuck or an AI goes and checks on everybody and realizes somebody might be stuck. Maybe ask them a question: Hey, if you're stuck right now, how about you take a break for a few minutes? And when you come back, I'd like you to just. Just do this 20-minute task to kind of clear your head and give you something simple to win, you know, a win for the day, because I know you can do this, and then you can get back to your program.
+
+53:30 - Unidentified Speaker
+Yeah.
+
+53:32 - Ryan Tisko
+Because sometimes, in the mix of these things, just a little win, right? Like, you're going to be asking it and doing it, and you're trying to get it to work, and it's not working, it's a pain. But if you take a second and you ask it something, it gives you an answer that you liked, it's kind of like golf. You suck, you can't hit the ball anywhere, you can't get, and all sudden you get one good shot, and oh, I can do this, I can become pro. No, it's just a mental thing. It makes you feel good for the moment. You got your dopamine, it can happen again. So then you keep trying.
+
+54:05 - Unidentified Speaker
+Show up.
+
+54:07 - Ryan Tisko
+So, anything like that, especially like as you're building something out, and you're like, you're building an operating system, and it's for estimating. These are the kind of ideas I want you to be able to come up with while you're looking at somebody's system, so that as you or anybody on the team is building a thing out, you're looking at it going, oh, well. Let me give them this. Let to the customer and ups on that. Let me see. And, like, these are the things that are what we keep the customer engaged with. So, for you to be able to look at it and say, okay, well, operating system, it does this estimate, does this estimate. Okay, it's going have all of these things. It's going to clear. What would be something from a business perspective that would make this even more valuable? What can I give them while we're working on this that's associated to this build out, right? So, this would be, yeah, anybody that says no, or you know, it goes in and emails anybody that hasn't ordered in a while, you know, while we're doing it on this project, but a project like A company asking us to do logistics agents for them to automate their scheduling.
+
+55:36 - Unidentified Speaker
+Yeah.
+
+55:37 - Ryan Tisko
+Well, we might want to actually look at that. And while you're building that out and having them approve their step-by-step process, you're going to see, oh, well, you'll come up with questions like you just asked, right? But then it'll associate differently with you. It'll resonate differently, where you'll get the answer you need to get the software to work, but that answer also lets you know how you could make it work. So if you know, oh, well, um, How do I get these? You know, I need your contact list of all your field crews and everything. And how do you schedule them from there? And what are the, you know, how do you determine what areas they're in? Oh, okay. Well, with the contact list, you'll have all the counties and everything. You can, you know, flag them for those are their dedicated areas. For you to get that kind of task. How would you look at it? Well, right now it'd be very software focused, right? Take a step back and look at it and go, wait a second. All right, we're going to build this out. We're going to have all this stuff that knows this guy's team. Would it be helpful for them to, you know, when do they send in their invoices? So, you ask the customer every Tuesday. Is that a pain in the butt process for you?
+
+57:23 - Unidentified Speaker
+Yes.
+
+57:24 - Ryan Tisko
+What do you check on all of those things, right? Oh, I check this, I check this, I check this, I check this. Well, because you notice that there's probably like a different aspect of this, right? From a leadership, from a business focus. Not just like this thing's getting done inside the company. You pulled out a pain point for that person that we could, that not only do we need to know, and we can give him an agent that just he can deploy through his AI, and all it does is check those things for him and gives him a report back. It doesn't do anything automated or any, like it doesn't go past that, or it just gives them. It just reviews all the invoices, tells them about duplicates and adjustments and all that stuff for him, like boom. Well, we give that to him, he's using it while we're building out the whole system. He's happy, we're happy, and guess what? We actually need that agent to be in the mix of the managed agents. So, when we get to this, when we get to completing our project, we're actually going to pull in. The agent we gave him while we were working on the project.
+
+58:41 - Unidentified Speaker
+Okay.
+
+58:46 - Ryan Tisko
+And it'll make it round out all the rest of the stuff. So the same thing like with where you got stuck: the you know, what happens after pending and what happens if the job and all these things. Oh, well, we're going to. Monitor, how do you monitor that? All these things. Maybe you build an agent that just does that. But you'd have to the person. So, you know, there is some, how do we get the AI to start maybe asking those questions throughout the experience? And we're just learning now, you know, all right, well, when these things happen, when do they happen? And what are the questions that we have? Exactly. I'd be curious In like a month or so, to take the last like three months' transcripts, give it to an AI and turn it into a podcast. And I'd like to listen to it.
+
+59:56 - Prateek Chandra
+That's a good idea.
+
+59:57 - Ryan Tisko
+Have you seen those where you can actually? I forget what the, I think Whisperflow does it.
+
+1:00:02 - Prateek Chandra
+Yes, Whisperflow does this.
+
+1:00:04 - Ryan Tisko
+Where you can actually tell it to turn it into a podcast and re-listen to your conversation, but like a third party. Yep. Yeah, that'd be really interesting. Because we could just have an AI podcast kind of running in the background. These are the things that we keep need to start layering in while we're doing projects. You know, filling those shelves up like I talk about.
+
+1:00:36 - Unidentified Speaker
+Exactly.
+
+1:00:39 - Ryan Tisko
+So, yeah, in the mix of all this bigger picture stuff, where can we squeeze a, you know, bring back our customer campaign, anybody who hasn't ordered for surveys in, you know, a year.
+
+1:01:25 - Prateek Chandra
+Yeah. It's like we discussed it's better to the sales flow if we can just embed with GHL, then we will get to know through AI that okay, what all customers we lost and who are actually not providing the orders from past six months. So I believe it will be easier from GHL we can start sending then these cold emails.
+
+1:02:14 - Ryan Tisko
+You think it'd be easier from G? Well, let's see what the difference is, right? Because I think you're right. It might be easier and longer term for more advanced aspects. Yes, I think that would be a way to go. But can you create an agent that has the ability to send out emails and You just tell it to go into Salesforce, look through all the order histories, and send an automated personalized email to each one and give it a timeframe, right? Like give it a week to complete the task so that it's not just like triggering a problem with an invoice or with an emailing system as a spammer because it's sending somebody out. We set it to act as a human, right? So this thing is going in, and each time it finds somebody, it triggers it and it sends email, finds person, sends an email, finds the next person, sends an email. And it's staggered, and maybe it runs every 30 minutes, or it only sends out 10 or 20 emails an hour or whatever. If that's always running, That's great, right? It doesn't need to be a go high-level thing. It just needs to be somebody who goes in and makes sure that they're updating and checking the way that the AI is sending the email and making any adjustments to it from a campaign basis, right? Getting a report from that emailing potentially. Go high level is going to give you the report, which is what the benefit is of like who opened it and all that stuff. So that's a bigger level thing, right? That's like, oh, yeah, you definitely want to know who opened it, how many opened it, how many didn't, all this stuff. So we can do that. That might take us a week. That might take us a day. That might take us two days. All right. This other agent that just can. We can just set to like never, it's like a tortoise. It's just never-ending, sending emails to these people in a, in a, in a slow enough way that it doesn't trigger spam. If somebody replies back, it lets us know, and it just keeps going, slow moving, but consistent. If that only takes an hour to build. Then doing that is more effective from a business perspective for the customer while we upsell why go high-level would be better.
+
+1:05:24 - Unidentified Speaker
+Right?
+
+1:05:24 - Ryan Tisko
+So it's like it's doing it now in this way, but if you hire us to do it this way, You're get tracking, you're going to get a dashboard, you're going to get the ability to do social media posts as well, you're going to have all these other things. Would you like that now that you're seeing you're getting results from sending these emails? Because there's a chance that, say, we do this and we go, you know what, we don't want to do that, we want to do something different. Now was the go high level now the time spent in making it a go high level thing versus the the quick version What was what was a better first step was the quick version because it got you to a point of understanding you at least saw results from from a you know moving you started moving in a direction and then you made an adjustment Instead of moving in a direction and then kind of locking yourself in and forcing, and then it's harder to make an adjustment because you've spent so much effort on your idea. So the person tends to try and make it work longer because it, because we've built it already, versus, oh, that was just the that took like 30 minutes, you know. So, those are our levels that we have to, you know. Yes, we want to get them in a go high level, but that's that's a higher value thing. This is also another product that we're willing to give you. Other simple things too, like we have an automated agent that goes in and posts. All the info at emails, right? Okay. So then we need an agent that talks to that agent that knows how to know the process to cancel the job and who to notify. And if they get approval to cancel it, they know what to do in the system. And move cancel it or whatever. That agent that reviews all the stuff and posts the email would have other agents understanding what certain emails are. Go ahead and approve this. The agent that's just reading the invoices or the inbox and posting it to the chat. Well, when it posts it to the chat and it knows that it said, please proceed, well, it posted to the chat and it also let the other please proceed agent that literally is just trained on. Phrases like that mean move file from quote to pending and notify the team. So we could slowly chip away at each different type of simple emails getting handled. By just making very small automated agents that just go and report on certain things. And maybe you can reply on specific things, like not teaching an agent how to reply on canceled ETAs, research ECs, topos. No, we have 30 agents. We have a topo. And construction agent. We have a change of certification agent. We have an approved agent. We have a canceled agent. Each one of them only knows one process. So that list of things that like you and I could get a customer, you could talk to them about what they want to get as far as AI. I can look at the business and go, these are, we could do 30 agents for this guy like this, boom, boom, going through his email and everything while you're building that agent. So how do we get this, these little individual things deployed? While we're building this out. And that's that's our that's phase one of sprint one. And that will, once that's done, then really the rest of the sprints are just going to be standard, right? How you already proceed. But because the sprint one was done in such a way, that customer kept kind of manifesting things for us and got instant value.
+
+1:11:13 - Prateek Chandra
+Yeah.
+
+1:11:25 - Ryan Tisko
+So these are some of the things that I'm trying to also get, and maybe we can be sneaky about it, and you can just like ask Anusha. But I'm trying to tell Wyatt, and you could tell by her usage compared to everybody else, too, like she's doing it. It's like, yeah, sorry. Once you guys get hummed along in this use of Claude and all these things, like try and send out campaigns, do this, do that. And I don't think they're still working towards that, right? But what if we did this over here and you just like fed her a skill or maybe, like I said, put a bug in her and see what she thinks. Because it'd be funny to like have that at some point next week, like one of these things, and just like not say it to anybody and just have her just do it. All right. Like give her. Hey, run this, run this prompt, do this, and then show Wyatt. Tell him you built it. Could I, yeah, I definitely want Wyatt and Bobby and and you, everybody, to kind of look at some of these things. And it's like, yeah, while we're working on stuff, the purpose of AI is to allow things to continue to happen in addition to what you normally could do because of it. Right. So, yeah, if you're going to start your day at work and you know that you can prompt your AI to run through and like drum up more business while you're doing your daily work, and if it comes up with nothing, It's still more work got done than you would have. And if it comes up with something, great. If I could wake up every day and deploy 200 agents or a thousand agents to go do something at the end of every day, if I'm doing that every day, no matter what I'm doing, I'm going to be way further along than anybody else. But I go back to the hands on, you know, 15 hands on yourself or 15 hands, two hands on 15 different people. What's the reality? So, yeah, if we a thousand agents doing simple tasks, then we got a thousand things done compared to anybody else that got. Maybe a few hundred because they're using AI. But they're, but they got too many, one, you know, they got too many agents with, 15 hands. They might have 200 agents. We have a thousand. I think the thousand wins.
+
+1:15:09 - Unidentified Speaker
+Exactly.
+
+1:15:10 - Prateek Chandra
+I agree with that part.
+
+1:15:13 - Ryan Tisko
+Yeah, I mean, if any business could hire 100 people and have no additional cost or very little, they'd do it because they'd get more done. They just don't do it and they try and do it with as many, as few amounts of people as possible, and they manage the budget and all that stuff that way. And they try and lead and optimize through leadership of the people. But they have a financial constraint. Just lifted the financial constraint. Everybody's minds are blown. And we don't have to keep trying to shove everything into one thing because of financial constraints, like we would a human, and try and teach it all these things. We can now. Do a hundred fake humans that do one thing each instead of one human that does a hundred things and I have to pay all this money for it. And then they don't want to duplicate and they don't want to teach anybody else because they might lose their job, is what they're fearing, and all these things. So, yeah, that's why everybody today is going to go so far, so fast moving forward once everybody catches on. Because you can literally start your company day one, and you can have a CTO, a CFO, a developing team, an HR department, a legal department to talk to. You have all of these things that a 16-year-old kid with a laptop and an internet connection can literally build out an entire workforce. For 20 bucks a month. A kid can use his lunch money and build an entire team and run a million-dollar company from their bedroom.
+
+1:17:21 - Unidentified Speaker
+Yeah.
+
+1:17:22 - Ryan Tisko
+People just haven't really recognized it fully like that yet. And it's solely because, yeah. Instead of teaching one person how to do two things, now you can just teach each one of these things individually and not have to worry about confusion or anything. It makes me jealous of the people who are starting from scratch because it's so much easier to just. Explain everything and build it from nothing than it is to try and like give a decade of knowledge to it and teach it what happened already versus just going from day one. Yeah, but all right, well. I hope you have a good weekend as well. And there's definitely some crazy, awesome, fun things to see happen over the next few months. And I think it'll start easily next week with this one.
+
+1:18:43 - Prateek Chandra
+Yes, of course. It already started actually from yesterday. It started. That's why today when I started testing, I started giving the scenarios. Oh my god I actually I just uh I was spinning around then I thought now I just wait I should wait for the call as soon as call will come I'm just going to tell Ryan that okay let's discuss about this and clear all the things yeah I appreciate you did it exactly and and exactly like what we said in the beginning you're too smart sometimes good.
+
+1:19:31 - Ryan Tisko
+No, I'm glad you got some more clarity. I think it'll just keep coming with time. And I appreciate it and I'm glad we got to spend some time on that. And then, yeah, if you have any more things you need me to clear up for you, you want me to, you know, do an explanation, record it, whatever, send it over on something, just shoot it over and you know I'll be I'll be able to do that anytime.
+
+1:19:58 - Prateek Chandra
+Sure, sure. I appreciate it, man.
+
+1:20:01 - Ryan Tisko
+Likewise, sir. I hope you have a good rest of your day. Appreciate you. I appreciate it.
+
+1:20:06 - Prateek Chandra
+Bye.
+
+1:20:06 - Unidentified Speaker
+Bye-bye.

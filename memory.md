@@ -153,9 +153,7 @@ Full rules, commands, edge cases, and state machine documented in:
 | Post-invoice: estimate agent stops | Once the invoice is delivered and the flag is gone, the estimate agent stops caring. No post-invoice tracking. Any modification after delivery = manual by staff. (Ryan 2026-05-29) |
 | Approval flow: price adjustment | Human reviewer can ADJUST $X before approving. AI updates invoice price to adjusted amount before sending. AI stores adjustment as learning for future similar jobs. (Ryan 2026-05-29) |
 | Parallel/shadow mode | Launch in shadow mode first — AI suggests but does not send. End-of-day comparison report: AI estimate totals vs actual. Ryan/Bobby evaluate accuracy before enabling auto-send. (Ryan 2026-05-29) |
-| NESA | OUT OF SCOPE for this project. Concept noted — NexGen Enterprises Surveying AI. Logged for future consideration. (2026-05-29) |
 | Small agents philosophy | Many small single-purpose agents managed by a high-level manager agent. NOT one big agent doing everything. If one breaks, manager keeps running with remaining agents. (Ryan 2026-05-29) |
-| Hermes Agent | OUT OF SCOPE — was being evaluated for NESA. Since NESA is out of scope, Hermes Agent research deferred too. Hermes LLM (Ollama local) still in use for low-complexity tasks. (2026-05-29) |
 
 ---
 

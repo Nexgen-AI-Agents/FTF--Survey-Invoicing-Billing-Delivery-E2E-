@@ -199,9 +199,6 @@ Each agent has a role card, reads a specific set of files, and operates within a
 - CR: ADJUST $X approval command (I-094)
 - CR: Personalized email + upsell + review on delivery (I-095)
 - Parallel/shadow mode (I-096)
-- NESA agent (I-097)
-- Hermes Agent research for NESA (I-099)
-
 **Project Management Board:** `project_management/` folder — Jira-style structure + `FTF_AI_OS_Project_Tracker.csv`
 
 ---
@@ -236,5 +233,4 @@ After every transcript extraction:
 | GitHub Actions failing silently | Built failure notification (if:failure) immediately | Operational blind spots get fixed proactively |
 | System broke on edge cases → called Ryan | Got complete clarification + new scope decisions in one call | Don't spin — get clarity fast, then build right |
 | Agent 2 built for Quote-only, Ryan clarified it's flag-based | Created I-093 immediately, updated memory.md, logged in PM board | When design is wrong, log it + fix it; don't defend the original |
-| Ryan introduced NESA concept | Logged I-097 + Hermes Agent research (I-099) + PM board entry same session | New feature ideas from Ryan → issues + backlog immediately |
 | Scope growing in all directions | Created Jira-style PM folder + Excel tracker | As scope grows, management tools grow with it |

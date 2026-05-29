@@ -36,9 +36,7 @@
 | FUT-03 | File ranking agent (daily order file rankings) | FEATURE | Sub-component of logistics agent |
 | FUT-04 | Marketing agent (follow up on no's/cancellations) | FEATURE | Depends on estimate OS logs |
 | FUT-05 | GHL full integration for win-back campaign tracking | FEATURE | Upgrade path from NF-02 |
-| FUT-06 | NESA agent (NexGen Enterprises Surveying AI) | FEATURE | Out of scope — concept only, not current project |
-| FUT-07 | Hermes Agent platform research (for NESA) | FEATURE | Out of scope — depends on NESA being in scope |
-| FUT-08 | In-progress/in-revision status management agent | FEATURE | Long future |
+| FUT-06 | In-progress/in-revision status management agent | FEATURE | Long future |
 | FUT-09 | Developer agent (modify FTF UI, hide buttons) | FEATURE | Long future |
 | FUT-08 | Weather monitoring agent | FEATURE | I-070 — post Sprint 12 |
 | FUT-09 | Post-transcript podcast generator (Whisperflow) | TASK | Nice to have, not project work |

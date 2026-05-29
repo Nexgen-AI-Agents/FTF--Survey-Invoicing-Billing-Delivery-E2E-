@@ -21,9 +21,7 @@ CR-01,I-093: Agent 2 scan ALL orders for invoice flag (not just Quote status),CR
 CR-02,I-094: Agent 4 add ADJUST $X command to approval flow,CR,BACKLOG,Sprint 12,Agent 4 Human Gate,P2,dev_manager,2026-05-29,2026-05-29,Bobby/Robert can adjust price before approving
 CR-03,I-095: Personalized email + upsell + Google review ask on delivery,CR,BACKLOG,Sprint 12,Agent 6 Writer + Agent 8 Sender,P2,dev_manager,2026-05-29,2026-05-29,Replace default FTF email template
 CR-04,I-096: Parallel/shadow mode - AI runs alongside humans for comparison,CR,BACKLOG,Sprint 11,All Agents,P1,Prateek,2026-05-29,2026-05-29,AI suggests but doesnt send - end-of-day comparison report
-NF-01,I-097: NESA agent - NexGen Enterprises Surveying AI,FEATURE,OUT OF SCOPE,Future,New Agent,P4,TBD,2026-05-29,2026-05-29,OUT OF SCOPE — concept only. Not current project.
 NF-02,I-098: Win-back email agent (customers inactive 1 year+),FEATURE,BACKLOG,Sprint 13,New Agent,P2,dev_manager,2026-05-29,2026-05-29,Staggered sends - no spam - FTF API first - GHL upgrade later
-NF-03,I-099: Hermes Agent integration for NESA,FEATURE,OUT OF SCOPE,Future,Agent Architecture,P4,TBD,2026-05-29,2026-05-29,OUT OF SCOPE — depends on NESA being in scope
 NF-04,I-090: Upsell campaigns (3-5 follow-ups after estimate sent),FEATURE,BACKLOG,Sprint 13,Marketing Agent,P3,dev_manager,2026-05-25,2026-05-29,Rush fee + aerial photos + EC upsell. Pricing TBD by Ryan+Robert
 NF-05,I-091: Re-engagement campaign for inactive customers 1+ year,FEATURE,BACKLOG,Sprint 13,Marketing Agent,P3,dev_manager,2026-05-25,2026-05-29,Weekly escalating email. GHL or direct email.
 NF-06,I-062: Website chat to order conversion,FEATURE,BACKLOG,Sprint 14,Chat Agent,P3,dev_manager,2026-05-26,2026-05-29,Customer says go ahead on website -> AI gets address/order# -> converts
@@ -35,6 +33,6 @@ FUT-02,Crew ranking agent,FEATURE,BACKLOG,Future,New Agent,P4,TBD,2026-05-29,202
 FUT-03,File ranking agent (daily order complexity ranking),FEATURE,BACKLOG,Future,New Agent,P4,TBD,2026-05-29,2026-05-29,Sub-component of logistics agent
 FUT-04,Marketing agent (follow up on no/canceled orders),FEATURE,BACKLOG,Future,New Agent,P4,TBD,2026-05-29,2026-05-29,Depends on estimate OS logs
 FUT-05,GHL full integration for win-back campaign tracking,FEATURE,BACKLOG,Future,Marketing,P4,TBD,2026-05-29,2026-05-29,Upgrade path from NF-02
-FUT-06,In-progress/in-revision status management via agent,FEATURE,BACKLOG,Future,New Agent,P4,TBD,2026-05-29,2026-05-29,Requires NESA first - break in-revision habit
+FUT-06,In-progress/in-revision status management via agent,FEATURE,BACKLOG,Future,New Agent,P4,TBD,2026-05-29,2026-05-29,Long future item
 FUT-07,Developer agent (modify FTF UI + hide buttons),FEATURE,BACKLOG,Future,New Agent,P4,TBD,2026-05-29,2026-05-29,Long future
 FUT-08,Weather monitoring agent (I-070),FEATURE,BACKLOG,Future,New Agent,P4,dev_manager,2026-05-26,2026-05-29,Post Sprint 12
