@@ -189,12 +189,20 @@ Each agent has a role card, reads a specific set of files, and operates within a
 - AR loop: staging only
 - Monthly statements: staging only
 
-**What's NOT built yet (open issues):**
+**What's NOT built yet (open issues added 2026-05-29):**
 - Website chat → order conversion (I-062)
 - Upsell campaign on orders (I-090)
-- Re-engagement campaign for inactive customers (I-091)
+- Re-engagement campaign for inactive customers (I-091, I-098)
 - Weather monitoring agent (I-070)
 - GHL evaluation (I-092)
+- CR: Agent 2 flag hunt across all statuses (I-093)
+- CR: ADJUST $X approval command (I-094)
+- CR: Personalized email + upsell + review on delivery (I-095)
+- Parallel/shadow mode (I-096)
+- NESA agent (I-097)
+- Hermes Agent research for NESA (I-099)
+
+**Project Management Board:** `project_management/` folder — Jira-style structure + `FTF_AI_OS_Project_Tracker.csv`
 
 ---
 
@@ -226,3 +234,7 @@ After every transcript extraction:
 | Refund rule confirmed | Written into code (refund_guard.py) before the session ended | Hard rules are code |
 | Dynamic pricing factors documented but not confirmed | PRICING_COMPLEXITY_ENABLED=false | Data before tuning |
 | GitHub Actions failing silently | Built failure notification (if:failure) immediately | Operational blind spots get fixed proactively |
+| System broke on edge cases → called Ryan | Got complete clarification + new scope decisions in one call | Don't spin — get clarity fast, then build right |
+| Agent 2 built for Quote-only, Ryan clarified it's flag-based | Created I-093 immediately, updated memory.md, logged in PM board | When design is wrong, log it + fix it; don't defend the original |
+| Ryan introduced NESA concept | Logged I-097 + Hermes Agent research (I-099) + PM board entry same session | New feature ideas from Ryan → issues + backlog immediately |
+| Scope growing in all directions | Created Jira-style PM folder + Excel tracker | As scope grows, management tools grow with it |

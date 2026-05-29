@@ -1,0 +1,40 @@
+ID,Title,Type,Status,Sprint,Agent_Component,Priority,Owner,Created,Updated,Notes
+S0-EPIC,Sprint 0 - Foundation (repo + infra + DB + APIs),EPIC,COMPLETED,Sprint 0,Infrastructure,P0,Prateek,2026-05-21,2026-05-21,All 5 API connections working
+S1-EPIC,Sprint 1 - Agent 2 Monitor,EPIC,COMPLETED,Sprint 1,Agent 2,P0,dev_manager,2026-05-22,2026-05-22,Detects Quote-status orders
+S2-EPIC,Sprint 2 - Agent 3 Classifier + Agent 5 Pricing Engine,EPIC,COMPLETED,Sprint 2,Agent 3 + Agent 5,P0,dev_manager,2026-05-25,2026-05-25,12 flag triggers + county pricing
+S3-EPIC,Sprint 3 - Agent 4 Human Gate,EPIC,COMPLETED,Sprint 3,Agent 4,P0,dev_manager,2026-05-25,2026-05-25,APPROVE/REJECT/DEFER/APPROVE ALL commands
+S4-EPIC,Sprint 4 - Agent 6 Writer + Change Order Clause,EPIC,COMPLETED,Sprint 4,Agent 6,P0,dev_manager,2026-05-26,2026-05-26,FL PSM persona + change order clause
+S5-EPIC,Sprint 5 - Agent 7 Reviewer (self-correction loop),EPIC,COMPLETED,Sprint 5,Agent 7,P0,dev_manager,2026-05-26,2026-05-26,Up to 3 correction loops
+S5b-EPIC,Sprint 5b - Agent 12 Email Monitor (info@ quote approval),EPIC,COMPLETED,Sprint 5b,Agent 12,P0,dev_manager,2026-05-27,2026-05-27,IMAP + AI intent detection + refund guard
+S6-EPIC,Sprint 6 - Agent 8 Sender + Agent 9 Reporter (first full loop),EPIC,COMPLETED,Sprint 6,Agent 8 + Agent 9,P0,dev_manager,2026-05-26,2026-05-26,8AM-6PM ET window + 6-13min random delay
+S7-EPIC,Sprint 7 - Agents 10-11 AR Internal Escalation,EPIC,COMPLETED,Sprint 7,Agents 10-11,P0,dev_manager,2026-05-27,2026-05-27,Day 60/90 alerts to Jessica + stakeholders
+S8-EPIC,Sprint 8 - Agents 15-17 Monthly Statement Loop,EPIC,COMPLETED,Sprint 8,Agents 15-17,P0,dev_manager,2026-05-27,2026-05-27,Excel+PDF delivery on 1st of month
+S9-EPIC,Sprint 9 - Agent 1 Orchestrator + Memory + Agent 18 BA,EPIC,COMPLETED,Sprint 9,Agent 1 + Agent 18,P0,dev_manager,2026-05-27,2026-05-27,24/7 GitHub Actions runtime
+S10-EPIC,Sprint 10 - Full Staging Test (GO/NO-GO),EPIC,COMPLETED,Sprint 10,All Agents,P0,Prateek + Ryan,2026-05-27,2026-05-27,GO from Ryan confirmed
+S11-01,Set FTF_API_BASE_URL to production URL,TASK,IN DEV,Sprint 11,GitHub Secrets,P0,Prateek,2026-05-27,2026-05-29,Blocked on production credentials from Ryan
+S11-02,Confirm FTF_API_KEY is production key,TASK,IN DEV,Sprint 11,GitHub Secrets,P0,Prateek,2026-05-27,2026-05-29,Blocked on production credentials
+S11-03,Trigger first production estimate loop run,TASK,IN DEV,Sprint 11,Agent 1 Orchestrator,P0,Prateek,2026-05-27,2026-05-29,After S11-01 and S11-02 complete
+S11-04,Robert/Mark monitor first 5 real estimates,TASK,IN DEV,Sprint 11,monitor_first5_estimates.py,P1,Robert/Mark,2026-05-27,2026-05-29,Run: python scripts/monitor_first5_estimates.py --teams
+S11-05,1-week observation period - flag edge cases,TASK,IN DEV,Sprint 11,All Agents,P1,Robert/Mark/Prateek,2026-05-27,2026-05-29,AR + Statement loops stay on staging
+S11-06,Ryan GO/NO-GO for Sprint 12,TASK,IN DEV,Sprint 11,Milestone,P0,Ryan,2026-05-27,2026-05-29,After 1-week observation
+CR-01,I-093: Agent 2 scan ALL orders for invoice flag (not just Quote status),CR,BACKLOG,Sprint 11/12,Agent 2 Monitor,P1,dev_manager,2026-05-29,2026-05-29,Ryan 2026-05-29: flag hunter across all statuses
+CR-02,I-094: Agent 4 add ADJUST $X command to approval flow,CR,BACKLOG,Sprint 12,Agent 4 Human Gate,P2,dev_manager,2026-05-29,2026-05-29,Bobby/Robert can adjust price before approving
+CR-03,I-095: Personalized email + upsell + Google review ask on delivery,CR,BACKLOG,Sprint 12,Agent 6 Writer + Agent 8 Sender,P2,dev_manager,2026-05-29,2026-05-29,Replace default FTF email template
+CR-04,I-096: Parallel/shadow mode - AI runs alongside humans for comparison,CR,BACKLOG,Sprint 11,All Agents,P1,Prateek,2026-05-29,2026-05-29,AI suggests but doesnt send - end-of-day comparison report
+NF-01,I-097: NESA agent - NexGen Enterprises Surveying AI,FEATURE,BACKLOG,Sprint 12,New Agent,P1,Prateek,2026-05-29,2026-05-29,Ryan wants next week. Blank slate + connected to everything + learns
+NF-02,I-098: Win-back email agent (customers inactive 1 year+),FEATURE,BACKLOG,Sprint 13,New Agent,P2,dev_manager,2026-05-29,2026-05-29,Staggered sends - no spam - FTF API first - GHL upgrade later
+NF-03,I-099: Hermes Agent integration for NESA,FEATURE,BACKLOG,Sprint 13,NESA / Agent Architecture,P2,Prateek,2026-05-29,2026-05-29,MIT licensed - persistent memory - autonomous server - matches NESA concept
+NF-04,I-090: Upsell campaigns (3-5 follow-ups after estimate sent),FEATURE,BACKLOG,Sprint 13,Marketing Agent,P3,dev_manager,2026-05-25,2026-05-29,Rush fee + aerial photos + EC upsell. Pricing TBD by Ryan+Robert
+NF-05,I-091: Re-engagement campaign for inactive customers 1+ year,FEATURE,BACKLOG,Sprint 13,Marketing Agent,P3,dev_manager,2026-05-25,2026-05-29,Weekly escalating email. GHL or direct email.
+NF-06,I-062: Website chat to order conversion,FEATURE,BACKLOG,Sprint 14,Chat Agent,P3,dev_manager,2026-05-26,2026-05-29,Customer says go ahead on website -> AI gets address/order# -> converts
+S12-01,Sprint 12 - Switch AR loop to production,TASK,BACKLOG,Sprint 12,Agents 10-11,P0,Prateek,2026-05-27,2026-05-29,After Sprint 11 GO/NO-GO
+S12-02,Sprint 12 - Switch monthly statements to production,TASK,BACKLOG,Sprint 12,Agents 15-17,P0,Prateek,2026-05-27,2026-05-29,After Sprint 11 GO/NO-GO
+S12-03,Sprint 12 - All 3 loops live 24/7 autonomous,EPIC,BACKLOG,Sprint 12,All Agents,P0,Prateek + Ryan,2026-05-27,2026-05-29,Milestone - Ryan sign-off required
+FUT-01,Logistics agent (post-pending crew scheduling + job board),EPIC,BACKLOG,Future,New Agent,P4,TBD,2026-05-29,2026-05-29,Depends on estimate OS fully live
+FUT-02,Crew ranking agent,FEATURE,BACKLOG,Future,New Agent,P4,TBD,2026-05-29,2026-05-29,Sub-component of logistics agent
+FUT-03,File ranking agent (daily order complexity ranking),FEATURE,BACKLOG,Future,New Agent,P4,TBD,2026-05-29,2026-05-29,Sub-component of logistics agent
+FUT-04,Marketing agent (follow up on no/canceled orders),FEATURE,BACKLOG,Future,New Agent,P4,TBD,2026-05-29,2026-05-29,Depends on estimate OS logs
+FUT-05,GHL full integration for win-back campaign tracking,FEATURE,BACKLOG,Future,Marketing,P4,TBD,2026-05-29,2026-05-29,Upgrade path from NF-02
+FUT-06,In-progress/in-revision status management via agent,FEATURE,BACKLOG,Future,New Agent,P4,TBD,2026-05-29,2026-05-29,Requires NESA first - break in-revision habit
+FUT-07,Developer agent (modify FTF UI + hide buttons),FEATURE,BACKLOG,Future,New Agent,P4,TBD,2026-05-29,2026-05-29,Long future
+FUT-08,Weather monitoring agent (I-070),FEATURE,BACKLOG,Future,New Agent,P4,dev_manager,2026-05-26,2026-05-29,Post Sprint 12
