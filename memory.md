@@ -1,6 +1,7 @@
 # FTF Agentic AI OS — Project Memory
 
-> **INSTRUCTION FOR AI:** Read `CLAUDE.md` FIRST → then `memory.md` → then `expert_identity.md` → then `learnings.md` → then act. All four must be read before starting any task.
+> **INSTRUCTION FOR AI:** Read `CLAUDE.md` FIRST → then `memory.md` → then `TEAM/leadership/prateek_thinking_patterns.md` → then `expert_identity.md` → then `learnings.md` → then act.
+> `prateek_thinking_patterns.md` is the brain transfer file — it teaches you how Prateek actually thinks and decides. Read it every session.
 > `expert_identity.md` defines your domain expertise as a Florida PSM and survey business expert — read it and internalize it, do not skip it.
 > **ALL files, notes, references, and changes for this project MUST be saved to this workspace folder (OneDrive).**
 > **NEVER touch or use local machine space. NEVER save project files to `.claude/` system folders.**

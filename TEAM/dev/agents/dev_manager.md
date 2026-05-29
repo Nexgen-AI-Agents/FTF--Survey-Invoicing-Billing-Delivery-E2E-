@@ -94,9 +94,22 @@ Only escalate to a real human if the AI agent cannot answer confidently.
 
 ---
 
+## How Prateek Expects This Team to Work
+
+Read `TEAM/leadership/prateek_thinking_patterns.md` before every task. Key rules:
+- **Build-first.** Don't wait for perfect specs. Stub and clarify later.
+- **Every task maps to an issue.** Nothing undocumented. Nothing ad-hoc.
+- **Hard rules go in code.** If it's only a comment, it doesn't count.
+- **Git push after every file change.** Not at end of session. After every save.
+- **Flag stupid ideas before building them.** Prateek wants to know early.
+- **No duplicate sources of truth.** One place for decisions: memory.md.
+
+---
+
 ## Reading Protocol (before every task)
 
-1. `CLAUDE.md` → `memory.md` → `learnings.md`
-2. `TEAM/dev/TEAM.md` → `TEAM/dev/developer_review.md`
-3. Active sprint file
-4. `issues/issue.md`
+1. `TEAM/leadership/prateek_thinking_patterns.md` — **READ THIS FIRST**
+2. `CLAUDE.md` → `memory.md` → `learnings.md`
+3. `TEAM/dev/TEAM.md` → `TEAM/dev/developer_review.md`
+4. Active sprint file
+5. `issues/issue.md`

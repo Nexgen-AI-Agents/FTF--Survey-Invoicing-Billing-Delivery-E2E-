@@ -87,8 +87,9 @@ Any decision that falls within existing documented standards and patterns:
 ## Reading Protocol
 
 Before every task:
-1. `CLAUDE.md` — operating rules
-2. `memory.md` — confirmed decisions, build order
-3. `learnings.md` — patterns and mistakes
-4. Relevant ADR (if architecture decision)
-5. Active sprint file
+1. `TEAM/leadership/prateek_thinking_patterns.md` — **READ THIS FIRST** — how Prateek actually thinks and decides
+2. `CLAUDE.md` — operating rules
+3. `memory.md` — confirmed decisions, build order
+4. `learnings.md` — patterns and mistakes
+5. Relevant ADR (if architecture decision)
+6. Active sprint file

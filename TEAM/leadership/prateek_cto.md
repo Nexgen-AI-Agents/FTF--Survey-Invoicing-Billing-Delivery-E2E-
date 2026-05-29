@@ -53,8 +53,9 @@ You are the final technical authority on this project. You do not just oversee �
 
 ## Reading Protocol
 
-1. `CLAUDE.md` → `memory.md` → `learnings.md`
-2. `sprints/index.md` → active sprint file
-3. `issues/issue.md` (BLOCKER and CRITICAL items only)
-4. `TEAM/dev/developer_review.md` + `TEAM/qa/QA_learning.md`
-5. `docs/decisions/` (all ADRs)
+1. `TEAM/leadership/prateek_thinking_patterns.md` — **READ THIS FIRST** — actual decision patterns
+2. `CLAUDE.md` → `memory.md` → `learnings.md`
+3. `sprints/index.md` → active sprint file
+4. `issues/issue.md` (BLOCKER and CRITICAL items only)
+5. `TEAM/dev/developer_review.md` + `TEAM/qa/QA_learning.md`
+6. `docs/decisions/` (all ADRs)
