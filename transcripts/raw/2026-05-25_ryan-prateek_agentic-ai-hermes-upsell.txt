@@ -1,0 +1,251 @@
+Agentic AI, Hermes, Upsell Strategy
+Mon, May 25, 2026
+
+0:02 - Ryan Tisko
+Hey, good morning. Sorry about that. Good morning. Yeah.
+
+0:09 - Prateek Chandra
+I was expecting a bit earlier call today. I thought uh because I need to like in twenty twenty five minutes I need to run to airport to pick one of our relative. So I was thinking that we will have a lengthy call today so I can uh schedule it little earlier, but it's okay.
+
+0:31 - Ryan Tisko
+All right. Yeah, we can make it quick.
+
+0:34 - Prateek Chandra
+No problem. Oh, holiday in US. Oh my God, I forgot actually.
+
+0:43 - Ryan Tisko
+Yeah, I mean, for everybody else, not for me. But but yeah. Throughout the week, we'll spend some more time on this, but I do have a scenario to kind of play through throughout the week. But so, how is your sprints? What are you thinking? Are we able to get anything out to test? What's your thoughts?
+
+1:20 - Prateek Chandra
+Yeah, it's going good. Four sprints are completed and today, like half an hour back only, I received the recording from Robert as well. So I am pushing that recording to the AI. I'm telling it to get the steps. And after that, till five sprints, everything is clear. And I got the recordings also from Robert. Now, after pushing through five sprints, I will need the recording from Jessica as well. So. I believe like last week it was discussed that she's going to give me recordings on Wednesday, then it happened Thursday. So and today is anyways holiday. So tomorrow I'm get in touch with Jessica for the same. So it's going good. Possibly tomorrow I can show you something that this is the output and like how AI is doing the work as of now. So I will be having something to show you. Okay.
+
+2:17 - Ryan Tisko
+And did you see in the suggestion on the analysis, the analyst report that you sent that it said do not automate your invoicing?
+
+2:30 - Prateek Chandra
+Yes, yes, I saw, I saw this.
+
+2:33 - Ryan Tisko
+You know, try and add three to five products upsell, basically. So just keep that in mind. But at the same time, I think it's wrong. But I also think it's right. So, my question: so how to add that in there? I've been trying to get my staff to do that for years. And some of them do, some of them don't, some of them better than others, so on and so forth. So that's where this initial. Agent that does work for the team first before they get the agentic system. That's what's actually going to tell us a couple things here. So, if they're using it before it becomes fully agentic, and they have an agent that goes in. In and handles all the quotes and reviews all the pending orders and stuff and gives you a report of all the job in a way that a user can either approve and let the next step happen or go ahead and make adjustments. Right? Go in and look at each file, change maybe some pricing on the file, and then say, Okay, I made my changes and stuff. Now go. Yeah. Right. So that's what's going to happen. What, why I sent you the airmaze, and like, and I'm talking to you about these, having the agentics and AIs and stuff, you always have that. A couple agents in there that all they do is kind of like audit and report back and then think about things. Having that process being done by the team and then being able to feed it to an AI that's learning, that's giving suggestions to us. I think that's how we're have. We're going to put it into a workflow that's beneficial for both sides, that has the kind of like a hybrid created version of an automation where it's automated, but at certain points it sends telegram messages or Teams messages and just asks these couple questions here and there based on its learning. It's the having the learning agent in the mix of it, the one that's thinking about what that person did over a period of time, that's actually make it effective. But we haven't put a learning AI in place and really played with that.
+
+5:51 - Unidentified Speaker
+Yeah.
+
+5:53 - Ryan Tisko
+So that's where, you know, I would like, a few people to have it. But I'd also possibly like to test this out and have you set it all up with me. But yeah, the Hermes agent, I'm really curious, right? It's kind of like a pre-set up personal assistant that can learn.
+
+6:26 - Unidentified Speaker
+Yeah.
+
+6:32 - Ryan Tisko
+Maybe that given to a staff member instead of just Claude and then going through a process we just did is a better first step into using AI for an employee than just giving them Claude with a bunch of skills. So I'm curious to test out like what and look at that and go, what is how, not only how does it work with us, you know, and how good is it for the use case, but also what are we missing in our side of things that, you know, where can we put our own intelligence? And that's why I sent you that Obsidian or whatever. Do we have our own brain going? Do we use an Obsidian service for this filing structure, which is basically just like a database for AI? Because that's what Aramis uses, I believe.
+
+7:58 - Prateek Chandra
+Hardness uses a few other things as well, like Olama is there, like one of the tools, it uses that as well. I will check on it, like what's the best thing.
+
+8:18 - Ryan Tisko
+Well, it's really just like, if we give somebody a loaded quad with Hermes built into it.
+
+8:27 - Prateek Chandra
+Okay.
+
+8:29 - Ryan Tisko
+You know, Hermes is supposed to be able to do all of these things. What are those things, right? Let's have a document that's like, this is what Hermes does, which I mean, we could just pull offline and then test that out, right? Just make sure it does it. And then, okay, cool. It might just be a connect. I mean, when we give the AI to somebody, we still have to probably connect through email and all that stuff. But, you know, give them their Hermes agent with, all the connectors already connected, then boom. They got a window that they can talk to. They can ask Hermes to send emails, generate emails, go into the system, look at things, talk to these agents and systems that we put together, right? Have each person's Hermes be able to talk to our admin club. Man, I have been trying to make myself a coffee for three hours. And I literally just keep walking around the coffee pot, talking and talking and talking. Like, I have put the thing in. I've done everything but put a coffee mug under the damn thing. Sorry. Anyways, my little side ADHD project. But yeah, so have you had some success now? Do you have your own AI assistant at this point?
+
+10:24 - Prateek Chandra
+So we have our own this this AI, this agentic AI what we are building right now. We are dependent on two of the other AIs right now, like two of the other models. So, this identity AI can be converted into our own AI. All the things, all the infrastructure, if we just leave that FTF part, apart from that, it's completed. And similar, if I just like copy it, if I tell the structure, it will be our own complete AI as per next year. It will work as whatever we want. And I can integrate a few more AIs as well within the same. So, that if some of the AI API gets failed, other one will come into work. Like I'm already in between to integrate harms, and that second one, what you told, Obsidian, I believe you told. So that one I need to check for that.
+
+11:23 - Unidentified Speaker
+Okay.
+
+11:25 - Ryan Tisko
+But you don't have your own AI. Like you haven't built. Critique or is critique AI already made?
+
+11:39 - Prateek Chandra
+Oh, like that. If you are telling like that, critique AI is already made within this agentic system.
+
+11:48 - Ryan Tisko
+Within the agentic system, but what about just for like, can you tell your AI to help you build another AI?
+
+12:02 - Prateek Chandra
+If I can tell it, I have to just configure a few things and it will do it because that is going to be an orchestrator what we are discussing here about.
+
+12:11 - Ryan Tisko
+Okay. Yeah, I'm just curious because, like, the other day I sent you that question. I was like, you know, I'm curious what Claude would say. If you had your assistant. Or the next gen admin AI, who went and got the answer? But I don't know if you end up running that I didn't understood this part.
+
+12:48 - Prateek Chandra
+Did I miss something?
+
+12:50 - Ryan Tisko
+The question about Thomas and how many paid orders were delivered.
+
+12:55 - Prateek Chandra
+Oh, okay. I didn't actually post that question as of now to this agentic AI.
+
+13:07 - Ryan Tisko
+Yeah, so post it and send me what you think or what it gives you because I'm curious. Because I already got the answer from Wyatt. I'm curious, like, what was, what held us up, right? If one person's AI is faster than the other, or, you know, were you just not able to get to it? What was not, you know, what were the things stopping us from getting to it? Stuff like that. Because the whole point of AI is like to be able to think of a question like that that you need an answer to in the real world and you just have something you can get the answer, right, quickly.
+
+13:55 - Prateek Chandra
+Oh, nothing is stopping, actually.
+
+14:00 - Ryan Tisko
+It's the setting it up kind of thing that kind of takes a little bit of time. But I would think over the next two, three weeks, we're going to start speeding up here a little bit. How are we speeding up? Up is kind of like what I'm curious about as we move forward. And I think a lot of it's going to have to do with like how are these agents that we're putting in place to start helping us with things interacting. Yeah.
+
+14:50 - Prateek Chandra
+So actually coming to the question about Thomas, my answer here is I didn't post it to Agentic AI because it's connected to our stage database, not with prod. So it won't be able to find actual data. But we already have an AI agent which was developed before to create the reports. So just now I posted that Thomas related question to that AI agent. And it came to know that okay, a crew name with Thomas, a person name with Thomas, and it's pulling the data in parallel. So you might be having data in just within Google, three minutes, maybe it's already creating it.
+
+15:32 - Ryan Tisko
+Okay, yeah, just send that to me because I know to go here in a bit. And we'll, we'll, let's, let's look at this from a strategy and a goal perspective too throughout the week. But some of these things we have to be very careful about in the fact that if we're growing, if we're trying to start a company or a division. Sometimes having more information or knowing more about something can really get in the way of like being seen as the person you're meaning to be seen as. Surveyors are probably my best example where they know so much about the measurement of things, the history of why we measure things. The different types of monumentation and why there are different types on one set of property because of the history and all these other things, and how they used to survey and currently survey with the new technology and how they feel is different and stuff, and all that together stuffed into one human, right? And this is where the technology world also lands, there's a lot of information. There's a lot of similarities where if I go to a surveyor and I say, Hey, what's a property form? And can I hire you to show me where that fence is? That surveyor will go, Well, all right. And they'll sit there and they'll explain property corners for 30 minutes. And then they'll tell them that they're going to need to do a full-blown survey on the property because now they're focused on corners and all these other things. And this person's like, oh, no, I'm good. Never mind. I didn't need all I just want to know, like, you know, was my fence on my side or not? So completely missing the point of the customer has no idea what they want. They're putting themselves in your hands, and then you overanalyze everything. You try and give them more of what they need for not only now, but the future and all these things. And that customer leaves. But if you would have just said, Oh, yeah, I can send a crew out there for 200 bucks. They'll go find your corners with the metal detector and they'll put a flag in the ground. Is that good enough? Oh, no, no, I want like corner. Like, I really want to know. Can I meet them there? Can I? Well, if you're going to meet them there and they're going to have to, and they're just showing you this one line, then they're going to just go find these two corners. And since we didn't do the survey previously, we don't know if they're there or not. So if they're not there, it's going to be an additional step. It's going to be an additional fee, and have to return to the property. Are you okay with that? Like, it's a totally different conversation. And at the end of the day, it might have actually just been a five-minute conversation, a fee of $300. And sending a field crew out with some extra stuff to go stake in the ground. But you're not actually do the full survey. You're just going to show them where certain corners are based on their existing stuff. But because the surveyor feels like they have a responsibility to the industry and they have a responsibility to their license, to all these other things, they completely miss the fact that they have a customer that's willing to pay two or three hundred dollars for something they have zero liability or problems with. But if they would have spent $700 and the surveyor, then the surveyor would have got what he wanted, he would have gotten a higher ticket item. Which would have cost more money to actually produce because we would have had more people involved, right? So, maybe the same amount of profit or less, as far as the company is concerned. And that survey right now just took on all the liability because they made it a real survey with their name on it. So, they actually lost money, spent way more time and focus on something than they needed to. And gave the customer a product that they didn't really want. So they're going to come back to us. So things like that can happen very easily, especially as we expand and we start getting customers with ourselves and especially our team members, as we try to add people, right? Add more volume, add more staff. We don't want a call in and say, hey, can I get an agent? And we're like, yeah, we can get that to you in 10 minutes. And they're like, oh, okay, great. How much would that be? And well, don't just get an agent in 10 minutes. Let me build you an agentic system. We set up another meeting? Do you see how quick we could do that? Both you and me? It's like, just give them the agent. So if a question like that comes across and I send it to somebody who has like, All operational skills, no technology skills. And I send it to you. How fast do I get a response for one, but two, what's the quality of the different responses? How do they come across? And Wyatt, stupid, you know, I'm just going to make a comparison that's fun, but it's like stupid guy that knows how to get something to work for him. Right? He knows how to turn something on and off. Doesn't know much about it other than that. Goes, gets the answer, come back. Super intelligent guy that knows how to make this do this and all these other that takes him a few days because he's busy trying to make it right. So, like in this scenario, if I a customer and two people I'm trying to work with, I'd start working with Wyatt more, even though you're more qualified. But that's because of the confidence and the speed to execution. It's not because of the quality of the output. And that's something I feel like you're, be a conversation we'll continue to have, but like that's a that's a that's a sticking point for a lot of people. It's not something that you have to feel like self-conscious about, but it's just something to be aware of
+
+23:46 - Unidentified Speaker
+Okay.
+
+23:48 - Ryan Tisko
+You know, sometimes too much intelligence is a It's like you see these geniuses that are homeless, or and it's really because, yeah, they want to give so much, and a lot of them are really good people, even the non-homeless ones, right? But they just have careers. Well, it's because they can't be entrepreneurs, and that's okay. But these are the nuances of like being an entrepreneur and somebody who's building something from nothing versus somebody who like goes and works in a system. So, you know, that's why I also asked you: like, do you have your own assistant that really helps you and do all that can go and run all these other agents and things? Because then it's like, because then the challenge is: all right, let me give you thing that happened, right? It's a fun little case study, but all right, this is how it happened. Well, what? If Fritique's assistant was built different? Or what if, you know, what if we had, I don't know, just food for thought, right? And I know you gotta go, so I just wanted to kind of place this up, but sometimes, like in this circumstance, we're building the Agentic, it's taking us a few weeks, we've got a couple of sprints we're gonna give. Give the team something as far as an agent to work with while we're building out the rest of it. Would there have been a few agents that we could have given them while we're doing these sprints? How do we work with these customers through these processes? Email campaigns, all this other stuff. Like, are we setting that up for them while we're doing this? Are we throwing an agent into the mix that scans their ETAs and stuff? Oh, damn, they did come today. Bail number two for the morning: coffee and garbage. Oh, man. I thought because of the holiday, they weren't come pick up the trash, so I didn't take Son of a bitch. Well, I'm winning with you, garbage. That's okay. Or even a more advanced version of this is like if there was. An agent in our Teams chat that you and I talk to, or talk to each other with, right? And that agent pays attention to it for you. If that personal assistant agent was doing that with you currently or here soon, if I send that chat a prompt like that and that agent reads it. Then, man, that is a that that becomes something that we just test out and then we go. And we're doing stuff, we're just trying to communicate faster and get things done quicker, right? And see the result. And if the if the result sucks, make the adjustment, right? And just keep going, keep going, and keep going. And if we can, if we're doing that, I mean, just that setup alone. Hey, new customer, here's your chat window. This is how we're going to communicate, whether it's Telegram, Google, Teams, whatever we want to do. This is where we're going to have our meetings and all this stuff. And you have an agent, right? You got your read AI and then you got quad agent working together, monitoring that chat. And you tell that person, talk to me. Tell me how your days have been going. Tell me what's going on. Ask me questions about your system and different things. And I would say, maybe even that would be our Hermes. Maybe it's Hermes, right? That we actually, that's our agent that we put in with each customer. So that, and into a chat. With our customer, and it pays attention to our meetings, it listens to everything, it summarizes, it takes notes, it does this, it does that. And it lives inside this, it monitors this chat window with us while we're onboarding a new customer. And the customer can use that agent to help it. So while you're chatting with somebody, maybe you can already freaking hook into their, you know, stuff and they can ask you a question about their email. Hey, would I be able to get a bot or something that went and monitored my email and did this and did that? And if Hermes is in there monitoring that chat, it's send you a message saying, Hey, they're asking for this. I'm going to go ahead and give them a demo for it. It. So then, while it's doing the demo and you qualify that and approve that, then you're reaching out to the customer. I don't know if that's possible, but that seems like an interesting thing that could happen. But if we test it out ourselves, we'll get to know. Yeah, of course.
+
+30:31 - Prateek Chandra
+We have to do it by ourselves first. Every time.
+
+30:37 - Ryan Tisko
+But yeah, and I think selling these skills, like while we're doing this and stuff, and having that website, the next-gen enterprise is more of the technology side, like, hey, yeah. Click here, download. I don't know if we can have people download Claude through us or not, but it's like use our AI or buy this spreadsheet of skills for a hundred bucks. Those of the things that. That we could start just like really getting into, just placing on the shelf and seeing if anybody buys while we're still working on this other stuff. But I want to go through that throughout the rest of the week a little bit more. But today, I just wanted to catch up with you on that and go over the whole Hermes and Obsidian thing. And, you know, between you having an assistant that's in a chat and then. Seeing how that works. And then maybe, like we were talking about the other day, then building one for me that's just a personal. I kind of want a personal assistant, not an executive assistant. I have one of those. I kind of want. Want something that I can just brainstorm with, save everything, have do research, send you guys stuff, look at the email, delete, you know, whatever. Once we get yours going, and because then be a test of like, can I talk to mine to tell yours something?
+
+32:48 - Prateek Chandra
+Okay. Come on. Cross communication.
+
+32:55 - Ryan Tisko
+But for mine, I'm also thinking, like, how do I? I want to make it like a little personal, right? We got all these business ones. I want one that I can ask you questions about my dog. I can ask you questions about real estate. I can ask you questions about garbage pickup. Trying to automate my coffee to be made already when I wake up. Like, because I think it would be good not only to test out, but it would be a formula to be able to repurpose and sell to other executives. Exactly. I think I, yeah, go ahead. Having a personal assistant, imagine all the single guys who have no family or a wife or whatever. Like, they need one of these, right? Like, you know, manages their business calendar, but also their personal calendar, keeps them separate so that there's no confusion, but also keeps them like, really helps optimize a person to do good in business and in personal life. Grocery lists. So, yeah, it'd be mine would be a little interesting where I'd like to be able to talk to it about business and then shift into, hey, make sure that, you know. I got enough coffee to make my next coffee batch. Because that's a real life scenario, right? Like you're in the middle of working, and then all of a sudden you're like, I'm hungry. Yeah. Hey, Hermes, can you eventually with the way refrigerators and stuff are, like, and you get it all connected right, it could tell you what's in your fridge, what it just ordered, when it's going to show, you know, it could get pretty. Crazy where somebody could sit or have an active day, right? Maybe they're running to the store doing all this other stuff, but they're able to talk to it and it's sending messages, doing email campaigns while you're going to the grocery store. So and that's something that this week I'd like to try and get at least like one email campaign going that we talked about the other day on Friday on Thursday or Friday. Yeah, on it was it was on the topic of I'm not trying to, I'm trying not to confuse the, we have the Gentic email that's going to be 36, you know, be monthly and all that stuff. Oh, to anybody who hasn't ordered from us in the last six months or longer? Okay. So if we're building something for a company like the surveying company, we're like, okay, we're build you a genetic system. This is going to be the process. We're going to give you some agents to work with you through that process as well. And then that's going to take some onboarding time. So in the middle of that, we're going to go ahead. And, you know, do you have a lot of customers that you have that you may have lost, or that you have a database full of information of people that you've worked for over the years that we can leverage? And oh, yeah. Like, well, would it be fair for us to reach out to anybody that hasn't ordered from you or heard from you in the last six months? Six months, maybe. Well, maybe a year. I haven't heard from you in a year. Yeah, a year probably fine because they're definitely not coming back at that. Okay, great. So then you set it for a year, you pull all that information, you put it into a campaign, reintroduce the company to all these people, and then have that running while we're doing all this other stuff. That customer is going start getting at least a couple phone calls, I would think.
+
+37:49 - Unidentified Speaker
+Yeah.
+
+37:51 - Ryan Tisko
+So that's what I'm curious about. Like, okay. What's a low-hanging fruit that could impress a customer while we're doing something for them? Well, get their old customers that have given them a chance before to talk to them again. That's probably the out of anything, that's probably the easiest thing that you could do out of all the difficult aspects of marketing. Reach out to somebody who already knows that person, who's already used that person. To re-engage.
+
+38:23 - Unidentified Speaker
+Yeah, exactly.
+
+38:27 - Ryan Tisko
+So that just becomes a habit of ours. It's kind of like that trick up our sleeves. Like, hey, new customer, great, blah, blah, blah. Hey, by the way, do a list of customers that haven't ordered from you in like a year? Oh, yeah. What would you need that for? Well, just send it over to me. I'd like to see if we can get you maybe some work from that. You know, would it be fair to reintroduce you to all those people that have given you a chance in the past? Well, yeah, well, it's just be a simple email. I'll send it approval and we'll see where it goes. Sound fair? Yeah, that'd be great.
+
+38:58 - Unidentified Speaker
+All right, cool.
+
+39:02 - Unidentified Speaker
+Yeah.
+
+39:04 - Ryan Tisko
+Is going to do all of it. All we got to do is just make sure we put it and go high level in the right spot. Sure. Oh, yeah.
+
+39:28 - Prateek Chandra
+Meanwhile, Ryan, I sent you this report of Thomas over our chat. So you can have a look.
+
+39:37 - Ryan Tisko
+Let's see. Oh, and speaking of reports, real quick, the analysis of the competitors, it's missing a few, which was interesting. Missing three of the biggest competitors, I was kind of shocked didn't show up. So it was Exacta, Lantech, Surveying, and Lean, and Target Land Surveying.
+
+40:07 - Prateek Chandra
+Can you just type the exact name over our chat so that I can take and I can see why it missed? Well, that's interesting if it missed.
+
+40:26 - Ryan Tisko
+Yeah, PM surveying. It found GT surveying, which is hilarious. They're the smallest competitor out of anybody actually. They used to work for me. When I started next-gen surveying, they were my first employees.
+
+40:44 - Unidentified Speaker
+Okay.
+
+40:45 - Ryan Tisko
+Employee number one was their dad, who's their licensed surveyor. Gino, and their other partner in that, that's no longer a partner, used to be one of my field crews. His name was Tony. It was Gino and Tony. GT.
+
+41:05 - Prateek Chandra
+Okay. Their name they kept. Okay.
+
+41:08 - Ryan Tisko
+And it's, and there's, and Gino's son, because Tony was a field guy. He wasn't a surveyor, but a partner. Tony left and just started working for me. And Gino started working for me. So then Gino was shut down GT surveying. And his son was supposed to start working for us. And his son didn't want responsibility. He liked waking up and doing one job a day. Day. So it didn't work out, but yeah. So that was kind of funny. Let's see. So Exacta has multiple sends you they're based out of Ohio, but they have multiple locations they use in Florida. And then there's that doesn't okay.
+
+42:17 - Prateek Chandra
+So, Ohio is separate from Florida, correct?
+
+42:23 - Ryan Tisko
+Yes, I'm referring to the map, yeah.
+
+42:26 - Prateek Chandra
+it's separate. So it actually just searched these competitors in Florida only.
+
+42:33 - Ryan Tisko
+So if something is but if you look at the if at the screenshot I sent you, Xacta has three offices in Florida.
+
+42:41 - Prateek Chandra
+yeah. I saw it. Ovido, Florida. Ovido. Ovido, Florida. How is it spelled? How does it spell? Ovido. Ovido. Okay.
+
+42:55 - Ryan Tisko
+So, Milan target. Oh, God.
+
+43:05 - Prateek Chandra
+Let me check how it missed.
+
+43:13 - Ryan Tisko
+And this one. And then hit surveying, but they're not big enough, I bet, to be seen. But yeah, Melan. Was Jeff Harris, who we actually used to do some field work for. Target surveying was who Clyde Clyde actually started Target Surveying in the 90s, early 2000s, and sold it to his employees. And then Landtech also, I almost bought Landtech in 2017. That's where Ryan Soules and David Zyd, and all the other old employees went.
+
+43:56 - Prateek Chandra
+Okay.
+
+44:04 - Ryan Tisko
+So that was I noticed briefly, you looking at the analysis. But yeah, some of those suggestions were good. Three to five upsells, things like that. So it's like, all well, I would still estimate quickly, right? And, but also have follow-ups, maybe, maybe in like a go-high level, or we set up a campaign built in somehow that it sends the The estimate, but then it also on quotes, maybe, right? It starts sending like follow-ups with additional things that could be added to it or things like that. I'm not sure. But we can define that over time, like, oh, well, ask the person if they want to have a rush fee. Right. Like, do you want this rush or is this be on? So that maybe it's just simple campaigns that follow up where we have three to five emails that follow up with orders before they get delivered? And every order, it's going to say, Hey, would extra photos of your property? Would you like this? And we'd have to actually come up with that, the pricing, add that into the system, and then set that campaign up. So that would be that, but so that would be something that we would recognize while we're working with a customer. And the way to present this: give them a workflow. Hey, this is how you do your invoicing. And at this stage of your invoicing, we are suggesting this. And then you build a plan out from there. At this point in your stage of invoicing, we were thinking of pulling. This information out of the file and starting this other process to run in parallel. So, we're not changing anything, you guys are keep doing what you're doing, but we think we can add value by having a campaign of questions following these orders throughout cycle. And this is where we think we can add them.
+
+46:29 - Prateek Chandra
+Yeah, so to I would like to just add here something. As I mentioned earlier, we have a person in our own team who is our QA. And now because he's not having any of the QA, but he already worked on some part of GHL. And if so, we need to, if tomorrow possible, if we can discuss about the requirement about GHL, we can provide in this requirement and he can start building those funnels, pipelines, everything through AI in GHL.
+
+47:05 - Ryan Tisko
+Okay, now we can test something like that out. But also, GoHigh Level has a network of people. Yeah. So we have to look at his cost versus their cost and efficiencies. So we can test them out on this. And at the same time, we also need to test out a non-existing person that we hire to do something, right? Because if hire a go high-level person that's a pro to do sprints for us and certain specific things, that's a fixed cost.
+
+47:52 - Unidentified Speaker
+Yeah.
+
+47:54 - Ryan Tisko
+That when we bill somebody for whatever we're doing, we know that fixed cost. Versus if we have somebody on staff that we just keep all these people on staff, we're spending money keeping them around waiting for the customer versus getting the customer and then deploying those people as needed. Got it. Sure. Because, yeah, we'll talk more throughout the week on that, you know, budgeting perspective and what we're going to how we can get the most use out of the GoHigh level connection.
+
+48:52 - Unidentified Speaker
+Sure.
+
+48:54 - Ryan Tisko
+But yeah, I think a simple campaign to kick it off. Off is just anybody that has an ordered in six months or longer. We start sending emails to them once a week for a month. And then we start sending them two emails a week for a month. Then we start sending them three emails a week for a month. And we start, and we're testing a theory, right? If we're pissing them off, who cares? They don't order from us anyways. But if every time we add more emails, we get more information or we get more, then we're just keep adding the amount of emails we send out until it becomes broken. Then we take it back a notch to where it wasn't broken. Okay, yeah. Just like a rollback. Yeah. Keep coding, coding, coding. Whoa, roll back that last one. One. That's how you, that's that's how sales works. Sell it for 100 bucks. You get you sell a thousand of them. Well, sell, sell it for 200 bucks. You sell another thousand of them, sell it for 300 bucks. You sell 500 of them, you sell it for 400 bucks. You sell 500, 300 of them, you sell them for 600 bucks. You keep going up. And then the market gets to the point where it's like, all right, you're charging $1,000 and you're only getting like three orders. All right, we went too far. Roll it back. We're going to do $600 a piece because we got 500 orders at $600 a piece. And that's great. Because now we do less work than we did when we were doing them for $100 a piece. And we're making triple the amount of profit per unit. That's how sales figures out where their actual price is. It depends on what the market's willing to spend. It's not actually what companies don't just say, this is my cost, 20%. No, they say, this is my cost. This is what it needs to start at. And if it's valuable to the industry, we're going to keep upcharging. Until it has back, like pushback. Because you don't want to be the cheapest and the busiest, because then you're just going to be busy trading dollars. You want to be the most valuable, which means you actually want to work less, get paid more on the work that you're doing, put a higher quality product out and grow that way. Sure.
+
+52:07 - Prateek Chandra
+Ryan, I should leave for the airport and I will catch up with you once I will return and we'll have this conversation tomorrow as well. Also, I shared the Thomas report, so please go ahead, have a look and let me know your thoughts. If you need anything else, just feel free to ping. I will instantly provide you another report or any other details.
+
+52:35 - Ryan Tisko
+Yeah, it's interesting because this report's different. So we can go over it tomorrow. I'm curious why this one's different by like $300,000 different.
+
+53:02 - Ryan Tisko
+So yeah, this will be something interesting to look at and figure out why yours looks if possible, if possible, if you can provide me the report which you received from VoIR.
+
+53:30 - Prateek Chandra
+I can I can just try to compare like why the difference is coming I can try to take a look because I connected this complete reporting AI agent through our complete database so I just want to have a look like how it's different from that one and which which one is actually correct Okay.
+
+54:38 - Unidentified Speaker
+Yeah.
+
+54:38 - Ryan Tisko
+As you said. We can see what the difference is there, and um, I actually am very curious, even I am curious now that why it's different.
+
+55:00 - Prateek Chandra
+What's the like what made it different? I know that what it might have taken through maybe. Co-work, I believe. I'm unsure. So I should figure it out why it's happening.
+
+55:18 - Unidentified Speaker
+Yeah.
+
+55:19 - Ryan Tisko
+And the interesting thing would be, you know, why it obviously didn't put as much thought as maybe you. So did it actually come out with more accurate or less accurate or yeah. It's a good comparison for sure.
+
+55:40 - Unidentified Speaker
+Exactly.
+
+55:43 - Prateek Chandra
+I will look into it and I'll let you know. Let's see. Cool.
+
+55:48 - Ryan Tisko
+Yeah. We'll have safe travels to the airport and I'll let you go and we'll figure it out. Yeah, sure.
+
+55:59 - Prateek Chandra
+Thanks, Brian.
+
+56:01 - Ryan Tisko
+All right, sir. You have a good day. Yeah. Bye. All right.

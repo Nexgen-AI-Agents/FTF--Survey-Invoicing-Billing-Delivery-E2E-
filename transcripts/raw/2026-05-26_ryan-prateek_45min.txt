@@ -1,0 +1,368 @@
+45mins - Ryan and Prateek Connect
+Tue, May 26, 2026
+
+0:29 - Prateek Chandra
+Am I audible? There, hey, yeah.
+
+0:50 - Ryan Tisko
+Oh, one second. Huh. I guess my headset. Can you hear me now?
+
+1:24 - Unidentified Speaker
+Yeah, I can hear you.
+
+1:26 - Unidentified Speaker
+Gotcha.
+
+1:29 - Ryan Tisko
+I don't know what's going on. My headset doesn't want to work. Okay. Yeah, so how are you doing?
+
+1:39 - Unidentified Speaker
+Doing good.
+
+1:43 - Ryan Tisko
+So I was just going through that. Is that a synthesia video?
+
+1:48 - Prateek Chandra
+No. This is This is made by my this AI agent.
+
+1:56 - Unidentified Speaker
+Okay.
+
+1:57 - Ryan Tisko
+Yeah. Yeah.
+
+1:58 - Ryan Tisko
+So just a couple tweaks on like it mentioned 50 orders a week when we should probably just let it say like a lot of orders a week. So it's it's more generic to anybody.
+
+2:13 - Unidentified Speaker
+Sure.
+
+2:16 - Ryan Tisko
+It said something. It was going through a process of like looking at the file and all that stuff. I couldn't read what the checks of it were. It mentioned something like competitor while it was trying to quote. I don't know why a competitor would even be.
+
+2:35 - Prateek Chandra
+Okay. Okay. So here is the deal. Like it will, let's suppose if any of the quote is coming. It will try to check if that quote is, if, if by any chance, if it's realizing that quote is coming from someone and it's fishy for it. So it can think that it can be a competitor and not actually reply on that quote. Instead, it will send it to manual review. So this is something it's referring to as competitor.
+
+3:12 - Ryan Tisko
+Okay. Well, we'll see how that works. That sounds interesting.
+
+3:18 - Unidentified Speaker
+Yeah, yeah.
+
+3:19 - Ryan Tisko
+And so the way we explain that might be just something to be aware of What was the other? Oh, and then the question of what happens when a quote, you know, you know, the quotes place. But it needs to get converted to the pending.
+
+3:44 - Unidentified Speaker
+Yeah.
+
+3:46 - Ryan Tisko
+How does the AI find out that it needs to get converted?
+
+3:52 - Prateek Chandra
+So when it's in court and it's need it needs to get converted to pending, go through the process. So it will always keep checking the new orders. So as soon as any order comes, it will be into court. It will get to know, okay, this is. Yeah.
+
+4:07 - Ryan Tisko
+but a new order isn't an old order that's sitting in quote that needs to get moved depending. So, if there's an order that came in yesterday in quote, okay, and the customer goes ahead and emails us and says, Go ahead and respond to that email or emails info at, then we're going to manually move it right.
+
+4:35 - Unidentified Speaker
+Yeah.
+
+4:38 - Ryan Tisko
+So I would think there should be an agent that any order that's quoted, they should be, they should, there should be an agent in here that's monitoring the info emails, info at next-gen survey, and any of the info at emails. And any email. That says convert this or approved or whatever, that it would know it would read the whole email, figure out what it's approving, and then go and send a message to the team letting them know that it, you know, we want it to let us know when it moves, but it can move it depending. Now, if they can reply to the email and the chat and the AI would see that. And do it, would be a good one if they could go on, you know, say they know that it's in their email and they're thinking about it and they talk to somebody and what, I'm go ahead and get it done. And they just like go onto our website and use our chat and ask it to go ahead and move forward with this. And it maybe it says, well, what's the property that we're moving forward with? Can you give me the exact address? And if they say no, then it's like, well, I need either an exact address or an order number in order to convert it. So then they give you one of those, and then that chat would send it to the system, right? That'd be so that was something I wanted to point out. And then I had a question. So, what are you waiting for on Wyatt? What's the answers you need?
+
+6:20 - Prateek Chandra
+need from Jessica and Goy combined. I just need one video where they can show the AR process.
+
+6:30 - Unidentified Speaker
+That's it.
+
+6:32 - Ryan Tisko
+So currently, there is no AR process other than what we've talked about. So, like sending an email. So, sending the invoice with the survey for delivery, right? That's one of the AR processes. The sending a monthly statement, that's a new one, right? That's one that we've talked about. You know, all the other, you know, every month and then every, you know, anything over 45 days and keeps going and everything we've talked about, right? To set up the funnel for emailing people with past due invoices and things. That's all that is our receivable. So if you're waiting on Jessica, you're actually no more than her. On that aspect, she is more what happens if they ask for a refund. Okay, so what we can do, so you don't have to wait for Jessica is just set it if anybody ever asks for a refund, she gets notified and then she'll handle it from there. Now, if we because we don't we don't want to we don't want a ai doing a refund uh yeah so that should clear that up and then as far as wyatt's video um I think kind of bobby covered a lot of that so I wasn't sure what what you might want to know from wyatt's perspective and then maybe I can give it to you so you don't have to wait and no I believe uh uh this was all combined because last week when I spoke to Void and Jessica, like they were on call.
+
+8:34 - Prateek Chandra
+We all were in call. So they both spoke and they told that combined, they will provide me one video, how it's working. And if any order come, if any invoice goes unpaid, then how they chase the payment and all. Then I thought, okay, there might be some extra process what they are calling. But I believe when you already You're trying to come up with the same thing that we're working on.
+
+8:56 - Ryan Tisko
+I'm just trying to have them do it. It more with because they're more involved, right? So if I'm missing anything. So let's set them up with the structure we already have in place. One of my biggest things, one of my biggest things here is on an ongoing basis, right? That's once we deploy something like this for somebody, it needs to constantly get trained. So I wanted to know how do we teach them to train it?
+
+9:25 - Unidentified Speaker
+it.
+
+9:26 - Ryan Tisko
+And then, how do we check in with them, right? Every month or so and see how it's going and see if we can provide some help in that, you know, more training, right?
+
+9:41 - Prateek Chandra
+But right now, when this goes through its checklist, does it at all are the AI for the invoicing have reference to our historical invoicing no not right now because it didn't reach to that point but it's it's gonna it's gonna take all the reference from the previous invoicing.
+
+10:09 - Ryan Tisko
+Okay. So we could probably take just like the last year to two years.
+
+10:18 - Unidentified Speaker
+Okay.
+
+10:20 - Ryan Tisko
+We don't have to go back to historical invoicing for 10 years. So if we can get the AI to be able to know what we've done for the last two years and all the different files and all the stuff. That'd be very beneficial um now on an ongoing basis if if I if we're invoicing and we see okay we need to change our pricing or we need to change our pricing overall right or we need to change our pricing because we notice that we need to it's It's taking us too much time on these houses with pools and extra windows. And, you know, so we really got to pay attention to how many windows and how many corners of the house. You know, if the house has 30 different walls versus four walls, that makes a difference because four walls that are flat, right, that doesn't take you as long to measure as. If you have 30 walls that are shorter, right, and same size house, it's going to take you twice as long, if not more, because you got to go to each wall and measure it. So we should charge more for that. So, how do we teach it to look at those files? Because it might be a half acre and it might fit into the category of 350, but it's got a pool, it's got you know seven extra walls, it's got a back patio with a bunch of different things, it's got a shed, it's got a driveway that loops around, and you know, it's got two driveways. That's a $700 survey, yeah.
+
+12:25 - Prateek Chandra
+So that'll be more costlier, correct?
+
+12:30 - Ryan Tisko
+Yeah, that same, somebody would have ordered that same half-acre property that's a square with a with a small house on it with no shed and just like in the middle of nowhere. That's a $350, $400 property. But it's got the same acreage, it's got the same square footage potentially. But it doesn't have a pool, it doesn't have multiple driveways, it doesn't have extra sheds, it doesn't have back patios. Yeah, the same property with more stuff on it is like seven $800. And the property with like just a house, that's probably still going to be upcharged a little bit at half an acre, depending on the location. Right?
+
+13:20 - Unidentified Speaker
+Okay, okay.
+
+13:22 - Ryan Tisko
+So, if the location is in the middle of the state and we got a bunch of people, great. If the location is like all the way up at the top of the state where we don't have anybody, we're going to charge them, yeah.
+
+13:41 - Prateek Chandra
+it will be costier because we have to travel that far, so our expenses will increase.
+
+13:47 - Unidentified Speaker
+Yeah.
+
+13:49 - Prateek Chandra
+Okay.
+
+13:50 - Ryan Tisko
+So, you know, part of what the evolution of this is like it should eventually be able to reference like the schedule, right? Who's available in what area, how many people. What's their schedule look like, Can I get them? What's their pricing? Okay, that should be a part of its reference eventually. Right now, we don't need that, but that's how it's going to really evolve and learn how to price things properly is by looking at the availability of the field crews, too, and where the location of the job is compared to who we have.
+
+14:34 - Prateek Chandra
+Okay. So one question Khayan here. Let's suppose like I know few of the insights, but I want to get a better clarity here. So let's suppose a client sent a cold request. After that, we actually call to the client after that because it's not possible that client will provide 100% of information. So do we call to the client and get all the all these questions noted?
+
+15:06 - Ryan Tisko
+No, so these are things that we just kind of teach our staff what to look for. And they, if it's an EC, if it's got all, these are the things we train people to look at and understand that there's some differences in all of these different things and to make judgments based off of it.
+
+15:34 - Prateek Chandra
+Okay.
+
+15:35 - Ryan Tisko
+That's the only reason I thought a gentic AI would work because it can think about what's going on and it can make judgment calls. We don't want an AI. We can't use an AI for this that just reads a structure process and follows the process because that process is going to get broken a million times. So at that point, if it's at that stage, we can still use it. But nothing can get automatically sent. Everything has to be reviewed.
+
+16:06 - Unidentified Speaker
+That's right.
+
+16:11 - Ryan Tisko
+So I don't know if it's an injection of an ARMAS agent or Hermes, and Hermes is running around checking for that type of stuff and talking to people, or we put our own thinking. Skill in their agent that we talk to because these are the things that you have, and I'm off the cuff right now, but like, this is why we're not documented very well and why AI is going to help us a lot. Because we talk about these things every day, day in, day out. Every day, a new scenario pops up that we may. Understand and know about, but it's a little bit different. And what we would need to do is teach the rest of our team a lot of times what we just handled so that they can handle it next time. Well, how do we do that with AI? Can we build this out, make it think and everything, and talk to it and keep feeding it information every day?
+
+17:22 - Prateek Chandra
+Okay.
+
+17:23 - Ryan Tisko
+Like, hey, this job has this. It should be able to go and look and see our invoicing and see the differences and stuff and make a judgment that, like, okay, or ask us, maybe we have the AI work with us. Ask us why. Ask us why we build for these different things in these different ways. So we can get a lot of it in there up front. But on an ongoing basis, Bobby would need to be able to say, oh, okay, this 100-acre, you know, this is how I would bill for this, and this is why, and this is what I look for. He be able to tell the AI something like that. And then it should be able to store it and then use that information as how it keeps performing on an ongoing basis.
+
+18:32 - Prateek Chandra
+Yeah.
+
+18:33 - Ryan Tisko
+Just like if we trained a new person and gave them a little bit more information next week, well, we don't want to lose that. We want them to build on that. Yes.
+
+18:47 - Prateek Chandra
+So my question here is as we go, like you said that it should like everything should be reviewed. So when you say it reviewed, it means after AI checks everything, it's not going to send anything to client, but it's going send everything for manual review. Is it correct?
+
+19:12 - Ryan Tisko
+Right now, we would want to. Send everything for manual review and for us to be able to say approved or not. But in that process, we need to be able to teach it.
+
+19:26 - Unidentified Speaker
+Yes.
+
+19:29 - Ryan Tisko
+So over time, we can talk to the team and stuff, and we can talk to it and feel comfortable with, okay, now we can kind of automate it, right? But yeah, we definitely have to be able to feed it, you know, look at this pool and give it an image, right? Or give it a file. Like, look at the pool. We would price this at this price because of these reasons. So the next time you see a file like this, you should be in this range, not this range.
+
+20:09 - Prateek Chandra
+Exactly.
+
+20:11 - Ryan Tisko
+And if the AI is constantly able to get information like that from everybody or even from just like specific people that we tell, that's what needs to get put in place.
+
+20:27 - Prateek Chandra
+That's true. Yeah, we can do that because right now, this AI that's created. Its brain, like how it's been from initial stage, how its brain is being developed. It's like it's not simply just going and doing the things. When it's getting confused, it's stopping and it's logging the issues and it's asking. If I'm going to do this step, why am I do this step? Why do you want me to do this step? Because, and just provide me clarity. So, this is something that it already developed right now. But, yes, as we go over the process, it needs more and more clarity. That's why when I asked Robert about this video, I specifically requested him that create a video in a way. So that you are teaching a baby like all the steps should be like baby steps that some person who doesn't know anything about land survey who doesn't know anything about what you're doing tell in that way so that AI can understand in much better way and he provided a good video demo so when I provided it to AI after that also it asked me few questions I cleared it out from my end and then it proceeded for the next steps So that brain already got developed and it's enhancing every time when I'm providing some input, it's enhancing its brain.
+
+22:05 - Ryan Tisko
+No, that's great. Now, a lot of this stuff, like we should be able to, did you feed it the Florida standards for splicing surveyors and have it do an analysis on? You know, or create a persona of a high-performing licensed surveyor for the state of Florida?
+
+22:35 - Prateek Chandra
+So, right now, I didn't fed anything at any such standards as of now.
+
+22:42 - Ryan Tisko
+Yeah, so that's where we need to get in the habit of, if we're going to create anything, like right now. Like marketing agents, surveyors, mechanics, all these different industries and stuff. The AI can really figure out based on social media and the internet what a best of the best version of that. That person is based on what it can go in research. And then now, saying having that, and then saying, I want to be this, this, and this allows you to let the AI understand, like, here's like the gold standard based on. Research. Here's my standard inside of that that I want to be. So now the AI can actually understand the technical side of things and then relate to what do you want. So it can refer to all the technicalities, but it's angling towards what you're talking to it about. So that if you asked it, it a question that's technical, it can answer you, but it's going to answer you. It's be able to answer you from a perspective of the owner, right? So I would want this so that then if somebody asked field to finish a question and they asked it from a technical perspective on online as a customer. It would give them the technical answer from the industry, but it would say the technical answer is this. But based on the culture and the abilities and goals of next-gen surveying or field to finish or whatever it says, we believe this, which would be just a a summarization from our perspective. Okay.
+
+25:24 - Unidentified Speaker
+Sure.
+
+25:26 - Ryan Tisko
+But these are things that we should be able to just like create and start talking to like same day, right? Yeah. And deploying them and letting people kind of use them. And then we're looking at them and seeing how they're responding. But it's all moving forward based on you know the AI.
+
+25:49 - Prateek Chandra
+Yep, exactly. No, those points what you provided are actually good and I got better idea. Now all those points are going to be inside the memory of AI in a cleaner form. Form, and with that, its capability will increase. So, like, how you set the standards and like how you provide the clarity that, okay, for refunds and for AR, we don't have any such process, and whatever we are making right now, we can include in that process, and also it will go to manual review if any order comes. So, all these things are now going to be inside the brain of the AI. Those are good points, actually.
+
+26:36 - Ryan Tisko
+Like, if you needed to change something in the AR process in a month because something changed, Jessica should be able to go to a chat or somewhere that we point her to and say, Hey, you know, this is my problem. How can you help me? Where can you take over these things and then still send me for approval or whatever? Like, we want whoever we give these things to to be able to talk to it and then also modify it itself in small aspects. Like, oh, I see now it would be, it be helpful if you emailed people like this, right? Well, do we really need the customer after we spend months building something and charge them a ton of money to come back to us for that?
+
+27:28 - Unidentified Speaker
+that?
+
+27:29 - Ryan Tisko
+Or should they be able to tell it, hey, I need you to do this better. And how do we, you know, what would it do? Would it do it? Would we need it to send us a notice to monitor it? Would it like, what would that actually look like, You know, I wouldn't want to open it up to allow any user that talks to it to make adjustments. Because that has a higher risk of breaking. But Jessica, when it comes to accounting stuff, can change stuff. Bobby, when it comes to logistics and understanding what types of invoices are getting quoted and change order notes and things like that, like, but Bobby can't go and change how the refunding process gets done.
+
+28:22 - Unidentified Speaker
+Yes.
+
+28:22 - Ryan Tisko
+Without talking to Jessica and having Jessica tell the AI how to change the refunding process. So, yeah, initially, I think when we can, if as soon as we can release this to Bobby and have it automatically, every hour send him a list of files that are linked that he can just click on if needed, the job size, you know, a brief description of the lot or the why they estimated whatever they estimated, and then the estimate total with a column for approved or denied, right? That way he could just get that spreadsheet every hour and look at it and just he can copy and paste. He could either just hit approve and copy it all the way down and approve everything at once, or you could pick a couple that look like they need a little bit extra and he denies those or takes those manually and then approves his other ones.
+
+29:56 - Unidentified Speaker
+Yeah.
+
+30:02 - Prateek Chandra
+Well, I'm very close to now release this thing because you already answered. All the questions that were dependent on Jessica, so I don't have to even consider anything as a video or anything. I can just provide inputs from my end, and my sprints are resolved now. Unless and until the yeah, today's whatever conversation we have we are having right now. So these are going to be inside the brain of AI. If there is something which AI brings up and I'm unsure about, then I'm going to get back to you. Otherwise, I believe most of the things I can figure out from my end itself. Okay. Yeah. Also, just an update: Hermes LLM is already actually integrated with this AI. It's in our AI for this agent. So, not exactly agent, this is operating system. I always confuse with agent. So, yeah. So, Hermes is integrated. We have different forms of cloud AI models. We have OpenAI. And so, what it's going to do, it's actually use each and every AI model as per the complexity. So let's suppose if it's less complex and there less brain is needed, it's gonna use Hermes. If more complex, it's like too much complexity is there, it's gonna use Sonet from cloud. And if there is something needs to be created like these recordings, these demos if needs to be created, voiceover needs to be given, then it's going to use OpenAI. So, like this, I have configured, and I am having planned to configure one or two more AI LLM models which are free in the market, which are better and little bit secure. So, I'm already into it. Also, Obsidian is also integrated, but just an FYI. Obsidian is not an LLM, it's a node taker. So, when everything goes into Obsidian, it creates a brain-like structure. Would you like to see? Should I show you how it's looking?
+
+32:21 - Ryan Tisko
+Oh, I'm familiar. Yeah, I can see ours. That'd be cool. It's yeah, it's basically the AI database.
+
+32:34 - Prateek Chandra
+Yeah, you can say that as a second brain, actually, because first brain is our own, this operating system with its actual database. When you go to Obsidian, it will provide you an easier picture. Yeah.
+
+32:50 - Ryan Tisko
+So we can see if there is a Hermes agent that was in charge of all of this and it ran around and grabbed all the CSR meetings, the morning meetings. Our meetings and you know was trained to go into everybody's outlook and look for you know their meetings, right? So that it can actually and put it into all the chats, it can review all the chats that everybody works in: the invoicing chat, the um. Can we Can we access that or you know have that running constantly so it's it's learning and refere and like looking at everybody's workflows and and talk to us about it go into the admin uh office account be able to go and log into everybody's stuff and look like help us optimize. Communication and you know, work efficiencies?
+
+34:45 - Prateek Chandra
+Yeah, it can do. It can do. We have to just keep some limits, like it should run by every half an hour or 45 minutes or 65 minutes, something like that.
+
+34:57 - Ryan Tisko
+So that this would be like once a day.
+
+35:01 - Prateek Chandra
+Oh, okay.
+
+35:03 - Ryan Tisko
+Yeah, no, this might be like once a day, and then let's see how it works. And then I'd probably give that away and turn ours into like a once a week and then see how that looks, and then maybe turn it into a once a month. Because if other people are doing the once a day and the once a week that are in the teams, then we can just have ours. Collect those for the monthly.
+
+35:35 - Prateek Chandra
+Okay, question over time. Sorry, understood. So, question here: what exactly it should look for? Like emails it will read, it will read teams chat, not so possible, I believe, because there will be restrictions, but emails it can read. What exactly are we looking for? Let's suppose it started everybody's emails for every day. It starts reading emails, phone calls.
+
+36:08 - Ryan Tisko
+We wanted to go into Ring Central and listen and review all of the recordings.
+
+36:13 - Prateek Chandra
+Okay.
+
+36:15 - Ryan Tisko
+Every day. All the emails from everybody in and out. And yeah, the meetings. If we can figure out the teams thing, because if we can't, we need to move our chats into something we can, because those chats are the heartbeat of the company. And if I can't adjust my heart flow or get to know my heart health, there's potential issues that I'm not aware of
+
+36:50 - Unidentified Speaker
+Right.
+
+36:51 - Ryan Tisko
+And it's not even want to be aware of them. I want. Hermes. I want an AI to be aware of all of it, thinking about it and talking to us about it, and then us telling it how to talk to the rest of the team about it, right? Who to send reports to, what to pay attention for. Okay, we're seeing this right now. Our goal is to get to this next week. These are the key players. Can you send them emails throughout the week, letting them know their progress? It's actually giving them like, because it's going through field to finish, it's looking at all the files, it knows where everything is, it knows who's working on what. It knows everything. It knows all the internal notes, office notes, dates, times. It knows the whole company.
+
+37:47 - Prateek Chandra
+Okay. I'm not sure.
+
+37:55 - Ryan Tisko
+So, yeah, that'll be a good test because if we can get that, that's how we introduce ourselves to people, right? Let us create an agent that, you know, we want to create you, right? We're talking to business owners. We want to duplicate you and all of your thinking and everything first. So just have, you know, so we set up an agent that goes through the guy's email, his database, all of his orders, asks him questions. He answers the questions, he records things, and we spend two weeks just filling this agent up with information about this customer. And we And that agent has access to his emails, it can send emails, it can write emails, it can read emails, it can report, it can do all of these things. It is him has access to probably let them create access to their financials, all of it. And then building something from there for anybody. Becomes much more efficient. Oh, you want an agent that just does this automation. Okay, well, we'll set that up and then we'll teach your assistant, right? Your brain to communicate to it. Yeah.
+
+39:31 - Unidentified Speaker
+Understood.
+
+39:32 - Prateek Chandra
+It's clear to me now. It can be done. Yeah.
+
+39:38 - Ryan Tisko
+Yeah, if we can do that, and then we'll want to create one of those for Wyatt, one of those for Bobby, and one of those for you. And then eventually one of those for me. So that when we're all all randomly waking up in the middle of the night and sending ideas to each other and thinking about stuff, and don't want to wake each other up, or don't want to bother, or wait for the next meeting, or whatever. We just put it somewhere and let our AIs talk with each other and let us know how it went.
+
+40:27 - Prateek Chandra
+All right, that's cool.
+
+40:35 - Ryan Tisko
+Yeah, because yeah, because imagine like if the AI learns like, oh man, in a surveying company, if it rains outside in areas that we have orders, that could potentially delay our orders and all this stuff. So we want to wake up in the morning, the AI already checked the weather, knows where it's going to be, knows what orders it's going to affect, and sends us a suggestion. Automated email to send out to all the customers that may be affected by this for approval.
+
+41:07 - Unidentified Speaker
+Yeah.
+
+41:09 - Ryan Tisko
+And it knows that because it checks the weather every day, because it knows that you've told it you're nervous about missing deadlines because of rain or weather events.
+
+41:22 - Unidentified Speaker
+Exactly. Got it.
+
+41:35 - Ryan Tisko
+Well, I will jump on my next meeting, but keep working hard. I appreciate you and we'll make some new fake friends.
+
+41:48 - Prateek Chandra
+Yeah, we are in the process and I believe within, I believe I'm trying that by tomorrow, EOD, I should be able to complete this agent. So that we can start. I can, I will start testing this one and I can provide you the inputs that how it's doing on stage. Because today, so many inputs I got from you, which I needed, which was compulsory for me. And I will just keep providing you these kind of as we move forward, I'll keep providing you the videos, these demos. Please go through it whenever you get time, start providing me the inputs. And I will keep enhancing it.
+
+42:30 - Unidentified Speaker
+Perfect.
+
+42:30 - Ryan Tisko
+Nope. Sounds great. I appreciate it. And it's definitely interesting.
+
+42:40 - Prateek Chandra
+You know, very interesting thing, just last thing before you go. I was laughing today because when I asked the estimate from AI, it told it will take 8 to 12 weeks.
+
+42:52 - Ryan Tisko
+but I was laughing today that I'm uh like I think I'm going to complete this within four to five days only and if there will be no dependency I would have completed this in maybe three days yeah I mean even the ai is getting to learn itself right now it's so you know and this agent will help us and we'll go over some more throughout the week of why that report that you sent me was so different and how that's interesting, right? So, if there was an agent like we already talked about already in place that knows all of this stuff, that knows the team, knows the field crews, you know, can talk, knows can contact them because it has access, you know, can send text messages, it's just fully connected to everything.
+
+43:42 - Unidentified Speaker
+Yeah.
+
+43:43 - Ryan Tisko
+You know, we could ask it. It why, when we're using these skills over here, you know, we're getting conflicting information. You know, it'll be able to look deeper for us, but also help us set a standard because it'll be able to say, okay, it's doing this, we're doing this. And that was an interesting thing because, as the first few reports you gave me, his numbers were more valuable. And then that last report it tanked. Yeah, so yeah, if we're looking, we're trying to pay people in incentives and develop that, right? So, one of the things because surveyors are so important, or else we don't have a surveying division, so we've incentivized them as our first test run of incentives if they make. If they deliver and we get paid for over $600,000 in revenue, they get an incentive, right? And it's not a ton of money, but it's something that we're learning here. And so that's why we're asking it. Okay, what now the payout's not until the end of Q2, but we start looking at it. Okay. And the incentive didn't actually start until the end of Q1, anyways. We want to know what we're going to be judging this off of, right?
+
+45:09 - Unidentified Speaker
+Yes.
+
+45:09 - Ryan Tisko
+Did they hit their incentive? And we looked, and from Wyatt's report, he was so close. And then from your first two reports, he was way over and hit it. And then on the third report, he was way under. So it's like, do we pay him? Do we not pay him? What do we, how do we help him improve?
+
+45:28 - Unidentified Speaker
+It might have been a lot new.
+
+45:31 - Ryan Tisko
+Yeah, and if we had something that new, every email the guy sent, every message, it can go and become a him and tell you, you know, kind of what it thinks and stuff. Then we'd have a lot more flexibility as a leader to help guide that person without like calling the person being like, so we're not really sure which report's correct. But we think you're doing okay. And we think if you improve these things, like it's just not as clean.
+
+46:07 - Prateek Chandra
+Exactly. A suggestion here, a quick suggestion: like how you provided me all the filters to get the report. I believe anybody who is taking out the report, even Void or Robert or anybody, they should provide a complete filter because still I believe that there is a gap. In between where people are still not like people are not providing the complete steps and they are not thinking that AI is actually brainless in starting. So you have to provide each and every step. We cannot miss anything.
+
+46:45 - Ryan Tisko
+Yeah. Yeah, I'm not sure exactly what his prompt was, but it'd be something to bring up on Wednesday. So, tomorrow's meeting, that could be a good thing that you could just be like, Hey, can you just show me what you did to prompt that and have him share his screen? Because some of these things might also be where, like I was saying yesterday, knowledge is power, but sometimes knowledge is distracting or slows you down. And some of these scenarios, the AI might be built. Well enough to think through it and actually come up with the right stuff, as opposed to a human giving direct as good quality, very detailed information. And that human kind of screws up that process. And when you compare those two, if we're doing like a case study and we're testing that theory out. Out, how many times, you know, it would be interesting to see a survey on it of how many times does the AI or the process pro, who's very descriptive, actually get a better outcome than the non-process oriented person that's just really asking the AI to make it. You gotta test the out. Because some of these things, like we might find in this circumstance, that asking it to go just look through field to finish and give an opinion, there's a chance, and this is the crazy thing and why it's so confusing to people. There is a chance that it's going to give you a better answer than what you would have built in telling it a process to go find it. And just because that chance exists. We need to make sure that we always give ourselves the chance to see that before we go build something bigger, right? And the beauty of it is it's fast, right? You can test out that direction quickly and move the other direction just as fast as if just going to take an object and then go into that direction. It's just one step, let it do it, and then move on.
+
+49:09 - Ryan Tisko
+Oh, yeah.
+
+49:09 - Ryan Tisko
+So yeah, it'd be curious. It'd be interesting to see kind of, you what is the findings between the two of you discussing it tomorrow on how it communicated? And then to let them know, we're gonna, we wanna give them a Hermes to each of them. Them that's connected to all their stuff that they can talk to, and that you know is a can do everything they need.
+
+49:48 - Unidentified Speaker
+Oh, yeah, sure.
+
+49:57 - Ryan Tisko
+All right, well, then let me know how the rest of this build goes. We'll test it out, and then yeah, we'll try and get those. Those couple agents put together for us to leverage for learning. All right. Well, let me know what your thoughts are on all that, and I'll get with the boys. I'll review that video another time, but I kind of Those few inputs were pretty much it. And then, yeah, if you want to remake it in the same process or test it out in Synthesia and see what the difference is, but that one wasn't bad. It's just definitely not as polished as Synthesia.
+
+50:55 - Prateek Chandra
+This is only the fifth version of video that I created. If you will see the version one, you will vomit actually it's very dirty and I when I told it to create an avatar it created avatar but it's very ugly avatar what it created in version five so that's why I upgraded I told okay remove the avatar just create without avatar then it created that's funny so it's enhancing I'm trying that maybe if I will actually make it learn more. So maybe there is a possibility that we can get rid of synthesia exactly and this AI can just directly start making the videos. So that is also in my brain and I'm teaching it.
+
+51:45 - Unidentified Speaker
+Okay.
+
+51:46 - Unidentified Speaker
+Yeah.
+
+51:47 - Ryan Tisko
+Cool. Well, we'll keep chipping away at it.
+
+51:53 - Prateek Chandra
+Yeah, sure.
+
+51:57 - Ryan Tisko
+All right, sir. Well, let me know your findings and I hope you have rest of and we'll chat.
+
+52:03 - Unidentified Speaker
+Yeah.
+
+52:03 - Prateek Chandra
+Bye. Take care.
+
+52:05 - Ryan Tisko
+All right.
