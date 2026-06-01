@@ -1,0 +1,52 @@
+name: Invoice Pipeline (Sprint 11)
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # every 15 minutes — A4 polls for replies, A1 hunts for new flags
+  workflow_dispatch:
+
+jobs:
+  run-invoice-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run invoice pipeline
+        env:
+          FTF_API_KEY:            ${{ secrets.FTF_API_KEY }}
+          FTF_API_BASE_URL:       ${{ secrets.FTF_API_BASE_URL }}
+          ANTHROPIC_API_KEY:      ${{ secrets.ANTHROPIC_API_KEY }}
+          DB_HOST:                ${{ secrets.DB_HOST }}
+          DB_PORT:                ${{ secrets.DB_PORT }}
+          DB_NAME:                ${{ secrets.DB_NAME }}
+          DB_USER:                ${{ secrets.DB_USER }}
+          DB_PASSWORD:            ${{ secrets.DB_PASSWORD }}
+          TEAMS_TENANT_ID:        ${{ secrets.TEAMS_TENANT_ID }}
+          TEAMS_APP_ID:           ${{ secrets.TEAMS_APP_ID }}
+          TEAMS_CLIENT_SECRET:    ${{ secrets.TEAMS_CLIENT_SECRET }}
+          TEAMS_TEAM_ID:          ${{ secrets.TEAMS_TEAM_ID }}
+          TEAMS_CHANNEL_ID:       ${{ secrets.TEAMS_CHANNEL_ID }}
+          TEAMS_CHAT_ID:          ${{ secrets.TEAMS_CHAT_ID }}
+          TEAMS_INCOMING_WEBHOOK_URL: ${{ secrets.TEAMS_INCOMING_WEBHOOK_URL }}
+          IMAP_HOST:              ${{ secrets.IMAP_HOST }}
+          IMAP_PORT:              ${{ secrets.IMAP_PORT }}
+          IMAP_USER:              ${{ secrets.IMAP_USER }}
+          IMAP_PASSWORD:          ${{ secrets.IMAP_PASSWORD }}
+          SMTP_HOST:              ${{ secrets.SMTP_HOST }}
+          SMTP_PORT:              ${{ secrets.SMTP_PORT }}
+          SMTP_USER:              ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD:          ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM:              ${{ secrets.SMTP_FROM }}
+          FTF_ORDER_URL:          ${{ secrets.FTF_ORDER_URL }}
+        run: |
+          cd code/sprint_11_invoice_pipeline
+          python -m agents.agent_a0_orchestrator

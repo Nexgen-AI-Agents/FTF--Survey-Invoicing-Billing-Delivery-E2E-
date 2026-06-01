@@ -51,6 +51,9 @@ TEAMS_APP_ID:        str | None = os.getenv("TEAMS_APP_ID")
 TEAMS_CLIENT_SECRET: str | None = os.getenv("TEAMS_CLIENT_SECRET")
 TEAMS_TEAM_ID:       str | None = os.getenv("TEAMS_TEAM_ID")
 TEAMS_CHANNEL_ID:    str | None = os.getenv("TEAMS_CHANNEL_ID")
+# Group chat used for invoice approvals: 19:xxxx@thread.v2
+# Requires Chat.Read.All + Chat.ReadWrite.All application permissions in Azure AD
+TEAMS_CHAT_ID:       str | None = os.getenv("TEAMS_CHAT_ID", "19:b88d010aa8254609937c512aded09e5f@thread.v2")
 # Incoming webhook URL (Logic App / Workflows) — for posting TO Teams channel
 TEAMS_INCOMING_WEBHOOK_URL: str | None = os.getenv("TEAMS_INCOMING_WEBHOOK_URL")
 # Graph API email notifications (Mail.Send application permission)
@@ -100,6 +103,15 @@ OBSIDIAN_API_KEY:  str | None = os.getenv("Obsidian")
 OBSIDIAN_BASE_URL: str        = os.getenv("OBSIDIAN_BASE_URL", "http://localhost:27123")
 
 LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+
+# Invoice pipeline
+MAX_INVOICE_MODIFICATIONS: int = int(os.getenv("MAX_INVOICE_MODIFICATIONS", "5"))
+
+# IMAP — email inbox for info@nexgensurveying.com
+IMAP_HOST:     str = os.getenv("IMAP_HOST", "outlook.office365.com")
+IMAP_PORT:     int = int(os.getenv("IMAP_PORT", "993"))
+IMAP_USER:     str | None = os.getenv("IMAP_USER")
+IMAP_PASSWORD: str | None = os.getenv("IMAP_PASSWORD")
 
 # Dynamic pricing complexity factors (I-065)
 # Set PRICING_COMPLEXITY_ENABLED=true to activate upcharges based on property features.

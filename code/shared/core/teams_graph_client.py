@@ -40,6 +40,7 @@ from config.settings import (
     NOTIFICATION_TO_EMAILS,
     TEAMS_APP_ID,
     TEAMS_CHANNEL_ID,
+    TEAMS_CHAT_ID,
     TEAMS_CLIENT_SECRET,
     TEAMS_INCOMING_WEBHOOK_URL,
     TEAMS_TEAM_ID,
@@ -644,6 +645,175 @@ def _parse_all_commands(text: str) -> list[tuple[str, list[str] | None, str | No
 def _parse_command(text: str) -> tuple[str, list[str] | None, str | None]:
     """Backward-compatible wrapper — returns first command from _parse_all_commands."""
     return _parse_all_commands(text)[0]
+
+
+# ── Teams Group Chat API (invoice approval flow) ──────────────────────────────
+#
+# The invoice pipeline uses a Teams GROUP CHAT (19:xxx@thread.v2) for:
+#   - A3 posts invoice drafts: POST /chats/{chatId}/messages
+#   - A4 polls for replies:    GET  /chats/{chatId}/messages/{id}/replies
+#
+# Required Azure AD app permissions (application, admin consent required):
+#   Chat.Read.All        — read all chat messages
+#   Chat.ReadWrite.All   — send messages to the chat as the app
+
+
+def post_chat_message(text_or_html: str, subject: str = "") -> dict:
+    """Post a new message to the invoice approval group chat.
+
+    Returns {"id": message_id, "ok": True} on success.
+    Requires Chat.ReadWrite.All application permission.
+    """
+    if not TEAMS_CHAT_ID:
+        raise AgentError("TEAMS_CHAT_ID not set in .env")
+
+    header = f"<strong>{subject}</strong><br><br>" if subject else ""
+    body   = (header + text_or_html).replace("\n", "<br>")
+
+    payload = {"body": {"contentType": "html", "content": body}}
+    url     = f"{_GRAPH_READ}/chats/{TEAMS_CHAT_ID}/messages"
+
+    try:
+        r = httpx.post(url, headers=_read_headers(), json=payload, timeout=20.0)
+        r.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        raise AgentError(
+            f"post_chat_message failed: HTTP {exc.response.status_code} -- {exc.response.text[:300]}"
+        ) from exc
+    except Exception as exc:
+        raise AgentError(f"post_chat_message failed: {exc}") from exc
+
+    data = r.json()
+    msg_id = data.get("id", "")
+    log.info("chat message posted id=%s subject=%r", msg_id, subject)
+    return {"id": msg_id, "ok": True}
+
+
+def post_chat_reply(message_id: str, text_or_html: str) -> dict:
+    """Post a reply in a chat message thread.
+
+    Returns {"id": reply_id, "ok": True} on success.
+    Requires Chat.ReadWrite.All application permission.
+    """
+    if not TEAMS_CHAT_ID:
+        raise AgentError("TEAMS_CHAT_ID not set in .env")
+
+    body_html = text_or_html.replace("\n", "<br>")
+    payload   = {"body": {"contentType": "html", "content": body_html}}
+    url       = f"{_GRAPH_READ}/chats/{TEAMS_CHAT_ID}/messages/{message_id}/replies"
+
+    try:
+        r = httpx.post(url, headers=_read_headers(), json=payload, timeout=20.0)
+        r.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        raise AgentError(
+            f"post_chat_reply failed: HTTP {exc.response.status_code} -- {exc.response.text[:300]}"
+        ) from exc
+    except Exception as exc:
+        raise AgentError(f"post_chat_reply failed: {exc}") from exc
+
+    data = r.json()
+    log.info("chat reply posted to message=%s", message_id)
+    return {"id": data.get("id", ""), "ok": True}
+
+
+def get_chat_messages(limit: int = 50) -> list[dict]:
+    """Fetch recent messages from the invoice approval group chat.
+
+    Returns list of dicts: {id, sender, is_app, text, created_at_dt}
+    Requires Chat.Read.All application permission.
+    """
+    if not TEAMS_CHAT_ID:
+        raise AgentError("TEAMS_CHAT_ID not set in .env")
+
+    url = f"{_GRAPH_READ}/chats/{TEAMS_CHAT_ID}/messages?$top={limit}"
+    try:
+        r = httpx.get(url, headers=_read_headers(), timeout=20.0)
+        r.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        raise AgentError(
+            f"get_chat_messages failed: HTTP {exc.response.status_code} -- {exc.response.text[:300]}"
+        ) from exc
+    except Exception as exc:
+        raise AgentError(f"get_chat_messages failed: {exc}") from exc
+
+    results: list[dict] = []
+    for msg in r.json().get("value", []):
+        if msg.get("messageType") != "message":
+            continue
+
+        from_obj    = msg.get("from") or {}
+        app_ref     = from_obj.get("application") or {}
+        user_ref    = from_obj.get("user") or {}
+        is_app      = bool(app_ref) or not bool(user_ref.get("id"))
+        sender_name = user_ref.get("displayName") or app_ref.get("displayName") or "Unknown"
+        raw_body    = (msg.get("body") or {}).get("content", "")
+        plain       = _clean_message_body(raw_body)
+
+        created_raw = msg.get("createdDateTime", "")
+        try:
+            created_dt = datetime.fromisoformat(created_raw.replace("Z", "+00:00"))
+        except Exception:
+            created_dt = datetime.now(timezone.utc)
+
+        results.append({
+            "id":            msg.get("id", ""),
+            "sender":        sender_name,
+            "is_app":        is_app,
+            "text":          plain,
+            "raw_html":      raw_body,
+            "created_at_dt": created_dt,
+        })
+
+    return results
+
+
+def get_chat_thread_replies(message_id: str) -> list[dict]:
+    """Fetch human replies to a specific chat message thread.
+
+    Returns list of dicts: {id, sender, text, created_at_dt}
+    Only returns messages from real users (skips bot/app replies).
+    """
+    if not TEAMS_CHAT_ID:
+        raise AgentError("TEAMS_CHAT_ID not set in .env")
+
+    url = f"{_GRAPH_READ}/chats/{TEAMS_CHAT_ID}/messages/{message_id}/replies?$top=50"
+    try:
+        r = httpx.get(url, headers=_read_headers(), timeout=20.0)
+        r.raise_for_status()
+    except Exception as exc:
+        log.warning("could not fetch chat replies for message=%s: %s", message_id, exc)
+        return []
+
+    results: list[dict] = []
+    for reply in r.json().get("value", []):
+        if reply.get("messageType") != "message":
+            continue
+
+        from_obj = reply.get("from") or {}
+        app_ref  = from_obj.get("application") or {}
+        user_ref = from_obj.get("user") or {}
+        if app_ref or not user_ref.get("id"):
+            continue
+
+        sender_name = user_ref.get("displayName") or "Unknown"
+        raw_body    = (reply.get("body") or {}).get("content", "")
+        plain       = _clean_message_body(raw_body)
+
+        created_raw = reply.get("createdDateTime", "")
+        try:
+            created_dt = datetime.fromisoformat(created_raw.replace("Z", "+00:00"))
+        except Exception:
+            created_dt = datetime.now(timezone.utc)
+
+        results.append({
+            "id":            reply.get("id", ""),
+            "sender":        sender_name,
+            "text":          plain,
+            "created_at_dt": created_dt,
+        })
+
+    return results
 
 
 def parse_confirmation_reply(text: str) -> str | None:

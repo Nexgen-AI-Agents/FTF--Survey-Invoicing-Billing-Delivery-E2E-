@@ -150,6 +150,30 @@ def get_pricing_overrides() -> dict:
         raise PricingError("get_pricing_overrides failed") from exc
 
 
+def get_invoice_needed_orders(max_results: int = 1000) -> list[dict]:
+    """Return all orders that have the 'order needs an invoice' flag set.
+
+    Uses the filter_by_flag=invoice_needed API param — maps to the $ indicator
+    visible in the FTF Track Flow UI (stage.fieldtofinish.jobs).
+    """
+    return get_orders(extra_params={"filter_by_flag": "invoice_needed"}, max_results=max_results)
+
+
+def get_invoice(invoice_id: str) -> dict:
+    try:
+        r = httpx.get(
+            f"{FTF_API_BASE_URL}/invoices/{invoice_id}",
+            headers=_headers(),
+            timeout=_TIMEOUT,
+        )
+        r.raise_for_status()
+        return r.json()
+    except httpx.HTTPStatusError as exc:
+        raise AgentError(f"get_invoice({invoice_id}) HTTP {exc.response.status_code}") from exc
+    except Exception as exc:
+        raise AgentError(f"get_invoice({invoice_id}) failed") from exc
+
+
 def create_invoice(order_id: str, amount: float, services: list[dict]) -> dict:
     payload = {"order_id": order_id, "amount": amount, "services": services}
     try:

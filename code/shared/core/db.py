@@ -17,6 +17,10 @@ _VALID_ORDER_COLUMNS = {
     "draft_estimate",
     "pricing_tier", "elevation_cert_required", "special_pricing",
     "classified_at", "priced_at", "written_at", "reviewed_at", "sent_at", "flagged_at",
+    # Invoice pipeline (Sprint 11)
+    "invoice_draft", "data_sources", "approval_message_id",
+    "modification_count", "invoice_id", "client_name", "property_address",
+    "data_collected_at", "draft_posted_at", "invoice_created_at",
 }
 
 
@@ -573,5 +577,108 @@ def get_recent_pricing_examples(limit: int = 10) -> list[dict]:
         cur.execute(
             "SELECT * FROM pricing_examples ORDER BY created_at DESC LIMIT %s",
             (limit,),
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+
+# ── Invoice Pipeline (Sprint 11) ──────────────────────────────────────────────
+
+def get_orders_by_status(status: str) -> list[dict]:
+    """Return all processed_orders rows with the given status, oldest first."""
+    with _get_cursor() as cur:
+        cur.execute(
+            "SELECT * FROM processed_orders WHERE status = %s ORDER BY created_at ASC",
+            (status,),
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+
+def get_orders_awaiting_invoice_approval() -> list[dict]:
+    """Return all orders in the invoice approval waiting states."""
+    with _get_cursor() as cur:
+        cur.execute(
+            """
+            SELECT * FROM processed_orders
+            WHERE status IN ('invoice_draft_posted', 'invoice_modification_requested')
+            ORDER BY draft_posted_at ASC NULLS LAST
+            """
+        )
+        return [dict(row) for row in cur.fetchall()]
+
+
+def increment_modification_count(order_id: str) -> int:
+    """Atomically increment modification_count; return the new value."""
+    with _get_cursor() as cur:
+        cur.execute(
+            """
+            UPDATE processed_orders
+            SET modification_count = COALESCE(modification_count, 0) + 1,
+                updated_at = NOW()
+            WHERE order_id = %s
+            RETURNING modification_count
+            """,
+            (order_id,),
+        )
+        row = cur.fetchone()
+        return row["modification_count"] if row else 1
+
+
+def save_invoice_learning(
+    order_id: str,
+    original_draft: str,
+    human_correction: str,
+    learned_rule: str,
+    service_type: Optional[str] = None,
+    county: Optional[str] = None,
+    entered_by: str = "system",
+) -> int:
+    """Persist a human correction as a learning record.
+
+    Returns the new row id.
+    Table: invoice_learnings (created by migration 002_invoice_pipeline.sql)
+    """
+    with _get_cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO invoice_learnings
+                (order_id, original_draft, human_correction, learned_rule,
+                 service_type, county, entered_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+            """,
+            (order_id, original_draft, human_correction, learned_rule,
+             service_type, county, entered_by),
+        )
+        row = cur.fetchone()
+        return row["id"] if row else -1
+
+
+def get_invoice_learnings(
+    service_type: Optional[str] = None,
+    county: Optional[str] = None,
+    limit: int = 10,
+) -> list[dict]:
+    """Return recent invoice learnings, optionally filtered."""
+    clauses: list[str] = []
+    params: list = []
+    if service_type:
+        clauses.append("LOWER(service_type) = LOWER(%s)")
+        params.append(service_type)
+    if county:
+        clauses.append("LOWER(county) = LOWER(%s)")
+        params.append(county)
+
+    where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    params.append(limit)
+
+    with _get_cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT * FROM invoice_learnings
+            {where}
+            ORDER BY created_at DESC
+            LIMIT %s
+            """,
+            params,
         )
         return [dict(row) for row in cur.fetchall()]

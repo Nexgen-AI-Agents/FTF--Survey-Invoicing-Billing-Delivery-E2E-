@@ -36,3 +36,13 @@ FUT-05,GHL full integration for win-back campaign tracking,FEATURE,BACKLOG,Futur
 FUT-06,In-progress/in-revision status management via agent,FEATURE,BACKLOG,Future,New Agent,P4,TBD,2026-05-29,2026-05-29,Long future item
 FUT-07,Developer agent (modify FTF UI + hide buttons),FEATURE,BACKLOG,Future,New Agent,P4,TBD,2026-05-29,2026-05-29,Long future
 FUT-08,Weather monitoring agent (I-070),FEATURE,BACKLOG,Future,New Agent,P4,dev_manager,2026-05-26,2026-05-29,Post Sprint 12
+S11-ARCH,Architecture Redesign — Phase 1 Invoice Pipeline,EPIC,COMPLETED,Sprint 11,All Agents,P0,Prateek,2026-06-01,2026-06-01,Fundamental redesign — new 6-agent pipeline replacing old estimate flow
+S11-A1,A1 Flag Hunter — filter_by_flag=invoice_needed scan all orders,TASK,COMPLETED,Sprint 11,agent_a1_flag_hunter,P0,dev_manager,2026-06-01,2026-06-01,Replaces agent_02_monitor — no status filter — any order with $ flag
+S11-A2,A2 Data Collector — FTF + email + Teams chat reader,TASK,COMPLETED,Sprint 11,agent_a2_data_collector,P0,dev_manager,2026-06-01,2026-06-01,NEW agent — reads 3 sources and builds order packet with confidence scores
+S11-A3,A3 Invoice Compiler — draft from packet + historical pricing + Teams post,TASK,COMPLETED,Sprint 11,agent_a3_invoice_compiler,P0,dev_manager,2026-06-01,2026-06-01,Replaces Agent05 + Agent06 combined — posts draft to Teams group chat
+S11-A4,A4 Human Gate v2 — NL thread conversation + modification loop + learning,TASK,COMPLETED,Sprint 11,agent_a4_human_gate_v2,P0,dev_manager,2026-06-01,2026-06-01,Enhanced — natural language not just keywords — stores corrections in invoice_learnings
+S11-A5,A5 Invoice Finalizer — write approved invoice to FTF API clear flag,TASK,COMPLETED,Sprint 11,agent_a5_invoice_finalizer,P0,dev_manager,2026-06-01,2026-06-01,NEW agent — POST /invoices + verify $ flag cleared
+S11-A6,A6 Sender v2 — send personalized invoice email to client,TASK,COMPLETED,Sprint 11,agent_a6_sender_v2,P0,dev_manager,2026-06-01,2026-06-01,Enhanced Agent08 — personalized email + upsell + review ask
+S11-DB,DB Migration 002 — invoice_pipeline columns + invoice_learnings table,TASK,COMPLETED,Sprint 11,PostgreSQL,P0,dev_manager,2026-06-01,2026-06-01,code/migrations/002_invoice_pipeline.sql — run before deploying
+S11-GHA,GitHub Actions — invoice_pipeline.yml — every 15 minutes,TASK,COMPLETED,Sprint 11,GitHub Actions,P0,dev_manager,2026-06-01,2026-06-01,Triggers A0 orchestrator — all 6 agents in sequence
+S11-ENV,Add TEAMS_CHAT_ID + IMAP vars + MAX_INVOICE_MODIFICATIONS to GitHub Secrets,TASK,IN DEV,Sprint 11,GitHub Secrets,P1,Prateek,2026-06-01,2026-06-01,TEAMS_CHAT_ID=19:b88d010aa8254609937c512aded09e5f@thread.v2 — need Azure AD Chat.Read.All + Chat.ReadWrite.All permissions
