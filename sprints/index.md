@@ -20,7 +20,7 @@
 | [sprint_09_memory_loop.md](sprint_09_memory_loop.md) | Sprint 9 | Agent 1 Orchestrator + Memory/Dream loops + Agent 18 Business Analyst | Sprint 8 ✓ | ✅ Complete | 2026-05-27 |
 | [sprint_10_staging_test.md](sprint_10_staging_test.md) | Sprint 10 ⭐ | Full staging test — all 3 loops + cost benchmark | Sprint 9 ✓ | ✅ Complete | 2026-05-27 |
 | [sprint_11_limited_production.md](sprint_11_limited_production.md) | Sprint 11 ⭐ | Limited production — estimate loop live, team monitors | Sprint 10 go/no-go ✓ | 🔄 In Progress | — |
-| [sprint_12_full_production.md](sprint_12_full_production.md) | Sprint 12 ⭐ | Full production — all 3 loops live, 24/7 autonomous | Sprint 11 clear | 🔲 Not Started | — |
+| [sprint_12_full_production.md](sprint_12_full_production.md) | Sprint 12 | Go-live deployment checklist — enable all workflows in production (not a dev sprint) | Sprint 11 clear | 🔲 Not Started | — |
 
 ⭐ = Milestone sprint — requires stakeholder sign-off before proceeding
 

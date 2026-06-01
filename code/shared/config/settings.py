@@ -67,11 +67,6 @@ APPROVED_SENDERS: list[str] = [
     if s.strip()
 ]
 
-# MS Teams — legacy webhook vars (not used by invoice pipeline; retained for other scripts)
-TEAMS_WEBHOOK_URL:             str | None = os.getenv("TEAMS_WEBHOOK_URL")
-TEAMS_APPROVAL_WEBHOOK_URL:    str | None = os.getenv("TEAMS_APPROVAL_WEBHOOK_URL")
-TEAMS_OUTGOING_WEBHOOK_SECRET: str | None = os.getenv("TEAMS_OUTGOING_WEBHOOK_SECRET")
-
 # SMTP — monthly statement email delivery
 SMTP_HOST:     str | None = os.getenv("SMTP_HOST")
 SMTP_PORT:     int        = int(os.getenv("SMTP_PORT", "587"))
