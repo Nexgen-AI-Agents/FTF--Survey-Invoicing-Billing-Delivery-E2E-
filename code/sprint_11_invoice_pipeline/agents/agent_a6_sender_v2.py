@@ -33,7 +33,7 @@ from config.settings import (
     SEND_HOUR_START, SEND_HOUR_END,
     SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM,
 )
-from core.db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
+from core.excel_db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
 from core.exceptions import AgentError
 from core.logger import get_logger
 from core.teams_graph_client import post_channel_reply

@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
-from core.db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
+from core.excel_db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
 from core.exceptions import AgentError
 from core.ftf_client import create_invoice, get_invoice
 from core.logger import get_logger

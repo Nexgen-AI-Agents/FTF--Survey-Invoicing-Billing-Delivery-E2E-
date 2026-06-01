@@ -33,7 +33,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared")
 from config.models import HUMAN_GATE_MODEL
 from config.settings import FTF_ORDER_URL
 from core.claude_client import call as llm_call
-from core.db import (
+from core.excel_db import (
     get_orders_by_status, get_order_by_id, get_pricing_examples,
     get_invoice_learnings, save_order_state, log_decision,
 )

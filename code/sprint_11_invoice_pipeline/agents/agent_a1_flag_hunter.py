@@ -17,8 +17,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
-from core.ftf_client import get_invoice_needed_orders
-from core.db import order_exists, save_order_state, log_decision
+from core.ftf_mysql import get_invoice_needed_orders
+from core.excel_db import order_exists, save_order_state, log_decision
 from core.logger import get_logger
 
 AGENT_NAME = "agent_a1_flag_hunter"

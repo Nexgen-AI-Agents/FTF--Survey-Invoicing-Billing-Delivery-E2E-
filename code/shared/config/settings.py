@@ -38,12 +38,19 @@ FTF_BOOKS_PASSWORD: str | None = os.getenv("FTF_BOOKS_PASSWORD")
 # Anthropic
 ANTHROPIC_API_KEY: str | None = os.getenv("ANTHROPIC_API_KEY")
 
-# PostgreSQL
+# PostgreSQL (legacy — other sprints; Sprint 11 uses excel_db + ftf_mysql instead)
 DB_HOST:     str       = os.getenv("DB_HOST", "localhost")
 DB_PORT:     int       = int(os.getenv("DB_PORT", "5432"))
 DB_NAME:     str       = os.getenv("DB_NAME", "ftf_agentic_ai")
 DB_USER:     str | None = os.getenv("DB_USER")
 DB_PASSWORD: str | None = os.getenv("DB_PASSWORD")
+
+# MySQL — FTF stage DB (direct connection for Sprint 11 invoice pipeline)
+MYSQL_HOST:     str | None = os.getenv("MYSQL_HOST")
+MYSQL_PORT:     int        = int(os.getenv("MYSQL_PORT", "3306"))
+MYSQL_USER:     str | None = os.getenv("MYSQL_USER")
+MYSQL_PASSWORD: str | None = os.getenv("MYSQL_PASSWORD")
+MYSQL_DB:       str | None = os.getenv("MYSQL_DB")
 
 # MS Teams — Graph API (Azure AD app, application permissions)
 TEAMS_TENANT_ID:     str | None = os.getenv("TEAMS_TENANT_ID")

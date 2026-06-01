@@ -40,7 +40,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared")
 from config.models import HUMAN_GATE_MODEL
 from config.settings import APPROVED_SENDERS, FTF_ORDER_URL, MAX_INVOICE_MODIFICATIONS
 from core.claude_client import call as llm_call
-from core.db import (
+from core.excel_db import (
     get_orders_awaiting_invoice_approval, get_order_by_id,
     get_processed_reply_ids, increment_modification_count,
     mark_reply_processed, save_invoice_learning,
