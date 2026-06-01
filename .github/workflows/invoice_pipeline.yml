@@ -2,7 +2,7 @@ name: Invoice Pipeline (Sprint 11)
 
 on:
   schedule:
-    - cron: "*/15 * * * *"   # every 15 minutes — A4 polls for replies, A1 hunts for new flags
+    - cron: "*/5 * * * *"    # every 5 minutes — A4 polls for replies, A1 hunts for new flags
   workflow_dispatch:
 
 jobs:
