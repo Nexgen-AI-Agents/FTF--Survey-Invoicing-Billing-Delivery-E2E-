@@ -21,6 +21,7 @@ _VALID_ORDER_COLUMNS = {
     "invoice_draft", "data_sources", "approval_message_id",
     "modification_count", "invoice_id", "client_name", "property_address",
     "data_collected_at", "draft_posted_at", "invoice_created_at",
+    "processed_reply_ids",
 }
 
 
@@ -651,6 +652,31 @@ def save_invoice_learning(
         )
         row = cur.fetchone()
         return row["id"] if row else -1
+
+
+def get_processed_reply_ids(order_id: str) -> set[str]:
+    """Return the set of Teams reply IDs already processed by A4 for this order."""
+    import json as _json
+    with _get_cursor() as cur:
+        cur.execute(
+            "SELECT processed_reply_ids FROM processed_orders WHERE order_id = %s LIMIT 1",
+            (order_id,),
+        )
+        row = cur.fetchone()
+        if not row or not row["processed_reply_ids"]:
+            return set()
+        try:
+            return set(_json.loads(row["processed_reply_ids"]))
+        except Exception:
+            return set()
+
+
+def mark_reply_processed(order_id: str, reply_id: str) -> None:
+    """Append reply_id to processed_reply_ids for this order (idempotent)."""
+    import json as _json
+    existing = get_processed_reply_ids(order_id)
+    existing.add(reply_id)
+    save_order_state(order_id, processed_reply_ids=_json.dumps(list(existing)))
 
 
 def get_invoice_learnings(

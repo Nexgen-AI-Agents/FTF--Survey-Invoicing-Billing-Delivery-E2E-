@@ -42,7 +42,8 @@ from config.settings import APPROVED_SENDERS, FTF_ORDER_URL, MAX_INVOICE_MODIFIC
 from core.claude_client import call as llm_call
 from core.db import (
     get_orders_awaiting_invoice_approval, get_order_by_id,
-    increment_modification_count, save_invoice_learning,
+    get_processed_reply_ids, increment_modification_count,
+    mark_reply_processed, save_invoice_learning,
     save_order_state, log_decision,
 )
 from core.exceptions import AgentError
@@ -243,17 +244,26 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
     raw_sources   = db_row.get("data_sources")
     data_sources  = json.loads(raw_sources) if isinstance(raw_sources, str) else (raw_sources or {})
 
+    already_processed = get_processed_reply_ids(order_id)
+
     replies = get_chat_thread_replies(message_id)
     if not replies:
         return None
 
-    # Process replies newest-first — only the latest non-ignored reply counts
-    for reply in sorted(replies, key=lambda r: r["created_at_dt"], reverse=True):
-        sender = reply["sender"]
-        text   = reply["text"]
+    new_replies = [r for r in replies if r["id"] not in already_processed]
+    if not new_replies:
+        log.debug("no new replies for order=%s (all %d already processed)", order_id, len(replies))
+        return None
+
+    # Process newest-first — only the latest non-ignored reply counts
+    for reply in sorted(new_replies, key=lambda r: r["created_at_dt"], reverse=True):
+        sender   = reply["sender"]
+        text     = reply["text"]
+        reply_id = reply["id"]
 
         if not _is_approved_sender(sender):
             log.debug("ignoring reply from unapproved sender=%s", sender)
+            mark_reply_processed(order_id, reply_id)
             continue
 
         parsed = _ai_parse_instruction(text, current_draft, order_id)
@@ -264,7 +274,10 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
                  order_id, sender, action, parsed.get("confidence"))
 
         if action == "ignore":
+            mark_reply_processed(order_id, reply_id)
             continue
+
+        mark_reply_processed(order_id, reply_id)
 
         if action == "approve":
             save_order_state(order_id, status="invoice_approved")
@@ -345,11 +358,10 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
             return "invoice_draft_posted"
 
         elif action == "question":
-            # AI is confused — ask a clarifying question
             q_text = parsed.get("question_text", "Could you clarify what change you'd like?")
             post_chat_reply(message_id, f"❓ {q_text}")
             log.info("clarification requested order=%s", order_id)
-            return None  # don't change status — still waiting
+            return None
 
     return None
 

@@ -79,7 +79,7 @@ SMTP_HOST:     str | None = os.getenv("SMTP_HOST")
 SMTP_PORT:     int        = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER:     str | None = os.getenv("SMTP_USER")
 SMTP_PASSWORD: str | None = os.getenv("SMTP_PASSWORD")
-SMTP_FROM:     str        = os.getenv("SMTP_FROM", "statements@nexgensurveying.com")
+SMTP_FROM:     str        = os.getenv("SMTP_FROM", "nesa@nexgenlogix.com")
 
 # Monthly statements — file output
 STATEMENT_OUTPUT_DIR: str = os.getenv(
