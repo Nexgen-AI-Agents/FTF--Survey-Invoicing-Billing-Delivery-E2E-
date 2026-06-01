@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>FTF Agentic AI OS &#8212; Client Architecture v3</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#F8FAFF; font-family:Arial,sans-serif; display:flex; flex-direction:column; align-items:center; padding:20px; }
+h1 { color:#1E1B4B; font-size:22px; margin-bottom:4px; }
+p { color:#6B7280; font-size:13px; margin-bottom:20px; }
+</style>
+</head>
+<body>
+<h1>FTF Agentic AI OS &#8212; How It Works (Client View) v3</h1>
+<p>Sprint 0&#8209;11 &middot; Business-level view &middot; Estimate Loop + Invoice Pipeline &middot; 24/7 Automated &middot; June 2026</p>
+
+<svg viewBox="0 0 1280 1120" xmlns="http://www.w3.org/2000/svg" width="1280" height="1120">
+<defs>
+  <marker id="arr"  markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L8,4 z" fill="#4F46E5"/></marker>
+  <marker id="arrg" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L8,4 z" fill="#065F46"/></marker>
+  <marker id="arrr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L8,4 z" fill="#991B1B"/></marker>
+  <marker id="arro" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L8,4 z" fill="#C2410C"/></marker>
+  <marker id="arrp" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L8,4 z" fill="#6D28D9"/></marker>
+  <marker id="arrb" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L8,4 z" fill="#1D4ED8"/></marker>
+  <marker id="arri" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,1 L0,7 L8,4 z" fill="#0369A1"/></marker>
+</defs>
+<rect width="1280" height="1120" fill="#F8FAFF"/>
+
+<!-- Header bar -->
+<rect x="0" y="0" width="1280" height="52" fill="#1E1B4B"/>
+<text x="640" y="22" text-anchor="middle" fill="#A5B4FC" font-size="13" font-weight="bold">FTF AGENTIC AI OPERATING SYSTEM &#8212; v3</text>
+<text x="640" y="40" text-anchor="middle" fill="#818CF8" font-size="10">Business Architecture &middot; Sprint 0-11 &middot; Estimate Loop + Invoice Pipeline &middot; 24/7 Automated &middot; June 2026</text>
+
+<!-- Sprint status badge -->
+<rect x="1040" y="4" width="230" height="44" rx="6" fill="#0369A1"/>
+<text x="1155" y="20" text-anchor="middle" fill="#7DD3FC" font-size="9" font-weight="bold">INVOICE PIPELINE: BUILT &#128310;</text>
+<text x="1155" y="34" text-anchor="middle" fill="#38BDF8" font-size="8">Sprint 11 &middot; DB migration + secrets pending</text>
+<text x="1155" y="46" text-anchor="middle" fill="#38BDF8" font-size="8">AR + Statements: Staging</text>
+
+<!-- ═══ ENTRY PATHS ═══ -->
+<rect x="30" y="70" width="160" height="100" rx="10" fill="#EFF6FF" stroke="#2563EB" stroke-width="2"/>
+<text x="110" y="94" text-anchor="middle" fill="#1D4ED8" font-size="10" font-weight="bold">CUSTOMER</text>
+<text x="110" y="108" text-anchor="middle" fill="#3B82F6" font-size="9">submits a survey</text>
+<text x="110" y="120" text-anchor="middle" fill="#3B82F6" font-size="9">order through FTF</text>
+<text x="110" y="136" text-anchor="middle" fill="#6B7280" font-size="8" font-style="italic">any time, 24/7</text>
+<text x="110" y="149" text-anchor="middle" fill="#6B7280" font-size="8" font-style="italic">individual or B2B</text>
+
+<rect x="30" y="184" width="160" height="80" rx="10" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+<text x="110" y="204" text-anchor="middle" fill="#92400E" font-size="10" font-weight="bold">CUSTOMER EMAIL</text>
+<text x="110" y="218" text-anchor="middle" fill="#B45309" font-size="8">replies to quote with</text>
+<text x="110" y="230" text-anchor="middle" fill="#B45309" font-size="8">"go ahead" / "approved"</text>
+<text x="110" y="244" text-anchor="middle" fill="#6B7280" font-size="8" font-style="italic">&#8594; nesa@nexgenlogix.com</text>
+
+<line x1="190" y1="120" x2="258" y2="140" stroke="#4F46E5" stroke-width="2" marker-end="url(#arr)"/>
+<text x="224" y="127" text-anchor="middle" fill="#4F46E5" font-size="8" font-weight="bold">order placed</text>
+<line x1="190" y1="224" x2="258" y2="200" stroke="#D97706" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arro)"/>
+<text x="224" y="220" text-anchor="middle" fill="#D97706" font-size="7" font-weight="bold">approval email</text>
+
+<!-- ═══ AI OS BOX ═══ -->
+<rect x="260" y="60" width="820" height="730" rx="12" fill="white" stroke="#4F46E5" stroke-width="2"/>
+<rect x="260" y="60" width="820" height="34" rx="12" fill="#1E1B4B"/>
+<rect x="260" y="82" width="820" height="12" fill="#1E1B4B"/>
+<text x="670" y="82" text-anchor="middle" fill="white" font-size="12" font-weight="bold">FTF AGENTIC AI OPERATING SYSTEM &#8212; 24/7 AUTOMATED</text>
+
+<rect x="820" y="64" width="250" height="28" rx="5" fill="#166534"/>
+<text x="945" y="82" text-anchor="middle" fill="#86EFAC" font-size="9" font-weight="bold">&#9889; GitHub Actions &#8212; No server &middot; No manual scripts</text>
+
+<!-- Step 0: Email monitor -->
+<rect x="280" y="104" width="200" height="60" rx="8" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
+<text x="380" y="122" text-anchor="middle" fill="#92400E" font-size="9" font-weight="bold">&#9312; EMAIL INTAKE MONITOR</text>
+<text x="380" y="135" text-anchor="middle" fill="#B45309" font-size="8">AI watches nesa@nexgenlogix.com</text>
+<text x="380" y="147" text-anchor="middle" fill="#B45309" font-size="8">Customer "go ahead" &#8594; converts quote to pending</text>
+<text x="380" y="157" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">Agent 12 &#8212; Email Monitor</text>
+
+<line x1="480" y1="134" x2="512" y2="145" stroke="#D97706" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arro)"/>
+
+<!-- Step A: Monitor picks up -->
+<rect x="514" y="104" width="186" height="60" rx="8" fill="#EEF2FF" stroke="#4F46E5" stroke-width="1.5"/>
+<text x="607" y="122" text-anchor="middle" fill="#312E81" font-size="9" font-weight="bold">&#9313; AI MONITORS FTF</text>
+<text x="607" y="135" text-anchor="middle" fill="#4F46E5" font-size="8">Checks every hour via GitHub Actions</text>
+<text x="607" y="147" text-anchor="middle" fill="#4F46E5" font-size="8">Picks up new unprocessed orders</text>
+<text x="607" y="157" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">Agent 2 &#8212; Monitor</text>
+
+<line x1="700" y1="134" x2="738" y2="134" stroke="#4F46E5" stroke-width="1.5" marker-end="url(#arr)"/>
+
+<!-- Step B: Classify -->
+<rect x="740" y="104" width="186" height="60" rx="8" fill="#EEF2FF" stroke="#4F46E5" stroke-width="1.5"/>
+<text x="833" y="122" text-anchor="middle" fill="#312E81" font-size="9" font-weight="bold">&#9314; AI CLASSIFIES ORDER</text>
+<text x="833" y="135" text-anchor="middle" fill="#4F46E5" font-size="8">Service type &middot; County &middot; Flood zone</text>
+<text x="833" y="147" text-anchor="middle" fill="#4F46E5" font-size="8">Competitor check &middot; Out-of-state check</text>
+<text x="833" y="157" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">Agent 3 &#8212; Classifier &middot; 9 flag triggers</text>
+
+<line x1="833" y1="164" x2="833" y2="192" stroke="#4F46E5" stroke-width="1.5" marker-end="url(#arr)"/>
+
+<!-- Decision diamond: flag? -->
+<polygon points="833,196 900,232 833,268 766,232" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2"/>
+<text x="833" y="228" text-anchor="middle" fill="#312E81" font-size="9" font-weight="bold">FLAG?</text>
+<text x="833" y="240" text-anchor="middle" fill="#4F46E5" font-size="8">9 triggers</text>
+
+<line x1="766" y1="232" x2="660" y2="232" stroke="#DC2626" stroke-width="1.5" marker-end="url(#arrr)"/>
+<text x="718" y="225" text-anchor="middle" fill="#DC2626" font-size="9" font-weight="bold">YES &#8212; FLAGGED</text>
+
+<line x1="833" y1="268" x2="833" y2="300" stroke="#059669" stroke-width="1.5" marker-end="url(#arrg)"/>
+<text x="852" y="288" fill="#059669" font-size="9" font-weight="bold">NO</text>
+
+<!-- HUMAN GATE (left branch) -->
+<rect x="460" y="198" width="196" height="70" rx="8" fill="#FDF2F8" stroke="#7C3AED" stroke-width="2"/>
+<text x="558" y="216" text-anchor="middle" fill="#6D28D9" font-size="9" font-weight="bold">&#9315; HUMAN REVIEW</text>
+<text x="558" y="229" text-anchor="middle" fill="#7C3AED" font-size="8">Robert / Ryan notified via Teams</text>
+<text x="558" y="241" text-anchor="middle" fill="#7C3AED" font-size="8">Batch digest every hour (overdue &#8805;4h marked)</text>
+<text x="558" y="253" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">Agent 4 &#8212; Human Gate &middot; GitHub Actions polls 24/7</text>
+<text x="558" y="263" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">APPROVE &middot; REJECT [reason] &middot; DEFER (24h hold)</text>
+
+<polygon points="558,278 630,310 558,342 486,310" fill="#FDF2F8" stroke="#7C3AED" stroke-width="2"/>
+<text x="558" y="306" text-anchor="middle" fill="#6D28D9" font-size="9" font-weight="bold">DECISION</text>
+<text x="558" y="318" text-anchor="middle" fill="#7C3AED" font-size="8">APPROVE?</text>
+
+<line x1="486" y1="310" x2="420" y2="310" stroke="#1D4ED8" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arrb)"/>
+<rect x="280" y="290" width="136" height="40" rx="6" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5"/>
+<text x="348" y="307" text-anchor="middle" fill="#1D4ED8" font-size="8" font-weight="bold">DEFERRED (24h)</text>
+<text x="348" y="319" text-anchor="middle" fill="#3B82F6" font-size="7">Reappears tomorrow's digest</text>
+<text x="348" y="329" text-anchor="middle" fill="#6B7280" font-size="7">Not rejected &#8212; status preserved</text>
+<line x1="416" y1="295" x2="416" y2="278" stroke="#1D4ED8" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arrb)"/>
+
+<line x1="558" y1="342" x2="558" y2="374" stroke="#DC2626" stroke-width="1.5" marker-end="url(#arrr)"/>
+<text x="572" y="362" fill="#DC2626" font-size="9" font-weight="bold">REJECTED</text>
+<rect x="460" y="376" width="196" height="36" rx="6" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5"/>
+<text x="558" y="392" text-anchor="middle" fill="#991B1B" font-size="8" font-weight="bold">Order held for review</text>
+<text x="558" y="404" text-anchor="middle" fill="#B91C1C" font-size="8">Team follows up manually</text>
+
+<line x1="630" y1="310" x2="720" y2="310" stroke="#059669" stroke-width="2" marker-end="url(#arrg)"/>
+<text x="680" y="303" text-anchor="middle" fill="#059669" font-size="9" font-weight="bold">APPROVED</text>
+
+<!-- AUTO PATH: Pricing -->
+<rect x="722" y="300" width="186" height="56" rx="8" fill="#ECFDF5" stroke="#059669" stroke-width="1.5"/>
+<text x="815" y="318" text-anchor="middle" fill="#065F46" font-size="9" font-weight="bold">&#9316; AI PRICES THE ORDER</text>
+<text x="815" y="331" text-anchor="middle" fill="#047857" font-size="8">County production averages (29 FL counties)</text>
+<text x="815" y="343" text-anchor="middle" fill="#047857" font-size="8">B2B multiplier &middot; Elevation Cert if flood zone</text>
+<text x="815" y="353" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">Agent 5 &#8212; Pricing Engine</text>
+
+<line x1="815" y1="356" x2="815" y2="390" stroke="#059669" stroke-width="1.5" marker-end="url(#arrg)"/>
+
+<rect x="722" y="392" width="186" height="56" rx="8" fill="#ECFDF5" stroke="#059669" stroke-width="1.5"/>
+<text x="815" y="410" text-anchor="middle" fill="#065F46" font-size="9" font-weight="bold">&#9317; AI WRITES ESTIMATE</text>
+<text x="815" y="423" text-anchor="middle" fill="#047857" font-size="8">Professional letter &middot; Change Order Clause</text>
+<text x="815" y="435" text-anchor="middle" fill="#047857" font-size="8">AI self-reviews (up to 3 loops) before sending</text>
+<text x="815" y="445" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">Agents 6 + 7 &#8212; Writer + Reviewer</text>
+
+<line x1="815" y1="448" x2="815" y2="480" stroke="#059669" stroke-width="1.5" marker-end="url(#arrg)"/>
+
+<rect x="722" y="482" width="186" height="56" rx="8" fill="#ECFDF5" stroke="#059669" stroke-width="1.5"/>
+<text x="815" y="500" text-anchor="middle" fill="#065F46" font-size="9" font-weight="bold">&#9318; AI SENDS ESTIMATE</text>
+<text x="815" y="513" text-anchor="middle" fill="#047857" font-size="8">Email to customer &middot; 6-13 min random delay</text>
+<text x="815" y="525" text-anchor="middle" fill="#047857" font-size="8">Only during 8 AM &#8211; 6 PM ET business hours</text>
+<text x="815" y="535" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">Agent 8 &#8212; Sender</text>
+
+<line x1="815" y1="538" x2="815" y2="570" stroke="#059669" stroke-width="1.5" marker-end="url(#arrg)"/>
+
+<rect x="722" y="572" width="186" height="56" rx="8" fill="#ECFDF5" stroke="#059669" stroke-width="1.5"/>
+<text x="815" y="590" text-anchor="middle" fill="#065F46" font-size="9" font-weight="bold">&#9319; AI REPORTS TO TEAM</text>
+<text x="815" y="603" text-anchor="middle" fill="#047857" font-size="8">Teams + Email notification to Ryan / Robert</text>
+<text x="815" y="615" text-anchor="middle" fill="#047857" font-size="8">Decision logged for audit trail</text>
+<text x="815" y="625" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">Agent 9 &#8212; Reporter</text>
+
+<line x1="908" y1="510" x2="1060" y2="510" stroke="#059669" stroke-width="2" marker-end="url(#arrg)"/>
+<text x="984" y="503" text-anchor="middle" fill="#059669" font-size="9" font-weight="bold">estimate sent</text>
+
+<rect x="1062" y="480" width="8" height="1" fill="none"/>
+
+<!-- Customer receives estimate -->
+<rect x="1062" y="480" width="150" height="60" rx="10" fill="#ECFDF5" stroke="#059669" stroke-width="2"/>
+<text x="1137" y="499" text-anchor="middle" fill="#065F46" font-size="10" font-weight="bold">CUSTOMER</text>
+<text x="1137" y="513" text-anchor="middle" fill="#047857" font-size="9">receives estimate</text>
+<text x="1137" y="525" text-anchor="middle" fill="#047857" font-size="9">via email</text>
+<text x="1137" y="537" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">within 6-13 min of approval</text>
+
+<!-- Customer reply loop -->
+<line x1="1137" y1="540" x2="1137" y2="600" stroke="#D97706" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arro)"/>
+<text x="1160" y="572" fill="#D97706" font-size="8" font-style="italic">"go ahead"</text>
+<line x1="1137" y1="600" x2="110" y2="600" stroke="#D97706" stroke-width="1.5" stroke-dasharray="5,3"/>
+<line x1="110" y1="600" x2="110" y2="264" stroke="#D97706" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arro)"/>
+<text x="640" y="618" text-anchor="middle" fill="#D97706" font-size="8" font-style="italic">customer replies &#8594; Agent 12 detects approval &#8594; converts status &#8594; pipeline re-triggers</text>
+
+<!-- ═══ INVOICE PIPELINE (NEW Sprint 11) ═══ -->
+<rect x="280" y="638" width="780" height="142" rx="8" fill="#F0F9FF" stroke="#0369A1" stroke-width="2"/>
+<rect x="280" y="638" width="780" height="24" rx="8" fill="#0369A1"/>
+<rect x="280" y="650" width="780" height="10" fill="#0369A1"/>
+<text x="670" y="652" text-anchor="middle" fill="white" font-size="10" font-weight="bold">&#10024; INVOICE PIPELINE (Sprint 11) &#8212; NEW &middot; Runs every 15 minutes</text>
+
+<!-- Invoice step boxes -->
+<rect x="290" y="670" width="100" height="50" rx="6" fill="#E0F2FE" stroke="#0369A1" stroke-width="1.5"/>
+<text x="340" y="687" text-anchor="middle" fill="#0C4A6E" font-size="8" font-weight="bold">&#9312; DETECTS</text>
+<text x="340" y="699" text-anchor="middle" fill="#0369A1" font-size="7">$ flag in FTF</text>
+<text x="340" y="710" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">Agent A1</text>
+
+<line x1="390" y1="695" x2="400" y2="695" stroke="#0369A1" stroke-width="1.5" marker-end="url(#arri)"/>
+
+<rect x="402" y="670" width="108" height="50" rx="6" fill="#E0F2FE" stroke="#0369A1" stroke-width="1.5"/>
+<text x="456" y="687" text-anchor="middle" fill="#0C4A6E" font-size="8" font-weight="bold">&#9313; COLLECTS</text>
+<text x="456" y="699" text-anchor="middle" fill="#0369A1" font-size="7">FTF + email + Teams</text>
+<text x="456" y="710" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">Agent A2 &middot; Haiku</text>
+
+<line x1="510" y1="695" x2="520" y2="695" stroke="#0369A1" stroke-width="1.5" marker-end="url(#arri)"/>
+
+<rect x="522" y="670" width="108" height="50" rx="6" fill="#E0F2FE" stroke="#0369A1" stroke-width="1.5"/>
+<text x="576" y="687" text-anchor="middle" fill="#0C4A6E" font-size="8" font-weight="bold">&#9314; DRAFTS</text>
+<text x="576" y="699" text-anchor="middle" fill="#0369A1" font-size="7">Invoice &#8594; Teams chat</text>
+<text x="576" y="710" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">Agent A3 &middot; Sonnet</text>
+
+<line x1="630" y1="695" x2="640" y2="695" stroke="#0369A1" stroke-width="1.5" marker-end="url(#arri)"/>
+
+<!-- A4 Human Gate box (wider, purple) -->
+<rect x="642" y="662" width="126" height="66" rx="6" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+<text x="705" y="679" text-anchor="middle" fill="#4C1D95" font-size="8" font-weight="bold">&#9315; TEAM APPROVES</text>
+<text x="705" y="691" text-anchor="middle" fill="#6D28D9" font-size="7">Reply in Teams group chat</text>
+<text x="705" y="701" text-anchor="middle" fill="#6D28D9" font-size="7">APPROVE / change price /</text>
+<text x="705" y="711" text-anchor="middle" fill="#6D28D9" font-size="7">add service / REJECT</text>
+<text x="705" y="721" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">Agent A4 &middot; Robert/Ryan/Prateek only</text>
+
+<line x1="768" y1="695" x2="778" y2="695" stroke="#0369A1" stroke-width="1.5" marker-end="url(#arri)"/>
+
+<rect x="780" y="670" width="108" height="50" rx="6" fill="#E0F2FE" stroke="#0369A1" stroke-width="1.5"/>
+<text x="834" y="687" text-anchor="middle" fill="#0C4A6E" font-size="8" font-weight="bold">&#9316; CREATES + SENDS</text>
+<text x="834" y="699" text-anchor="middle" fill="#0369A1" font-size="7">Invoice in FTF &#8594; email client</text>
+<text x="834" y="710" text-anchor="middle" fill="#6B7280" font-size="7" font-style="italic">Agents A5 + A6</text>
+
+<!-- Arrow out to Customer Invoice -->
+<line x1="888" y1="695" x2="1062" y2="530" stroke="#0369A1" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arri)"/>
+<text x="994" y="618" text-anchor="middle" fill="#0369A1" font-size="8" font-weight="bold">invoice email sent</text>
+
+<!-- Learning note -->
+<rect x="290" y="728" width="598" height="46" rx="4" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1"/>
+<text x="589" y="744" text-anchor="middle" fill="#4C1D95" font-size="8" font-weight="bold">&#129504; AI LEARNS FROM EVERY CORRECTION</text>
+<text x="589" y="757" text-anchor="middle" fill="#6D28D9" font-size="8">Every time the team changes a price or service, the AI stores the rule and applies it to future similar orders.</text>
+<text x="589" y="768" text-anchor="middle" fill="#7C3AED" font-size="7">Pricing priority: team examples &#8594; past corrections &#8594; base rates ($450 land / $225 EC / $2100 commercial)</text>
+
+<!-- AI OS box close marker (invisible) -->
+<!-- ── AR FOLLOW-UP SECTION ── -->
+<rect x="280" y="650" width="1" height="1" fill="none"/>
+</svg>
+
+<!-- Second SVG: AR + Statements + Hard Rules -->
+<svg viewBox="0 0 1280 280" xmlns="http://www.w3.org/2000/svg" width="1280" height="280" style="margin-top:10px">
+<rect width="1280" height="280" fill="#F8FAFF"/>
+
+<!-- AR Follow-Up -->
+<rect x="10" y="10" width="390" height="128" rx="8" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.5"/>
+<text x="20" y="30" fill="#6D28D9" font-size="10" font-weight="bold">AR FOLLOW-UP LOOP (daily)</text>
+<text x="20" y="46" fill="#7C3AED" font-size="8">&bull; FTF Books scanned daily for unpaid invoices &#8805;60 days overdue</text>
+<text x="20" y="60" fill="#7C3AED" font-size="8">&bull; Day 60: Internal alert &#8594; Jessica (email + Teams)</text>
+<text x="20" y="74" fill="#7C3AED" font-size="8">&bull; Day 90: Alert &#8594; Jessica + Ryan + Wyatt + Robert (all stakeholders)</text>
+<text x="20" y="88" fill="#7C3AED" font-size="8">&bull; Refund request detected &#8594; Jessica immediately, AI stops processing</text>
+<text x="20" y="102" fill="#7C3AED" font-size="8">&bull; AR exclusion list: accounts with custom payment terms skipped</text>
+<text x="20" y="116" fill="#7C3AED" font-size="8">&bull; NOTE: FTF handles customer-facing Day 30/60/90 reminders (not us)</text>
+<text x="20" y="130" fill="#6B7280" font-size="7" font-style="italic">Agents 10-11 &middot; Staging &#8212; Jessica/Wyatt sign-off pending</text>
+
+<!-- Monthly Statements -->
+<rect x="416" y="10" width="390" height="128" rx="8" fill="#ECFDF5" stroke="#059669" stroke-width="1.5"/>
+<text x="426" y="30" fill="#065F46" font-size="10" font-weight="bold">MONTHLY STATEMENTS (1st of month)</text>
+<text x="426" y="46" fill="#047857" font-size="8">&bull; Compile all B2B orders from FTF Books</text>
+<text x="426" y="60" fill="#047857" font-size="8">&bull; Generate Excel (2-tab: Unpaid Detail + Summary) + PDF</text>
+<text x="426" y="74" fill="#047857" font-size="8">&bull; Deliver via MS Teams + email to billing contact</text>
+<text x="426" y="88" fill="#047857" font-size="8">&bull; Report to Ryan &middot; Wyatt &middot; Jessica</text>
+<text x="426" y="102" fill="#047857" font-size="8">&bull; Currently: staging only &middot; Wyatt/Jessica sign-off pending</text>
+<text x="426" y="130" fill="#6B7280" font-size="7" font-style="italic">Agents 15-16-17 &middot; Staging</text>
+
+<!-- Invoice Pipeline status -->
+<rect x="822" y="10" width="448" height="128" rx="8" fill="#F0F9FF" stroke="#0369A1" stroke-width="2"/>
+<text x="832" y="30" fill="#0C4A6E" font-size="10" font-weight="bold">INVOICE PIPELINE STATUS &#8212; Sprint 11</text>
+<text x="832" y="46" fill="#0369A1" font-size="8">&bull; Code: COMPLETE &#10003; &middot; All 6 agents built (A0&#8209;A6)</text>
+<text x="832" y="60" fill="#0369A1" font-size="8">&bull; Reply dedup fix: DONE &#10003; &middot; AI learning: DONE &#10003;</text>
+<text x="832" y="74" fill="#D97706" font-size="8">&bull; Pending: DB migration &middot; GitHub Secrets (10) &middot; Azure AD Chat perms</text>
+<text x="832" y="88" fill="#D97706" font-size="8">&bull; Pending: Add app to Teams group chat &middot; FTF API confirm (Ryan)</text>
+<text x="832" y="102" fill="#0369A1" font-size="8">&bull; Once all pending done: every $ flag order &#8594; invoiced in &lt;3 min, 24/7</text>
+<text x="832" y="116" fill="#6B7280" font-size="7" font-style="italic">Group chat: 19:b88d010aa8254609937c512aded09e5f@thread.v2</text>
+<text x="832" y="130" fill="#6B7280" font-size="7" font-style="italic">Approval: Robert, Ryan, Prateek only</text>
+
+<!-- Hard Rules bar -->
+<rect x="10" y="148" width="1260" height="46" rx="6" fill="#1E1B4B"/>
+<text x="640" y="165" text-anchor="middle" fill="#A5B4FC" font-size="11" font-weight="bold">HARD RULES &#8212; What the AI Never Does</text>
+<rect x="20" y="172" width="238" height="18" rx="4" fill="#450A0A" stroke="#DC2626" stroke-width="1"/>
+<text x="139" y="184" text-anchor="middle" fill="#FCA5A5" font-size="8" font-weight="bold">NO REFUNDS &#8212; Jessica only, always</text>
+<rect x="268" y="172" width="238" height="18" rx="4" fill="#450A0A" stroke="#DC2626" stroke-width="1"/>
+<text x="387" y="184" text-anchor="middle" fill="#FCA5A5" font-size="8" font-weight="bold">NO OUT-OF-STATE AUTO-QUOTE</text>
+<rect x="516" y="172" width="238" height="18" rx="4" fill="#450A0A" stroke="#DC2626" stroke-width="1"/>
+<text x="635" y="184" text-anchor="middle" fill="#FCA5A5" font-size="8" font-weight="bold">NO AFTER-HOURS SENDING (8 AM&#8211;6 PM ET)</text>
+<rect x="764" y="172" width="496" height="18" rx="4" fill="#450A0A" stroke="#DC2626" stroke-width="1"/>
+<text x="1012" y="184" text-anchor="middle" fill="#FCA5A5" font-size="8" font-weight="bold">NO INVOICE SENT WITHOUT ROBERT / RYAN / PRATEEK APPROVAL</text>
+
+<!-- Footer -->
+<rect x="10" y="202" width="1260" height="68" rx="6" fill="#F8FAFF" stroke="#E5E7EB" stroke-width="1"/>
+<text x="640" y="220" text-anchor="middle" fill="#6B7280" font-size="9">All decisions are logged with timestamps and agent version. Every estimate has a Change Order Clause. Dynamic pricing complexity (pools, sheds, driveways) is off until Robert confirms.</text>
+<text x="640" y="234" text-anchor="middle" fill="#6B7280" font-size="9">Invoice learning is permanent &#8212; every team correction becomes a rule that applies to future orders automatically.</text>
+<text x="640" y="252" text-anchor="middle" fill="#9CA3AF" font-size="8">FTF Agentic AI OS &middot; Client Architecture v3 &middot; Sprint 0-11 &middot; Estimate Loop + Invoice Pipeline &middot; June 2026 &middot; Prateek</text>
+<text x="640" y="264" text-anchor="middle" fill="#9CA3AF" font-size="8">Phase 1: FTF (estimate &#8594; invoice) &middot; Phase 2: AR automation &middot; Phase 3: Poff's Power + NGE</text>
+</svg>
+
+</body>
+</html>
