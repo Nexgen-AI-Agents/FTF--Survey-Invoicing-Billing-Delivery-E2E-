@@ -49,7 +49,7 @@ from core.db import (
 from core.exceptions import AgentError
 from core.logger import get_logger
 from core.teams_graph_client import (
-    get_chat_thread_replies, post_chat_reply,
+    get_channel_thread_replies, post_channel_reply,
 )
 
 AGENT_NAME = "agent_a4_human_gate_v2"
@@ -92,7 +92,7 @@ Current invoice draft:
 
 Determine what the team member wants to do. Return ONLY valid JSON:
 {{
-  "action": "approve | reject | modify | question | ignore",
+  "action": "approve | reject | hold | modify | question | ignore",
   "modification": {{
     "type": "change_price | add_service | remove_service | change_field | other",
     "description": "what specifically to change",
@@ -107,7 +107,8 @@ Determine what the team member wants to do. Return ONLY valid JSON:
 
 Rules:
 - action=approve: they want to send the invoice as-is (synonyms: looks good, send it, ok, APPROVE etc.)
-- action=reject: they want to hold/cancel (synonyms: don't send, reject, hold, no, REJECT etc.)
+- action=reject: they want to cancel permanently (synonyms: don't send, reject, no, REJECT etc.)
+- action=hold: they want to pause this invoice for now but not reject it (synonyms: hold, skip, defer, wait, not yet, pause, hold on, hold this, skip this cycle)
 - action=modify: they want to change something (price, service, add/remove)
 - action=question: unclear — set question_text to what you'd ask them to clarify
 - action=ignore: random chat not related to this invoice
@@ -246,7 +247,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
 
     already_processed = get_processed_reply_ids(order_id)
 
-    replies = get_chat_thread_replies(message_id)
+    replies = get_channel_thread_replies(message_id)
     if not replies:
         return None
 
@@ -280,7 +281,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
         mark_reply_processed(order_id, reply_id)
 
         if action == "approve":
-            save_order_state(order_id, status="invoice_approved")
+            save_order_state(order_id, status="invoice_approved", approved_by=sender)
             log_decision(
                 AGENT_NAME, "invoice_approved",
                 order_id=order_id,
@@ -289,13 +290,24 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
                 output_summary="status → invoice_approved",
                 model_used=HUMAN_GATE_MODEL,
             )
-            # Learn from the approval if there were modifications
             if db_row.get("modification_count", 0) > 0 and learned_rule:
                 _store_learning(order_id, current_draft, text, learned_rule, data_sources, sender)
 
-            post_chat_reply(message_id, f"✅ <strong>Invoice approved by {sender}.</strong> Sending to client shortly...")
+            post_channel_reply(message_id, f"✅ <strong>Invoice approved by {sender}.</strong> Sending to client shortly...")
             log.info("invoice approved order=%s by=%s", order_id, sender)
             return "invoice_approved"
+
+        elif action == "hold":
+            save_order_state(order_id, status="on_hold")
+            log_decision(
+                AGENT_NAME, "invoice_on_hold",
+                order_id=order_id,
+                reason=f"Held by {sender} via Teams thread",
+                model_used=HUMAN_GATE_MODEL,
+            )
+            post_channel_reply(message_id, f"⏸️ <strong>Invoice held by {sender}.</strong> Will skip this cycle. Reply APPROVE or REJECT when ready.")
+            log.info("invoice on_hold order=%s by=%s", order_id, sender)
+            return "on_hold"
 
         elif action == "reject":
             reason = parsed.get("reject_reason") or text
@@ -306,7 +318,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
                 reason=f"Rejected by {sender}: {reason}",
                 model_used=HUMAN_GATE_MODEL,
             )
-            post_chat_reply(message_id, f"❌ <strong>Invoice rejected.</strong> Reason: {reason}<br>Will not send to client.")
+            post_channel_reply(message_id, f"❌ <strong>Invoice rejected.</strong> Reason: {reason}<br>Will not send to client.")
             log.info("invoice rejected order=%s by=%s reason=%s", order_id, sender, reason)
             return "invoice_rejected"
 
@@ -315,7 +327,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
 
             if mod_count > MAX_INVOICE_MODIFICATIONS:
                 save_order_state(order_id, status="invoice_needs_human")
-                post_chat_reply(
+                post_channel_reply(
                     message_id,
                     f"⚠️ I've made {mod_count - 1} modifications on this order and I'm still not getting it right. "
                     f"Please handle order {order_id} manually. I've flagged it for human review."
@@ -343,7 +355,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
             # Repost updated draft as a thread reply
             link = f"{FTF_ORDER_URL}/{order_id}"
             reply_html = _build_updated_draft_post(order_id, updated_draft, mod_count, link)
-            post_chat_reply(message_id, reply_html)
+            post_channel_reply(message_id, reply_html)
 
             log_decision(
                 AGENT_NAME, "invoice_modified",
@@ -359,7 +371,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
 
         elif action == "question":
             q_text = parsed.get("question_text", "Could you clarify what change you'd like?")
-            post_chat_reply(message_id, f"❓ {q_text}")
+            post_channel_reply(message_id, f"❓ {q_text}")
             log.info("clarification requested order=%s", order_id)
             return None
 
@@ -399,7 +411,7 @@ def _store_learning(
 def run() -> dict:
     """Check all orders awaiting invoice approval for new replies."""
     orders  = get_orders_awaiting_invoice_approval()
-    summary = {"checked": 0, "approved": 0, "rejected": 0, "modified": 0, "errors": 0, "no_reply": 0}
+    summary = {"checked": 0, "approved": 0, "rejected": 0, "on_hold": 0, "modified": 0, "errors": 0, "no_reply": 0}
 
     for db_row in orders:
         order_id = db_row["order_id"]
@@ -410,6 +422,8 @@ def run() -> dict:
                 summary["approved"] += 1
             elif new_status == "invoice_rejected":
                 summary["rejected"] += 1
+            elif new_status == "on_hold":
+                summary["on_hold"] += 1
             elif new_status == "invoice_draft_posted":
                 summary["modified"] += 1
             else:

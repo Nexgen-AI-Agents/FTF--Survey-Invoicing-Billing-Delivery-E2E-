@@ -13,7 +13,8 @@ ALTER TABLE processed_orders
     ADD COLUMN IF NOT EXISTS data_collected_at     TIMESTAMPTZ,
     ADD COLUMN IF NOT EXISTS draft_posted_at       TIMESTAMPTZ,
     ADD COLUMN IF NOT EXISTS invoice_created_at    TIMESTAMPTZ,
-    ADD COLUMN IF NOT EXISTS processed_reply_ids   TEXT DEFAULT '[]';
+    ADD COLUMN IF NOT EXISTS processed_reply_ids   TEXT DEFAULT '[]',
+    ADD COLUMN IF NOT EXISTS approved_by           TEXT;
 
 -- Human corrections / learnings table
 CREATE TABLE IF NOT EXISTS invoice_learnings (
@@ -38,6 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_processed_orders_status_invoice
     ON processed_orders (status)
     WHERE status IN (
         'invoice_needed',
+        'details_missing',
         'data_collected',
         'invoice_draft_posted',
         'invoice_modification_requested',
@@ -45,5 +47,6 @@ CREATE INDEX IF NOT EXISTS idx_processed_orders_status_invoice
         'invoice_rejected',
         'invoice_finalized',
         'invoice_sent',
-        'invoice_needs_human'
+        'invoice_needs_human',
+        'on_hold'
     );

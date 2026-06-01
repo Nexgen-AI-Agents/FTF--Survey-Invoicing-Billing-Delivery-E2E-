@@ -36,7 +36,7 @@ from config.settings import (
 from core.db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
 from core.exceptions import AgentError
 from core.logger import get_logger
-from core.teams_graph_client import post_chat_reply
+from core.teams_graph_client import post_channel_reply
 
 AGENT_NAME = "agent_a6_sender_v2"
 log = get_logger(AGENT_NAME)
@@ -142,6 +142,7 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
     client_name  = db_row.get("client_name", "")
     client_email = db_row.get("customer_email", "")
     message_id   = db_row.get("approval_message_id")
+    approved_by  = db_row.get("approved_by", "Unknown")
 
     if not client_email:
         raise AgentError(f"send_for_order: no client email for order {order_id}")
@@ -179,13 +180,12 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
         model_used=None,
     )
 
-    # Confirm in Teams thread
+    # Confirm in Teams channel thread
     if message_id:
-        post_chat_reply(
+        post_channel_reply(
             message_id,
-            f"✅ <strong>Invoice sent to {client_name} ({client_email})</strong>.<br>"
-            f"Total: ${total:,.2f} | Order: {order_id}<br>"
-            f"Phase 1 complete for this order."
+            f"✅ <strong>Email sent to {client_name} ({client_email}), approved by {approved_by}</strong><br>"
+            f"Order: {order_id} | Total: ${total:,.2f}"
         )
 
     log.info("invoice sent order=%s to=%s total=%.2f", order_id, client_email, total)

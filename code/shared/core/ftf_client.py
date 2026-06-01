@@ -267,6 +267,65 @@ def get_b2b_orders_for_month(month: date) -> list[dict]:
     return result
 
 
+def get_historical_pricing_orders(
+    service_type: str | None = None,
+    county: str | None = None,
+    months: int = 24,
+    max_results: int = 100,
+) -> list[dict]:
+    """Return completed/delivered orders for pricing reference (last N months).
+
+    Used by A3 to build AI pricing context from real invoice history.
+    Filters client-side on service_type and county since FTF API may not support those params.
+    Returns only orders that have a non-zero estimate_amount.
+    """
+    from datetime import datetime as _dt
+    cutoff = _dt.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    cutoff = cutoff.replace(year=cutoff.year - (months // 12), month=max(1, cutoff.month - (months % 12)))
+
+    extra: dict = {}
+    if service_type:
+        extra["service_type"] = service_type
+
+    all_orders = get_orders(
+        limit=500,
+        status="complete",
+        extra_params=extra or None,
+        max_results=max_results * 3,
+    )
+
+    results = []
+    for order in all_orders:
+        amount = order.get("estimate_amount") or order.get("invoice_amount") or order.get("total_amount")
+        if not amount or float(amount) <= 0:
+            continue
+
+        if county:
+            order_county = str(order.get("county") or order.get("property_county") or "").lower()
+            if order_county and county.lower() not in order_county:
+                continue
+
+        if service_type:
+            order_svc = str(order.get("service_type") or order.get("job_type") or "").lower()
+            if order_svc and service_type.lower() not in order_svc and order_svc not in service_type.lower():
+                continue
+
+        results.append({
+            "order_id":     order.get("order_id", ""),
+            "service_type": order.get("service_type") or order.get("job_type", ""),
+            "county":       order.get("county") or order.get("property_county", ""),
+            "amount":       float(amount),
+            "status":       order.get("status", ""),
+        })
+
+        if len(results) >= max_results:
+            break
+
+    logger.info("get_historical_pricing_orders: %d results service=%s county=%s months=%d",
+                len(results), service_type, county, months)
+    return results
+
+
 def mark_estimate_sent(order_id: str) -> bool:
     try:
         r = httpx.patch(

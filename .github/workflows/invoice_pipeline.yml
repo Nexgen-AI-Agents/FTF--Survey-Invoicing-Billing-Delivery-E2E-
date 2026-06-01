@@ -23,7 +23,6 @@ jobs:
       TEAMS_CLIENT_SECRET:        ${{ secrets.TEAMS_CLIENT_SECRET }}
       TEAMS_TEAM_ID:              ${{ secrets.TEAMS_TEAM_ID }}
       TEAMS_CHANNEL_ID:           ${{ secrets.TEAMS_CHANNEL_ID }}
-      TEAMS_CHAT_ID:              ${{ secrets.TEAMS_CHAT_ID }}
       TEAMS_INCOMING_WEBHOOK_URL: ${{ secrets.TEAMS_INCOMING_WEBHOOK_URL }}
       IMAP_HOST:                  ${{ secrets.IMAP_HOST }}
       IMAP_PORT:                  ${{ secrets.IMAP_PORT }}

@@ -1,21 +1,18 @@
 """Agent A2 — Data Collector (Invoice Pipeline)
 
 For each order queued by A1 (status=invoice_needed), this agent collects
-all available information from 3 sources:
+all available information from 2 sources:
 
   1. FTF API      — order details, client details, service type, property info
   2. Email inbox  — nesa@nexgenlogix.com: find emails matching this order
-  3. Teams chat   — group chat: find staff messages about this order/property
 
-Output: a structured "order packet" saved to processed_orders.data_sources
-Each field has a confidence score: HIGH (confirmed) / MEDIUM (inferred) / LOW (missing).
+If key fields (client_email, services_requested) cannot be determined with
+at least MEDIUM confidence, the order is set to status='details_missing' and
+a Teams channel alert is posted: "Client details not found for order #ORDER".
 
-Match logic for email + Teams:
-  - property address (best match — most specific)
-  - client name
-  - order ID / order number
+Otherwise status → data_collected (proceed to A3).
 
-Status flow: invoice_needed → data_collected
+Status flow: invoice_needed → data_collected | details_missing
 """
 
 import json
@@ -37,12 +34,11 @@ from core.db import get_orders_by_status, get_order_by_id, save_order_state, log
 from core.exceptions import AgentError
 from core.ftf_client import get_order, get_customer
 from core.logger import get_logger
-from core.teams_graph_client import get_chat_messages
+from core.teams_graph_client import post_channel_message
 
 AGENT_NAME = "agent_a2_data_collector"
 log = get_logger(AGENT_NAME)
 
-# How far back to look for matching emails / Teams messages
 LOOKBACK_DAYS = 90
 
 
@@ -73,13 +69,10 @@ def _extract_email_body(msg) -> str:
 
 
 def _text_matches_order(text: str, property_address: str, client_name: str, order_id: str) -> bool:
-    """Quick check: does this text mention this order?"""
     lower = text.lower()
     if property_address and len(property_address) > 5:
-        # Match on partial address — first meaningful word (usually house number or street)
         addr_parts = property_address.lower().split()
         if len(addr_parts) >= 2 and addr_parts[0].isdigit():
-            # "123 Main St" → check for "123 main"
             if f"{addr_parts[0]} {addr_parts[1]}" in lower:
                 return True
         if property_address.lower() in lower:
@@ -97,11 +90,7 @@ def _fetch_matching_emails(
     client_name: str,
     order_id: str,
 ) -> list[dict]:
-    """Search info@ inbox for emails related to this order.
-
-    Returns list of {from, subject, body, date} dicts.
-    Falls back to empty list if IMAP not configured.
-    """
+    """Search nesa@nexgenlogix.com inbox for emails related to this order."""
     if not IMAP_USER or not IMAP_PASSWORD:
         log.warning("IMAP not configured — skipping email search")
         return []
@@ -111,7 +100,6 @@ def _fetch_matching_emails(
         mail.login(IMAP_USER, IMAP_PASSWORD)
         mail.select("INBOX")
 
-        # Search recent emails (IMAP SINCE date)
         since_date = (datetime.now() - timedelta(days=LOOKBACK_DAYS)).strftime("%d-%b-%Y")
         _, data = mail.search(None, f"SINCE {since_date}")
         email_ids = data[0].split()
@@ -122,17 +110,17 @@ def _fetch_matching_emails(
                 _, msg_data = mail.fetch(eid, "(RFC822)")
                 raw = msg_data[0][1]
                 msg = email_lib.message_from_bytes(raw)
-                subject = _decode_header_field(msg.get("Subject", ""))
+                subject  = _decode_header_field(msg.get("Subject", ""))
                 from_addr = _decode_header_field(msg.get("From", ""))
-                body = _extract_email_body(msg)
+                body     = _extract_email_body(msg)
                 combined = f"{subject} {body}"
 
                 if _text_matches_order(combined, property_address, client_name, order_id):
                     matching.append({
-                        "from": from_addr,
+                        "from":    from_addr,
                         "subject": subject,
-                        "body": body[:3000],
-                        "date": msg.get("Date", ""),
+                        "body":    body[:3000],
+                        "date":    msg.get("Date", ""),
                     })
             except Exception as exc:
                 log.debug("email fetch error eid=%s: %s", eid, exc)
@@ -150,59 +138,16 @@ def _fetch_matching_emails(
         return []
 
 
-def _fetch_matching_teams_messages(
-    property_address: str,
-    client_name: str,
-    order_id: str,
-) -> list[dict]:
-    """Search the Teams group chat for messages related to this order.
-
-    Returns list of {sender, text, date} dicts.
-    """
-    try:
-        messages = get_chat_messages(limit=200)
-        cutoff = datetime.now(timezone.utc) - timedelta(days=LOOKBACK_DAYS)
-        matching = []
-
-        for msg in messages:
-            if msg.get("is_app"):
-                continue
-            if msg["created_at_dt"] < cutoff:
-                continue
-            if _text_matches_order(msg["text"], property_address, client_name, order_id):
-                matching.append({
-                    "sender": msg["sender"],
-                    "text": msg["text"][:2000],
-                    "date": msg["created_at_dt"].isoformat(),
-                })
-
-        log.info("teams search complete matches=%d", len(matching))
-        return matching
-
-    except AgentError as exc:
-        log.warning("Teams chat search failed: %s", exc)
-        return []
-
-
 def _ai_extract_order_packet(
     ftf_order: dict,
     ftf_customer: dict,
     emails: list[dict],
-    teams_messages: list[dict],
 ) -> dict:
-    """Use Claude to synthesize all sources into a structured order packet.
-
-    Returns a dict with invoice-relevant fields and confidence scores.
-    """
+    """Use Claude to synthesize FTF data and emails into a structured order packet."""
     email_block = ""
     for i, em in enumerate(emails[:5], 1):
         email_block += f"\n--- Email {i} from {em['from']} ({em['date']}) ---\n"
         email_block += f"Subject: {em['subject']}\n{em['body'][:1000]}\n"
-
-    teams_block = ""
-    for i, tm in enumerate(teams_messages[:10], 1):
-        teams_block += f"\n--- Teams message {i} from {tm['sender']} ({tm['date']}) ---\n"
-        teams_block += f"{tm['text'][:500]}\n"
 
     prompt = f"""You are extracting invoice details for a land surveying order at NexGen Surveying.
 
@@ -215,11 +160,8 @@ FTF CUSTOMER DATA:
 MATCHING EMAILS ({len(emails)} found):
 {email_block or "(none found)"}
 
-MATCHING TEAMS MESSAGES ({len(teams_messages)} found):
-{teams_block or "(none found)"}
-
-Extract the following fields. For each field, rate confidence as:
-  HIGH   = explicitly stated in email/Teams or clear in FTF data
+Extract the following fields. Rate confidence:
+  HIGH   = explicitly stated in email or clear in FTF data
   MEDIUM = inferred from context
   LOW    = missing or unclear — needs human input
 
@@ -235,7 +177,7 @@ Return ONLY valid JSON, no markdown:
   "property_features": {{"value": {{}}, "confidence": "LOW", "notes": "pool, shed, driveways etc if mentioned"}},
   "client_tier": {{"value": "residential|b2b|unknown", "confidence": "HIGH|MEDIUM|LOW"}},
   "urgency": {{"value": "normal|rush|unknown", "confidence": "HIGH|MEDIUM|LOW"}},
-  "source_of_truth": "ftf_only|email_primary|teams_primary|mixed",
+  "source_of_truth": "ftf_only|email_primary|mixed",
   "gaps": ["list of information that is missing and needs human input"],
   "summary": "one sentence describing this order"
 }}"""
@@ -260,7 +202,7 @@ Return ONLY valid JSON, no markdown:
             "client_email":       {"value": ftf_order.get("customer_email", ""), "confidence": "MEDIUM"},
             "property_address":   {"value": ftf_order.get("property_address") or ftf_order.get("address", ""), "confidence": "MEDIUM"},
             "property_county":    {"value": ftf_order.get("county") or ftf_order.get("property_county", ""), "confidence": "MEDIUM"},
-            "services_requested": {"value": [ftf_order.get("service_type", "Unknown")], "confidence": "LOW", "notes": "AI extraction failed — review manually"},
+            "services_requested": {"value": [ftf_order.get("service_type", "Unknown")], "confidence": "LOW", "notes": "AI extraction failed"},
             "special_requirements": {"value": "", "confidence": "LOW"},
             "lot_size_acres":     {"value": None, "confidence": "LOW"},
             "property_features":  {"value": {}, "confidence": "LOW", "notes": ""},
@@ -272,18 +214,32 @@ Return ONLY valid JSON, no markdown:
         }
 
 
-def collect_for_order(order_id: str) -> dict:
-    """Run full data collection for one order.
+def _has_minimum_viable_data(packet: dict) -> bool:
+    """Return True if we have enough data to build an invoice draft.
 
-    Returns the assembled order packet.
+    Minimum required: client_email with HIGH or MEDIUM confidence AND
+    at least one service_requested that isn't completely unknown.
     """
+    email_conf = packet.get("client_email", {}).get("confidence", "LOW")
+    email_val  = packet.get("client_email", {}).get("value", "")
+    if not email_val or email_conf == "LOW":
+        return False
+
+    svcs = packet.get("services_requested", {}).get("value", [])
+    if not svcs or (len(svcs) == 1 and str(svcs[0]).lower() in ("unknown", "")):
+        return False
+
+    return True
+
+
+def collect_for_order(order_id: str) -> dict:
+    """Run full data collection for one order. Returns the assembled order packet."""
     db_row = get_order_by_id(order_id)
     if not db_row:
         raise AgentError(f"collect_for_order: order {order_id} not in processed_orders")
 
     property_address = db_row.get("property_address", "")
     client_name      = db_row.get("client_name", "")
-    customer_email   = db_row.get("customer_email", "")
 
     # 1 — FTF API
     try:
@@ -292,7 +248,6 @@ def collect_for_order(order_id: str) -> dict:
         log.warning("FTF order fetch failed order=%s: %s", order_id, exc)
         ftf_order = {"order_id": order_id}
 
-    # Enrich address / client from FTF if missing in DB
     if not property_address:
         property_address = str(
             ftf_order.get("property_address") or
@@ -308,23 +263,51 @@ def collect_for_order(order_id: str) -> dict:
     except Exception:
         ftf_customer = {}
 
-    # 2 — Email inbox
+    # 2 — Email inbox (only source besides FTF notes)
     emails = _fetch_matching_emails(property_address, client_name, order_id)
 
-    # 3 — Teams chat
-    teams_messages = _fetch_matching_teams_messages(property_address, client_name, order_id)
+    # 3 — AI synthesis
+    packet = _ai_extract_order_packet(ftf_order, ftf_customer, emails)
 
-    # 4 — AI synthesis
-    packet = _ai_extract_order_packet(ftf_order, ftf_customer, emails, teams_messages)
+    # 4 — Check if we have enough data to proceed
+    if not _has_minimum_viable_data(packet):
+        save_order_state(
+            order_id,
+            status="details_missing",
+            data_collected_at=datetime.now(timezone.utc).isoformat(),
+        )
+        log_decision(
+            AGENT_NAME,
+            decision="details_missing",
+            order_id=order_id,
+            reason=(
+                f"Insufficient data: email_conf={packet.get('client_email', {}).get('confidence')} "
+                f"services={packet.get('services_requested', {}).get('value')} "
+                f"emails_found={len(emails)}"
+            ),
+            input_summary=f"property={property_address[:60]} client={client_name[:40]}",
+            output_summary="status → details_missing; Teams alert posted",
+            model_used=CLASSIFIER_MODEL,
+        )
+        try:
+            post_channel_message(
+                f"⚠️ <strong>Client details not found for order #{order_id}</strong><br>"
+                f"Property: {property_address or 'unknown'}<br>"
+                f"Checked: FTF order notes + nesa@nexgenlogix.com inbox (last {LOOKBACK_DAYS} days)<br>"
+                f"Please add notes to the FTF order or forward relevant emails to nesa@nexgenlogix.com",
+                subject=f"Client Details Missing — Order {order_id}",
+            )
+        except Exception as exc:
+            log.warning("failed to post details_missing alert for order=%s: %s", order_id, exc)
+        log.warning("details_missing order=%s emails=%d", order_id, len(emails))
+        return packet
 
-    # Store metadata about sources
+    # 5 — Save collected data
     data_sources = {
         "ftf_order":      ftf_order,
         "ftf_customer":   ftf_customer,
         "emails_found":   len(emails),
-        "teams_found":    len(teams_messages),
         "email_snippets": [{"from": e["from"], "subject": e["subject"], "date": e["date"]} for e in emails],
-        "teams_snippets": [{"sender": t["sender"], "date": t["date"]} for t in teams_messages],
         "packet":         packet,
     }
 
@@ -343,7 +326,7 @@ def collect_for_order(order_id: str) -> dict:
         decision="data_collected",
         order_id=order_id,
         reason=(
-            f"emails={len(emails)} teams={len(teams_messages)} "
+            f"emails={len(emails)} "
             f"source_of_truth={packet.get('source_of_truth')} "
             f"gaps={len(packet.get('gaps', []))}"
         ),
@@ -351,12 +334,11 @@ def collect_for_order(order_id: str) -> dict:
         output_summary=f"packet built confidence={_min_confidence(packet)}",
         model_used=CLASSIFIER_MODEL,
     )
-    log.info("data collected order=%s emails=%d teams=%d", order_id, len(emails), len(teams_messages))
+    log.info("data collected order=%s emails=%d", order_id, len(emails))
     return packet
 
 
 def _min_confidence(packet: dict) -> str:
-    """Return the lowest confidence level across all packet fields."""
     levels = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
     min_level = 3
     for key, val in packet.items():
@@ -366,18 +348,18 @@ def _min_confidence(packet: dict) -> str:
 
 
 def run() -> dict:
-    """Process all orders with status=invoice_needed.
-
-    Returns summary: {processed, data_collected, errors}
-    """
-    orders = get_orders_by_status("invoice_needed")
-    summary = {"processed": 0, "data_collected": 0, "errors": 0}
+    """Process all orders with status=invoice_needed."""
+    orders  = get_orders_by_status("invoice_needed")
+    summary = {"processed": 0, "data_collected": 0, "details_missing": 0, "errors": 0}
 
     for db_row in orders:
         order_id = db_row["order_id"]
         try:
-            collect_for_order(order_id)
-            summary["data_collected"] += 1
+            packet = collect_for_order(order_id)
+            if db_row.get("status") == "details_missing" or not _has_minimum_viable_data(packet):
+                summary["details_missing"] += 1
+            else:
+                summary["data_collected"] += 1
         except Exception as exc:
             log.error("data collection failed order=%s: %s", order_id, exc)
             summary["errors"] += 1

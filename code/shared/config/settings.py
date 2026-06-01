@@ -51,9 +51,9 @@ TEAMS_APP_ID:        str | None = os.getenv("TEAMS_APP_ID")
 TEAMS_CLIENT_SECRET: str | None = os.getenv("TEAMS_CLIENT_SECRET")
 TEAMS_TEAM_ID:       str | None = os.getenv("TEAMS_TEAM_ID")
 TEAMS_CHANNEL_ID:    str | None = os.getenv("TEAMS_CHANNEL_ID")
-# Group chat used for invoice approvals: 19:xxxx@thread.v2
-# Requires Chat.Read.All + Chat.ReadWrite.All application permissions in Azure AD
-TEAMS_CHAT_ID:       str | None = os.getenv("TEAMS_CHAT_ID", "19:b88d010aa8254609937c512aded09e5f@thread.v2")
+# Legacy group chat ID (thread.v2) — no longer used by the invoice pipeline.
+# Sprint 11+ uses Teams CHANNEL (tacv2) via TEAMS_TEAM_ID + TEAMS_CHANNEL_ID.
+TEAMS_CHAT_ID:       str | None = os.getenv("TEAMS_CHAT_ID")
 # Incoming webhook URL (Logic App / Workflows) — for posting TO Teams channel
 TEAMS_INCOMING_WEBHOOK_URL: str | None = os.getenv("TEAMS_INCOMING_WEBHOOK_URL")
 # Graph API email notifications (Mail.Send application permission)
@@ -67,12 +67,10 @@ APPROVED_SENDERS: list[str] = [
     if s.strip()
 ]
 
-# MS Teams — legacy webhook vars (kept for backward compat; unused once Graph API is live)
+# MS Teams — legacy webhook vars (not used by invoice pipeline; retained for other scripts)
 TEAMS_WEBHOOK_URL:             str | None = os.getenv("TEAMS_WEBHOOK_URL")
 TEAMS_APPROVAL_WEBHOOK_URL:    str | None = os.getenv("TEAMS_APPROVAL_WEBHOOK_URL")
 TEAMS_OUTGOING_WEBHOOK_SECRET: str | None = os.getenv("TEAMS_OUTGOING_WEBHOOK_SECRET")
-APPROVAL_RECEIVER_HOST:        str        = os.getenv("APPROVAL_RECEIVER_HOST", "0.0.0.0")
-APPROVAL_RECEIVER_PORT:        int        = int(os.getenv("APPROVAL_RECEIVER_PORT", "5001"))
 
 # SMTP — monthly statement email delivery
 SMTP_HOST:     str | None = os.getenv("SMTP_HOST")

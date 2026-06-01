@@ -38,8 +38,9 @@ from core.db import (
     get_invoice_learnings, save_order_state, log_decision,
 )
 from core.exceptions import AgentError
+from core.ftf_client import get_historical_pricing_orders
 from core.logger import get_logger
-from core.teams_graph_client import post_chat_message
+from core.teams_graph_client import post_channel_message
 
 AGENT_NAME = "agent_a3_invoice_compiler"
 log = get_logger(AGENT_NAME)
@@ -272,21 +273,33 @@ def compile_for_order(order_id: str) -> dict:
     packet       = data_sources.get("packet", {})
     link         = f"{FTF_ORDER_URL}/{order_id}"
 
-    # Pricing context for AI prompt
-    service_list   = packet.get("services_requested", {}).get("value", [])
-    county_val     = packet.get("property_county", {}).get("value", "")
-    pricing_ctx    = f"Base rates: {json.dumps(_BASE_RATES)}\n"
+    # Pricing context: FTF 2yr history + internal examples + base rates
+    service_list = packet.get("services_requested", {}).get("value", [])
+    county_val   = packet.get("property_county", {}).get("value", "")
+    pricing_ctx  = f"Base rates (fallback): {json.dumps(_BASE_RATES)}\n"
+
     for svc in (service_list if isinstance(service_list, list) else [service_list]):
-        examples = get_pricing_examples(service_type=str(svc), county=county_val, limit=3)
+        svc_str = str(svc)
+        # FTF 2-year invoice history (real completed orders)
+        hist_orders = get_historical_pricing_orders(service_type=svc_str, county=county_val, months=24, max_results=20)
+        if hist_orders:
+            amounts = sorted([o["amount"] for o in hist_orders])
+            median  = amounts[len(amounts) // 2]
+            pricing_ctx += (
+                f"\n{svc_str} FTF history (last 2yr, n={len(amounts)}, county={county_val or 'any'}): "
+                f"min=${min(amounts):,.0f} median=${median:,.0f} max=${max(amounts):,.0f}"
+            )
+        # Internal pricing examples (human corrections)
+        examples = get_pricing_examples(service_type=svc_str, county=county_val, limit=3)
         if examples:
-            pricing_ctx += f"\n{svc} recent examples: {[e['final_price'] for e in examples]}"
+            pricing_ctx += f"\n{svc_str} internal examples: {[e['final_price'] for e in examples]}"
 
     # Build draft
     draft = _ai_build_invoice_draft(order_id, packet, link, pricing_ctx)
 
-    # Post to Teams
+    # Post to Teams channel
     teams_html  = _build_teams_post(order_id, packet, draft, link)
-    post_result = post_chat_message(teams_html, subject=f"Invoice Draft — Order {order_id}")
+    post_result = post_channel_message(teams_html, subject=f"Invoice Draft — Order {order_id}")
     message_id  = post_result.get("id", "")
 
     # Save

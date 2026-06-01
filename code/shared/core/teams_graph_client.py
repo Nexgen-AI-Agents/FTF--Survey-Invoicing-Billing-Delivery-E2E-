@@ -816,6 +816,130 @@ def get_chat_thread_replies(message_id: str) -> list[dict]:
     return results
 
 
+# ── Teams Channel API (invoice pipeline v5 — tacv2 channel) ──────────────────
+#
+# The invoice pipeline posts to a Teams CHANNEL (thread.tacv2), not a group chat.
+# Channel ID: 19:50IGnbm0MQft2C4eUkl8RXLk6wa2IRpEEE-ySnUeaV81@thread.tacv2
+# Required Azure AD app permissions (application, admin consent required):
+#   ChannelMessage.Send          — post messages to the channel
+#   ChannelMessage.Read.All      — read channel messages and thread replies
+
+
+def post_channel_message(text_or_html: str, subject: str = "") -> dict:
+    """Post a new top-level message to the invoice approval Teams channel.
+
+    Returns {"id": message_id, "ok": True} on success.
+    Requires ChannelMessage.Send application permission.
+    """
+    if not TEAMS_TEAM_ID or not TEAMS_CHANNEL_ID:
+        raise AgentError("TEAMS_TEAM_ID and TEAMS_CHANNEL_ID must be set in .env")
+
+    header = f"<strong>{subject}</strong><br><br>" if subject else ""
+    body   = (header + text_or_html).replace("\n", "<br>")
+
+    payload = {"body": {"contentType": "html", "content": body}}
+    url     = f"{_GRAPH_READ}/teams/{TEAMS_TEAM_ID}/channels/{TEAMS_CHANNEL_ID}/messages"
+
+    try:
+        r = httpx.post(url, headers=_read_headers(), json=payload, timeout=20.0)
+        r.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        raise AgentError(
+            f"post_channel_message failed: HTTP {exc.response.status_code} -- {exc.response.text[:300]}"
+        ) from exc
+    except Exception as exc:
+        raise AgentError(f"post_channel_message failed: {exc}") from exc
+
+    data   = r.json()
+    msg_id = data.get("id", "")
+    log.info("channel message posted id=%s subject=%r", msg_id, subject)
+    return {"id": msg_id, "ok": True}
+
+
+def post_channel_reply(message_id: str, text_or_html: str) -> dict:
+    """Post a thread reply to a channel message.
+
+    Returns {"id": reply_id, "ok": True} on success.
+    Requires ChannelMessage.Send application permission.
+    """
+    if not TEAMS_TEAM_ID or not TEAMS_CHANNEL_ID:
+        raise AgentError("TEAMS_TEAM_ID and TEAMS_CHANNEL_ID must be set in .env")
+
+    body_html = text_or_html.replace("\n", "<br>")
+    payload   = {"body": {"contentType": "html", "content": body_html}}
+    url       = (
+        f"{_GRAPH_READ}/teams/{TEAMS_TEAM_ID}/channels/{TEAMS_CHANNEL_ID}"
+        f"/messages/{message_id}/replies"
+    )
+
+    try:
+        r = httpx.post(url, headers=_read_headers(), json=payload, timeout=20.0)
+        r.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        raise AgentError(
+            f"post_channel_reply failed: HTTP {exc.response.status_code} -- {exc.response.text[:300]}"
+        ) from exc
+    except Exception as exc:
+        raise AgentError(f"post_channel_reply failed: {exc}") from exc
+
+    data = r.json()
+    log.info("channel reply posted to message=%s", message_id)
+    return {"id": data.get("id", ""), "ok": True}
+
+
+def get_channel_thread_replies(message_id: str) -> list[dict]:
+    """Fetch human replies to a specific channel message thread.
+
+    Returns list of dicts: {id, sender, text, created_at_dt}
+    Only returns messages from real users (skips bot/app replies).
+    Requires ChannelMessage.Read.All application permission.
+    """
+    if not TEAMS_TEAM_ID or not TEAMS_CHANNEL_ID:
+        raise AgentError("TEAMS_TEAM_ID and TEAMS_CHANNEL_ID must be set in .env")
+
+    url = (
+        f"{_GRAPH_READ}/teams/{TEAMS_TEAM_ID}/channels/{TEAMS_CHANNEL_ID}"
+        f"/messages/{message_id}/replies?$top=50"
+    )
+    try:
+        r = httpx.get(url, headers=_read_headers(), timeout=20.0)
+        r.raise_for_status()
+    except Exception as exc:
+        log.warning("could not fetch channel replies for message=%s: %s", message_id, exc)
+        return []
+
+    results: list[dict] = []
+    for reply in r.json().get("value", []):
+        if reply.get("messageType") != "message":
+            continue
+
+        from_obj = reply.get("from") or {}
+        app_ref  = from_obj.get("application") or {}
+        user_ref = from_obj.get("user") or {}
+
+        if app_ref or not user_ref.get("id"):
+            continue
+
+        sender_name = user_ref.get("displayName") or "Unknown"
+        raw_body    = (reply.get("body") or {}).get("content", "")
+        plain       = _clean_message_body(raw_body)
+
+        created_raw = reply.get("createdDateTime", "")
+        try:
+            created_dt = datetime.fromisoformat(created_raw.replace("Z", "+00:00"))
+        except Exception:
+            created_dt = datetime.now(timezone.utc)
+
+        results.append({
+            "id":            reply.get("id", ""),
+            "sender":        sender_name,
+            "text":          plain,
+            "created_at_dt": created_dt,
+        })
+
+    return results
+
+
 def parse_confirmation_reply(text: str) -> str | None:
     """Parse a yes/no confirmation reply from a Teams message.
 

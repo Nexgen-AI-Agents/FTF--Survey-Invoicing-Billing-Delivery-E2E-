@@ -23,7 +23,7 @@ from core.db import get_orders_by_status, get_order_by_id, save_order_state, log
 from core.exceptions import AgentError
 from core.ftf_client import create_invoice, get_invoice
 from core.logger import get_logger
-from core.teams_graph_client import post_chat_reply
+from core.teams_graph_client import post_channel_reply
 
 AGENT_NAME = "agent_a5_invoice_finalizer"
 log       = get_logger(AGENT_NAME)
@@ -75,7 +75,7 @@ def finalize_order(order_id: str) -> dict:
     else:
         # All retries exhausted
         if message_id:
-            post_chat_reply(
+            post_channel_reply(
                 message_id,
                 f"❌ <strong>Failed to create invoice in FTF for order {order_id} after {MAX_RETRY} attempts.</strong><br>"
                 f"Error: {last_exc}<br>Please create the invoice manually and reply APPROVE to continue."
@@ -109,7 +109,7 @@ def finalize_order(order_id: str) -> dict:
 
     # Confirm in Teams thread
     if message_id:
-        post_chat_reply(
+        post_channel_reply(
             message_id,
             f"📄 Invoice created in FTF (ID: {invoice_id}). Sending to client now..."
         )

@@ -21,7 +21,7 @@ _VALID_ORDER_COLUMNS = {
     "invoice_draft", "data_sources", "approval_message_id",
     "modification_count", "invoice_id", "client_name", "property_address",
     "data_collected_at", "draft_posted_at", "invoice_created_at",
-    "processed_reply_ids",
+    "processed_reply_ids", "approved_by",
 }
 
 
@@ -595,12 +595,12 @@ def get_orders_by_status(status: str) -> list[dict]:
 
 
 def get_orders_awaiting_invoice_approval() -> list[dict]:
-    """Return all orders in the invoice approval waiting states."""
+    """Return all orders in the invoice approval waiting states (including on_hold)."""
     with _get_cursor() as cur:
         cur.execute(
             """
             SELECT * FROM processed_orders
-            WHERE status IN ('invoice_draft_posted', 'invoice_modification_requested')
+            WHERE status IN ('invoice_draft_posted', 'invoice_modification_requested', 'on_hold')
             ORDER BY draft_posted_at ASC NULLS LAST
             """
         )
