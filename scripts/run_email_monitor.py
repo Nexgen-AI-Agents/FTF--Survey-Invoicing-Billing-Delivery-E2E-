@@ -1,14 +1,14 @@
-"""
-run_email_monitor.py — Continuous runner for Agent 12 (Email Monitor).
+﻿"""
+run_email_monitor.py â€” Continuous runner for Agent 12 (Email Monitor).
 
-Polls info@nexgensurveying.com via IMAP every N seconds.
-When a customer approval email is found, converts the order quote→pending
+Polls nesa@nexgenlogix.com via IMAP every N seconds.
+When a customer approval email is found, converts the order quoteâ†’pending
 and notifies the team via Teams.
 
 Required env vars (add to .env or GitHub Actions secrets):
   IMAP_HOST      -- e.g. imap.gmail.com or outlook.office365.com
   IMAP_PORT      -- default 993 (IMAP SSL)
-  IMAP_USER      -- info@nexgensurveying.com
+  IMAP_USER      -- nesa@nexgenlogix.com
   IMAP_PASSWORD  -- app password (not the login password)
 
 Usage:
@@ -65,7 +65,7 @@ def run_once(dry_run: bool = False) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="FTF Email Monitor — continuous IMAP poller")
+    parser = argparse.ArgumentParser(description="FTF Email Monitor â€” continuous IMAP poller")
     parser.add_argument("--interval", type=int, default=DEFAULT_INTERVAL,
                         help=f"Seconds between IMAP polls (default {DEFAULT_INTERVAL})")
     parser.add_argument("--once", action="store_true", help="Run one cycle then exit")
@@ -80,7 +80,7 @@ def main() -> None:
         sys.exit(1)
 
     imap_user = os.getenv("IMAP_USER", "?")
-    print(f"FTF Email Monitor — watching {imap_user}")
+    print(f"FTF Email Monitor â€” watching {imap_user}")
     print(f"  Poll interval : {args.interval}s")
     print(f"  Dry run       : {args.dry_run}")
     print()
@@ -113,3 +113,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

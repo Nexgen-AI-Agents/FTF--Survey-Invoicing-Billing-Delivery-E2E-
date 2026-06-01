@@ -4,7 +4,7 @@ For each order queued by A1 (status=invoice_needed), this agent collects
 all available information from 3 sources:
 
   1. FTF API      — order details, client details, service type, property info
-  2. Email inbox  — info@nexgensurveying.com: find emails matching this order
+  2. Email inbox  — nesa@nexgenlogix.com: find emails matching this order
   3. Teams chat   — group chat: find staff messages about this order/property
 
 Output: a structured "order packet" saved to processed_orders.data_sources

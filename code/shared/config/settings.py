@@ -107,7 +107,7 @@ LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 # Invoice pipeline
 MAX_INVOICE_MODIFICATIONS: int = int(os.getenv("MAX_INVOICE_MODIFICATIONS", "5"))
 
-# IMAP — email inbox for info@nexgensurveying.com
+# IMAP — email inbox for nesa@nexgenlogix.com
 IMAP_HOST:     str = os.getenv("IMAP_HOST", "outlook.office365.com")
 IMAP_PORT:     int = int(os.getenv("IMAP_PORT", "993"))
 IMAP_USER:     str | None = os.getenv("IMAP_USER")

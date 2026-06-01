@@ -62,7 +62,7 @@ def _send_email(to_email: str, statement_month: date,
         f"Please find attached your monthly statement for {statement_month.strftime('%B %Y')}.\n\n"
         f"The statement includes all survey orders for this period along with payment status "
         f"and any outstanding balance.\n\n"
-        f"If you have any questions, please contact us at info@nexgensurveying.com.\n\n"
+        f"If you have any questions, please contact us at nesa@nexgenlogix.com.\n\n"
         f"Thank you for your business,\n"
         f"NexGen Land Surveying"
     )

@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>FTF Agentic AI OS — Technical Architecture v2</title>
+<title>FTF Agentic AI OS â€” Technical Architecture v2</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body { background:#0F0F1A; font-family:Arial,sans-serif; display:flex; flex-direction:column; align-items:center; padding:20px; min-height:100vh; }
@@ -12,8 +12,8 @@ p { color:#818CF8; font-size:13px; margin-bottom:20px; }
 </style>
 </head>
 <body>
-<h1>FTF Agentic AI OS — Technical Architecture v2</h1>
-<p>Sprint 0-11 · 19 Agents · 3 Active Loops + Memory · GitHub Actions 24/7 · Phase 1: FTF Only</p>
+<h1>FTF Agentic AI OS â€” Technical Architecture v2</h1>
+<p>Sprint 0-11 Â· 19 Agents Â· 3 Active Loops + Memory Â· GitHub Actions 24/7 Â· Phase 1: FTF Only</p>
 <div class="canvas">
 <svg viewBox="0 0 1400 1100" xmlns="http://www.w3.org/2000/svg" width="1400" height="1100">
 <defs>
@@ -26,15 +26,15 @@ p { color:#818CF8; font-size:13px; margin-bottom:20px; }
 <rect width="1400" height="1100" fill="#0F172A"/>
 
 <!-- Title -->
-<text x="700" y="26" text-anchor="middle" fill="#E2E8F0" font-size="17" font-weight="bold">FTF Agentic AI OS — Technical Architecture v2</text>
-<text x="700" y="44" text-anchor="middle" fill="#818CF8" font-size="11">Sprint 0-11 · 19 Agents · 3 Loops + Memory · GitHub Actions 24/7 · Phase 1: FTF Only · May 2026</text>
+<text x="700" y="26" text-anchor="middle" fill="#E2E8F0" font-size="17" font-weight="bold">FTF Agentic AI OS â€” Technical Architecture v2</text>
+<text x="700" y="44" text-anchor="middle" fill="#818CF8" font-size="11">Sprint 0-11 Â· 19 Agents Â· 3 Loops + Memory Â· GitHub Actions 24/7 Â· Phase 1: FTF Only Â· May 2026</text>
 <line x1="16" y1="52" x2="1384" y2="52" stroke="#4F46E5" stroke-width="1" opacity="0.5"/>
 
-<!-- ── GITHUB ACTIONS LAYER ── -->
+<!-- â”€â”€ GITHUB ACTIONS LAYER â”€â”€ -->
 <rect x="12" y="58" width="752" height="90" rx="8" fill="#0C1A0C" stroke="#16A34A" stroke-width="2"/>
 <rect x="12" y="58" width="752" height="24" rx="8" fill="#166534"/>
 <rect x="12" y="74" width="752" height="8" fill="#166534"/>
-<text x="22" y="72" fill="white" font-size="11" font-weight="bold">GITHUB ACTIONS — 24/7 Automated Execution (no local machine, no manual scripts)</text>
+<text x="22" y="72" fill="white" font-size="11" font-weight="bold">GITHUB ACTIONS â€” 24/7 Automated Execution (no local machine, no manual scripts)</text>
 
 <!-- GA: Poll Monitor -->
 <rect x="22" y="90" width="220" height="50" rx="5" fill="#14532D" stroke="#22C55E" stroke-width="1.5"/>
@@ -52,7 +52,7 @@ p { color:#818CF8; font-size:13px; margin-bottom:20px; }
 <rect x="490" y="90" width="262" height="50" rx="5" fill="#14532D" stroke="#22C55E" stroke-width="1.5"/>
 <text x="621" y="106" text-anchor="middle" fill="#86EFAC" font-size="8" font-weight="bold">estimate_generation.yml</text>
 <text x="621" y="118" text-anchor="middle" fill="#4ADE80" font-size="8">cron: 0 * * * * (every hour)</text>
-<text x="621" y="130" text-anchor="middle" fill="#86EFAC" font-size="7">Loop 1 trigger · FTF_API_BASE_URL secret swap → prod</text>
+<text x="621" y="130" text-anchor="middle" fill="#86EFAC" font-size="7">Loop 1 trigger Â· FTF_API_BASE_URL secret swap â†’ prod</text>
 
 <!-- Failure alert note -->
 <rect x="766" y="58" width="280" height="90" rx="8" fill="#1A0A00" stroke="#DC2626" stroke-width="1.5"/>
@@ -60,22 +60,22 @@ p { color:#818CF8; font-size:13px; margin-bottom:20px; }
 <rect x="766" y="74" width="280" height="8" fill="#7F1D1D"/>
 <text x="906" y="72" text-anchor="middle" fill="white" font-size="10" font-weight="bold">FAILURE ALERTING</text>
 <text x="906" y="95" text-anchor="middle" fill="#FCA5A5" font-size="8">if: failure() on all 3 workflows</text>
-<text x="906" y="108" text-anchor="middle" fill="#FCA5A5" font-size="8">→ notify_workflow_failure.py</text>
-<text x="906" y="121" text-anchor="middle" fill="#FCA5A5" font-size="8">→ Teams alert with run URL</text>
-<text x="906" y="134" text-anchor="middle" fill="#F87171" font-size="7">Silent failures impossible — team always notified</text>
+<text x="906" y="108" text-anchor="middle" fill="#FCA5A5" font-size="8">â†’ notify_workflow_failure.py</text>
+<text x="906" y="121" text-anchor="middle" fill="#FCA5A5" font-size="8">â†’ Teams alert with run URL</text>
+<text x="906" y="134" text-anchor="middle" fill="#F87171" font-size="7">Silent failures impossible â€” team always notified</text>
 
-<!-- ── LOOP 1 ── -->
+<!-- â”€â”€ LOOP 1 â”€â”€ -->
 <rect x="12" y="158" width="752" height="340" rx="8" fill="#1E1B4B" stroke="#4F46E5" stroke-width="1.5"/>
 <rect x="12" y="158" width="752" height="26" rx="8" fill="#4F46E5"/>
 <rect x="12" y="176" width="752" height="8" fill="#4F46E5"/>
-<text x="22" y="174" fill="white" font-size="11" font-weight="bold">LOOP 1 — ESTIMATE GENERATION  (hourly via GitHub Actions)  |  Agents 1, 2, 12, 3–9</text>
+<text x="22" y="174" fill="white" font-size="11" font-weight="bold">LOOP 1 â€” ESTIMATE GENERATION  (hourly via GitHub Actions)  |  Agents 1, 2, 12, 3â€“9</text>
 
-<!-- Row 1: Agent 12 Email Monitor (NEW — first in pipeline) -->
+<!-- Row 1: Agent 12 Email Monitor (NEW â€” first in pipeline) -->
 <rect x="22" y="194" width="102" height="52" rx="5" fill="#1E3A5F" stroke="#3B82F6" stroke-width="1.5"/>
 <text x="73" y="210" text-anchor="middle" fill="#93C5FD" font-size="8" font-weight="bold">AGENT 12</text>
 <text x="73" y="222" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Email Monitor</text>
 <text x="73" y="234" text-anchor="middle" fill="#60A5FA" font-size="7">info@nexgensurveying</text>
-<text x="73" y="244" text-anchor="middle" fill="#93C5FD" font-size="7">quote→pending</text>
+<text x="73" y="244" text-anchor="middle" fill="#93C5FD" font-size="7">quoteâ†’pending</text>
 
 <!-- Agent 2 Monitor -->
 <rect x="138" y="194" width="102" height="52" rx="5" fill="#312E81" stroke="#6366F1" stroke-width="1"/>
@@ -102,7 +102,7 @@ p { color:#818CF8; font-size:13px; margin-bottom:20px; }
 <rect x="486" y="194" width="102" height="52" rx="5" fill="#312E81" stroke="#6366F1" stroke-width="1"/>
 <text x="537" y="210" text-anchor="middle" fill="#A5B4FC" font-size="8" font-weight="bold">AGENT 5</text>
 <text x="537" y="222" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Pricing Engine</text>
-<text x="537" y="234" text-anchor="middle" fill="#818CF8" font-size="7">County avg · B2B 4.1x</text>
+<text x="537" y="234" text-anchor="middle" fill="#818CF8" font-size="7">County avg Â· B2B 4.1x</text>
 <text x="537" y="244" text-anchor="middle" fill="#818CF8" font-size="7">Complexity: off (I-065)</text>
 
 <!-- Agent 6 Writer -->
@@ -134,7 +134,7 @@ p { color:#818CF8; font-size:13px; margin-bottom:20px; }
 <text x="189" y="278" text-anchor="middle" fill="#67E8F9" font-size="8" font-weight="bold">AGENT 8</text>
 <text x="189" y="290" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Sender</text>
 <text x="189" y="302" text-anchor="middle" fill="#67E8F9" font-size="7">6-13 min delay</text>
-<text x="189" y="312" text-anchor="middle" fill="#67E8F9" font-size="7">8 AM – 6 PM ET</text>
+<text x="189" y="312" text-anchor="middle" fill="#67E8F9" font-size="7">8 AM â€“ 6 PM ET</text>
 
 <!-- Agent 9 Reporter -->
 <rect x="254" y="262" width="102" height="52" rx="5" fill="#312E81" stroke="#6366F1" stroke-width="1"/>
@@ -145,9 +145,9 @@ p { color:#818CF8; font-size:13px; margin-bottom:20px; }
 
 <!-- Agent 1 Orchestrator -->
 <rect x="370" y="262" width="334" height="52" rx="5" fill="#1E1B4B" stroke="#6366F1" stroke-width="1.5"/>
-<text x="537" y="278" text-anchor="middle" fill="#A5B4FC" font-size="8" font-weight="bold">AGENT 1 — Orchestrator</text>
-<text x="537" y="292" text-anchor="middle" fill="white" font-size="9">Master controller · entry point for AUTO (GitHub Actions) and MANUAL (CLI/MCP) modes</text>
-<text x="537" y="308" text-anchor="middle" fill="#818CF8" font-size="7">Sprint 9 · Memory loop · Dream loop · Agent 18 Business Analyst</text>
+<text x="537" y="278" text-anchor="middle" fill="#A5B4FC" font-size="8" font-weight="bold">AGENT 1 â€” Orchestrator</text>
+<text x="537" y="292" text-anchor="middle" fill="white" font-size="9">Master controller Â· entry point for AUTO (GitHub Actions) and MANUAL (CLI/MCP) modes</text>
+<text x="537" y="308" text-anchor="middle" fill="#818CF8" font-size="7">Sprint 9 Â· Memory loop Â· Dream loop Â· Agent 18 Business Analyst</text>
 
 <!-- Row 2 arrows -->
 <line x1="704" y1="220" x2="73" y2="261" stroke="#4F46E5" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#a1)"/>
@@ -157,96 +157,96 @@ p { color:#818CF8; font-size:13px; margin-bottom:20px; }
 <!-- Flag triggers -->
 <rect x="22" y="326" width="728" height="26" rx="4" fill="#1F1233" stroke="#7C3AED" stroke-width="1" stroke-dasharray="3,2"/>
 <text x="30" y="340" fill="#C4B5FD" font-size="8" font-weight="bold">FLAG TRIGGERS (Agent 4):</text>
-<text x="182" y="340" fill="#A5B4FC" font-size="8">Competitor · ALTA/Other · Monroe County · VE flood zone · Missing county · Out-of-state · B-II Title · Building Stakeout · Reviewer fail</text>
+<text x="182" y="340" fill="#A5B4FC" font-size="8">Competitor Â· ALTA/Other Â· Monroe County Â· VE flood zone Â· Missing county Â· Out-of-state Â· B-II Title Â· Building Stakeout Â· Reviewer fail</text>
 
 <!-- Approval commands -->
 <rect x="22" y="360" width="728" height="22" rx="4" fill="#2D1B69" stroke="#7C3AED" stroke-width="0.5"/>
-<text x="386" y="375" text-anchor="middle" fill="#C4B5FD" font-size="8">Teams commands: APPROVE · APPROVE ALL · REJECT [reason] · REJECT ALL · DEFER [reason] (24h hold — reappears next digest)  ·  Overdue ≥4h → *** OVERDUE *** in digest</text>
+<text x="386" y="375" text-anchor="middle" fill="#C4B5FD" font-size="8">Teams commands: APPROVE Â· APPROVE ALL Â· REJECT [reason] Â· REJECT ALL Â· DEFER [reason] (24h hold â€” reappears next digest)  Â·  Overdue â‰¥4h â†’ *** OVERDUE *** in digest</text>
 
 <!-- Post-approval note -->
 <rect x="22" y="390" width="728" height="22" rx="4" fill="#312E81" stroke="#4F46E5" stroke-width="0.5"/>
-<text x="386" y="405" text-anchor="middle" fill="#A5B4FC" font-size="8">Post-approval: AI auto-sends — no manual click  ·  FEMA: auto-adds Elevation Cert ($225) if flood zone  ·  Change Order Clause on every estimate</text>
+<text x="386" y="405" text-anchor="middle" fill="#A5B4FC" font-size="8">Post-approval: AI auto-sends â€” no manual click  Â·  FEMA: auto-adds Elevation Cert ($225) if flood zone  Â·  Change Order Clause on every estimate</text>
 
 <!-- Change order -->
 <rect x="22" y="420" width="728" height="22" rx="4" fill="#064E3B" stroke="#10B981" stroke-width="1"/>
-<text x="386" y="435" text-anchor="middle" fill="white" font-size="8" font-weight="bold">⚖  Change Order Clause — Agent 6 appends · Agent 7 verifies · stored in config/knowledge_base/change_order_clause.txt</text>
+<text x="386" y="435" text-anchor="middle" fill="white" font-size="8" font-weight="bold">âš–  Change Order Clause â€” Agent 6 appends Â· Agent 7 verifies Â· stored in config/knowledge_base/change_order_clause.txt</text>
 
 <!-- Dynamic pricing note -->
 <rect x="22" y="450" width="728" height="22" rx="4" fill="#1F1233" stroke="#9333EA" stroke-width="0.5"/>
-<text x="386" y="465" text-anchor="middle" fill="#D8B4FE" font-size="8">Dynamic pricing complexity (I-065): pools +$150 · sheds +$112 · extra driveways +$150 · wall count · remote/rural — PRICING_COMPLEXITY_ENABLED=false (off by default — Robert to confirm)</text>
+<text x="386" y="465" text-anchor="middle" fill="#D8B4FE" font-size="8">Dynamic pricing complexity (I-065): pools +$150 Â· sheds +$112 Â· extra driveways +$150 Â· wall count Â· remote/rural â€” PRICING_COMPLEXITY_ENABLED=false (off by default â€” Robert to confirm)</text>
 
-<!-- ── LOOP 2 ── -->
+<!-- â”€â”€ LOOP 2 â”€â”€ -->
 <rect x="12" y="508" width="752" height="155" rx="8" fill="#1A0533" stroke="#7C3AED" stroke-width="1.5"/>
 <rect x="12" y="508" width="752" height="26" rx="8" fill="#6D28D9"/>
 <rect x="12" y="526" width="752" height="8" fill="#6D28D9"/>
-<text x="22" y="524" fill="white" font-size="11" font-weight="bold">LOOP 2 — AR FOLLOW-UP  (daily · ar_followup.yml)  |  Agents 10–11</text>
+<text x="22" y="524" fill="white" font-size="11" font-weight="bold">LOOP 2 â€” AR FOLLOW-UP  (daily Â· ar_followup.yml)  |  Agents 10â€“11</text>
 
 <rect x="22" y="540" width="150" height="52" rx="5" fill="#2D1B69" stroke="#7C3AED" stroke-width="1"/>
 <text x="97" y="556" text-anchor="middle" fill="#C4B5FD" font-size="8" font-weight="bold">AGENT 10</text>
 <text x="97" y="568" text-anchor="middle" fill="white" font-size="9" font-weight="bold">AR Scanner</text>
-<text x="97" y="580" text-anchor="middle" fill="#C4B5FD" font-size="7">FTF Books · ≥60d overdue</text>
+<text x="97" y="580" text-anchor="middle" fill="#C4B5FD" font-size="7">FTF Books Â· â‰¥60d overdue</text>
 <text x="97" y="590" text-anchor="middle" fill="#C4B5FD" font-size="7">AR exclusion list check</text>
 
 <rect x="186" y="540" width="150" height="52" rx="5" fill="#2D1B69" stroke="#7C3AED" stroke-width="1"/>
 <text x="261" y="556" text-anchor="middle" fill="#C4B5FD" font-size="8" font-weight="bold">AGENT 11</text>
 <text x="261" y="568" text-anchor="middle" fill="white" font-size="9" font-weight="bold">AR Escalation</text>
-<text x="261" y="580" text-anchor="middle" fill="#C4B5FD" font-size="7">Day 60 → Jessica alert</text>
-<text x="261" y="590" text-anchor="middle" fill="#C4B5FD" font-size="7">Day 90 → all stakeholders</text>
+<text x="261" y="580" text-anchor="middle" fill="#C4B5FD" font-size="7">Day 60 â†’ Jessica alert</text>
+<text x="261" y="590" text-anchor="middle" fill="#C4B5FD" font-size="7">Day 90 â†’ all stakeholders</text>
 
 <line x1="172" y1="566" x2="184" y2="566" stroke="#7C3AED" stroke-width="1.5" marker-end="url(#a2)"/>
 
 <!-- Refund guard -->
 <rect x="350" y="540" width="400" height="52" rx="5" fill="#450A0A" stroke="#DC2626" stroke-width="1"/>
-<text x="550" y="556" text-anchor="middle" fill="#FCA5A5" font-size="8" font-weight="bold">REFUND GUARD (I-063) — Hard Rule</text>
-<text x="550" y="570" text-anchor="middle" fill="#FCA5A5" font-size="8">Refund keyword detected → stop ALL processing → alert Jessica immediately</text>
+<text x="550" y="556" text-anchor="middle" fill="#FCA5A5" font-size="8" font-weight="bold">REFUND GUARD (I-063) â€” Hard Rule</text>
+<text x="550" y="570" text-anchor="middle" fill="#FCA5A5" font-size="8">Refund keyword detected â†’ stop ALL processing â†’ alert Jessica immediately</text>
 <text x="550" y="584" text-anchor="middle" fill="#F87171" font-size="7">AI never touches, processes, or approves a refund. Jessica handles manually.</text>
 
 <rect x="22" y="602" width="728" height="22" rx="4" fill="#2D1B69" stroke="#7C3AED" stroke-width="0.5"/>
-<text x="386" y="617" text-anchor="middle" fill="#C4B5FD" font-size="8">AR exclusion list: AR_EXCLUSION_LIST env var (comma-separated emails) · Jessica manages · empty by default · confirm before AR loop goes live</text>
+<text x="386" y="617" text-anchor="middle" fill="#C4B5FD" font-size="8">AR exclusion list: AR_EXCLUSION_LIST env var (comma-separated emails) Â· Jessica manages Â· empty by default Â· confirm before AR loop goes live</text>
 
 <rect x="22" y="630" width="728" height="22" rx="4" fill="#2D1B69" stroke="#7C3AED" stroke-width="0.5"/>
 <text x="386" y="645" text-anchor="middle" fill="#A5B4FC" font-size="8">NOTE: FTF platform handles Day 30/60/90 customer-facing reminders. We build INTERNAL escalation alerts only (Jessica + stakeholders).</text>
 
-<!-- ── LOOP 3 ── -->
+<!-- â”€â”€ LOOP 3 â”€â”€ -->
 <rect x="12" y="672" width="752" height="115" rx="8" fill="#052E16" stroke="#059669" stroke-width="1.5"/>
 <rect x="12" y="672" width="752" height="26" rx="8" fill="#065F46"/>
 <rect x="12" y="690" width="752" height="8" fill="#065F46"/>
-<text x="22" y="688" fill="white" font-size="11" font-weight="bold">LOOP 3 — MONTHLY STATEMENTS  (1st of month · monthly_statements.yml)  |  Agents 15–17</text>
+<text x="22" y="688" fill="white" font-size="11" font-weight="bold">LOOP 3 â€” MONTHLY STATEMENTS  (1st of month Â· monthly_statements.yml)  |  Agents 15â€“17</text>
 
 <rect x="22" y="704" width="224" height="48" rx="5" fill="#064E3B" stroke="#059669" stroke-width="1"/>
-<text x="134" y="720" text-anchor="middle" fill="#6EE7B7" font-size="8" font-weight="bold">AGENT 15 — Statement Generator</text>
+<text x="134" y="720" text-anchor="middle" fill="#6EE7B7" font-size="8" font-weight="bold">AGENT 15 â€” Statement Generator</text>
 <text x="134" y="733" text-anchor="middle" fill="white" font-size="8">Compile B2B orders from FTF Books</text>
-<text x="134" y="746" text-anchor="middle" fill="#6EE7B7" font-size="7">Claude API · Excel + PDF</text>
+<text x="134" y="746" text-anchor="middle" fill="#6EE7B7" font-size="7">Claude API Â· Excel + PDF</text>
 
 <rect x="262" y="704" width="224" height="48" rx="5" fill="#064E3B" stroke="#059669" stroke-width="1"/>
-<text x="374" y="720" text-anchor="middle" fill="#6EE7B7" font-size="8" font-weight="bold">AGENT 16 — Statement Reviewer</text>
+<text x="374" y="720" text-anchor="middle" fill="#6EE7B7" font-size="8" font-weight="bold">AGENT 16 â€” Statement Reviewer</text>
 <text x="374" y="733" text-anchor="middle" fill="white" font-size="8">Validate accuracy against FTF Books</text>
-<text x="374" y="746" text-anchor="middle" fill="#6EE7B7" font-size="7">Claude API · cross-check</text>
+<text x="374" y="746" text-anchor="middle" fill="#6EE7B7" font-size="7">Claude API Â· cross-check</text>
 
 <rect x="502" y="704" width="224" height="48" rx="5" fill="#064E3B" stroke="#059669" stroke-width="1"/>
-<text x="614" y="720" text-anchor="middle" fill="#6EE7B7" font-size="8" font-weight="bold">AGENT 17 — Statement Sender</text>
+<text x="614" y="720" text-anchor="middle" fill="#6EE7B7" font-size="8" font-weight="bold">AGENT 17 â€” Statement Sender</text>
 <text x="614" y="733" text-anchor="middle" fill="white" font-size="8">Deliver via MS Teams + email</text>
-<text x="614" y="746" text-anchor="middle" fill="#6EE7B7" font-size="7">Ryan · Wyatt · Jessica · master billing contact</text>
+<text x="614" y="746" text-anchor="middle" fill="#6EE7B7" font-size="7">Ryan Â· Wyatt Â· Jessica Â· master billing contact</text>
 
 <line x1="246" y1="728" x2="260" y2="728" stroke="#059669" stroke-width="1.5" marker-end="url(#a3)"/>
 <line x1="486" y1="728" x2="500" y2="728" stroke="#059669" stroke-width="1.5" marker-end="url(#a3)"/>
 
 <rect x="22" y="760" width="728" height="22" rx="4" fill="#064E3B" stroke="#059669" stroke-width="0.5"/>
-<text x="386" y="775" text-anchor="middle" fill="#6EE7B7" font-size="8">Format: Excel (2-tab: Unpaid Detail + Summary) + PDF · Trigger: 1st of month · Wyatt/Jessica sign-off: Recording 11 pending</text>
+<text x="386" y="775" text-anchor="middle" fill="#6EE7B7" font-size="8">Format: Excel (2-tab: Unpaid Detail + Summary) + PDF Â· Trigger: 1st of month Â· Wyatt/Jessica sign-off: Recording 11 pending</text>
 
-<!-- ── MEMORY LOOP ── -->
+<!-- â”€â”€ MEMORY LOOP â”€â”€ -->
 <rect x="12" y="796" width="752" height="70" rx="8" fill="#1A1600" stroke="#CA8A04" stroke-width="1"/>
 <rect x="12" y="796" width="752" height="22" rx="8" fill="#78350F"/>
 <rect x="12" y="810" width="752" height="8" fill="#78350F"/>
-<text x="22" y="808" fill="#FCD34D" font-size="10" font-weight="bold">MEMORY LOOP — Nightly (nightly_memory.yml) + Pricing Trainer (Agent 13) + Business Analyst (Agent 18)</text>
+<text x="22" y="808" fill="#FCD34D" font-size="10" font-weight="bold">MEMORY LOOP â€” Nightly (nightly_memory.yml) + Pricing Trainer (Agent 13) + Business Analyst (Agent 18)</text>
 <rect x="22" y="824" width="230" height="28" rx="4" fill="#292100" stroke="#CA8A04" stroke-width="0.5"/>
-<text x="137" y="842" text-anchor="middle" fill="#FCD34D" font-size="8" font-weight="bold">Memory Manager — logs decisions · corrections</text>
+<text x="137" y="842" text-anchor="middle" fill="#FCD34D" font-size="8" font-weight="bold">Memory Manager â€” logs decisions Â· corrections</text>
 <rect x="264" y="824" width="230" height="28" rx="4" fill="#292100" stroke="#CA8A04" stroke-width="0.5"/>
-<text x="379" y="842" text-anchor="middle" fill="#FCD34D" font-size="8" font-weight="bold">Dream Processor — self-improvement · knowledge base</text>
+<text x="379" y="842" text-anchor="middle" fill="#FCD34D" font-size="8" font-weight="bold">Dream Processor â€” self-improvement Â· knowledge base</text>
 <rect x="506" y="824" width="244" height="28" rx="4" fill="#292100" stroke="#CA8A04" stroke-width="0.5"/>
-<text x="628" y="842" text-anchor="middle" fill="#FCD34D" font-size="8" font-weight="bold">Agent 13 Pricing Trainer · Agent 18 Business Analyst</text>
+<text x="628" y="842" text-anchor="middle" fill="#FCD34D" font-size="8" font-weight="bold">Agent 13 Pricing Trainer Â· Agent 18 Business Analyst</text>
 
-<!-- ── SPRINT STATUS BAR ── -->
+<!-- â”€â”€ SPRINT STATUS BAR â”€â”€ -->
 <rect x="12" y="876" width="752" height="28" rx="6" fill="#0F172A" stroke="#334155" stroke-width="1"/>
 <text x="16" y="895" fill="#94A3B8" font-size="9" font-weight="bold">SPRINT:</text>
 <rect x="66" y="880" width="28" height="18" rx="3" fill="#166534"/>
@@ -272,12 +272,12 @@ p { color:#818CF8; font-size:13px; margin-bottom:20px; }
 <rect x="386" y="880" width="28" height="18" rx="3" fill="#166534"/>
 <text x="400" y="893" text-anchor="middle" fill="white" font-size="8" font-weight="bold">S10</text>
 <rect x="418" y="880" width="36" height="18" rx="3" fill="#92400E"/>
-<text x="436" y="893" text-anchor="middle" fill="#FCD34D" font-size="8" font-weight="bold">S11🟡</text>
+<text x="436" y="893" text-anchor="middle" fill="#FCD34D" font-size="8" font-weight="bold">S11ðŸŸ¡</text>
 <rect x="458" y="880" width="28" height="18" rx="3" fill="#1E293B"/>
 <text x="472" y="893" text-anchor="middle" fill="#475569" font-size="8">S12</text>
-<text x="492" y="893" fill="#6EE7B7" font-size="8">S0-S10 ✅ Complete · S11 🟡 Limited Production (estimate loop live, credentials pending) · S12 ⏳ Full Production</text>
+<text x="492" y="893" fill="#6EE7B7" font-size="8">S0-S10 âœ… Complete Â· S11 ðŸŸ¡ Limited Production (estimate loop live, credentials pending) Â· S12 â³ Full Production</text>
 
-<!-- ── RIGHT PANEL ── -->
+<!-- â”€â”€ RIGHT PANEL â”€â”€ -->
 <!-- APIs -->
 <rect x="776" y="158" width="296" height="320" rx="8" fill="#0F172A" stroke="#334155" stroke-width="1.5"/>
 <text x="924" y="178" text-anchor="middle" fill="#94A3B8" font-size="11" font-weight="bold">EXTERNAL APIS</text>
@@ -285,29 +285,29 @@ p { color:#818CF8; font-size:13px; margin-bottom:20px; }
 
 <rect x="788" y="192" width="272" height="40" rx="5" fill="#1E3A5F" stroke="#3B82F6" stroke-width="1"/>
 <text x="924" y="208" text-anchor="middle" fill="#93C5FD" font-size="9" font-weight="bold">FTF CRM API</text>
-<text x="924" y="222" text-anchor="middle" fill="#60A5FA" font-size="8">fieldtofinish.jobs/ftf-ai-api/v1 · Agents 2,3,4,8,9</text>
+<text x="924" y="222" text-anchor="middle" fill="#60A5FA" font-size="8">fieldtofinish.jobs/ftf-ai-api/v1 Â· Agents 2,3,4,8,9</text>
 
 <rect x="788" y="238" width="272" height="40" rx="5" fill="#1E3A5F" stroke="#3B82F6" stroke-width="1"/>
 <text x="924" y="254" text-anchor="middle" fill="#93C5FD" font-size="9" font-weight="bold">FTF Books API</text>
-<text x="924" y="268" text-anchor="middle" fill="#60A5FA" font-size="8">fieldtofinish.jobs · Agents 10,11,15,16,17</text>
+<text x="924" y="268" text-anchor="middle" fill="#60A5FA" font-size="8">fieldtofinish.jobs Â· Agents 10,11,15,16,17</text>
 
 <rect x="788" y="284" width="272" height="40" rx="5" fill="#1A2E1A" stroke="#22C55E" stroke-width="1"/>
 <text x="924" y="300" text-anchor="middle" fill="#86EFAC" font-size="9" font-weight="bold">FTF Pricing API</text>
-<text x="924" y="314" text-anchor="middle" fill="#4ADE80" font-size="8">fieldtofinish.jobs/ftf-ai-api/v1 · Agent 5 · County avg model</text>
+<text x="924" y="314" text-anchor="middle" fill="#4ADE80" font-size="8">fieldtofinish.jobs/ftf-ai-api/v1 Â· Agent 5 Â· County avg model</text>
 
 <rect x="788" y="330" width="272" height="40" rx="5" fill="#2A1A3E" stroke="#A855F7" stroke-width="1"/>
 <text x="924" y="346" text-anchor="middle" fill="#D8B4FE" font-size="9" font-weight="bold">Anthropic Claude API</text>
-<text x="924" y="360" text-anchor="middle" fill="#C084FC" font-size="8">Agents 3,6,7,9,12,13,15,16,18 · Sonnet 4 default</text>
+<text x="924" y="360" text-anchor="middle" fill="#C084FC" font-size="8">Agents 3,6,7,9,12,13,15,16,18 Â· Sonnet 4 default</text>
 
 <rect x="788" y="376" width="272" height="40" rx="5" fill="#1A2E2E" stroke="#14B8A6" stroke-width="1"/>
 <text x="924" y="392" text-anchor="middle" fill="#5EEAD4" font-size="9" font-weight="bold">FEMA Flood Map API</text>
-<text x="924" y="406" text-anchor="middle" fill="#2DD4BF" font-size="8">msc.fema.gov · Free · no auth · Agent 3 · auto Elev Cert</text>
+<text x="924" y="406" text-anchor="middle" fill="#2DD4BF" font-size="8">msc.fema.gov Â· Free Â· no auth Â· Agent 3 Â· auto Elev Cert</text>
 
 <rect x="788" y="422" width="272" height="24" rx="4" fill="#1A1A2E" stroke="#6366F1" stroke-width="1"/>
-<text x="924" y="438" text-anchor="middle" fill="#A5B4FC" font-size="8">MS Teams Graph API · Logic App webhook · Mail.Send</text>
+<text x="924" y="438" text-anchor="middle" fill="#A5B4FC" font-size="8">MS Teams Graph API Â· Logic App webhook Â· Mail.Send</text>
 
 <rect x="788" y="452" width="272" height="22" rx="4" fill="#1A0F0F" stroke="#DC2626" stroke-width="0.5"/>
-<text x="924" y="466" text-anchor="middle" fill="#FCA5A5" font-size="8">IMAP (info@nexgensurveying.com) · Agent 12 · approval emails</text>
+<text x="924" y="466" text-anchor="middle" fill="#FCA5A5" font-size="8">IMAP (nesa@nexgenlogix.com) Â· Agent 12 Â· approval emails</text>
 
 <!-- INFRA -->
 <rect x="776" y="488" width="296" height="230" rx="8" fill="#0F172A" stroke="#334155" stroke-width="1.5"/>
@@ -316,33 +316,33 @@ p { color:#818CF8; font-size:13px; margin-bottom:20px; }
 
 <rect x="788" y="520" width="130" height="38" rx="4" fill="#1C1917" stroke="#78716C" stroke-width="1"/>
 <text x="853" y="536" text-anchor="middle" fill="#D6D3D1" font-size="9" font-weight="bold">PostgreSQL</text>
-<text x="853" y="550" text-anchor="middle" fill="#A8A29E" font-size="8">State DB · decision_log</text>
+<text x="853" y="550" text-anchor="middle" fill="#A8A29E" font-size="8">State DB Â· decision_log</text>
 
 <rect x="930" y="520" width="130" height="38" rx="4" fill="#0C1A0C" stroke="#16A34A" stroke-width="1"/>
 <text x="995" y="536" text-anchor="middle" fill="#86EFAC" font-size="9" font-weight="bold">GitHub Actions</text>
-<text x="995" y="550" text-anchor="middle" fill="#4ADE80" font-size="8">5 workflows · 24/7 AUTO</text>
+<text x="995" y="550" text-anchor="middle" fill="#4ADE80" font-size="8">5 workflows Â· 24/7 AUTO</text>
 
 <rect x="788" y="564" width="130" height="38" rx="4" fill="#1A0F2E" stroke="#7C3AED" stroke-width="1"/>
 <text x="853" y="580" text-anchor="middle" fill="#C4B5FD" font-size="9" font-weight="bold">MCP Server</text>
-<text x="853" y="594" text-anchor="middle" fill="#A78BFA" font-size="8">MANUAL mode · dev</text>
+<text x="853" y="594" text-anchor="middle" fill="#A78BFA" font-size="8">MANUAL mode Â· dev</text>
 
 <rect x="930" y="564" width="130" height="38" rx="4" fill="#0F2027" stroke="#0EA5E9" stroke-width="1"/>
 <text x="995" y="580" text-anchor="middle" fill="#7DD3FC" font-size="9" font-weight="bold">MS Teams</text>
-<text x="995" y="594" text-anchor="middle" fill="#38BDF8" font-size="8">Alerts · Reports · Commands</text>
+<text x="995" y="594" text-anchor="middle" fill="#38BDF8" font-size="8">Alerts Â· Reports Â· Commands</text>
 
 <rect x="788" y="608" width="130" height="38" rx="4" fill="#1A0600" stroke="#EA580C" stroke-width="1"/>
 <text x="853" y="624" text-anchor="middle" fill="#FDBA74" font-size="9" font-weight="bold">Failure Alerts</text>
-<text x="853" y="638" text-anchor="middle" fill="#FB923C" font-size="8">if:failure() → Teams</text>
+<text x="853" y="638" text-anchor="middle" fill="#FB923C" font-size="8">if:failure() â†’ Teams</text>
 
 <rect x="930" y="608" width="130" height="38" rx="4" fill="#1A1600" stroke="#CA8A04" stroke-width="1"/>
 <text x="995" y="624" text-anchor="middle" fill="#FCD34D" font-size="9" font-weight="bold">DigitalOcean VPS</text>
 <text x="995" y="638" text-anchor="middle" fill="#D97706" font-size="8">Cloud deployment</text>
 
 <rect x="788" y="652" width="272" height="22" rx="4" fill="#1C1917" stroke="#78716C" stroke-width="0.5"/>
-<text x="924" y="666" text-anchor="middle" fill="#D6D3D1" font-size="8">All decisions logged · timestamps · agent versions · decision_log table</text>
+<text x="924" y="666" text-anchor="middle" fill="#D6D3D1" font-size="8">All decisions logged Â· timestamps Â· agent versions Â· decision_log table</text>
 
 <rect x="788" y="680" width="272" height="22" rx="4" fill="#1C1917" stroke="#78716C" stroke-width="0.5"/>
-<text x="924" y="694" text-anchor="middle" fill="#D6D3D1" font-size="8">Approval dashboard: build_approval_dashboard.py → docs/approval_dashboard.html</text>
+<text x="924" y="694" text-anchor="middle" fill="#D6D3D1" font-size="8">Approval dashboard: build_approval_dashboard.py â†’ docs/approval_dashboard.html</text>
 
 <!-- MONITORING TOOLS -->
 <rect x="776" y="728" width="296" height="148" rx="8" fill="#0F172A" stroke="#334155" stroke-width="1.5"/>
@@ -350,37 +350,37 @@ p { color:#818CF8; font-size:13px; margin-bottom:20px; }
 <line x1="788" y1="754" x2="1060" y2="754" stroke="#334155" stroke-width="1"/>
 
 <rect x="788" y="760" width="272" height="26" rx="4" fill="#14532D" stroke="#22C55E" stroke-width="0.5"/>
-<text x="924" y="778" text-anchor="middle" fill="#86EFAC" font-size="8" font-weight="bold">scripts/build_approval_dashboard.py → docs/approval_dashboard.html</text>
+<text x="924" y="778" text-anchor="middle" fill="#86EFAC" font-size="8" font-weight="bold">scripts/build_approval_dashboard.py â†’ docs/approval_dashboard.html</text>
 
 <rect x="788" y="792" width="272" height="26" rx="4" fill="#14532D" stroke="#22C55E" stroke-width="0.5"/>
-<text x="924" y="810" text-anchor="middle" fill="#86EFAC" font-size="8" font-weight="bold">scripts/export_flag_stats.py — flag calibration report (run after 1 week prod)</text>
+<text x="924" y="810" text-anchor="middle" fill="#86EFAC" font-size="8" font-weight="bold">scripts/export_flag_stats.py â€” flag calibration report (run after 1 week prod)</text>
 
 <rect x="788" y="824" width="272" height="26" rx="4" fill="#14532D" stroke="#22C55E" stroke-width="0.5"/>
-<text x="924" y="842" text-anchor="middle" fill="#86EFAC" font-size="8" font-weight="bold">scripts/run_email_monitor.py — Agent 12 IMAP continuous runner</text>
+<text x="924" y="842" text-anchor="middle" fill="#86EFAC" font-size="8" font-weight="bold">scripts/run_email_monitor.py â€” Agent 12 IMAP continuous runner</text>
 
 <rect x="788" y="856" width="272" height="14" rx="3" fill="#1A1A2E" stroke="#6366F1" stroke-width="0.5"/>
-<text x="924" y="867" text-anchor="middle" fill="#A5B4FC" font-size="7">Run flag_stats weekly · dashboard daily · email monitor: needs deployment (IMAP_HOST, IMAP_USER, IMAP_PASSWORD)</text>
+<text x="924" y="867" text-anchor="middle" fill="#A5B4FC" font-size="7">Run flag_stats weekly Â· dashboard daily Â· email monitor: needs deployment (IMAP_HOST, IMAP_USER, IMAP_PASSWORD)</text>
 
 <!-- footer -->
 <rect x="12" y="912" width="1360" height="22" rx="4" fill="#0F172A" stroke="#1E293B" stroke-width="1"/>
-<text x="686" y="927" text-anchor="middle" fill="#475569" font-size="9">FTF Agentic AI OS · Technical Architecture v2 · 19 Agents · 3 Loops + Memory · GitHub Actions 24/7 · Sprint 0-11 · Phase 1: FTF · Phase 2: POF + NGE · Prateek · May 2026</text>
+<text x="686" y="927" text-anchor="middle" fill="#475569" font-size="9">FTF Agentic AI OS Â· Technical Architecture v2 Â· 19 Agents Â· 3 Loops + Memory Â· GitHub Actions 24/7 Â· Sprint 0-11 Â· Phase 1: FTF Â· Phase 2: POF + NGE Â· Prateek Â· May 2026</text>
 
 <!-- legend -->
 <rect x="12" y="942" width="1360" height="96" rx="6" fill="#0F172A" stroke="#1E293B" stroke-width="1"/>
 <text x="686" y="958" text-anchor="middle" fill="#94A3B8" font-size="10" font-weight="bold">LEGEND</text>
-<rect x="28" y="966" width="12" height="10" rx="2" fill="#4F46E5"/><text x="44" y="976" fill="#E2E8F0" font-size="9">Loop 1 — Estimate Generation (GitHub Actions hourly)</text>
-<rect x="28" y="984" width="12" height="10" rx="2" fill="#6D28D9"/><text x="44" y="994" fill="#E2E8F0" font-size="9">Loop 2 — AR Follow-Up (daily)</text>
-<rect x="28" y="1002" width="12" height="10" rx="2" fill="#065F46"/><text x="44" y="1012" fill="#E2E8F0" font-size="9">Loop 3 — Monthly Statements (1st of month)</text>
+<rect x="28" y="966" width="12" height="10" rx="2" fill="#4F46E5"/><text x="44" y="976" fill="#E2E8F0" font-size="9">Loop 1 â€” Estimate Generation (GitHub Actions hourly)</text>
+<rect x="28" y="984" width="12" height="10" rx="2" fill="#6D28D9"/><text x="44" y="994" fill="#E2E8F0" font-size="9">Loop 2 â€” AR Follow-Up (daily)</text>
+<rect x="28" y="1002" width="12" height="10" rx="2" fill="#065F46"/><text x="44" y="1012" fill="#E2E8F0" font-size="9">Loop 3 â€” Monthly Statements (1st of month)</text>
 <rect x="28" y="1020" width="12" height="10" rx="2" fill="#78350F"/><text x="44" y="1030" fill="#E2E8F0" font-size="9">Memory / Dream / Pricing Trainer / BA Loops</text>
 <rect x="280" y="966" width="12" height="10" rx="2" fill="#166534"/><text x="296" y="976" fill="#E2E8F0" font-size="9">GitHub Actions 24/7 (5 workflows)</text>
-<rect x="280" y="984" width="12" height="10" rx="2" fill="#7F1D1D"/><text x="296" y="994" fill="#E2E8F0" font-size="9">Failure Alerts (if:failure → Teams)</text>
-<rect x="280" y="1002" width="12" height="10" rx="2" fill="#1E3A5F"/><text x="296" y="1012" fill="#E2E8F0" font-size="9">Agent 12 — Email Monitor (IMAP · new)</text>
+<rect x="280" y="984" width="12" height="10" rx="2" fill="#7F1D1D"/><text x="296" y="994" fill="#E2E8F0" font-size="9">Failure Alerts (if:failure â†’ Teams)</text>
+<rect x="280" y="1002" width="12" height="10" rx="2" fill="#1E3A5F"/><text x="296" y="1012" fill="#E2E8F0" font-size="9">Agent 12 â€” Email Monitor (IMAP Â· new)</text>
 <rect x="280" y="1020" width="12" height="10" rx="2" fill="#4C1D95"/><text x="296" y="1030" fill="#E2E8F0" font-size="9">Agent 4 Human Gate (APPROVE/REJECT/DEFER)</text>
-<rect x="540" y="966" width="12" height="10" rx="2" fill="#450A0A"/><text x="556" y="976" fill="#E2E8F0" font-size="9">Refund Guard (hard rule — Jessica only)</text>
+<rect x="540" y="966" width="12" height="10" rx="2" fill="#450A0A"/><text x="556" y="976" fill="#E2E8F0" font-size="9">Refund Guard (hard rule â€” Jessica only)</text>
 <rect x="540" y="984" width="12" height="10" rx="2" fill="#064E3B"/><text x="556" y="994" fill="#E2E8F0" font-size="9">Change Order Clause (all estimates)</text>
 <rect x="540" y="1002" width="12" height="10" rx="2" fill="#3B82F6"/><text x="556" y="1012" fill="#E2E8F0" font-size="9">FTF CRM + Books + Pricing APIs</text>
 <rect x="540" y="1020" width="12" height="10" rx="2" fill="#A855F7"/><text x="556" y="1030" fill="#E2E8F0" font-size="9">Anthropic Claude API (9 agents)</text>
-<rect x="800" y="966" width="12" height="10" rx="2" fill="#0E7490"/><text x="816" y="976" fill="#E2E8F0" font-size="9">Sender: 6-13 min delay · 8 AM–6 PM ET only</text>
+<rect x="800" y="966" width="12" height="10" rx="2" fill="#0E7490"/><text x="816" y="976" fill="#E2E8F0" font-size="9">Sender: 6-13 min delay Â· 8 AMâ€“6 PM ET only</text>
 <rect x="800" y="984" width="12" height="10" rx="2" fill="#14B8A6"/><text x="816" y="994" fill="#E2E8F0" font-size="9">FEMA API: auto Elevation Cert if flood zone</text>
 <rect x="800" y="1002" width="12" height="10" rx="2" fill="#22C55E"/><text x="816" y="1012" fill="#E2E8F0" font-size="9">New monitoring scripts (dashboard, flag stats, email runner)</text>
 <rect x="800" y="1020" width="12" height="10" rx="2" fill="#92400E"/><text x="816" y="1030" fill="#E2E8F0" font-size="9">Sprint 11: estimate loop in Limited Production (credentials pending)</text>
@@ -388,3 +388,4 @@ p { color:#818CF8; font-size:13px; margin-bottom:20px; }
 </div>
 </body>
 </html>
+

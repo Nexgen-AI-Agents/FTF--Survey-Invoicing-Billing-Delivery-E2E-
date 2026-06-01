@@ -1,5 +1,5 @@
-CHANGE ORDER CLAUSE
-NexGen Land Surveying — Estimate Terms & Conditions
+﻿CHANGE ORDER CLAUSE
+NexGen Land Surveying â€” Estimate Terms & Conditions
 
 All estimates provided by NexGen Land Surveying are based on the scope of work described
 at the time of quotation. Acceptance of this estimate constitutes agreement to the
@@ -20,7 +20,7 @@ acceptance is a change order. This includes but is not limited to:
     actual site conditions that materially affect scope
 
 HOW TO REQUEST A CHANGE ORDER
-  1. Contact NexGen in writing at info@nexgensurveying.com or (561) 508-6272
+  1. Contact NexGen in writing at nesa@nexgenlogix.com or (561) 508-6272
      before any additional work begins.
   2. NexGen will assess the new scope and provide a written change order quote
      within one (1) business day.
@@ -43,7 +43,8 @@ approved change order.
 ---
 NexGen Land Surveying
 1547 Prosperity Farms Road, Lake Park, Florida 33403
-(561) 508-6272  |  info@nexgensurveying.com  |  nexgensurveying.com
+(561) 508-6272  |  nesa@nexgenlogix.com  |  nexgensurveying.com
 License: Florida Licensed Land Surveyor & Mapper
 
-DRAFT — Pending Ryan's review and approval before Sprint 4 go-live (I-026 / I-008)
+DRAFT â€” Pending Ryan's review and approval before Sprint 4 go-live (I-026 / I-008)
+

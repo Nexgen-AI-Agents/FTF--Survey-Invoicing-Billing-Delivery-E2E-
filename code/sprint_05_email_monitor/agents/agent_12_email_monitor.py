@@ -4,7 +4,7 @@ I-061: Ryan (2026-05-26): "There should be an agent monitoring the info emails.
 Any email that says convert/approved/go ahead — read the whole email, figure out
 what it's approving, move to pending, notify team."
 
-Monitors info@nexgensurveying.com for customer approval emails.
+Monitors nesa@nexgenlogix.com for customer approval emails.
 When a customer replies to their quote with intent to proceed:
   1. AI reads the full email to identify which order/property it refers to
   2. Moves the order from quote->pending status in FTF CRM (or our DB)
@@ -49,7 +49,7 @@ IMAP_HOST     = os.getenv("IMAP_HOST", "imap.gmail.com")
 IMAP_PORT     = int(os.getenv("IMAP_PORT", "993"))
 IMAP_USER     = os.getenv("IMAP_USER")
 IMAP_PASSWORD = os.getenv("IMAP_PASSWORD")
-MONITOR_EMAIL = "info@nexgensurveying.com"
+MONITOR_EMAIL = "nesa@nexgenlogix.com"
 
 _APPROVAL_KEYWORDS = [
     "approved", "approve", "go ahead", "go-ahead", "move forward",
@@ -103,7 +103,7 @@ def _ai_identify_order(from_addr: str, subject: str, body: str) -> dict:
       - confidence: "high" | "medium" | "low"
       - summary: str (brief summary of AI reasoning)
     """
-    prompt = f"""You are reviewing an email sent to info@nexgensurveying.com.
+    prompt = f"""You are reviewing an email sent to nesa@nexgenlogix.com.
 
 Email From: {from_addr}
 Email Subject: {subject}

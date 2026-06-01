@@ -1,5 +1,5 @@
-"""
-Generate NexGen Surveying — Florida Competitive Analysis spreadsheet.
+﻿"""
+Generate NexGen Surveying â€” Florida Competitive Analysis spreadsheet.
 Output: TEAM/research/NexGen_Competitive_Analysis_2026.xlsx
 """
 
@@ -10,7 +10,7 @@ from openpyxl.styles import (
 from openpyxl.utils import get_column_letter
 from openpyxl.styles.numbers import FORMAT_TEXT
 
-# ── Palette ──────────────────────────────────────────────────────────────────
+# â”€â”€ Palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 NAVY       = "1B3A5C"
 TEAL       = "2196A6"
 TEAL_LIGHT = "D6F0F4"
@@ -86,15 +86,15 @@ def subtitle_row(ws, row, max_col, text, bg=TEAL, fg=WHITE, height=18, size=10):
     ws.row_dimensions[row].height = height
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# SHEET 1 — OVERVIEW
-# ═════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# SHEET 1 â€” OVERVIEW
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 def sheet_overview(wb):
     ws = wb.active
     ws.title = "Overview"
     ws.sheet_view.showGridLines = False
 
-    merge_title(ws, 1, 4, "NexGen Surveying — Florida Competitive Analysis 2026")
+    merge_title(ws, 1, 4, "NexGen Surveying â€” Florida Competitive Analysis 2026")
     subtitle_row(ws, 2, 4,
         "Researched by: Competitor Analyst AI  |  Reviewed by: Ryan AI, Robert AI, Mark AI  |  Date: 2026-05-25")
 
@@ -105,13 +105,13 @@ def sheet_overview(wb):
         ("Company", "NexGen Surveying (nexgensurveying.com)"),
         ("Address", "1547 Prosperity Farms Road, Lake Park, FL 33403"),
         ("Phone", "(561) 508-6272"),
-        ("Email", "info@nexgensurveying.com"),
-        ("Hours", "Monday–Friday 9 AM–5 PM (closed weekends)"),
-        ("Service Area", "Entire state of Florida (statewide claim — no county map published)"),
+        ("Email", "nesa@nexgenlogix.com"),
+        ("Hours", "Mondayâ€“Friday 9 AMâ€“5 PM (closed weekends)"),
+        ("Service Area", "Entire state of Florida (statewide claim â€” no county map published)"),
         ("Experience", "40+ years"),
         ("Published Services", "3 of 24 actual FTF services shown on website"),
-        ("Mobile App", "Yes — Google Play + Apple App Store"),
-        ("Online Ordering", "Yes — nexgensurveying.com/order-survey/"),
+        ("Mobile App", "Yes â€” Google Play + Apple App Store"),
+        ("Online Ordering", "Yes â€” nexgensurveying.com/order-survey/"),
         ("Tagline", '"We not only meet, but beat, all of the expectations set by our industry."'),
     ]
     for i, (field, detail) in enumerate(profile):
@@ -128,21 +128,21 @@ def sheet_overview(wb):
     header_row(ws, 17, ["#", "Key Finding", "Category", "Priority"],
                bg=TEAL, height=20)
     findings = [
-        (1, "Boundary Survey is the #1 searched FL survey type — NOT on NexGen website, despite being in 24-service list",
+        (1, "Boundary Survey is the #1 searched FL survey type â€” NOT on NexGen website, despite being in 24-service list",
          "Service Gap", "P1"),
         (2, "GT Surveys (gtsurvey.com) operates 5 miles from NexGen HQ with same services + Saturday hours",
          "Competitor Threat", "P1"),
-        (3, "Homepage lists 6 services; only 3 have pages — Geological, Hydrographic, Land Subdivisions are orphaned",
+        (3, "Homepage lists 6 services; only 3 have pages â€” Geological, Hydrographic, Land Subdivisions are orphaned",
          "Website Fix", "P1"),
-        (4, "LOMA/LOMR processing is the highest-ROI upsell to elevation certificate clients — not offered",
+        (4, "LOMA/LOMR processing is the highest-ROI upsell to elevation certificate clients â€” not offered",
          "Revenue Gap", "P1"),
-        (5, "No PSM license numbers or credentials published — Florida surveyor norm violation",
+        (5, "No PSM license numbers or credentials published â€” Florida surveyor norm violation",
          "Trust Signal", "P1"),
         (6, "Apex Surveying (apexsurvey.us) covers all 67 FL counties with published pricing and LiDAR drones",
          "Statewide Threat", "P1"),
         (7, "NEVER_AUTO_QUOTE expanded from 3 to 7 services after stakeholder AI review",
          "System Config", "DONE"),
-        (8, "Monroe County (Florida Keys) has no hard flag — auto-quoting Keys surveys will lose money",
+        (8, "Monroe County (Florida Keys) has no hard flag â€” auto-quoting Keys surveys will lose money",
          "Flag Trigger Gap", "I-034"),
         (9, "National firms (Terracon, Kimley-Horn, AECOM) added to competitor list",
          "Flag Trigger", "DONE"),
@@ -169,14 +169,14 @@ def sheet_overview(wb):
     ws.freeze_panes = "A5"
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# SHEET 2 — COMPETITORS
-# ═════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# SHEET 2 â€” COMPETITORS
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 def sheet_competitors(wb):
     ws = wb.create_sheet("Competitors")
     ws.sheet_view.showGridLines = False
 
-    merge_title(ws, 1, 8, "Florida Competitors — Full Profiles")
+    merge_title(ws, 1, 8, "Florida Competitors â€” Full Profiles")
     subtitle_row(ws, 2, 8,
         "8 competitors researched via website crawl | Threat levels assigned by Ryan AI, Robert AI, Mark AI")
 
@@ -194,7 +194,7 @@ def sheet_competitors(wb):
          "All 67 Florida counties\nMiami, Tampa, Orlando, Jacksonville, Naples, Key West", "10",
          "Boundary, ALTA, Topo, Construction Staking, Elevation Certs, Drone/UAV, 3D Laser Scan, As-Built, Subdivision Platting, ROW",
          "Sub-1-hr quote response; published pricing; LiDAR drones; 500+ surveys listed",
-         "HIGH", "Published: Boundary $400–$1,000; ALTA $2,500–$10,000+"),
+         "HIGH", "Published: Boundary $400â€“$1,000; ALTA $2,500â€“$10,000+"),
         ("Land Surveying Palm Beach", "landsurveyingpalmbeach.com",
          "Palm Beach, Martin, St. Lucie, Indian River counties\n40+ municipalities", "9",
          "ALTA, Boundary, Flood Elev Certs, Topo, Construction Layout, Subdivision Plats, As-Built, Tree/Utility, Lot Split",
@@ -211,7 +211,7 @@ def sheet_competitors(wb):
          "Hybrid surveying + civil engineering; 20+ yrs; 48-hr turnaround; FSMS + NSPS member",
          "MEDIUM", "Not published; 48-hr turnaround claim"),
         ("Stoner & Associates, Inc.", "stonersurveyors.com",
-         "South Florida — HQ: Davie, Broward County", "15",
+         "South Florida â€” HQ: Davie, Broward County", "15",
          "ALTA, As-Built, Aviation, Boundary, Construction, Drone, Engineering, Environmental, Litigation, Topo, Utility Mapping, Hydrographic",
          "3rd-generation firm since 1988; aviation surveys, litigation surveys, hydrographic specializations",
          "LOW-MEDIUM", "Not published"),
@@ -253,24 +253,24 @@ def sheet_competitors(wb):
     ws.freeze_panes = "A4"
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# SHEET 3 — SERVICE COMPARISON
-# ═════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# SHEET 3 â€” SERVICE COMPARISON
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 def sheet_service_comparison(wb):
     ws = wb.create_sheet("Service Comparison")
     ws.sheet_view.showGridLines = False
 
-    merge_title(ws, 1, 9, "Service Comparison Matrix — NexGen vs. Florida Competitors")
+    merge_title(ws, 1, 9, "Service Comparison Matrix â€” NexGen vs. Florida Competitors")
     subtitle_row(ws, 2, 9,
-        "✅ = offered  ❌ = not offered / not published  ⚠️ = listed on homepage but no service page")
+        "âœ… = offered  âŒ = not offered / not published  âš ï¸ = listed on homepage but no service page")
 
     headers = ["Service", "NexGen", "GT Surveys", "Apex", "Land Survey PB",
                "Accurate", "Suarez", "Stoner", "SurvTech"]
     header_row(ws, 3, headers, bg=NAVY)
 
-    Y = "✅"
-    N = "❌"
-    W = "⚠️"
+    Y = "âœ…"
+    N = "âŒ"
+    W = "âš ï¸"
     services = [
         # (Service, NexGen, GT, Apex, LSPB, Accurate, Suarez, Stoner, SurvTech)
         ("Mortgage / Purchase Surveys",  Y, Y, N, N, Y, N, N, N),
@@ -330,10 +330,10 @@ def sheet_service_comparison(wb):
     header_row(ws, r, ["Legend", "", "", "", "", "", "", "", ""], bg=DGRAY,
                fg=BLACK, height=16)
     legends = [
-        ("✅ Green", "Service offered by this company"),
-        ("❌ Red (NexGen row)", "NexGen gap — offered by competitors but not by NexGen"),
-        ("⚠️ Orange", "Listed on NexGen homepage but no service page exists"),
-        ("Bold red service name", "Gap row — NexGen does not offer but competitors do"),
+        ("âœ… Green", "Service offered by this company"),
+        ("âŒ Red (NexGen row)", "NexGen gap â€” offered by competitors but not by NexGen"),
+        ("âš ï¸ Orange", "Listed on NexGen homepage but no service page exists"),
+        ("Bold red service name", "Gap row â€” NexGen does not offer but competitors do"),
     ]
     for j, (sym, desc) in enumerate(legends):
         ws.merge_cells(start_row=r+1+j, start_column=2,
@@ -346,14 +346,14 @@ def sheet_service_comparison(wb):
     ws.freeze_panes = "B4"
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# SHEET 4 — IMPROVEMENT PRIORITIES
-# ═════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# SHEET 4 â€” IMPROVEMENT PRIORITIES
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 def sheet_priorities(wb):
     ws = wb.create_sheet("Improvement Priorities")
     ws.sheet_view.showGridLines = False
 
-    merge_title(ws, 1, 5, "Improvement Priorities — NexGen Surveying")
+    merge_title(ws, 1, 5, "Improvement Priorities â€” NexGen Surveying")
     subtitle_row(ws, 2, 5,
         "P1 = Do now (competitive necessity)  |  P2 = Next quarter  |  P3 = Future consideration")
 
@@ -363,9 +363,9 @@ def sheet_priorities(wb):
     priorities = [
         # P1
         ("1", "P1", "Service Portfolio",
-         "Boundary Survey — #1 searched FL survey type — not on website despite being in 24-service list",
+         "Boundary Survey â€” #1 searched FL survey type â€” not on website despite being in 24-service list",
          "Add Boundary Surveys as named service page immediately. Already in FTF system at $350. Pure marketing fix."),
-        ("2", "P1", "Revenue — LOMA/LOMR",
+        ("2", "P1", "Revenue â€” LOMA/LOMR",
          "Elevation cert clients need LOMA processing next. No Flood Florida built a business on this step NexGen skips.",
          "Add LOMA/LOMR submission as upsell to every elevation certificate order. High-value, minimal overhead."),
         ("3", "P1", "Pricing Transparency",
@@ -375,16 +375,16 @@ def sheet_priorities(wb):
          "Claims statewide coverage but zero counties/cities published. Cannot rank in local searches.",
          "Publish explicit county list or coverage map. Add county + city names to service pages for local SEO."),
         ("5", "P1", "Homepage Content Fix",
-         "Homepage lists Geological Surveying, Hydrographic Survey, Land Subdivisions — none have service pages.",
+         "Homepage lists Geological Surveying, Hydrographic Survey, Land Subdivisions â€” none have service pages.",
          "Either publish proper service pages OR remove from homepage. Every listed service must have a page."),
-        ("6", "P1", "SEO — Local Landing Pages",
+        ("6", "P1", "SEO â€” Local Landing Pages",
          "No county-level or service+location landing pages. Competitors rank for 'West Palm Beach boundary survey'.",
          "Create landing pages per county served x per service type to capture long-tail local searches."),
         ("7", "P1", "License Transparency",
          "No PSM license numbers, DBPR IDs, or professional association memberships published.",
          "Publish PSM license numbers, DBPR registration, FSMS/NSPS membership on About page and footer."),
         ("8", "P1", "GT Surveys Threat",
-         "GT Surveys — 5 miles from HQ, same services, opens Saturday. Direct local competition.",
+         "GT Surveys â€” 5 miles from HQ, same services, opens Saturday. Direct local competition.",
          "Differentiate on speed, technology, or service breadth. Adding Saturday hours directly neutralizes GT's main advantage."),
         # P2
         ("9", "P2", "Saturday Availability",
@@ -395,12 +395,12 @@ def sheet_priorities(wb):
          "Publish quote-response SLA (e.g., 'Quotes within 2 hours during business hours') and honor it."),
         ("11", "P2", "Technology Specifics",
          "Claims 'cutting-edge technology' without naming equipment. Every competitor says the same.",
-         "Name actual equipment used. If NexGen uses GPS rovers, robotic total stations — say so explicitly."),
+         "Name actual equipment used. If NexGen uses GPS rovers, robotic total stations â€” say so explicitly."),
         ("12", "P2", "Google Reviews",
          "No Google review count or rating featured. First Choice Surveying leads with '4.9/5 (50+ reviews)'.",
          "Embed live Google review widget or display star rating + count on homepage. Top trust signal for local services."),
         ("13", "P2", "Realtor Referral Network",
-         "Accurate Land Surveyors runs free RE professional seminars — a referral pipeline. NexGen has none.",
+         "Accurate Land Surveyors runs free RE professional seminars â€” a referral pipeline. NexGen has none.",
          "Create Realtor Resource page with free 'How to Read a Mortgage Survey' PDF. Email realtors in Palm Beach + Broward."),
         ("14", "P2", "Mobile App Promotion",
          "Mobile app exists (Play + App Store) but barely visible on site. Genuine differentiator vs. most competitors.",
@@ -410,7 +410,7 @@ def sheet_priorities(wb):
          "6/8 competitors offer these repeat-business services tied to builders and contractors.",
          "Add As-Built Surveys + Construction Staking. Required for CO in many municipalities. High repeat-business volume."),
         ("16", "P3", "Web Consolidation",
-         "NexGen operates 3 web properties (nexgensurveying.com, nexgensurveyingllc.com, Square site) — fragmented SEO.",
+         "NexGen operates 3 web properties (nexgensurveying.com, nexgensurveyingllc.com, Square site) â€” fragmented SEO.",
          "Consolidate to one domain with 301 redirects from the secondary properties."),
     ]
 
@@ -433,14 +433,14 @@ def sheet_priorities(wb):
     ws.freeze_panes = "A4"
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# SHEET 5 — FLAG TRIGGERS
-# ═════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# SHEET 5 â€” FLAG TRIGGERS
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 def sheet_flag_triggers(wb):
     ws = wb.create_sheet("Flag Triggers Config")
     ws.sheet_view.showGridLines = False
 
-    merge_title(ws, 1, 4, "Agent 4 Flag Triggers — Competitor Detection Configuration")
+    merge_title(ws, 1, 4, "Agent 4 Flag Triggers â€” Competitor Detection Configuration")
     subtitle_row(ws, 2, 4,
         "Bootstrapped 2026-05-25 | Reviewed by Ryan AI, Robert AI, Mark AI | Robert/Mark validation required before Sprint 3")
 
@@ -449,7 +449,7 @@ def sheet_flag_triggers(wb):
                bg=TEAL, height=20)
     naq = [
         ("Specific Purpose Survey",
-         "Scope undefined until client describes purpose — could be $600 to $6,000+",
+         "Scope undefined until client describes purpose â€” could be $600 to $6,000+",
          "Competitor Analyst AI", "Confirmed by all 3 agents"),
         ("Lot Split",
          "County/municipality review required; public hearing coordination; unpredictable timeline",
@@ -462,13 +462,13 @@ def sheet_flag_triggers(wb):
          "Ryan AI + Robert AI", "Confirmed by Ryan AI + Robert AI"),
         ("Acreage",
          "$250 base rate does not hold above ~2 acres; large acreage scope swings hard",
-         "Mark AI", "Confirmed by Mark AI — real Mark to validate"),
+         "Mark AI", "Confirmed by Mark AI â€” real Mark to validate"),
         ("Legal Description",
          "Rural/metes-and-bounds parcels are not flat-rate safe; liability exposure on errors",
-         "Robert AI + Mark AI", "Confirmed by Robert + Mark AI — real Robert to validate"),
+         "Robert AI + Mark AI", "Confirmed by Robert + Mark AI â€” real Robert to validate"),
         ("Topography Survey",
-         "$225 listed price is below FL market rate ($500–$2,000); commercial scope not flat-rate safe",
-         "Mark AI", "Confirmed by Mark AI — real Mark to validate"),
+         "$225 listed price is below FL market rate ($500â€“$2,000); commercial scope not flat-rate safe",
+         "Mark AI", "Confirmed by Mark AI â€” real Mark to validate"),
     ]
     for i, (svc, reason, addedby, validation) in enumerate(naq):
         r = 4 + i
@@ -490,38 +490,38 @@ def sheet_flag_triggers(wb):
                bg=NAVY, height=20)
     competitors_list = [
         ("Apex Surveying & Mapping", "apexsurvey.us", "FL Statewide", "Web-confirmed"),
-        ("Apex Surveying", "apexsurvey.us", "FL Statewide", "Alias — confirmed"),
+        ("Apex Surveying", "apexsurvey.us", "FL Statewide", "Alias â€” confirmed"),
         ("GT Surveys", "gtsurvey.com", "Palm Beach + Broward", "Web-confirmed"),
-        ("GT Surveyors", "gtsurvey.com", "Palm Beach + Broward", "Alias — confirmed"),
+        ("GT Surveyors", "gtsurvey.com", "Palm Beach + Broward", "Alias â€” confirmed"),
         ("Land Surveying Palm Beach", "landsurveyingpalmbeach.com", "4-county South FL", "Web-confirmed"),
         ("Accurate Land Surveyors", "accuratelandsurveyors.com", "5-county South FL", "Web-confirmed"),
-        ("Accurate Land Surveyors Inc", "accuratelandsurveyors.com", "5-county South FL", "Alias — confirmed"),
+        ("Accurate Land Surveyors Inc", "accuratelandsurveyors.com", "5-county South FL", "Alias â€” confirmed"),
         ("Suarez Surveying & Mapping", "suarezsurveying.com", "South FL", "Web-confirmed"),
         ("Stoner & Associates", "stonersurveyors.com", "Broward County", "Web-confirmed"),
         ("SurvTech Solutions", "survtechsolutions.com", "Tampa + 5 FL offices", "Web-confirmed"),
         ("No Flood Florida", "nofloodflorida.com", "FL Statewide", "Web-confirmed"),
-        ("National Flood Experts", "nofloodflorida.com", "FL Statewide", "Alias — confirmed"),
+        ("National Flood Experts", "nofloodflorida.com", "FL Statewide", "Alias â€” confirmed"),
         ("First Choice Surveying", "firstchoicesurveying.com", "FL", "Web-confirmed"),
         ("John Ibarra & Associates", "ibarralandsurveyors.com", "FL", "Web-confirmed"),
         ("GeoPoint Surveying", "geopointsurvey.com", "FL", "Web-confirmed"),
         ("Target Surveying", "targetsurveying.com", "FL", "Web-confirmed"),
-        ("Sliger & Associates", "—", "FL", "Web-confirmed"),
-        ("Fordco Surveying", "—", "FL", "Web-confirmed — domain unknown"),
-        ("Atlantic Coast Surveying", "acsiweb.net", "FL", "⚠️ NEEDS REAL ROBERT — generic name risk"),
-        ("Florida Land Surveying", "floridalandsurveying.com", "FL", "⚠️ NEEDS REAL ROBERT — generic name risk"),
+        ("Sliger & Associates", "â€”", "FL", "Web-confirmed"),
+        ("Fordco Surveying", "â€”", "FL", "Web-confirmed â€” domain unknown"),
+        ("Atlantic Coast Surveying", "acsiweb.net", "FL", "âš ï¸ NEEDS REAL ROBERT â€” generic name risk"),
+        ("Florida Land Surveying", "floridalandsurveying.com", "FL", "âš ï¸ NEEDS REAL ROBERT â€” generic name risk"),
         ("Florida Builders Engineers & Inspectors", "landsurveyingpalmbeach.com", "4-county South FL", "DBA of Land Surveying PB"),
-        ("Terracon", "terracon.com", "National (FL active)", "Mark AI — national firm FL survey division"),
-        ("Terracon Consultants", "terracon.com", "National (FL active)", "Alias — confirmed"),
-        ("Kimley-Horn", "kimley-horn.com", "National (FL active)", "Mark AI — significant FL presence"),
-        ("Kimley-Horn and Associates", "kimley-horn.com", "National (FL active)", "Alias — confirmed"),
-        ("AECOM", "aecom.com", "National (FL active)", "Mark AI — FL infrastructure projects"),
+        ("Terracon", "terracon.com", "National (FL active)", "Mark AI â€” national firm FL survey division"),
+        ("Terracon Consultants", "terracon.com", "National (FL active)", "Alias â€” confirmed"),
+        ("Kimley-Horn", "kimley-horn.com", "National (FL active)", "Mark AI â€” significant FL presence"),
+        ("Kimley-Horn and Associates", "kimley-horn.com", "National (FL active)", "Alias â€” confirmed"),
+        ("AECOM", "aecom.com", "National (FL active)", "Mark AI â€” FL infrastructure projects"),
     ]
 
     valid_colors = {
         "Web-confirmed": GREEN_LIGHT,
-        "Alias — confirmed": GREEN_LIGHT,
-        "Alias — confirmed": GREEN_LIGHT,
-        "Web-confirmed — domain unknown": YELLOW_LIGHT,
+        "Alias â€” confirmed": GREEN_LIGHT,
+        "Alias â€” confirmed": GREEN_LIGHT,
+        "Web-confirmed â€” domain unknown": YELLOW_LIGHT,
         "DBA of Land Surveying PB": TEAL_LIGHT,
     }
 
@@ -541,9 +541,9 @@ def sheet_flag_triggers(wb):
     ws.freeze_panes = "A4"
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# SHEET 6 — PRICING BENCHMARKS
-# ═════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# SHEET 6 â€” PRICING BENCHMARKS
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 def sheet_pricing(wb):
     ws = wb.create_sheet("Pricing Benchmarks")
     ws.sheet_view.showGridLines = False
@@ -556,37 +556,37 @@ def sheet_pricing(wb):
     header_row(ws, 3, headers, bg=NAVY)
 
     pricing = [
-        ("Mortgage / Purchase Survey", "$350–600 (varies)", "$200–$500 residential",
+        ("Mortgage / Purchase Survey", "$350â€“600 (varies)", "$200â€“$500 residential",
          "At or above market", "NexGen's core volume service. Price range competitive."),
-        ("Elevation Certificate", "$225", "$175–$900 residential; up to $2,000 complex",
-         "⚠️ LOW end of market", "NexGen price is low for a commodity service. Could increase without losing volume."),
-        ("ALTA Survey", "$2,000–$3,000 (published)", "$2,500–$10,000+",
-         "⚠️ Priced below market floor", "NexGen publishes $2,000–$3,000 but Apex quotes $2,500+ as floor. May be underpricing."),
-        ("Boundary Survey", "$350 (FTF rate)", "$400–$1,000 residential",
+        ("Elevation Certificate", "$225", "$175â€“$900 residential; up to $2,000 complex",
+         "âš ï¸ LOW end of market", "NexGen price is low for a commodity service. Could increase without losing volume."),
+        ("ALTA Survey", "$2,000â€“$3,000 (published)", "$2,500â€“$10,000+",
+         "âš ï¸ Priced below market floor", "NexGen publishes $2,000â€“$3,000 but Apex quotes $2,500+ as floor. May be underpricing."),
+        ("Boundary Survey", "$350 (FTF rate)", "$400â€“$1,000 residential",
          "Below market", "NexGen FTF rate is $350; FL market starts at $400. Not on NexGen website."),
-        ("Topographic Survey", "$225 (FTF rate)", "$500–$2,000 residential/small lot",
-         "⚠️ SIGNIFICANTLY BELOW market", "FTF rate is likely scoped for small residential lots only. Commercial/large site topo cannot be flat-rated at $225. Added to NEVER_AUTO_QUOTE."),
-        ("Construction Staking", "$225 (Building Stake Out)", "$300–$1,500 per phase",
-         "Below market — varies by scope", "Multiple FTF services cover construction phases. Each phase priced separately."),
-        ("Lot Split", "$450 (FTF rate)", "Varies widely — county dependent",
-         "Cannot compare — scope-dependent", "Added to NEVER_AUTO_QUOTE. Not flat-rate safe."),
-        ("Specific Purpose Survey", "$600 (FTF rate)", "$600–$5,000+ depending on purpose",
+        ("Topographic Survey", "$225 (FTF rate)", "$500â€“$2,000 residential/small lot",
+         "âš ï¸ SIGNIFICANTLY BELOW market", "FTF rate is likely scoped for small residential lots only. Commercial/large site topo cannot be flat-rated at $225. Added to NEVER_AUTO_QUOTE."),
+        ("Construction Staking", "$225 (Building Stake Out)", "$300â€“$1,500 per phase",
+         "Below market â€” varies by scope", "Multiple FTF services cover construction phases. Each phase priced separately."),
+        ("Lot Split", "$450 (FTF rate)", "Varies widely â€” county dependent",
+         "Cannot compare â€” scope-dependent", "Added to NEVER_AUTO_QUOTE. Not flat-rate safe."),
+        ("Specific Purpose Survey", "$600 (FTF rate)", "$600â€“$5,000+ depending on purpose",
          "Floor rate only", "Added to NEVER_AUTO_QUOTE. Scope unknown until client describes."),
-        ("Wetland Delineation", "$300 (FTF rate)", "Regulatory — not market-priced",
+        ("Wetland Delineation", "$300 (FTF rate)", "Regulatory â€” not market-priced",
          "Not comparable", "FDEP/Army Corps scope makes this non-quotable at flat rate. In NEVER_AUTO_QUOTE."),
-        ("LOMA / LOMR Processing", "Not offered", "$500–$2,000 professional fee",
+        ("LOMA / LOMR Processing", "Not offered", "$500â€“$2,000 professional fee",
          "Revenue gap", "No Flood Florida has built a standalone business on LOMA processing. Natural upsell after elevation cert."),
-        ("Legal Description", "$300 (FTF rate)", "Varies — simple to complex",
+        ("Legal Description", "$300 (FTF rate)", "Varies â€” simple to complex",
          "Simple OK; complex underpriced", "Metes-and-bounds descriptions in rural FL counties are not $300 jobs. Added to NEVER_AUTO_QUOTE."),
-        ("Acreage Survey", "$250 (FTF rate)", "$400–$2,000+ depending on acreage",
-         "⚠️ Underpriced for large lots", "FL market rate scales with acreage. $250 flat rate only holds for small residential. Added to NEVER_AUTO_QUOTE."),
+        ("Acreage Survey", "$250 (FTF rate)", "$400â€“$2,000+ depending on acreage",
+         "âš ï¸ Underpriced for large lots", "FL market rate scales with acreage. $250 flat rate only holds for small residential. Added to NEVER_AUTO_QUOTE."),
     ]
 
     for i, (svc, nexgen, market, delta, notes) in enumerate(pricing):
         r = 4 + i
         bg = GRAY if i % 2 == 0 else WHITE
         risk = "BELOW" in delta or "gap" in delta.lower() or "under" in delta.lower()
-        warn = "⚠️" in delta
+        warn = "âš ï¸" in delta
         delta_bg = RED_LIGHT if risk or warn else GREEN_LIGHT if "competitive" in delta.lower() else YELLOW_LIGHT
         data_cell(ws, r, 1, svc, bg=bg, bold=True, fg=NAVY, size=10)
         data_cell(ws, r, 2, nexgen, bg=bg, size=10, h_align="center")
@@ -600,14 +600,14 @@ def sheet_pricing(wb):
     ws.freeze_panes = "A4"
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# SHEET 7 — STAKEHOLDER REVIEW
-# ═════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+# SHEET 7 â€” STAKEHOLDER REVIEW
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 def sheet_stakeholder_review(wb):
     ws = wb.create_sheet("Stakeholder AI Review")
     ws.sheet_view.showGridLines = False
 
-    merge_title(ws, 1, 4, "Stakeholder AI Review — Ryan, Robert, Mark")
+    merge_title(ws, 1, 4, "Stakeholder AI Review â€” Ryan, Robert, Mark")
     subtitle_row(ws, 2, 4,
         "All three Stakeholder AI agents reviewed the competitive analysis on 2026-05-25 | Items marked [Real Human] require confirmation before Sprint 3")
 
@@ -616,38 +616,38 @@ def sheet_stakeholder_review(wb):
                bg=NAVY, height=20)
     actions = [
         ("Removed studioaeng.com + cwi-assoc.com from competitor domains",
-         "Ryan AI + Robert AI", "DONE", "—"),
+         "Ryan AI + Robert AI", "DONE", "â€”"),
         ("Added B-II Title Review to NEVER_AUTO_QUOTE",
-         "Ryan AI + Robert AI", "DONE", "—"),
+         "Ryan AI + Robert AI", "DONE", "â€”"),
         ("Added Acreage to NEVER_AUTO_QUOTE",
          "Mark AI", "DONE", "Real Mark to validate threshold"),
         ("Added Legal Description to NEVER_AUTO_QUOTE",
          "Robert AI + Mark AI", "DONE", "Real Robert to validate"),
         ("Added Topography Survey to NEVER_AUTO_QUOTE",
-         "Mark AI", "DONE", "Real Mark to validate — $225 vs market $500+"),
+         "Mark AI", "DONE", "Real Mark to validate â€” $225 vs market $500+"),
         ("Added Terracon, Kimley-Horn, AECOM to COMPETITOR_NAMES",
          "Mark AI", "DONE", "Real Robert/Mark to confirm"),
-        ("Monroe County (Keys) hard flag missing — I-034 logged",
+        ("Monroe County (Keys) hard flag missing â€” I-034 logged",
          "Mark AI", "ISSUE LOGGED", "Real Mark: does NexGen service the Keys?"),
-        ("VE flood zone not flagged as coastal trigger — I-035 logged",
+        ("VE flood zone not flagged as coastal trigger â€” I-035 logged",
          "Mark AI", "ISSUE LOGGED", "Sprint 2 dev: parse flood_zone for 'V' prefix"),
-        ("Missing property_county guard — I-036 logged",
+        ("Missing property_county guard â€” I-036 logged",
          "Mark AI", "ISSUE LOGGED", "Sprint 2 dev: flag null/empty county"),
-        ("False FL address coordinate cross-check — I-037 logged",
+        ("False FL address coordinate cross-check â€” I-037 logged",
          "Mark AI", "ISSUE LOGGED", "Sprint 2 dev: check lat > 31.0 if state = FL"),
-        ('"Florida Land Surveying" + "Atlantic Coast Surveying" false positive risk — I-038',
-         "Ryan AI + Robert AI", "NEEDS REAL ROBERT/MARK", "Confirm or remove — too generic, may block legitimate clients"),
-        ("acsiweb.net — identity unconfirmed",
+        ('"Florida Land Surveying" + "Atlantic Coast Surveying" false positive risk â€” I-038',
+         "Ryan AI + Robert AI", "NEEDS REAL ROBERT/MARK", "Confirm or remove â€” too generic, may block legitimate clients"),
+        ("acsiweb.net â€” identity unconfirmed",
          "Robert AI", "NEEDS REAL ROBERT", "Confirm: is this Atlantic Coast Surveying Inc?"),
         ("Surveyor's Affidavit as NEVER_AUTO_QUOTE candidate",
-         "Ryan AI", "NEEDS REAL RYAN", "Liability call — only real Ryan can decide"),
+         "Ryan AI", "NEEDS REAL RYAN", "Liability call â€” only real Ryan can decide"),
         ("LOMA/LOMR as Phase 1 scope item",
          "Ryan AI", "NEEDS REAL RYAN", "Is LOMA/LOMR upsell in scope for Phase 1 build?"),
         ("Small local Palm Beach/Broward competitors with no web presence",
-         "Mark AI", "NEEDS REAL MARK", "Web research cannot find these — only institutional memory"),
+         "Mark AI", "NEEDS REAL MARK", "Web research cannot find these â€” only institutional memory"),
         ("Competitor alert format: must include matched field + value + competitor name",
          "Ryan AI + Robert AI", "SPRINT 3 REQUIREMENT", "Dev Manager: add to Sprint 3 human gate notification payload"),
-        ("B2B title company orders — soft flag for Robert review (not hard competitor block)",
+        ("B2B title company orders â€” soft flag for Robert review (not hard competitor block)",
          "Mark AI", "SPRINT 3 REQUIREMENT", "New flag logic: B2B + known title company name = soft flag"),
     ]
 
@@ -679,9 +679,9 @@ def sheet_stakeholder_review(wb):
     ws.freeze_panes = "A4"
 
 
-# ═════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # MAIN
-# ═════════════════════════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 def main():
     wb = Workbook()
 
@@ -702,3 +702,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
