@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FTF Invoice Pipeline — Client Architecture v5</title>
+  <style>
+    :root {
+      --orange: #f97316;
+      --purple: #8b5cf6;
+      --blue:   #3b82f6;
+      --green:  #16a34a;
+      --red:    #dc2626;
+      --amber:  #d97706;
+      --slate:  #64748b;
+      --bg:     #f1f5f9;
+      --card:   #ffffff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: #1e293b;
+      padding: 40px 20px;
+      min-width: 860px;
+    }
+    .page { max-width: 980px; margin: 0 auto; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 44px; }
+    .header h1 { font-size: 30px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+    .header .sub { color: var(--slate); margin-top: 6px; font-size: 15px; }
+    .cron-badge {
+      display: inline-block; background: #e0f2fe; color: #0369a1;
+      padding: 5px 14px; border-radius: 20px; font-size: 13px;
+      font-weight: 700; margin-top: 14px;
+    }
+
+    /* Layout */
+    .flow { display: flex; flex-direction: column; }
+    .row  { display: flex; align-items: flex-start; gap: 16px; }
+    .spacer { width: 180px; flex-shrink: 0; }
+    .side   { width: 180px; flex-shrink: 0; }
+
+    /* Step card */
+    .step {
+      flex: 1; background: var(--card); border-radius: 14px;
+      padding: 20px 22px; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      border-left: 5px solid var(--slate);
+    }
+    .step-num  { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--slate); margin-bottom: 4px; }
+    .step-title { font-size: 17px; font-weight: 800; margin-bottom: 7px; }
+    .step-desc  { font-size: 13.5px; color: #475569; line-height: 1.55; }
+    .badges { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px; }
+    .badge { font-size: 11px; background: #f1f5f9; color: #475569; padding: 3px 9px; border-radius: 5px; font-weight: 700; }
+
+    .orange { border-left-color: var(--orange); } .orange .step-title { color: var(--orange); }
+    .purple { border-left-color: var(--purple); } .purple .step-title { color: var(--purple); }
+    .blue   { border-left-color: var(--blue);   } .blue   .step-title { color: var(--blue);   }
+    .green  { border-left-color: var(--green);  } .green  .step-title { color: var(--green);  }
+
+    /* Connector */
+    .connector { display: flex; align-items: center; margin: 6px 0; }
+    .connector-spacer { width: 180px; flex-shrink: 0; }
+    .connector-line { flex: 1; display: flex; flex-direction: column; align-items: center; }
+    .vline { width: 2px; height: 20px; background: #cbd5e1; }
+    .arrow-head { width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 10px solid #cbd5e1; }
+    .connector-side { width: 180px; flex-shrink: 0; }
+
+    /* Side card */
+    .side-card {
+      background: var(--card); border-radius: 10px; padding: 12px 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07); font-size: 13px; margin-top: 4px;
+    }
+    .side-card .slabel { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .src-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f1f5f9; font-size: 12.5px; }
+    .src-item:last-child { border-bottom: none; }
+
+    /* Alert */
+    .not-found { flex: 1; background: #fef2f2; border: 2px solid var(--red); border-radius: 12px; padding: 14px 18px; }
+    .nf-label  { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--red); margin-bottom: 6px; }
+    .nf-msg    { font-family: 'Consolas', monospace; font-size: 13px; background: #fee2e2; padding: 7px 10px; border-radius: 6px; color: #7f1d1d; }
+    .nf-sub    { font-size: 12px; color: #991b1b; margin-top: 6px; }
+
+    /* Branches */
+    .branches { flex: 1; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .branch { border-radius: 10px; padding: 13px 14px; border: 2px solid; }
+    .branch .blabel { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+    .branch .bdesc  { font-size: 12.5px; color: #475569; line-height: 1.4; }
+    .branch-hold   { border-color: var(--amber); background: #fffbeb; } .branch-hold   .blabel { color: var(--amber); }
+    .branch-reject { border-color: var(--red);   background: #fef2f2; } .branch-reject .blabel { color: var(--red);   }
+    .branch-qa     { border-color: var(--blue);  background: #eff6ff; } .branch-qa     .blabel { color: var(--blue);  }
+
+    /* Teams confirm */
+    .teams-confirm { flex: 1; background: #eff6ff; border: 2px solid var(--blue); border-radius: 12px; padding: 14px 18px; }
+    .tc-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--blue); margin-bottom: 6px; }
+    .tc-msg   { font-family: 'Consolas', monospace; font-size: 13px; background: #dbeafe; padding: 7px 10px; border-radius: 6px; color: #1e40af; }
+
+    /* Loop */
+    .loop-box { flex: 1; border: 2px dashed #94a3b8; border-radius: 12px; padding: 14px; text-align: center; color: var(--slate); font-size: 14px; font-weight: 700; background: #f8fafc; }
+
+    /* Channel info */
+    .channel-pill {
+      display: inline-block; font-size: 10px; font-weight: 700;
+      background: #dbeafe; color: #1e40af;
+      padding: 3px 8px; border-radius: 5px; margin-top: 6px;
+      font-family: 'Consolas', monospace; word-break: break-all;
+    }
+
+    /* Legend */
+    .legend { margin-top: 44px; background: var(--card); border-radius: 14px; padding: 18px 22px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+    .legend h3 { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--slate); margin-bottom: 12px; }
+    .legend-items { display: flex; flex-wrap: wrap; gap: 14px 24px; }
+    .legend-item  { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .legend-dot   { width: 13px; height: 13px; border-radius: 4px; flex-shrink: 0; }
+
+    /* Footer */
+    .footer { text-align: center; margin-top: 28px; color: #94a3b8; font-size: 12px; line-height: 1.8; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>FTF Invoice Pipeline</h1>
+    <div class="sub">Automated Invoice Processing &amp; Approval Workflow — Sprint 11</div>
+    <div class="cron-badge">&#9201;&nbsp; Runs every 15 minutes &nbsp;|&nbsp; GitHub Actions</div>
+  </div>
+
+  <div class="flow">
+
+    <!-- STEP 1 -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="step orange">
+        <div class="step-num">Step 1 — Trigger</div>
+        <div class="step-title">Scan for $ Flagged Orders</div>
+        <div class="step-desc">
+          Every 15 minutes, query FTF for all orders carrying the
+          <strong>$ (invoice_needed)</strong> flag. Already-processed orders are skipped.
+        </div>
+        <div class="badges"><span class="badge">FTF API</span><span class="badge">PostgreSQL</span></div>
+      </div>
+      <div class="side"></div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <!-- STEP 2 -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="step purple">
+        <div class="step-num">Step 2 — Data Gathering</div>
+        <div class="step-title">Gather Client Requirements</div>
+        <div class="step-desc">
+          For each flagged order, AI searches <strong>2 sources</strong> to find what
+          the client needs invoiced — services, quantities, billing details, pricing.
+        </div>
+        <div class="badges">
+          <span class="badge">FTF Order Notes</span>
+          <span class="badge">Email Inbox</span>
+          <span class="badge">Claude AI</span>
+        </div>
+      </div>
+      <div class="side">
+        <div class="side-card">
+          <div class="slabel" style="color:var(--purple)">2 Data Sources</div>
+          <div class="src-item"><span>📋</span><span>FTF order notes</span></div>
+          <div class="src-item"><span>📧</span><span>nesa@nexgenlogix.com</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <!-- NOT FOUND -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="not-found">
+        <div class="nf-label">&#9888;&nbsp; If client details not found in either source</div>
+        <div class="nf-msg">Client details not found for #ORDER-XXXX</div>
+        <div class="nf-sub">Posted to Teams channel — order skipped until details are provided</div>
+      </div>
+      <div class="side"></div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <!-- STEP 3 -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="step purple">
+        <div class="step-num">Step 3 — Invoice Preparation</div>
+        <div class="step-title">Prepare &amp; Price Invoice</div>
+        <div class="step-desc">
+          AI extracts all service details from the gathered requirements and checks
+          everything that should appear on the invoice. Pricing is validated against
+          <strong>last 2 years of invoice history</strong> for similar jobs in the same area.
+          If price is not justified for current year or market, AI suggests a correction.
+        </div>
+        <div class="badges">
+          <span class="badge">Invoice History (2 yrs)</span>
+          <span class="badge">Area / Market Rates</span>
+          <span class="badge">Claude AI</span>
+        </div>
+      </div>
+      <div class="side">
+        <div class="side-card">
+          <div class="slabel" style="color:var(--purple)">Pricing Checks</div>
+          <div class="src-item"><span>📜</span><span>Last 2 yrs of invoices</span></div>
+          <div class="src-item"><span>📍</span><span>Same area / job type</span></div>
+          <div class="src-item"><span>🗓️</span><span>Current year rates</span></div>
+          <div class="src-item"><span>🏷️</span><span>AI price suggestion</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <!-- STEP 4 -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="step blue">
+        <div class="step-num">Step 4 — Human Gate</div>
+        <div class="step-title">Request Approval via Teams Channel</div>
+        <div class="step-desc">
+          Invoice details + order # are posted to the <strong>Teams channel</strong>.
+          Ryan / Robert / Prateek reply with Approve / Reject / Hold — or ask questions.
+          AI answers in the channel, modifies if needed, and re-requests approval.
+          <em>No invoice is created or email sent before approval.</em>
+        </div>
+        <div class="badges">
+          <span class="badge">MS Teams Graph API</span>
+          <span class="badge">Claude AI (Q&amp;A)</span>
+        </div>
+        <div class="channel-pill">19:50IGnbm0MQft2C4eUkl8RXLk6wa2IRpEEE-ySnUeaV81@thread.tacv2</div>
+      </div>
+      <div class="side"></div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <!-- Branches -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="branches">
+        <div class="branch branch-hold">
+          <div class="blabel">&#9679; Hold</div>
+          <div class="bdesc">Skip this cycle — order checked again on next 15-minute run</div>
+        </div>
+        <div class="branch branch-reject">
+          <div class="blabel">&#9679; Reject</div>
+          <div class="bdesc">Mark order rejected — stop processing, log reason</div>
+        </div>
+        <div class="branch branch-qa">
+          <div class="blabel">&#9679; Questions / Modify</div>
+          <div class="bdesc">AI answers in Teams, updates invoice, re-posts for re-confirmation</div>
+        </div>
+      </div>
+      <div class="side"></div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <!-- STEP 5 -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="step green">
+        <div class="step-num">Step 5 — Execute (Approve only)</div>
+        <div class="step-title">Create Invoice &amp; Email Client</div>
+        <div class="step-desc">
+          Once approved, the invoice is <strong>created in FTF</strong> and emailed
+          to the client with the invoice attached. Nothing is generated or sent before approval.
+        </div>
+        <div class="badges">
+          <span class="badge">FTF API (POST /invoices)</span>
+          <span class="badge">SMTP Email</span>
+        </div>
+      </div>
+      <div class="side"></div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <!-- Teams confirm -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="teams-confirm">
+        <div class="tc-label">&#10003;&nbsp; Teams Confirmation (Step 5b)</div>
+        <div class="tc-msg">Email sent to [Client Name / Email], approved by [User]</div>
+      </div>
+      <div class="side"></div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <!-- Loop -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="loop-box">&#8635;&nbsp;&nbsp;Loop — repeat Step 1 on next 15-minute cycle</div>
+      <div class="side"></div>
+    </div>
+
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <h3>Legend</h3>
+    <div class="legend-items">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div><span>Trigger / Scan</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div><span>AI Processing / Gathering</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div><span>Teams Channel Communication</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div><span>Execute (post-approval only)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div><span>Error / Not Found / Reject</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div><span>Hold / Pause</span></div>
+    </div>
+  </div>
+
+  <!-- Systems -->
+  <div style="margin-top:28px;background:var(--card);border-radius:14px;padding:18px 22px;box-shadow:0 1px 4px rgba(0,0,0,.07);">
+    <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:var(--slate);margin-bottom:14px;">Connected Systems</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;">
+      <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;border:1px solid #e2e8f0;">
+        <div style="font-size:20px;margin-bottom:6px;">🔍</div>
+        <div style="font-size:12px;font-weight:700;">FTF API</div>
+        <div style="font-size:11px;color:var(--slate);margin-top:2px;">Read orders · Create invoices</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;border:1px solid #e2e8f0;">
+        <div style="font-size:20px;margin-bottom:6px;">📧</div>
+        <div style="font-size:12px;font-weight:700;">IMAP + SMTP</div>
+        <div style="font-size:11px;color:var(--slate);margin-top:2px;">Read inbox · Send invoices</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;border:1px solid #e2e8f0;">
+        <div style="font-size:20px;margin-bottom:6px;">💬</div>
+        <div style="font-size:12px;font-weight:700;">MS Teams Channel</div>
+        <div style="font-size:11px;color:var(--slate);margin-top:2px;">Alerts · Approvals · Confirms</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;border:1px solid #e2e8f0;">
+        <div style="font-size:20px;margin-bottom:6px;">🧠</div>
+        <div style="font-size:12px;font-weight:700;">Claude AI</div>
+        <div style="font-size:11px;color:var(--slate);margin-top:2px;">Extract · Price · Q&amp;A</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;border:1px solid #e2e8f0;">
+        <div style="font-size:20px;margin-bottom:6px;">🗄️</div>
+        <div style="font-size:12px;font-weight:700;">PostgreSQL DB</div>
+        <div style="font-size:11px;color:var(--slate);margin-top:2px;">State tracking · History</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Important note -->
+  <div style="margin-top:20px;background:#fff7ed;border:2px solid #fed7aa;border-radius:14px;padding:16px 20px;">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#c2410c;margin-bottom:8px;">Important — Teams Channel (not group chat)</div>
+    <div style="font-size:13px;color:#7c2d12;line-height:1.6;">
+      This pipeline posts to a <strong>Teams channel</strong> (thread.tacv2), not a group chat (thread.v2).
+      The MS Graph API uses different endpoints:
+      <code style="background:#fde68a;padding:2px 6px;border-radius:4px;font-size:12px;">
+        POST /teams/{teamId}/channels/{channelId}/messages
+      </code>
+      instead of
+      <code style="background:#fde68a;padding:2px 6px;border-radius:4px;font-size:12px;">
+        POST /chats/{chatId}/messages
+      </code>.<br>
+      The <strong>Team ID</strong> must be configured alongside the channel ID.
+    </div>
+  </div>
+
+  <div class="footer">
+    <div>NexGen Enterprises &nbsp;·&nbsp; FTF Invoice Pipeline — Sprint 11</div>
+    <div>Approvers: Robert &nbsp;·&nbsp; Ryan &nbsp;·&nbsp; Prateek</div>
+    <div>Teams Channel: 19:50IGnbm0MQft2C4eUkl8RXLk6wa2IRpEEE-ySnUeaV81@thread.tacv2</div>
+  </div>
+
+</div>
+</body>
+</html>
