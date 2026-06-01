@@ -193,9 +193,79 @@ GET https://graph.microsoft.com/v1.0/teams/{teamId}/channels
 
 ---
 
+## Step 6 — Power Automate: Real-Time Approval Trigger (Teams → GitHub)
+
+**What this does:** The moment someone types APPROVE/REJECT/HOLD in the FTF-Approvals channel, this flow immediately triggers the invoice pipeline on GitHub Actions — instead of waiting up to 15 minutes for the cron to fire.
+
+**What you need first — GitHub PAT:**
+1. Go to **github.com → Settings → Developer settings → Personal access tokens → Tokens (classic)**
+2. Click **Generate new token (classic)**
+3. Name: `FTF Power Automate Trigger`
+4. Expiry: 1 year
+5. Scopes: tick **`workflow`** only
+6. Click **Generate token** → copy the token immediately (shown once)
+7. Save it — you'll paste it into Power Automate below
+
+---
+
+**Create the Power Automate flow:**
+
+1. Go to **make.powerautomate.com** (sign in with your Microsoft 365 account)
+2. Click **Create** → **Automated cloud flow**
+3. Flow name: `FTF Invoice Approval Trigger`
+4. Search for trigger: **"When a new channel message is added"** (Microsoft Teams)
+5. Click **Create**
+
+**Configure the trigger:**
+- **Team:** NexGen Surveying (your team)
+- **Channel:** FTF-Approvals
+
+**Add a Condition step:**
+6. Click **+ New step** → search **"Condition"**
+7. In the condition builder, click **"Add row"** three times and set to OR logic:
+   - Row 1: `Message body content` → **contains** → `APPROVE`
+   - Row 2: `Message body content` → **contains** → `REJECT`
+   - Row 3: `Message body content` → **contains** → `HOLD`
+8. Change the top logic to **OR** (not AND)
+
+**In the "If yes" branch — add HTTP action:**
+9. Click **Add an action** → search **"HTTP"**
+10. Configure:
+    - **Method:** POST
+    - **URI:**
+      ```
+      https://api.github.com/repos/Nexgen-AI-Agents/FTF--Survey-Invoicing-Billing-Delivery-E2E-/actions/workflows/invoice_pipeline.yml/dispatches
+      ```
+    - **Headers** (add each separately):
+      | Key | Value |
+      |-----|-------|
+      | `Accept` | `application/vnd.github.v3+json` |
+      | `Authorization` | `Bearer {paste your GitHub PAT here}` |
+      | `Content-Type` | `application/json` |
+    - **Body:**
+      ```json
+      {"ref": "main"}
+      ```
+11. Leave the "If no" branch empty
+12. Click **Save**
+
+**Test it:**
+13. Post `APPROVE test` in the FTF-Approvals Teams channel
+14. In Power Automate → go to the flow → **Run history** → confirm it shows a successful run
+15. In GitHub → Actions → `Invoice Pipeline` → confirm a new run was triggered
+
+---
+
+**Result:** When Robert or Ryan type APPROVE/REJECT/HOLD, the pipeline starts within ~1–2 minutes (GitHub Actions runner startup time — unavoidable without a dedicated server).
+
+The 15-minute cron in `invoice_pipeline.yml` stays as a safety net to catch anything the Power Automate flow might miss.
+
+---
+
 ## Security Notes
 
 - All credentials stored only in `.env` (gitignored — never committed)
 - Graph API uses `client_credentials` flow — no user sign-in required
 - Logic App HTTP trigger URL is a secret — treat like a password
 - Rotate `TEAMS_CLIENT_SECRET` in Azure portal if compromised; update `.env`
+- GitHub PAT in Power Automate: rotate annually; update the HTTP action header when renewed
