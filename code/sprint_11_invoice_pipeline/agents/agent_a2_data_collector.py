@@ -610,7 +610,7 @@ def _min_confidence(packet: dict) -> str:
     return {3: "HIGH", 2: "MEDIUM", 1: "LOW"}.get(min_level, "LOW")
 
 
-MAX_PER_RUN = int(os.getenv("A2_MAX_PER_RUN", "20"))
+MAX_PER_RUN = int(os.getenv("A2_MAX_PER_RUN", "5"))
 
 
 def run() -> dict:

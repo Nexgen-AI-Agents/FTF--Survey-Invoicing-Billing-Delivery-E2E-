@@ -12,7 +12,6 @@ Pricing principle: NO fixed table applied mechanically.
 
 Pre-flight gates (deterministic, before AI runs):
   • Condo detection → reject (no land parcel to survey)
-  • Unsupported service → escalate to Robert/Allan (no price generated)
   • Duplicate detection → flag in Teams card; human decides
 
 Client tier classification (deterministic):
@@ -62,16 +61,6 @@ from core.teams_graph_client import post_channel_message
 AGENT_NAME = "agent_a3_invoice_compiler"
 log = get_logger(AGENT_NAME)
 
-# Services that must be escalated — AI must NOT generate a price for these.
-# Robert/Allan quote them manually.
-_ESCALATE_SERVICES = [
-    "alta", "as-built", "as built", "form board", "foundation survey",
-    "site plan", "cad file", "cad", "lot split", "sketch and description",
-    "surveyor's affidavit", "b-ii title review", "specific purpose survey",
-    "tree location", "survey re-draw",
-]
-
-
 # ── Pre-flight validation ─────────────────────────────────────────────────────
 
 def _detect_condo(order_details: dict) -> Optional[str]:
@@ -94,15 +83,6 @@ def _detect_condo(order_details: dict) -> Optional[str]:
             if after and (after[0].isdigit() or after[0].isalpha()):
                 return f"Possible condo — address contains '{pattern.strip()}' indicator"
 
-    return None
-
-
-def _detect_unsupported_service(service_type: str) -> Optional[str]:
-    """Return escalation reason if service must go to Robert/Allan, else None."""
-    svc = service_type.lower().strip()
-    for keyword in _ESCALATE_SERVICES:
-        if keyword in svc:
-            return f"Service '{service_type}' requires manual quoting by management (Robert/Allan)"
     return None
 
 
@@ -362,8 +342,7 @@ def _build_teams_post(
     company_info: dict,
     tier: str,
     duplicates: list[dict],
-    condo_reason: Optional[str],
-    escalate_reason: Optional[str],
+    condo_reason: Optional[str] = None,
 ) -> str:
     """Build the Teams approval card HTML."""
     client  = packet.get("client_name", {}).get("value") or company_info.get("company_name") or "Unknown"
@@ -375,8 +354,9 @@ def _build_teams_post(
     # Header and status tag
     if condo_reason:
         status_tag = "<p><strong>🚫 REJECTED — CONDO ORDER (no land parcel to survey)</strong></p>"
-    elif escalate_reason:
-        status_tag = f"<p><strong>📤 ESCALATED — {escalate_reason}</strong></p>"
+    elif ai_result.get("escalate_flag"):
+        reason = ai_result.get("escalate_reason") or "AI flagged for manual review"
+        status_tag = f"<p><strong>📤 ESCALATED — {reason}</strong></p>"
     else:
         confidence = ai_result.get("confidence", "MEDIUM")
         conf_icon = {"HIGH": "✅", "MEDIUM": "⚠️", "LOW": "❌"}.get(confidence, "⚠️")
@@ -476,25 +456,24 @@ def compile_for_order(order_id: str) -> dict:
     tier          = _classify_client_tier(company_info)
 
     # ── 2. Pre-flight validation ──────────────────────────────────────────────
-    service_type   = order_details.get("ng_service_requested") or ""
-    condo_reason   = _detect_condo(order_details)
-    escalate_reason = _detect_unsupported_service(service_type) if not condo_reason else None
-    duplicates     = _detect_duplicates(order_id, order_details)
+    service_type = order_details.get("ng_service_requested") or ""
+    condo_reason = _detect_condo(order_details)
+    duplicates   = _detect_duplicates(order_id, order_details)
 
-    # Hard stops — build a minimal result and post to Teams
-    if condo_reason or escalate_reason:
+    # Hard stop — condo orders cannot be surveyed
+    if condo_reason:
         stop_result = {
             "total_amount": 0.0,
             "services": [],
-            "pricing_reasoning": condo_reason or escalate_reason,
+            "pricing_reasoning": condo_reason,
             "confidence": "N/A",
             "escalate_flag": True,
-            "escalate_reason": condo_reason or escalate_reason,
-            "flags": ["condo_rejected"] if condo_reason else ["unsupported_service_escalated"],
+            "escalate_reason": condo_reason,
+            "flags": ["condo_rejected"],
         }
         teams_html = _build_teams_post(
             order_id, packet, stop_result, link, company_info, tier,
-            duplicates, condo_reason, escalate_reason,
+            duplicates, condo_reason,
         )
         post_result = post_channel_message(teams_html, subject=f"Invoice — Order {order_id}")
         save_order_state(
@@ -506,7 +485,7 @@ def compile_for_order(order_id: str) -> dict:
             estimate_amount=0.0,
             draft_posted_at=datetime.now(timezone.utc).isoformat(),
         )
-        log.info("order=%s hard-stop: %s", order_id, condo_reason or escalate_reason)
+        log.info("order=%s hard-stop: %s", order_id, condo_reason)
         return stop_result
 
     # ── 3. Pricing history context ────────────────────────────────────────────
@@ -540,7 +519,7 @@ def compile_for_order(order_id: str) -> dict:
     # ── 5. Post to Teams ──────────────────────────────────────────────────────
     teams_html  = _build_teams_post(
         order_id, packet, ai_result, link, company_info, tier,
-        duplicates, condo_reason=None, escalate_reason=None,
+        duplicates,
     )
     post_result = post_channel_message(teams_html, subject=f"Invoice Draft — Order {order_id}")
     message_id  = post_result.get("id", "")
