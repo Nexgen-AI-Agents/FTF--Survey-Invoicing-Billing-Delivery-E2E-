@@ -505,6 +505,10 @@ def collect_for_order(order_id: str) -> dict:
         ftf_order["service_type"] = _db_service
     if not ftf_order.get("county") and not ftf_order.get("property_county"):
         ftf_order["county"] = _db_county
+    if not ftf_order.get("property_address") and not ftf_order.get("address"):
+        ftf_order["property_address"] = property_address
+    if not ftf_order.get("customer_name") and not ftf_order.get("client_name"):
+        ftf_order["customer_name"] = client_name
 
     if not property_address:
         property_address = str(

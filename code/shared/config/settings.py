@@ -68,7 +68,7 @@ SERVICE_STATE:        str = "FL"
 # FTF API
 FTF_API_BASE_URL: str = os.getenv("FTF_API_BASE_URL", "https://stage.fieldtofinish.jobs/ftf-ai-api/v1")
 FTF_API_KEY:      str | None = os.getenv("FTF_API_KEY")
-FTF_ORDER_URL:    str = os.getenv("FTF_ORDER_URL", "https://stage.fieldtofinish.jobs/admin/orders")
+FTF_ORDER_URL:    str = os.getenv("FTF_ORDER_URL", "https://stage.fieldtofinish.jobs/order")
 
 # FTF Books (AR Excel download — session-cookie auth)
 FTF_BOOKS_BASE_URL: str      = os.getenv("FTF_BOOKS_BASE_URL", "https://stage.fieldtofinish.jobs")

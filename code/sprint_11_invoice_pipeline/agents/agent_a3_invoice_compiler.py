@@ -64,7 +64,12 @@ log = get_logger(AGENT_NAME)
 # ── Pre-flight validation ─────────────────────────────────────────────────────
 
 def _detect_condo(order_details: dict) -> Optional[str]:
-    """Return rejection reason if order is a condo (cannot survey), else None."""
+    """Return rejection reason if order is a condo (cannot survey), else None.
+
+    Only uses reliable DB fields — ng_unit_number (set by FTF admin for true condos)
+    and legal description keywords. Address string matching was removed: 'UNIT X' in
+    an address is common in mobile home parks and commercial complexes, not condos.
+    """
     unit = (order_details.get("ng_unit_number") or "").strip()
     if unit:
         return f"Condo/unit order — unit number '{unit}' detected in ng_unit_number"
@@ -73,15 +78,6 @@ def _detect_condo(order_details: dict) -> Optional[str]:
     for keyword in ("CONDOMINIUM", " CONDO", "UNIT OF ", "AIRSPACE UNIT"):
         if keyword in legal:
             return f"Condo order — legal description contains '{keyword}'"
-
-    address = (order_details.get("ng_property_address") or "").upper()
-    for pattern in (" UNIT ", " APT ", " SUITE ", "#"):
-        if pattern in address:
-            # Only flag if followed by alphanumerics (actual unit indicator)
-            idx = address.find(pattern)
-            after = address[idx + len(pattern):idx + len(pattern) + 5].strip()
-            if after and (after[0].isdigit() or after[0].isalpha()):
-                return f"Possible condo — address contains '{pattern.strip()}' indicator"
 
     return None
 
@@ -444,7 +440,7 @@ def compile_for_order(order_id: str) -> dict:
 
     data_sources = json.loads(raw_sources) if isinstance(raw_sources, str) else raw_sources
     packet = data_sources.get("packet", {})
-    link   = f"{FTF_ORDER_URL}/{order_id}"
+    link   = f"{FTF_ORDER_URL}/?order={order_id}"
 
     # ── 1. Fetch live order + company data from MySQL ─────────────────────────
     order_details = get_order_details(order_id)
