@@ -359,7 +359,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
             )
 
             # Repost updated draft as a thread reply
-            link = f"{FTF_ORDER_URL}/{order_id}"
+            link = f"{FTF_ORDER_URL}/?order={order_id}"
             reply_html = _build_updated_draft_post(order_id, updated_draft, mod_count, link)
             post_channel_reply(message_id, reply_html)
 
