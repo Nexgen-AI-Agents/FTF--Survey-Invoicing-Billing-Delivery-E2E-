@@ -3958,7 +3958,7 @@
     },
     {
       "order_id": "1000273343",
-      "status": "invoice_approved",
+      "status": "invoice_finalized",
       "service_type": "Land Survey Only",
       "customer_email": "bacall40@hotmail.com",
       "client_name": "Johanne Beaumont",
@@ -3967,7 +3967,7 @@
       "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 202510211448162837, \"created_at\": \"2025-10-21T11:11:01\", \"customer_email\": \"bacall40@hotmail.com\", \"customer_id\": 202510211448162936, \"customer_name\": \"Johanne Beaumont\", \"customer_type\": \"individual\", \"delivered_at\": null, \"due_amount\": 475.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": \"12127C0366H\\nZONE: X\\nEFF: 02/19/2014\", \"invoiced\": false, \"order_id\": 1000273343, \"paid\": false, \"property_address\": \"152 WOODBRIDGE CIR\", \"property_city\": \"DAYTONA BEACH\", \"property_county\": \"Volusia County\", \"property_lat\": \"29.1619689\", \"property_lng\": \"-81.0390599\", \"property_state\": \"FLORIDA\", \"property_zip\": \"32119\", \"service_type\": \"Land Survey Only\", \"special_pricing\": false, \"status\": \"On Hold\", \"status_code\": 11, \"updated_at\": \"2026-01-16T06:04:08\"}, \"success\": true, \"order_id\": \"1000273343\", \"customer_email\": \"bacall40@hotmail.com\", \"service_type\": \"Land Survey Only\", \"county\": \"\", \"property_address\": \"152 WOODBRIDGE CIR\", \"customer_name\": \"Johanne Beaumont \"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"Johanne Beaumont\", \"confidence\": \"HIGH\"}, \"client_email\": {\"value\": \"bacall40@hotmail.com\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"152 Woodbridge Cir, Daytona Beach, FL 32119\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Volusia County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"Land Survey Only\"], \"confidence\": \"HIGH\", \"notes\": \"Service type explicitly stated as 'Land Survey Only' in FTF order data; no elevation certificate required per elevation_cert flag.\"}, \"special_requirements\": {\"value\": null, \"confidence\": \"LOW\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property features available; county appraiser unavailable and no emails or attachments to reference.\"}, \"client_tier\": {\"value\": \"residential\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Lot size unknown \\u2014 county appraiser unavailable\", \"Legal description missing \\u2014 no appraiser data or supporting documents\", \"Structure square footage unknown\", \"Property features (pool, shed, fencing, etc.) unknown\", \"Special requirements or access instructions not provided\", \"Order is currently On Hold \\u2014 reason for hold not stated\", \"No customer profile data returned from FTF customer lookup\", \"No matching emails found to supplement order details\"], \"summary\": \"Residential land survey only order for Johanne Beaumont at 152 Woodbridge Cir, Daytona Beach, FL (Volusia County), currently on hold with a $475 balance due and no delivery or fieldwork dates scheduled.\"}}",
       "approval_message_id": "1780428017959",
       "modification_count": 0,
-      "invoice_id": null,
+      "invoice_id": "TEST-OVERRIDE-CHECK",
       "data_collected_at": "2026-06-02T18:01:01.624011+00:00",
       "draft_posted_at": "2026-06-02T19:20:20.753326+00:00",
       "invoice_created_at": null,
@@ -3977,7 +3977,7 @@
       "estimate_amount": 475,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:18.772653+00:00",
-      "updated_at": "2026-06-02T19:42:31.451877+00:00"
+      "updated_at": "2026-06-02T20:05:31.763216+00:00"
     },
     {
       "order_id": "1000273161",
@@ -8722,9 +8722,9 @@
     "details_missing": 61,
     "invoice_draft_posted": 123,
     "data_collected": 83,
-    "invoice_approved": 1,
+    "invoice_finalized": 1,
     "invoice_needed": 111
   },
   "total": 379,
-  "generated_at": "2026-06-02T19:59:34.454030+00:00"
+  "generated_at": "2026-06-02T20:05:33.170556+00:00"
 }
