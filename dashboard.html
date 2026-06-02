@@ -137,11 +137,7 @@ tbody td{padding:9px 12px;vertical-align:top;max-width:220px;overflow:hidden;tex
 </div>
 
 <script>
-// GitHub Pages: use relative path. Public dashboard repo or rawgithub: use absolute.
-const _base = window.location.href.replace(/\/[^\/]*$/, '/');
-const JSON_URL = _base.includes('github.io') || _base.includes('localhost') || _base.startsWith('file:')
-  ? _base + 'data/pipeline_state.json'
-  : 'https://raw.githubusercontent.com/Nexgen-AI-Agents/FTF--Survey-Invoicing-Billing-Delivery-E2E-/main/data/pipeline_state.json';
+const JSON_URL = 'https://raw.githubusercontent.com/Nexgen-AI-Agents/ftf-invoice-dashboard/main/pipeline_state.json';
 const PAGE_SIZE = 25;
 
 let allOrders = [], filtered = [], sortCol = 'updated_at', sortDir = -1, page = 1;
