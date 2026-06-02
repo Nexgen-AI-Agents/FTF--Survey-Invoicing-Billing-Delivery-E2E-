@@ -1,5 +1,7 @@
 {
-  "version": 1,
+  "version": 2,
   "rules": [],
+  "order_overrides": {},
+  "pending_confirmations": [],
   "processed_message_ids": []
 }

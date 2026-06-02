@@ -1,0 +1,58 @@
+name: Feedback Learner (A7)
+
+# Runs every 5 minutes — lightweight standalone A7 only.
+# Checks Teams threads for new user replies and pending confirmation responses.
+# Full invoice pipeline (A0-A6) runs separately every 30 min.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Never run A7 concurrently — learned_rules.json has no locking
+concurrency:
+  group: feedback-learner
+  cancel-in-progress: true
+
+jobs:
+  run-feedback-learner:
+    runs-on: ubuntu-latest
+
+    env:
+      ANTHROPIC_API_KEY:          ${{ secrets.ANTHROPIC_API_KEY }}
+      TEAMS_TENANT_ID:            ${{ secrets.TEAMS_TENANT_ID }}
+      TEAMS_APP_ID:               ${{ secrets.TEAMS_APP_ID }}
+      TEAMS_CLIENT_SECRET:        ${{ secrets.TEAMS_CLIENT_SECRET }}
+      TEAMS_TEAM_ID:              ${{ secrets.TEAMS_TEAM_ID }}
+      TEAMS_CHANNEL_ID:           ${{ secrets.TEAMS_CHANNEL_ID }}
+      TEAMS_INCOMING_WEBHOOK_URL: ${{ secrets.TEAMS_INCOMING_WEBHOOK_URL }}
+      APPROVED_SENDERS:           ${{ secrets.APPROVED_SENDERS }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run A7 feedback learner
+        run: |
+          cd code/sprint_11_invoice_pipeline
+          python -m agents.agent_a7_feedback_learner
+
+      - name: Commit updated rules
+        if: always()
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add data/learned_rules.json
+          git diff --cached --quiet || git commit -m "chore: update learned rules [skip ci]"
+          git pull --rebase origin main
+          git push

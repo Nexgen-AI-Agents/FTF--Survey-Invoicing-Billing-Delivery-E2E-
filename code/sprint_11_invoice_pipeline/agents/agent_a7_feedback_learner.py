@@ -42,10 +42,11 @@ from core.teams_graph_client import (
 
 log = get_logger("agent_a7_feedback_learner")
 
-_DATA_DIR   = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data")
-_RULES_FILE = os.path.join(_DATA_DIR, "learned_rules.json")
-_MAX_RULES  = 100   # keep at most 100 active rules (oldest dropped first)
-_SCAN_HOURS = 48    # look back this many hours when scanning messages
+_DATA_DIR            = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data")
+_RULES_FILE          = os.path.join(_DATA_DIR, "learned_rules.json")
+_MAX_RULES           = 100   # keep at most 100 active rules (oldest dropped first)
+_SCAN_HOURS          = 48    # look back this many hours when scanning messages
+_CONFIRM_EXPIRE_HRS  = 24   # pending confirmation expires after this many hours
 
 # First words that mark APPROVE/REJECT/DEFER/YES/NO commands — already handled by A4
 _COMMAND_FIRST_WORDS = {
@@ -58,6 +59,20 @@ _NOISE_PHRASES = {
     "ok", "okay", "thanks", "thank you", "got it", "noted", "sure",
     "will do", "understood", "sounds good", "good", "great", "perfect",
     "alright", "done", "👍", "✅", "check", "cool", "nice",
+}
+
+# Response keywords for the global-vs-this-order confirmation prompt
+_GLOBAL_KW = {
+    "global", "all orders", "all future", "always", "save it", "save rule",
+    "for all", "every order", "all cases", "every time",
+}
+_THIS_ORDER_KW = {
+    "this order", "just this", "only this", "this one", "one time", "one-time",
+    "just once", "this case", "only for this", "not global", "don't save",
+    "dont save", "just now", "this instance",
+}
+_SKIP_KW = {
+    "skip", "ignore", "never mind", "nevermind", "cancel", "discard", "forget it",
 }
 
 
@@ -98,6 +113,150 @@ def _is_noise(text: str) -> bool:
     """True if the reply is too short/generic to be actionable."""
     clean = text.strip().lower().rstrip("!.,?")
     return len(clean) < 5 or clean in _NOISE_PHRASES
+
+
+# ── Confirmation resolution ───────────────────────────────────────────────────
+
+def _classify_confirm_response(text: str) -> str | None:
+    """Return 'global', 'this_order', 'skip', or None (ambiguous / not a response)."""
+    t = text.lower().strip()
+    for kw in _THIS_ORDER_KW:
+        if kw in t:
+            return "this_order"
+    for kw in _GLOBAL_KW:
+        if kw in t:
+            return "global"
+    for kw in _SKIP_KW:
+        if kw in t:
+            return "skip"
+    # Single-word shortcuts
+    first = t.split()[0] if t.split() else ""
+    if first in {"global", "all", "always"}:
+        return "global"
+    if first in {"skip", "ignore", "cancel"}:
+        return "skip"
+    return None
+
+
+def _find_confirm_response(
+    conf: dict, messages: list[dict]
+) -> tuple[str | None, str | None]:
+    """Scan recent top-level messages AND thread replies for a confirmation response.
+
+    Returns (response, replied_msg_id) where response is 'global' | 'this_order' |
+    'skip' | None, and replied_msg_id is the ID of the message that contained
+    the response (to mark as processed).
+    """
+    sender_first = conf["sender"].split()[0].lower()
+    asked_at     = datetime.fromisoformat(conf["asked_at"])
+
+    for msg in messages:
+        if msg["created_at_dt"] <= asked_at:
+            continue
+
+        # Top-level channel messages from the same sender
+        if not msg["is_app"]:
+            if (msg["sender"] or "").split()[0].lower() == sender_first:
+                r = _classify_confirm_response(msg["text"])
+                if r:
+                    return r, msg["id"]
+
+        # Thread replies on any recent message
+        try:
+            for reply in get_channel_thread_replies(msg["id"]):
+                if reply["created_at_dt"] <= asked_at:
+                    continue
+                if (reply["sender"] or "").split()[0].lower() == sender_first:
+                    r = _classify_confirm_response(reply["text"])
+                    if r:
+                        return r, reply["id"]
+        except Exception:
+            pass
+
+    return None, None
+
+
+def _resolve_pending_confirmations(
+    data: dict, messages: list[dict], processed_ids: set
+) -> int:
+    """Resolve any pending confirmations that now have a response. Returns count resolved."""
+    pending  = data.get("pending_confirmations", [])
+    resolved = set()
+    now      = datetime.now(timezone.utc)
+    count    = 0
+
+    for conf in pending:
+        conf_id  = conf["id"]
+        asked_at = datetime.fromisoformat(conf["asked_at"])
+        order_id = conf["order_id"]
+        sender   = conf["sender"]
+        cls      = conf["classification"]
+
+        # Expire after _CONFIRM_EXPIRE_HRS
+        if (now - asked_at).total_seconds() > _CONFIRM_EXPIRE_HRS * 3600:
+            log.info("confirmation expired id=%s order=%s", conf_id, order_id)
+            resolved.add(conf_id)
+            continue
+
+        response, resp_msg_id = _find_confirm_response(conf, messages)
+        if response is None:
+            continue
+
+        # Mark the response message as seen so it isn't re-processed as feedback
+        if resp_msg_id:
+            processed_ids.add(resp_msg_id)
+
+        resolved.add(conf_id)
+        count += 1
+
+        if response == "global":
+            rule_id = f"rule_{uuid.uuid4().hex[:8]}"
+            rule = {
+                "id":           rule_id,
+                "type":         cls["type"],
+                "description":  cls["description"],
+                "raw_feedback": conf["raw_feedback"],
+                "order_id":     order_id,
+                "learned_from": sender,
+                "learned_at":   now.isoformat(),
+                "confidence":   cls["confidence"],
+                "status":       "active",
+            }
+            data.setdefault("rules", []).append(rule)
+            log.info("confirmation resolved global rule_id=%s order=%s", rule_id, order_id)
+            try:
+                send_channel_message(
+                    f"[INFO] ✅ <strong>Rule saved globally</strong> (from <strong>{sender}</strong> on order "
+                    f"<strong>{order_id}</strong>):<br><em>{cls['description']}</em><br>"
+                    f"<small>Applied to all future orders. Rule ID: <code>{rule_id}</code></small>"
+                )
+            except Exception as exc:
+                log.warning("could not post global-save ack: %s", exc)
+
+        elif response == "this_order":
+            overrides = data.setdefault("order_overrides", {})
+            overrides.setdefault(order_id, []).append(cls["description"])
+            log.info("confirmation resolved this-order order=%s", order_id)
+            try:
+                send_channel_message(
+                    f"[INFO] ✅ <strong>Got it</strong> — <strong>{sender}</strong>'s instruction applied to order "
+                    f"<strong>{order_id}</strong> only. No global rule saved."
+                )
+            except Exception as exc:
+                log.warning("could not post this-order ack: %s", exc)
+
+        elif response == "skip":
+            log.info("confirmation skipped id=%s order=%s", conf_id, order_id)
+            try:
+                send_channel_message(
+                    f"[INFO] Feedback from <strong>{sender}</strong> on order "
+                    f"<strong>{order_id}</strong> discarded — no rule saved."
+                )
+            except Exception as exc:
+                log.warning("could not post skip ack: %s", exc)
+
+    data["pending_confirmations"] = [c for c in pending if c["id"] not in resolved]
+    return count
 
 
 # ── Claude classification ─────────────────────────────────────────────────────
@@ -174,31 +333,34 @@ def _classify_feedback(order_id: str, sender: str, feedback: str) -> dict | None
 # ── Main run ──────────────────────────────────────────────────────────────────
 
 def run() -> dict:
-    """Scan Teams for feedback, extract rules, save to learned_rules.json."""
+    """Scan Teams for feedback; ask global-vs-this-order before saving any rule."""
     data          = _load_rules()
-    processed_ids: set  = set(data.get("processed_message_ids", []))
-    rules: list         = data.get("rules", [])
+    processed_ids: set = set(data.get("processed_message_ids", []))
+    rules: list        = data.get("rules", [])
 
-    new_rules  = 0
-    skipped    = 0
-    cutoff     = datetime.now(timezone.utc) - timedelta(hours=_SCAN_HOURS)
+    pending_confirmed = 0
+    new_pending       = 0
+    skipped           = 0
+    cutoff            = datetime.now(timezone.utc) - timedelta(hours=_SCAN_HOURS)
 
     try:
         messages = get_recent_messages(limit=100)
     except Exception as exc:
         log.error("could not fetch Teams messages: %s", exc)
-        return {"new_rules": 0, "skipped": 0, "error": str(exc)}
+        return {"new_pending": 0, "skipped": 0, "error": str(exc)}
 
+    # ── Phase 1: resolve any pending confirmations that now have a response ───
+    pending_confirmed = _resolve_pending_confirmations(data, messages, processed_ids)
+    # Re-read rules list in case confirmations added to it
+    rules = data.get("rules", [])
+
+    # ── Phase 2: scan for new feedback ───────────────────────────────────────
     for msg in messages:
-        # Only scan messages within the look-back window
         if msg["created_at_dt"] < cutoff:
             continue
 
-        # Extract order ID from the parent message (our bot order cards contain it)
         parent_order_id = _extract_order_id(msg["text"])
 
-        # We're interested in replies on bot order-card messages, but also check
-        # any message that has replies in case a human posted the order ref themselves
         try:
             replies = get_channel_thread_replies(msg["id"])
         except Exception as exc:
@@ -206,9 +368,7 @@ def run() -> dict:
             continue
 
         for reply in replies:
-            reply_id = reply["id"]
-
-            # Always mark as seen — even if we skip, so we don't reprocess
+            reply_id     = reply["id"]
             already_seen = reply_id in processed_ids
             processed_ids.add(reply_id)
 
@@ -221,25 +381,21 @@ def run() -> dict:
             if not text:
                 continue
 
-            # Only learn from authorized users (same whitelist as approvals)
             sender_first = (sender or "").split()[0].lower()
             if sender_first not in APPROVED_SENDERS:
-                log.debug("skip feedback from unauthorized sender=%s", sender)
+                log.debug("skip unauthorized sender=%s", sender)
                 skipped += 1
                 continue
 
-            # Skip APPROVE/REJECT/DEFER/YES/NO — handled by poll_teams_approvals
             if _is_command(text):
                 continue
 
-            # Skip short/generic noise without calling the LLM
             if _is_noise(text):
                 skipped += 1
                 continue
 
             eff_order_id = _extract_order_id(text) or parent_order_id or "unknown"
 
-            # Ask Claude to classify
             result = _classify_feedback(eff_order_id, sender, text)
             if not result:
                 skipped += 1
@@ -249,12 +405,9 @@ def run() -> dict:
             description   = (result.get("description") or "").strip()
             confidence    = result.get("confidence", "low")
 
-            # ── Code change: never store — direct user to dev team ─────────────
+            # ── Code change: direct to dev team ──────────────────────────────
             if feedback_type == "code_change":
-                log.info(
-                    "code_change feedback from=%s order=%s — directing to dev team: %s",
-                    sender, eff_order_id, text[:120],
-                )
+                log.info("code_change from=%s order=%s: %s", sender, eff_order_id, text[:120])
                 dev_msg = (
                     f"[INFO] 🛠️ <strong>{sender}</strong> — your feedback on order "
                     f"<strong>{eff_order_id}</strong> requires a <strong>code change</strong> "
@@ -271,61 +424,70 @@ def run() -> dict:
                 skipped += 1
                 continue
 
-            # ── Noise / low-confidence: discard silently ───────────────────────
+            # ── Noise / low-confidence: discard silently ─────────────────────
             if feedback_type == "noise" or not description or confidence == "low":
                 skipped += 1
-                log.debug("noise/low-confidence feedback skipped: %s", text[:80])
+                log.debug("noise/low skipped: %s", text[:80])
                 continue
 
-            # ── Valid logic rule: store and acknowledge ────────────────────────
-            rule_id = f"rule_{uuid.uuid4().hex[:8]}"
-            rule = {
-                "id":           rule_id,
-                "type":         feedback_type,
-                "description":  description,
-                "raw_feedback": text[:500],
-                "order_id":     eff_order_id,
-                "learned_from": sender,
-                "learned_at":   datetime.now(timezone.utc).isoformat(),
-                "confidence":   confidence,
-                "status":       "active",
+            # ── Valid logic feedback: ask global-vs-this-order BEFORE saving ─
+            confirm_id = f"confirm_{uuid.uuid4().hex[:8]}"
+            pending_entry = {
+                "id":            confirm_id,
+                "order_id":      eff_order_id,
+                "sender":        sender,
+                "raw_feedback":  text[:500],
+                "classification": {
+                    "type":        feedback_type,
+                    "description": description,
+                    "confidence":  confidence,
+                },
+                "asked_at": datetime.now(timezone.utc).isoformat(),
             }
-            rules.append(rule)
-            new_rules += 1
+            data.setdefault("pending_confirmations", []).append(pending_entry)
+            new_pending += 1
 
             log.info(
-                "rule learned id=%s type=%s from=%s order=%s | %s",
-                rule_id, feedback_type, sender, eff_order_id, description[:80],
+                "confirmation pending id=%s type=%s from=%s order=%s | %s",
+                confirm_id, feedback_type, sender, eff_order_id, description[:80],
             )
 
-            # Acknowledge in the channel (standalone message — thread-reply via webhook
-            # is unreliable; order_id makes it clear which order this applies to)
-            label = feedback_type.replace("_", " ").title()
-            ack = (
-                f"[INFO] ✅ <strong>Rule learned</strong> from <strong>{sender}</strong> "
-                f"on order <strong>{eff_order_id}</strong> ({label}):<br>"
-                f"<em>{description}</em><br>"
-                f"<small>Applied to all future orders. Rule ID: <code>{rule_id}</code></small>"
+            label       = feedback_type.replace("_", " ").title()
+            confirm_msg = (
+                f"[FEEDBACK] <strong>Order {eff_order_id}</strong> — "
+                f"<strong>{sender}</strong> said:<br>"
+                f"<em>{text[:300]}</em><br><br>"
+                f"AI classified as <strong>{label}</strong>:<br>"
+                f"<em>{description}</em><br><br>"
+                f"📋 <strong>Reply with one of:</strong><br>"
+                f"&nbsp;&nbsp;<code>global</code> — save this rule for <strong>ALL future orders</strong><br>"
+                f"&nbsp;&nbsp;<code>this order</code> — apply to order <strong>{eff_order_id} only</strong><br>"
+                f"&nbsp;&nbsp;<code>skip</code> — discard, save nothing<br><br>"
+                f"<small>Confirmation ID: {confirm_id} | Expires in 24h</small>"
             )
             try:
-                send_channel_message(ack)
+                send_channel_message(confirm_msg)
             except Exception as exc:
-                log.warning("could not post ack for rule=%s: %s", rule_id, exc)
+                log.warning("could not post confirmation question id=%s: %s", confirm_id, exc)
 
     # Keep only the most recent _MAX_RULES rules
     if len(rules) > _MAX_RULES:
         rules = rules[-_MAX_RULES:]
 
-    # Persist
-    data["rules"]                = rules
+    data["rules"]                 = rules
     data["processed_message_ids"] = list(processed_ids)
     _save_rules(data)
 
     log.info(
-        "feedback learner complete new_rules=%d skipped=%d total_rules=%d",
-        new_rules, skipped, len(rules),
+        "feedback learner complete pending_confirmed=%d new_pending=%d skipped=%d total_rules=%d",
+        pending_confirmed, new_pending, skipped, len(rules),
     )
-    return {"new_rules": new_rules, "skipped": skipped, "total_rules": len(rules)}
+    return {
+        "pending_confirmed": pending_confirmed,
+        "new_pending":       new_pending,
+        "skipped":           skipped,
+        "total_rules":       len(rules),
+    }
 
 
 if __name__ == "__main__":

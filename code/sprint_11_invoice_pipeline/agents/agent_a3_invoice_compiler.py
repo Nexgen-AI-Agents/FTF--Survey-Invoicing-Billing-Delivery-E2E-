@@ -97,18 +97,29 @@ def _detect_duplicates(order_id: str, order_details: dict) -> list[dict]:
 _RULES_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "learned_rules.json")
 
 
-def _load_learned_rules() -> str:
-    """Return active learned rules formatted for injection into the Claude pricing prompt."""
+def _load_learned_rules(order_id: str = "") -> str:
+    """Return learned rules + order-specific overrides for injection into the pricing prompt.
+
+    Order overrides are listed first (highest priority) and labeled clearly so
+    Claude knows they apply only to this order. Global rules follow.
+    """
     try:
         with open(_RULES_FILE) as f:
             data = json.load(f)
-        active = [r for r in data.get("rules", []) if r.get("status") == "active"]
-        if not active:
-            return ""
+
         lines = []
+
+        # Order-specific overrides (highest priority — one-time instructions)
+        if order_id:
+            for override in data.get("order_overrides", {}).get(order_id, []):
+                lines.append(f"  • [ORDER OVERRIDE — THIS ORDER ONLY] {override}")
+
+        # Global active rules
+        active = [r for r in data.get("rules", []) if r.get("status") == "active"]
         for r in active[-20:]:  # cap at 20 most recent so the prompt stays bounded
             label = r["type"].replace("_", " ").upper()
             lines.append(f"  • [{label}] {r['description']}")
+
         return "\n".join(lines)
     except Exception:
         return ""
@@ -301,13 +312,13 @@ Return ONLY valid JSON (no markdown, no explanation outside JSON):
   "flags": []
 }}"""
 
-    # Inject field-user-learned rules so Claude applies human feedback
-    learned_block = _load_learned_rules()
+    # Inject learned rules + any one-time order overrides
+    learned_block = _load_learned_rules(order_id=order_id)
     if learned_block:
         context = context.replace(
             "── YOUR TASK ────────────────────────────────────",
             (
-                "── FIELD USER RULES (from human feedback — apply to ALL orders) ────\n"
+                "── FIELD USER RULES (from human feedback — apply as instructed) ────\n"
                 f"{learned_block}\n\n"
                 "── YOUR TASK ────────────────────────────────────"
             ),
