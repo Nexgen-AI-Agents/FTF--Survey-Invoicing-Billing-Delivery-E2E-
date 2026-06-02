@@ -2,16 +2,17 @@ name: Invoice Pipeline (Sprint 11)
 
 on:
   schedule:
-    - cron: "*/5 * * * *"    # every 5 minutes — A4 polls for replies, A1 hunts for new flags
+    - cron: "0,30 * * * *"   # every 30 minutes
   workflow_dispatch:
 
 permissions:
   contents: write
 
 # Prevent concurrent runs — Excel state file has no locking; overlapping runs corrupt state
+# cancel-in-progress: true drops queued duplicates so manual burst triggers don't stack up
 concurrency:
   group: invoice-pipeline
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   run-invoice-pipeline:
@@ -59,6 +60,18 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Connectivity check
+        run: |
+          echo "=== Anthropic API ==="
+          curl -sS -o /dev/null -w "HTTP %{http_code} | time %{time_total}s\n" \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            https://api.anthropic.com/v1/models || echo "curl failed: $?"
+          echo "=== FTF API health ==="
+          curl -sS -o /dev/null -w "HTTP %{http_code} | time %{time_total}s\n" \
+            -H "Authorization: Bearer $FTF_API_KEY" \
+            "${FTF_API_BASE_URL}/health" || echo "curl failed: $?"
 
       - name: Run invoice pipeline
         run: |
