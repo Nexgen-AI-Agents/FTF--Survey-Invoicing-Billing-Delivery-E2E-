@@ -29,6 +29,7 @@ jobs:
           FTF_BOOKS_USER:    ${{ secrets.FTF_BOOKS_USER }}
           FTF_BOOKS_PASSWORD: ${{ secrets.FTF_BOOKS_PASSWORD }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          DATABASE_URL:      ${{ secrets.DATABASE_URL }}
-          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+          DATABASE_URL:               ${{ secrets.DATABASE_URL }}
+          TEAMS_WEBHOOK_URL:          ${{ secrets.TEAMS_WEBHOOK_URL }}
+          TEAMS_INCOMING_WEBHOOK_URL: ${{ secrets.TEAMS_INCOMING_WEBHOOK_URL }}
         run: python code/sprint_09_memory_loop/agents/agent_01_orchestrator.py

@@ -103,6 +103,8 @@ TEAMS_CHANNEL_ID:    str | None = os.getenv("TEAMS_CHANNEL_ID")
 TEAMS_CHAT_ID:       str | None = os.getenv("TEAMS_CHAT_ID")
 # Incoming webhook URL (Logic App / Workflows) — for posting TO Teams channel
 TEAMS_INCOMING_WEBHOOK_URL: str | None = os.getenv("TEAMS_INCOMING_WEBHOOK_URL")
+# Alias used by Sprint 9 reporter — falls back to TEAMS_INCOMING_WEBHOOK_URL
+TEAMS_WEBHOOK_URL: str | None = os.getenv("TEAMS_WEBHOOK_URL") or os.getenv("TEAMS_INCOMING_WEBHOOK_URL")
 # Graph API email notifications (Mail.Send application permission)
 # FROM must be a valid licensed mailbox in the same Azure AD tenant.
 NOTIFICATION_FROM_EMAIL:  str | None = os.getenv("NOTIFICATION_FROM_EMAIL")
