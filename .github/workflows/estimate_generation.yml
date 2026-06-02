@@ -1,7 +1,10 @@
 name: Estimate Generation Loop
 
 on:
-  workflow_dispatch:   # Sprint 9 superseded by Sprint 11 invoice_pipeline — schedule disabled
+  workflow_run:
+    workflows: ["Invoice Pipeline (Sprint 11)"]
+    types: [completed]
+  workflow_dispatch:
 
 jobs:
   run-estimate-loop:

@@ -1,7 +1,10 @@
 name: Teams Approval Monitor
 
 on:
-  workflow_dispatch:   # approval polling merged into invoice_pipeline A4 — schedule disabled
+  workflow_run:
+    workflows: ["Invoice Pipeline (Sprint 11)"]
+    types: [completed]
+  workflow_dispatch:
 
 jobs:
   poll:
