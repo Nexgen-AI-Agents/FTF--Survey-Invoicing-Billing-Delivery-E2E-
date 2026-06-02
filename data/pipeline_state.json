@@ -1267,7 +1267,7 @@
     },
     {
       "order_id": "1000283805",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": "CAD",
       "customer_email": "chaz@cedarsteelfl.com",
       "client_name": "Cedar and Steel Construction",
@@ -1277,7 +1277,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": null,
+      "data_collected_at": "2026-06-02T14:33:05.068152+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -1286,11 +1286,11 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.587990+00:00",
-      "updated_at": "2026-06-02T14:27:47.587990+00:00"
+      "updated_at": "2026-06-02T14:33:05.081791+00:00"
     },
     {
       "order_id": "1000283792",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": "CAD",
       "customer_email": "Tatiana@nieverawilliams.com",
       "client_name": "Nievera Williams Design",
@@ -1300,7 +1300,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": null,
+      "data_collected_at": "2026-06-02T14:33:13.060042+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -1309,11 +1309,11 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.620737+00:00",
-      "updated_at": "2026-06-02T14:27:47.620737+00:00"
+      "updated_at": "2026-06-02T14:33:13.076008+00:00"
     },
     {
       "order_id": "1000283790",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": "CAD",
       "customer_email": "beachbumcapemay@yahoo.com",
       "client_name": "Kenn Mann",
@@ -1323,7 +1323,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": null,
+      "data_collected_at": "2026-06-02T14:33:21.507528+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -1332,11 +1332,11 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.653540+00:00",
-      "updated_at": "2026-06-02T14:27:47.653540+00:00"
+      "updated_at": "2026-06-02T14:33:21.522986+00:00"
     },
     {
       "order_id": "1000283771",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": "Land Survey Only",
       "customer_email": "fernando@thearchitectgroup.com",
       "client_name": "Sandra Puerta",
@@ -1346,7 +1346,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": null,
+      "data_collected_at": "2026-06-02T14:33:28.321699+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -1355,11 +1355,11 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.685716+00:00",
-      "updated_at": "2026-06-02T14:27:47.685716+00:00"
+      "updated_at": "2026-06-02T14:33:28.336035+00:00"
     },
     {
       "order_id": "1000283753",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": "Land Survey Only",
       "customer_email": "ddicarloanderson@gmail.com",
       "client_name": "Dominique Anderson",
@@ -1369,7 +1369,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": null,
+      "data_collected_at": "2026-06-02T14:33:35.542353+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -1378,7 +1378,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.719638+00:00",
-      "updated_at": "2026-06-02T14:27:47.719638+00:00"
+      "updated_at": "2026-06-02T14:33:35.557855+00:00"
     },
     {
       "order_id": "1000283728",
@@ -1796,9 +1796,9 @@
     }
   ],
   "status_counts": {
-    "details_missing": 55,
-    "invoice_needed": 23
+    "details_missing": 60,
+    "invoice_needed": 18
   },
   "total": 78,
-  "generated_at": "2026-06-02T14:28:28.396288+00:00"
+  "generated_at": "2026-06-02T14:33:36.267976+00:00"
 }
