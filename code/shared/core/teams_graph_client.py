@@ -862,7 +862,7 @@ def post_channel_message(text_or_html: str, subject: str = "") -> dict:
     """
     import time
 
-    send_teams_notification(text_or_html, subject)
+    send_channel_message(text_or_html, subject)
 
     # Give Teams ~3 s to process the webhook post, then read back the latest msg id
     time.sleep(3)
@@ -874,12 +874,12 @@ def post_channel_message(text_or_html: str, subject: str = "") -> dict:
 def post_channel_reply(message_id: str, text_or_html: str) -> dict:
     """Post a thread reply to a channel message via incoming webhook.
 
-    Uses send_teams_notification with parent_message_id so the Logic App posts
+    Uses send_channel_message with parent_message_id so the Logic App posts
     as a thread reply. No ChannelMessage.Send Application permission needed.
 
     Returns {"id": "", "ok": True} — webhook replies don't return a reply ID.
     """
-    send_teams_notification(text_or_html, parent_message_id=message_id)
+    send_channel_message(text_or_html, parent_message_id=message_id)
     log.info("channel reply posted via webhook parent_id=%s", message_id)
     return {"id": "", "ok": True}
 
@@ -1036,3 +1036,7 @@ def build_digest_html(orders: list[dict], ftf_order_url: str) -> str:
     ]
 
     return "\n".join(lines)
+
+
+# Alias used by agent_a2_data_collector and other agents
+send_teams_notification = send_channel_message

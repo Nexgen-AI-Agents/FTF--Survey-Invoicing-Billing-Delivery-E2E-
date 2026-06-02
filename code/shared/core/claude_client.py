@@ -67,6 +67,12 @@ def call_with_image(
             if attempt < _MAX_RETRIES:
                 time.sleep(_RETRY_BASE_DELAY * attempt)
 
+        except anthropic.APIConnectionError as exc:
+            logger.warning("Claude connection error (attempt %d/%d): %s", attempt, _MAX_RETRIES, exc)
+            last_exc = exc
+            if attempt < _MAX_RETRIES:
+                time.sleep(_RETRY_BASE_DELAY * attempt)
+
         except anthropic.APIStatusError as exc:
             logger.error("Claude API error %s (attempt %d/%d)", exc.status_code, attempt, _MAX_RETRIES)
             last_exc = exc
@@ -117,6 +123,12 @@ def call(model: str, system: str, user: str, max_tokens: int = 1024,
 
         except anthropic.RateLimitError as exc:
             logger.warning("Claude rate limit hit (attempt %d/%d)", attempt, _MAX_RETRIES)
+            last_exc = exc
+            if attempt < _MAX_RETRIES:
+                time.sleep(_RETRY_BASE_DELAY * attempt)
+
+        except anthropic.APIConnectionError as exc:
+            logger.warning("Claude connection error (attempt %d/%d): %s", attempt, _MAX_RETRIES, exc)
             last_exc = exc
             if attempt < _MAX_RETRIES:
                 time.sleep(_RETRY_BASE_DELAY * attempt)
