@@ -62,6 +62,7 @@ NEW_TITLE_ORDER_CUTOFF: int = 20
 
 # Legacy — kept for backward compatibility; superseded by PRICE_EC_BASE above
 ELEVATION_CERT_PRICE: int = 275
+COMPLEXITY_FACTORS = COMPLEXITY_REFERENCE  # Sprint 9 alias — renamed to COMPLEXITY_REFERENCE in Sprint 11
 SERVICE_STATE:        str = "FL"
 
 # FTF API
