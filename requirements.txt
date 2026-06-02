@@ -29,6 +29,9 @@ schedule>=1.2.1
 # YAML parsing — workflow validation in test_connections.py
 PyYAML>=6.0.1
 
+# HTML parsing — county property appraiser page scraping (A2 Data Collector)
+beautifulsoup4>=4.12.0
+
 # Testing
 pytest>=8.2.0
 pytest-mock>=3.14.0

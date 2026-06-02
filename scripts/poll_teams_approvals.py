@@ -40,7 +40,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code", "shared
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
 from config.settings import APPROVED_SENDERS
-from core.db import get_all_awaiting_orders, get_all_flagged_orders, get_order_by_id
+from core.excel_db import get_order_by_id, get_orders_by_status, save_order_state
 from core.exceptions import AgentError
 from core.logger import get_logger
 from core.teams_graph_client import (
@@ -51,6 +51,24 @@ from core.teams_graph_client import (
 )
 
 log = get_logger("poll_teams_approvals")
+
+
+def get_all_awaiting_orders() -> list[dict]:
+    return get_orders_by_status("awaiting_approval")
+
+
+def get_all_flagged_orders() -> list[dict]:
+    return get_orders_by_status("flagged")
+
+
+def _process_decision(order_id: str, decision: str) -> None:
+    """Write approve/reject decision to excel_db state store."""
+    if decision == "approve":
+        save_order_state(order_id, status="approved")
+    elif decision == "reject":
+        save_order_state(order_id, status="rejected")
+    else:
+        raise AgentError(f"_process_decision: invalid decision '{decision}'")
 
 _STATE_FILE        = Path(__file__).parent / "poll_state.json"
 _PENDING_CONF_FILE = Path(__file__).parent / "pending_confirmations.json"
@@ -68,17 +86,6 @@ _REVERSIBLE_STATUSES = {"approved", "rejected"}
 # ── State persistence ─────────────────────────────────────────────────────────
 
 def _load_last_polled() -> datetime | None:
-    try:
-        from core.db import get_loop_state
-        state = get_loop_state(_POLL_LOOP_NAME)
-        if state and state.get("last_run_at"):
-            lr = state["last_run_at"]
-            if isinstance(lr, datetime):
-                return lr if lr.tzinfo else lr.replace(tzinfo=timezone.utc)
-            dt = datetime.fromisoformat(str(lr))
-            return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
-    except Exception:
-        pass
     if not _STATE_FILE.exists():
         return None
     try:
@@ -90,11 +97,6 @@ def _load_last_polled() -> datetime | None:
 
 
 def _save_last_polled(dt: datetime) -> None:
-    try:
-        from core.db import save_loop_state
-        save_loop_state(_POLL_LOOP_NAME, "completed", last_run_at=dt)
-    except Exception as exc:
-        log.warning("could not save poll state to DB: %s", exc)
     try:
         _STATE_FILE.write_text(json.dumps({"last_processed_at": dt.isoformat()}))
     except Exception as exc:
@@ -341,11 +343,9 @@ def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
 
     summary = {"found": len(commands), "approved": 0, "rejected": 0, "failed": 0, "dry_run": dry_run}
 
-    from sprint_03_human_gate.agents.agent_04_human_gate import process_approval_reply  # type: ignore[import]
-
     # ── Step 1: resolve any pending YES/NO confirmations first ───────────────
     if not dry_run:
-        _check_pending_confirmations(process_approval_reply, summary)
+        _check_pending_confirmations(_process_decision, summary)
 
     if not commands:
         log.info("poll complete: no approval commands found")
@@ -388,17 +388,17 @@ def run_poll(since_hours: int = 2, dry_run: bool = False) -> dict:
         # ── Process command ───────────────────────────────────────────────────
         try:
             if action == "approve_bare":
-                _do_approve_bare(sender, summary, process_approval_reply, parent_msg_id)
+                _do_approve_bare(sender, summary, _process_decision, parent_msg_id)
             elif action == "approve_all":
-                _do_approve_all(sender, summary, process_approval_reply, parent_msg_id)
+                _do_approve_all(sender, summary, _process_decision, parent_msg_id)
             elif action == "approve":
-                _do_approve_multi(order_ids or [], sender, summary, process_approval_reply, parent_msg_id)
+                _do_approve_multi(order_ids or [], sender, summary, _process_decision, parent_msg_id)
             elif action == "reject_bare":
-                _do_reject_bare(sender, reason, summary, process_approval_reply, parent_msg_id)
+                _do_reject_bare(sender, reason, summary, _process_decision, parent_msg_id)
             elif action == "reject_all":
-                _do_reject_all(sender, reason, summary, process_approval_reply, parent_msg_id)
+                _do_reject_all(sender, reason, summary, _process_decision, parent_msg_id)
             elif action == "reject":
-                _do_reject(order_ids or [], sender, reason, summary, process_approval_reply, parent_msg_id)
+                _do_reject(order_ids or [], sender, reason, summary, _process_decision, parent_msg_id)
             elif action == "defer":
                 _do_defer(order_ids or [], sender, reason, summary, parent_msg_id)
         except AgentError as exc:
@@ -649,7 +649,6 @@ def _do_defer(order_ids, sender, reason, summary, parent_msg_id):
             failed_ids.append(f"{oid} (status={status} — cannot defer)")
             continue
         try:
-            from datetime import timedelta
             deferred_until = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
             save_order_state(oid, status="deferred", deferred_until=deferred_until)
             deferred_ids.append(oid)

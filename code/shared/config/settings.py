@@ -22,7 +22,46 @@ AR_EXCLUSION_LIST: list[str] = [
     if e.strip()
 ]
 APPROVAL_TIMEOUT_HOURS:    int = int(os.getenv("APPROVAL_TIMEOUT_HOURS", "24"))
-ELEVATION_CERT_PRICE: int = 225
+# ── Pricing reference constants (fed to Claude as context — not applied by code) ──
+# Survey base rate fallbacks — used ONLY when ng_company.ng_rate is 0 / unset.
+# Primary rate always comes from ng_company.ng_rate (negotiated per client).
+PRICE_SURVEY_FALLBACK_INDIVIDUAL: float = 475.0   # one-off + new title company
+PRICE_SURVEY_FALLBACK_OLD_TITLE:  float = 400.0   # established title company
+
+# EC is always $275 for all client types (Robert/Ryan adjust exceptions manually)
+PRICE_EC_BASE: float = 275.0
+
+# Complexity upcharge reference ranges — midpoints validated by land surveyor consultation.
+# These are GUIDELINES for Claude's reasoning, not hard rule amounts.
+COMPLEXITY_REFERENCE: dict = {
+    "monroe_county":    150.0,   # remote Keys mobilisation
+    "pool":              62.0,   # pool / screened enclosure locate
+    "waterfront_canal":  87.0,   # riparian / OHWL determination
+    "metes_and_bounds": 100.0,   # no plat; deed-call boundary
+    "heavy_vegetation": 112.0,   # line-of-sight cutting
+    "zone_ve_ec":        50.0,   # coastal VE zone EC complexity (EC component only)
+    "lot_0.31_0.50_ac":  62.0,
+    "lot_0.51_1.00_ac": 137.0,
+    "lot_1.01_2.00_ac": 275.0,
+    "lot_2.01_5.00_ac": 550.0,
+    # lot > 5.00 ac → ESCALATE; do not auto-price
+}
+
+# Topo reference pricing by lot size — baseline for Claude's reasoning
+TOPO_REFERENCE: dict = {
+    "lot_0.00_0.30_ac":  700.0,
+    "lot_0.31_0.50_ac":  825.0,
+    "lot_0.51_1.00_ac": 1100.0,
+    # > 1.00 ac → ESCALATE
+}
+
+# New title company thresholds (registered on/after Jan 1 of NEW_TITLE_YEAR_CUTOFF
+# AND fewer than NEW_TITLE_ORDER_CUTOFF total orders)
+NEW_TITLE_YEAR_CUTOFF:  int = 2026
+NEW_TITLE_ORDER_CUTOFF: int = 20
+
+# Legacy — kept for backward compatibility; superseded by PRICE_EC_BASE above
+ELEVATION_CERT_PRICE: int = 275
 SERVICE_STATE:        str = "FL"
 
 # FTF API
@@ -113,21 +152,11 @@ IMAP_PORT:     int = int(os.getenv("IMAP_PORT", "993"))
 IMAP_USER:     str | None = os.getenv("IMAP_USER")
 IMAP_PASSWORD: str | None = os.getenv("IMAP_PASSWORD")
 
-# Dynamic pricing complexity factors (I-065)
-# Set PRICING_COMPLEXITY_ENABLED=true to activate upcharges based on property features.
-# Robert must confirm exact weights before enabling in production.
-# Features are passed as order properties (pool, shed_count, driveway_count, etc.)
-PRICING_COMPLEXITY_ENABLED: bool = os.getenv("PRICING_COMPLEXITY_ENABLED", "false").lower() == "true"
+# Google Maps — aerial/satellite image fetch for property analysis
+GOOGLE_MAPS_API_KEY: str | None = os.getenv("GOOGLE_MAPS_API_KEY")
 
-# Upcharge ranges (midpoints used by default; Robert to tune)
-COMPLEXITY_FACTORS: dict = {
-    "pool":            150,   # swimming pool — midpoint of $100-$200
-    "shed":            112,   # per shed — midpoint of $75-$150
-    "driveway_extra":  150,   # per extra driveway beyond 1 — midpoint of $100-$200
-    "walls_per_10":     75,   # per 10 corners/walls above baseline of 4 — midpoint of $50-$150
-    "patio_large":      75,   # large back patio — moderate upcharge
-    "remote_rural":    100,   # rural/remote location surcharge (% of base applied separately)
-}
+# Legacy complexity flag — no longer used; pricing now handled by AI reasoning in A3
+PRICING_COMPLEXITY_ENABLED: bool = False
 
 # FTF API status keyword map (confirmed 2026-05-27 — Prateek)
 # Keys = FTF API query param values; values = CRM display labels.

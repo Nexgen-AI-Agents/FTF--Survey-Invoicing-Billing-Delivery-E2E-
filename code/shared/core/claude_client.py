@@ -21,6 +21,63 @@ def _get_client() -> anthropic.Anthropic:
     return _client
 
 
+def call_with_image(
+    model: str,
+    system: str,
+    user_text: str,
+    image_b64: str,
+    media_type: str = "image/png",
+    max_tokens: int = 1024,
+) -> str:
+    """Send a text + base64 image to Claude. Returns response text.
+
+    For property aerial analysis and any other vision tasks.
+    """
+    client = _get_client()
+    last_exc: Optional[Exception] = None
+
+    for attempt in range(1, _MAX_RETRIES + 1):
+        try:
+            message = client.messages.create(
+                model=model,
+                max_tokens=max_tokens,
+                system=system,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": media_type,
+                                    "data": image_b64,
+                                },
+                            },
+                            {"type": "text", "text": user_text},
+                        ],
+                    }
+                ],
+            )
+            return message.content[0].text
+
+        except anthropic.RateLimitError as exc:
+            logger.warning("Claude rate limit hit (attempt %d/%d)", attempt, _MAX_RETRIES)
+            last_exc = exc
+            if attempt < _MAX_RETRIES:
+                time.sleep(_RETRY_BASE_DELAY * attempt)
+
+        except anthropic.APIStatusError as exc:
+            logger.error("Claude API error %s (attempt %d/%d)", exc.status_code, attempt, _MAX_RETRIES)
+            last_exc = exc
+            if attempt < _MAX_RETRIES:
+                time.sleep(_RETRY_BASE_DELAY)
+
+    raise LLMUnavailableError(
+        f"Claude unavailable after {_MAX_RETRIES} attempts"
+    ) from last_exc
+
+
 def call(model: str, system: str, user: str, max_tokens: int = 1024,
          cache_system: bool = True) -> str:
     """Send a prompt to Claude and return the response text.

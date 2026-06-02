@@ -1,22 +1,28 @@
 """Agent A3 — Invoice Compiler (Invoice Pipeline)
 
-Takes the order packet from A2 (data_collected status), builds a complete
-invoice draft, and posts it to the Teams group chat for human approval.
+Takes the order packet from A2 (data_collected status), validates the order,
+classifies the client tier, and uses Claude Sonnet to reason a complete invoice
+draft from real property data. Posts the draft to Teams for human approval (A4).
 
-Replaces Agent 05 (Pricing Engine) + Agent 06 (Writer) — combined into one
-because pricing and drafting cannot be separated from context.
+Pricing principle: NO fixed table applied mechanically.
+  Claude sees: service type, company's negotiated rate, aerial analysis, appraiser
+  data, FEMA zone, lot size, legal description, county, notes, duplicate alerts —
+  and reasons about the final price. Pricing constants are guidelines for that
+  reasoning, not lookup values the code applies directly.
 
-Pricing logic:
-  1. Exact match from pricing_examples table (corrections entered by Robert/Ryan)
-  2. Historical median from production data for same service + county
-  3. Fallback to hardcoded base rates (from production_data_analysis findings)
+Pre-flight gates (deterministic, before AI runs):
+  • Condo detection → reject (no land parcel to survey)
+  • Unsupported service → escalate to Robert/Allan (no price generated)
+  • Duplicate detection → flag in Teams card; human decides
 
-Invoice draft fields:
-  - services: list of {name, description, amount}
-  - total_amount: sum
-  - client_name, client_email, property_address
-  - notes: any uncertainties or questions for the approver
-  - gaps: fields that need human confirmation
+Client tier classification (deterministic):
+  • individual  — ng_company.company_type = 1
+  • new_title   — company_type = 0, registered >= NEW_TITLE_YEAR_CUTOFF, low volume
+  • old_title   — all other companies
+
+Rate source (passed to AI as context):
+  • PRIMARY: ng_company.ng_rate if > $100 (per-client negotiated rate)
+  • FALLBACK: $475 (individual/new_title) or $400 (old_title) when ng_rate unset
 
 Status flow: data_collected → invoice_draft_posted
 """
@@ -31,188 +37,385 @@ from typing import Optional
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
 from config.models import HUMAN_GATE_MODEL
-from config.settings import FTF_ORDER_URL
+from config.settings import (
+    FTF_ORDER_URL,
+    PRICE_SURVEY_FALLBACK_INDIVIDUAL,
+    PRICE_SURVEY_FALLBACK_OLD_TITLE,
+    PRICE_EC_BASE,
+    COMPLEXITY_REFERENCE,
+    TOPO_REFERENCE,
+    NEW_TITLE_YEAR_CUTOFF,
+    NEW_TITLE_ORDER_CUTOFF,
+)
 from core.claude_client import call as llm_call
 from core.excel_db import (
     get_orders_by_status, get_order_by_id, get_pricing_examples,
-    get_invoice_learnings, save_order_state, log_decision,
+    save_order_state, log_decision,
 )
 from core.exceptions import AgentError
 from core.ftf_client import get_historical_pricing_orders
+from core.ftf_mysql import get_order_details, get_company_info, find_duplicate_orders
 from core.logger import get_logger
 from core.teams_graph_client import post_channel_message
 
 AGENT_NAME = "agent_a3_invoice_compiler"
 log = get_logger(AGENT_NAME)
 
-# Base rates from production data analysis (2025-2026, nexgen_ftf_db, 18,497 orders)
-# These are medians — Robert/Ryan corrections in pricing_examples take priority
-_BASE_RATES: dict[str, float] = {
-    "land survey only":              450.0,   # sweet spot $400-499 (52.7%)
-    "land survey and elevation":     400.0,   # wide spread — many under $200 for add-on
-    "elevation certificate":         225.0,   # near-uniform $200-299 (88.6%)
-    "commercial":                   2100.0,   # 4.1x residential avg
-    "boundary survey":               450.0,
-    "topographic survey":            600.0,
-    "construction staking":          750.0,
-    "as-built survey":               500.0,
-    "default":                       450.0,   # fallback when service not recognized
-}
+# Services that must be escalated — AI must NOT generate a price for these.
+# Robert/Allan quote them manually.
+_ESCALATE_SERVICES = [
+    "alta", "as-built", "as built", "form board", "foundation survey",
+    "site plan", "cad file", "cad", "lot split", "sketch and description",
+    "surveyor's affidavit", "b-ii title review", "specific purpose survey",
+    "tree location", "survey re-draw",
+]
 
 
-def _lookup_price(service: str, county: str, client_tier: str) -> tuple[float, str]:
-    """Return (price, source) for a service.
+# ── Pre-flight validation ─────────────────────────────────────────────────────
 
-    Priority:
-      1. pricing_examples (human-entered corrections)
-      2. invoice_learnings (learned from past corrections)
-      3. Base rates table
-    """
-    service_lower = service.lower().strip()
+def _detect_condo(order_details: dict) -> Optional[str]:
+    """Return rejection reason if order is a condo (cannot survey), else None."""
+    unit = (order_details.get("ng_unit_number") or "").strip()
+    if unit:
+        return f"Condo/unit order — unit number '{unit}' detected in ng_unit_number"
 
-    # 1. pricing_examples (most trusted)
-    examples = get_pricing_examples(service_type=service, county=county, limit=5)
-    if not examples:
-        examples = get_pricing_examples(service_type=service, limit=5)
-    if examples:
-        prices = [e["final_price"] for e in examples if e.get("final_price")]
-        if prices:
-            median_price = sorted(prices)[len(prices) // 2]
-            return median_price, "pricing_examples"
+    legal = (order_details.get("ng_legal_description") or "").upper()
+    for keyword in ("CONDOMINIUM", " CONDO", "UNIT OF ", "AIRSPACE UNIT"):
+        if keyword in legal:
+            return f"Condo order — legal description contains '{keyword}'"
 
-    # 2. invoice_learnings (corrections from past approvals)
-    learnings = get_invoice_learnings(service_type=service, county=county, limit=5)
-    if learnings:
-        # learnings store the correction as text; skip for now (needs price parsing)
-        pass
+    address = (order_details.get("ng_property_address") or "").upper()
+    for pattern in (" UNIT ", " APT ", " SUITE ", "#"):
+        if pattern in address:
+            # Only flag if followed by alphanumerics (actual unit indicator)
+            idx = address.find(pattern)
+            after = address[idx + len(pattern):idx + len(pattern) + 5].strip()
+            if after and (after[0].isdigit() or after[0].isalpha()):
+                return f"Possible condo — address contains '{pattern.strip()}' indicator"
 
-    # 3. Base rates
-    for key, rate in _BASE_RATES.items():
-        if key in service_lower or service_lower in key:
-            multiplier = 1.3 if client_tier == "b2b" else 1.0
-            return rate * multiplier, "base_rate"
-
-    return _BASE_RATES["default"], "base_rate_default"
+    return None
 
 
-def _ai_build_invoice_draft(
+def _detect_unsupported_service(service_type: str) -> Optional[str]:
+    """Return escalation reason if service must go to Robert/Allan, else None."""
+    svc = service_type.lower().strip()
+    for keyword in _ESCALATE_SERVICES:
+        if keyword in svc:
+            return f"Service '{service_type}' requires manual quoting by management (Robert/Allan)"
+    return None
+
+
+def _detect_duplicates(order_id: str, order_details: dict) -> list[dict]:
+    """Run multi-signal duplicate check. Returns candidate list (may be empty)."""
+    return find_duplicate_orders(
+        order_id=order_id,
+        address=order_details.get("ng_property_address") or "",
+        county=order_details.get("ng_property_county") or "",
+        parcel_id=order_details.get("ng_folio_mls_number") or "",
+        company_id=int(order_details.get("ng_company_id") or 0),
+        service_type=order_details.get("ng_service_requested") or "",
+    )
+
+
+# ── Client tier classification ────────────────────────────────────────────────
+
+def _classify_client_tier(company_info: dict) -> str:
+    """Return 'individual', 'new_title', or 'old_title'."""
+    if not company_info:
+        return "individual"  # no company record → treat as one-off
+
+    if company_info.get("company_type") == 1:
+        return "individual"
+
+    dtentered = company_info.get("ng_dtentered")
+    order_count = company_info.get("ng_order_count", 0)
+
+    if dtentered:
+        reg_year = dtentered.year if hasattr(dtentered, "year") else int(str(dtentered)[:4])
+        if reg_year >= NEW_TITLE_YEAR_CUTOFF and order_count < NEW_TITLE_ORDER_CUTOFF:
+            return "new_title"
+
+    return "old_title"
+
+
+def _get_fallback_survey_rate(tier: str) -> float:
+    """Return default survey rate when ng_company.ng_rate is not set."""
+    if tier in ("individual", "new_title"):
+        return PRICE_SURVEY_FALLBACK_INDIVIDUAL
+    return PRICE_SURVEY_FALLBACK_OLD_TITLE
+
+
+# ── AI context assembly ───────────────────────────────────────────────────────
+
+def _build_ai_context(
     order_id: str,
     packet: dict,
+    order_details: dict,
+    company_info: dict,
+    tier: str,
+    duplicates: list[dict],
     link: str,
-    pricing_context: str,
-) -> dict:
-    """Use Claude to build a complete invoice draft from the order packet.
+    pricing_history: str,
+) -> str:
+    """Assemble the full context block fed to Claude Sonnet for price reasoning."""
 
-    Returns dict: {services, total_amount, notes, gaps, questions, summary}
-    """
-    prompt = f"""You are building an invoice for a land surveying order.
+    ng_rate = company_info.get("ng_rate", 0.0)
+    company_name = company_info.get("company_name", "Unknown")
 
-ORDER PACKET:
-{json.dumps(packet, indent=2, default=str)[:3000]}
+    if ng_rate and ng_rate > 100:
+        rate_guidance = (
+            f"Company's negotiated survey rate: ${ng_rate:,.2f} — USE THIS as the base survey rate. "
+            f"It was agreed upon by management for this specific client."
+        )
+    else:
+        fallback = _get_fallback_survey_rate(tier)
+        rate_guidance = (
+            f"No negotiated rate on file for this company. "
+            f"Use default for {tier} clients: ${fallback:,.2f} as the base survey rate."
+        )
 
-PRICING CONTEXT (recent examples and base rates):
-{pricing_context}
+    # EC pricing guidance
+    ec_guidance = (
+        f"Elevation Certificate (EC): always ${PRICE_EC_BASE:,.2f} regardless of client type. "
+        f"If FEMA flood zone is VE (coastal), add ${COMPLEXITY_REFERENCE['zone_ve_ec']:,.2f} "
+        f"to the EC line item only."
+    )
 
-FTF ORDER LINK: {link}
+    # Complexity reference (formatted for AI)
+    complexity_lines = "\n".join(
+        f"  • {k.replace('_', ' ')}: +${v:,.2f}" for k, v in COMPLEXITY_REFERENCE.items()
+        if k != "zone_ve_ec"
+    )
+    topo_lines = "\n".join(
+        f"  • {k.replace('_', ' ')}: ${v:,.2f}" for k, v in TOPO_REFERENCE.items()
+    )
 
-Build a complete invoice draft. Be specific about services. Flag anything uncertain.
+    # Duplicate alert block
+    dup_block = ""
+    if duplicates:
+        dup_lines = "\n".join(
+            f"  • Order {d['order_id']} — {d['address']}, {d['county']} — "
+            f"service: {d['service']} — match: {', '.join(d['match_reasons'])} "
+            f"(score {d['match_score']})"
+            for d in duplicates[:3]
+        )
+        dup_block = f"\n⚠️ POSSIBLE DUPLICATE ORDERS (flagged for human review):\n{dup_lines}\n"
 
-Return ONLY valid JSON:
+    # Key order fields
+    service_type = order_details.get("ng_service_requested") or packet.get("services_requested", {}).get("value", "Unknown")
+    lot_size     = order_details.get("ng_size") or packet.get("lot_size", {}).get("value", "unknown")
+    fema_zone    = order_details.get("ng_flood") or packet.get("fema_zone", {}).get("value", "unknown")
+    county       = order_details.get("ng_property_county") or packet.get("property_county", {}).get("value", "")
+    address      = order_details.get("ng_property_address") or packet.get("property_address", {}).get("value", "")
+    legal_desc   = order_details.get("ng_legal_description") or packet.get("legal_description", {}).get("value", "")
+    is_commercial = bool(order_details.get("ng_commercial"))
+    certifications = (order_details.get("ng_certifications") or "").strip()
+    notes        = packet.get("summary", "")
+
+    # A2 analysis blocks
+    appraiser_data   = packet.get("appraiser_data") or {}
+    aerial_analysis  = packet.get("aerial_analysis") or {}
+
+    aerial_summary = ""
+    if aerial_analysis:
+        aerial_summary = f"""
+AERIAL IMAGE ANALYSIS (Google satellite, zoom 19):
+  Lot shape: {aerial_analysis.get('lot_shape', 'unknown')}
+  Estimated lot size: {aerial_analysis.get('estimated_lot_size', 'unknown')}
+  Main structure footprint: {aerial_analysis.get('main_structure_footprint_sqft', 'unknown')} sqft
+  Visible structures: {aerial_analysis.get('visible_structures', 'unknown')}
+  Pool visible: {aerial_analysis.get('pool_visible', False)}
+  Driveway count: {aerial_analysis.get('driveway_count', 'unknown')}
+  Apparent encroachments: {aerial_analysis.get('apparent_encroachments', 'none noted')}
+  Access type: {aerial_analysis.get('access_type', 'unknown')}
+  Site notes: {aerial_analysis.get('site_notes', '')}
+  Confidence: {aerial_analysis.get('confidence', 'unknown')}
+"""
+
+    appraiser_summary = ""
+    if appraiser_data and appraiser_data.get("confidence") not in ("LOW", None):
+        appraiser_summary = f"""
+PROPERTY APPRAISER DATA:
+  Legal description: {appraiser_data.get('legal_description', '')}
+  Lot size: {appraiser_data.get('lot_size', '')}
+  Structure sqft: {appraiser_data.get('structure_sqft', '')}
+  Parcel ID: {appraiser_data.get('parcel_id', '')}
+  Year built: {appraiser_data.get('year_built', '')}
+  Confidence: {appraiser_data.get('confidence', '')}
+"""
+
+    context = f"""You are pricing a Florida land survey invoice for NexGen Surveying.
+Reason carefully through every relevant factor. Propose a final price with itemized line items.
+
+ORDER: {order_id}
+FTF LINK: {link}
+
+── ORDER DETAILS ────────────────────────────────
+Service requested: {service_type}
+Property address:  {address}
+County:            {county}
+Lot size (DB):     {lot_size} acres
+FEMA flood zone:   {fema_zone}
+Legal description: {legal_desc[:300] if legal_desc else 'not available'}
+Commercial flag:   {is_commercial}
+Certifications:    {certifications[:200] if certifications else 'none (individual/direct order)'}
+Order notes:       {notes[:300] if notes else 'none'}
+{aerial_summary}{appraiser_summary}
+── CLIENT ───────────────────────────────────────
+Company: {company_name}
+Client tier: {tier.upper()} ({tier} = {'individual homeowner' if tier == 'individual' else ('new/low-volume title company' if tier == 'new_title' else 'established title company')})
+Order count: {company_info.get('ng_order_count', 0)} total orders with NexGen
+{rate_guidance}
+
+── PRICING GUIDELINES (use as context for your reasoning) ───
+{ec_guidance}
+
+Complexity upcharge reference ranges (validate against actual property data — do NOT apply mechanically):
+{complexity_lines}
+
+Topographic Survey reference pricing by lot size:
+{topo_lines}
+Topo lots > 1.00 acre: ESCALATE — do not price, flag for management.
+
+Lot > 5.00 acres: ESCALATE — do not price for any service type.
+{dup_block}
+── PRICING HISTORY (recent FTF + internal examples) ─────────
+{pricing_history}
+
+── YOUR TASK ────────────────────────────────────
+1. Identify the service route: is this a standard boundary/survey, EC-only, combined, TOPO, or should it ESCALATE?
+2. Start from the company's rate (or fallback) — then assess what the aerial image, legal description, lot size, county, and FEMA zone tell you about actual field complexity.
+3. Apply complexity upcharges only where the data supports them — explain each one.
+4. If Zone VE, add ${COMPLEXITY_REFERENCE['zone_ve_ec']:,.2f} to any EC line item.
+5. If Monroe County, add ~${COMPLEXITY_REFERENCE['monroe_county']:,.2f} for remote mobilisation.
+6. If anything is unclear or the job clearly needs management quoting, set escalate_flag=true and explain why.
+7. Flag duplicates if found — do not reject, just note in flags.
+
+Return ONLY valid JSON (no markdown, no explanation outside JSON):
 {{
-  "services": [
-    {{"name": "...", "description": "...", "amount": 0.00}},
-    ...
+  "invoice_amount": 0.00,
+  "line_items": [
+    {{"name": "...", "description": "...", "amount": 0.00}}
   ],
-  "total_amount": 0.00,
-  "invoice_notes": "any special notes for this order",
-  "questions_for_approver": ["Q1 if any", "Q2 if any"],
-  "low_confidence_fields": ["list of fields that need human verification"],
-  "pricing_rationale": "brief explanation of how prices were determined",
-  "ready_to_approve": true
-}}
+  "pricing_reasoning": "2-3 sentence explanation of how you determined the price",
+  "confidence": "HIGH|MEDIUM|LOW",
+  "escalate_flag": false,
+  "escalate_reason": null,
+  "flags": []
+}}"""
 
-Rules:
-- Use pricing examples/base rates provided — don't invent prices
-- Mark ready_to_approve=false if any service amount is unknown or confidence is LOW
-- questions_for_approver: ask SPECIFIC questions only (e.g. "Is this a rush order?")
-- Keep descriptions clear for client — they will see this on the invoice"""
+    return context
 
+
+# ── AI pricing pass ───────────────────────────────────────────────────────────
+
+def _ai_compile_price(context: str) -> dict:
+    """Claude Sonnet reasons from real order data and returns a pricing decision."""
     try:
-        result_str = llm_call(
+        raw = llm_call(
             model=HUMAN_GATE_MODEL,
-            system="You are an invoice drafting assistant for a Florida land surveying company.",
-            user=prompt,
-            max_tokens=600,
+            system=(
+                "You are a pricing expert for a Florida land surveying company. "
+                "You reason from real property data — aerial analysis, legal descriptions, "
+                "lot size, county, FEMA zone — to propose accurate invoice prices. "
+                "Your output is always valid JSON."
+            ),
+            user=context,
+            max_tokens=800,
         ).strip()
 
-        if result_str.startswith("```"):
-            result_str = re.sub(r"^```[a-z]*\n?", "", result_str).rstrip("`").strip()
+        if raw.startswith("```"):
+            raw = re.sub(r"^```[a-z]*\n?", "", raw).rstrip("`").strip()
 
-        draft = json.loads(result_str)
+        result = json.loads(raw)
 
-        # Sanity check total
-        if draft.get("services"):
-            computed_total = sum(s.get("amount", 0) for s in draft["services"])
-            if abs(computed_total - draft.get("total_amount", 0)) > 0.01:
-                draft["total_amount"] = computed_total
+        # Sanity check: recompute total from line items
+        if result.get("line_items"):
+            computed = sum(item.get("amount", 0) for item in result["line_items"])
+            if abs(computed - result.get("invoice_amount", 0)) > 0.01:
+                result["invoice_amount"] = round(computed, 2)
 
-        return draft
+        return result
 
     except Exception as exc:
-        log.warning("AI draft build failed: %s", exc)
-        services_requested = packet.get("services_requested", {}).get("value", ["Land Survey"])
-        if isinstance(services_requested, str):
-            services_requested = [services_requested]
-
-        services = []
-        total = 0.0
-        for svc in services_requested:
-            price, source = _lookup_price(svc, "", "residential")
-            services.append({"name": svc, "description": svc, "amount": price})
-            total += price
-
+        log.warning("_ai_compile_price failed: %s", exc)
         return {
-            "services": services,
-            "total_amount": total,
-            "invoice_notes": "AI draft failed — please review all fields",
-            "questions_for_approver": ["Please confirm services and pricing"],
-            "low_confidence_fields": ["all fields — AI extraction failed"],
-            "pricing_rationale": f"Fallback base rate used (AI failed: {exc})",
-            "ready_to_approve": False,
+            "invoice_amount": 0.0,
+            "line_items": [],
+            "pricing_reasoning": f"AI pricing failed: {exc}. Manual review required.",
+            "confidence": "LOW",
+            "escalate_flag": True,
+            "escalate_reason": "AI pricing error — needs manual quote",
+            "flags": ["ai_error"],
         }
 
+
+# ── Teams card ────────────────────────────────────────────────────────────────
 
 def _build_teams_post(
     order_id: str,
     packet: dict,
-    draft: dict,
+    ai_result: dict,
     link: str,
+    company_info: dict,
+    tier: str,
+    duplicates: list[dict],
+    condo_reason: Optional[str],
+    escalate_reason: Optional[str],
 ) -> str:
-    """Build the Teams message HTML for human review."""
-    client  = packet.get("client_name", {}).get("value") or "Unknown"
+    """Build the Teams approval card HTML."""
+    client  = packet.get("client_name", {}).get("value") or company_info.get("company_name") or "Unknown"
     address = packet.get("property_address", {}).get("value") or "Unknown"
     county  = packet.get("property_county", {}).get("value") or "Unknown"
     summary = packet.get("summary", "")
-    total   = draft.get("total_amount", 0)
+    total   = ai_result.get("invoice_amount", 0)
 
-    services_lines = ""
-    for svc in draft.get("services", []):
-        services_lines += f"<li><strong>{svc['name']}</strong> — ${svc['amount']:,.2f}<br>{svc['description']}</li>"
+    # Header and status tag
+    if condo_reason:
+        status_tag = "<p><strong>🚫 REJECTED — CONDO ORDER (no land parcel to survey)</strong></p>"
+    elif escalate_reason:
+        status_tag = f"<p><strong>📤 ESCALATED — {escalate_reason}</strong></p>"
+    else:
+        confidence = ai_result.get("confidence", "MEDIUM")
+        conf_icon = {"HIGH": "✅", "MEDIUM": "⚠️", "LOW": "❌"}.get(confidence, "⚠️")
+        status_tag = f"<p>{conf_icon} AI confidence: <strong>{confidence}</strong></p>"
 
-    questions_block = ""
-    for q in draft.get("questions_for_approver", []):
-        questions_block += f"<li>❓ {q}</li>"
+    # Client tier display
+    tier_labels = {
+        "individual": "Individual / One-off",
+        "new_title":  "New Title Company (2026+, low volume)",
+        "old_title":  "Established Title Company",
+    }
+    ng_rate = company_info.get("ng_rate", 0)
+    if ng_rate and ng_rate > 100:
+        rate_source = f"Negotiated rate: <strong>${ng_rate:,.2f}</strong> (from account profile)"
+    else:
+        fallback = _get_fallback_survey_rate(tier)
+        rate_source = f"Default rate: <strong>${fallback:,.2f}</strong> (no rate on file — tier default)"
 
-    gaps_block = ""
-    for g in draft.get("low_confidence_fields", []):
-        gaps_block += f"<li>⚠️ {g}</li>"
+    # Line items
+    items_html = ""
+    for item in ai_result.get("line_items", []):
+        items_html += f"<li><strong>{item['name']}</strong> — ${item['amount']:,.2f}<br><small>{item['description']}</small></li>"
+    if not items_html:
+        items_html = "<li>No line items — see escalation/rejection reason above</li>"
 
-    confidence_note = ""
-    if not draft.get("ready_to_approve"):
-        confidence_note = "<p><strong>⚠️ Some fields have LOW confidence — please review before approving.</strong></p>"
+    # Duplicate alert
+    dup_html = ""
+    if duplicates:
+        dup_html = "<h4>⚠️ Possible Duplicate Orders</h4><ul>"
+        for d in duplicates[:3]:
+            dup_html += (
+                f"<li>Order <strong>{d['order_id']}</strong> — {d['address']}, {d['county']} — "
+                f"service: {d['service']} — match: {', '.join(d['match_reasons'])}</li>"
+            )
+        dup_html += "</ul>"
 
-    notes = draft.get("invoice_notes", "")
-    rationale = draft.get("pricing_rationale", "")
+    # Flags
+    flags = ai_result.get("flags", [])
+    flags_html = ""
+    if flags:
+        flags_html = "<h4>Flags</h4><ul>" + "".join(f"<li>🔸 {f}</li>" for f in flags) + "</ul>"
 
     html = f"""
 <h3>📋 Invoice Draft — Order {order_id}</h3>
@@ -220,96 +423,134 @@ def _build_teams_post(
 
 <ul>
 <li><strong>Client:</strong> {client}</li>
+<li><strong>Tier:</strong> {tier_labels.get(tier, tier)}</li>
+<li><strong>Rate source:</strong> {rate_source}</li>
 <li><strong>Property:</strong> {address}, {county} County</li>
 <li><strong>Summary:</strong> {summary}</li>
 </ul>
 
+{status_tag}
+
 <h4>Services</h4>
-<ul>{services_lines}</ul>
+<ul>{items_html}</ul>
 <p><strong>Total: ${total:,.2f}</strong></p>
 
-<h4>Pricing Rationale</h4>
-<p>{rationale}</p>
-""".strip()
-
-    if notes:
-        html += f"\n<h4>Notes</h4><p>{notes}</p>"
-
-    if questions_block:
-        html += f"\n<h4>Questions for Approver</h4><ul>{questions_block}</ul>"
-
-    if gaps_block:
-        html += f"\n<h4>Needs Verification</h4><ul>{gaps_block}</ul>"
-
-    html += confidence_note
-
-    html += """
+<h4>Pricing Reasoning</h4>
+<p><em>{ai_result.get('pricing_reasoning', '')}</em></p>
+{dup_html}{flags_html}
 <hr>
-<p><strong>Reply to this message to approve, reject, or request changes:</strong><br>
+<p><strong>Reply to approve, reject, or change:</strong><br>
 • <code>APPROVE</code> — send invoice as-is<br>
 • <code>REJECT [reason]</code> — hold, don't send<br>
-• <code>change price to $XXX</code> — I'll update and repost<br>
-• <code>add [service]</code> or <code>remove [service]</code><br>
+• <code>change price to $XXX</code> — update and repost<br>
+• <code>add [service]</code> / <code>remove [service]</code><br>
 • Any other instruction — I'll interpret and update<br>
-Only Robert, Ryan, or Prateek can approve.</p>"""
+<em>Only Robert, Ryan, or Prateek can approve.</em></p>
+""".strip()
 
     return html
 
 
-def compile_for_order(order_id: str) -> dict:
-    """Build and post invoice draft for one order.
+# ── Main entry point ──────────────────────────────────────────────────────────
 
-    Returns the draft dict.
-    """
+def compile_for_order(order_id: str) -> dict:
+    """Validate, price, and post invoice draft for one order. Returns result dict."""
     db_row = get_order_by_id(order_id)
     if not db_row:
-        raise AgentError(f"compile_for_order: order {order_id} not in DB")
+        raise AgentError(f"compile_for_order: order {order_id} not in state DB")
 
     raw_sources = db_row.get("data_sources")
     if not raw_sources:
         raise AgentError(f"compile_for_order: order {order_id} has no data_sources — run A2 first")
 
     data_sources = json.loads(raw_sources) if isinstance(raw_sources, str) else raw_sources
-    packet       = data_sources.get("packet", {})
-    link         = f"{FTF_ORDER_URL}/{order_id}"
+    packet = data_sources.get("packet", {})
+    link   = f"{FTF_ORDER_URL}/{order_id}"
 
-    # Pricing context: FTF 2yr history + internal examples + base rates
-    service_list = packet.get("services_requested", {}).get("value", [])
-    county_val   = packet.get("property_county", {}).get("value", "")
-    pricing_ctx  = f"Base rates (fallback): {json.dumps(_BASE_RATES)}\n"
+    # ── 1. Fetch live order + company data from MySQL ─────────────────────────
+    order_details = get_order_details(order_id)
+    company_id    = int(order_details.get("ng_company_id") or 0)
+    company_info  = get_company_info(company_id) if company_id else {}
+    tier          = _classify_client_tier(company_info)
 
-    for svc in (service_list if isinstance(service_list, list) else [service_list]):
-        svc_str = str(svc)
-        # FTF 2-year invoice history (real completed orders)
-        hist_orders = get_historical_pricing_orders(service_type=svc_str, county=county_val, months=24, max_results=20)
-        if hist_orders:
-            amounts = sorted([o["amount"] for o in hist_orders])
+    # ── 2. Pre-flight validation ──────────────────────────────────────────────
+    service_type   = order_details.get("ng_service_requested") or ""
+    condo_reason   = _detect_condo(order_details)
+    escalate_reason = _detect_unsupported_service(service_type) if not condo_reason else None
+    duplicates     = _detect_duplicates(order_id, order_details)
+
+    # Hard stops — build a minimal result and post to Teams
+    if condo_reason or escalate_reason:
+        stop_result = {
+            "invoice_amount": 0.0,
+            "line_items": [],
+            "pricing_reasoning": condo_reason or escalate_reason,
+            "confidence": "N/A",
+            "escalate_flag": True,
+            "escalate_reason": condo_reason or escalate_reason,
+            "flags": ["condo_rejected"] if condo_reason else ["unsupported_service_escalated"],
+        }
+        teams_html = _build_teams_post(
+            order_id, packet, stop_result, link, company_info, tier,
+            duplicates, condo_reason, escalate_reason,
+        )
+        post_result = post_channel_message(teams_html, subject=f"Invoice — Order {order_id}")
+        save_order_state(
+            order_id,
+            status="invoice_draft_posted",
+            invoice_draft=json.dumps(stop_result, default=str),
+            approval_message_id=post_result.get("id", ""),
+            modification_count=0,
+            estimate_amount=0.0,
+            draft_posted_at=datetime.now(timezone.utc).isoformat(),
+        )
+        log.info("order=%s hard-stop: %s", order_id, condo_reason or escalate_reason)
+        return stop_result
+
+    # ── 3. Pricing history context ────────────────────────────────────────────
+    county_val   = order_details.get("ng_property_county") or ""
+    pricing_ctx  = ""
+    svc_list = [service_type] if service_type else (
+        packet.get("services_requested", {}).get("value", [])
+    )
+    if isinstance(svc_list, str):
+        svc_list = [svc_list]
+    for svc in svc_list[:2]:
+        hist = get_historical_pricing_orders(service_type=svc, county=county_val, months=24, max_results=20)
+        if hist:
+            amounts = sorted(o["amount"] for o in hist)
             median  = amounts[len(amounts) // 2]
             pricing_ctx += (
-                f"\n{svc_str} FTF history (last 2yr, n={len(amounts)}, county={county_val or 'any'}): "
-                f"min=${min(amounts):,.0f} median=${median:,.0f} max=${max(amounts):,.0f}"
+                f"{svc} — FTF history (24mo, n={len(amounts)}, county={county_val or 'any'}): "
+                f"min=${min(amounts):,.0f} median=${median:,.0f} max=${max(amounts):,.0f}\n"
             )
-        # Internal pricing examples (human corrections)
-        examples = get_pricing_examples(service_type=svc_str, county=county_val, limit=3)
+        examples = get_pricing_examples(service_type=svc, county=county_val, limit=3)
         if examples:
-            pricing_ctx += f"\n{svc_str} internal examples: {[e['final_price'] for e in examples]}"
+            pricing_ctx += f"{svc} — internal examples: {[e['final_price'] for e in examples]}\n"
 
-    # Build draft
-    draft = _ai_build_invoice_draft(order_id, packet, link, pricing_ctx)
+    # ── 4. AI pricing pass ────────────────────────────────────────────────────
+    context   = _build_ai_context(
+        order_id, packet, order_details, company_info, tier,
+        duplicates, link, pricing_ctx,
+    )
+    ai_result = _ai_compile_price(context)
 
-    # Post to Teams channel
-    teams_html  = _build_teams_post(order_id, packet, draft, link)
+    # ── 5. Post to Teams ──────────────────────────────────────────────────────
+    teams_html  = _build_teams_post(
+        order_id, packet, ai_result, link, company_info, tier,
+        duplicates, condo_reason=None, escalate_reason=None,
+    )
     post_result = post_channel_message(teams_html, subject=f"Invoice Draft — Order {order_id}")
     message_id  = post_result.get("id", "")
 
-    # Save
+    # ── 6. Save state ─────────────────────────────────────────────────────────
     save_order_state(
         order_id,
         status="invoice_draft_posted",
-        invoice_draft=json.dumps(draft, default=str),
+        invoice_draft=json.dumps(ai_result, default=str),
         approval_message_id=message_id,
         modification_count=0,
-        estimate_amount=draft.get("total_amount"),
+        estimate_amount=ai_result.get("invoice_amount"),
         draft_posted_at=datetime.now(timezone.utc).isoformat(),
     )
 
@@ -317,13 +558,23 @@ def compile_for_order(order_id: str) -> dict:
         AGENT_NAME,
         decision="invoice_draft_posted",
         order_id=order_id,
-        reason=f"total=${draft.get('total_amount', 0):.2f} services={len(draft.get('services', []))} ready={draft.get('ready_to_approve')}",
-        input_summary=f"packet confidence={packet.get('source_of_truth')}",
+        reason=(
+            f"tier={tier} rate_source={'negotiated' if company_info.get('ng_rate', 0) > 100 else 'default'} "
+            f"total=${ai_result.get('invoice_amount', 0):.2f} "
+            f"confidence={ai_result.get('confidence')} "
+            f"escalate={ai_result.get('escalate_flag')} "
+            f"duplicates={len(duplicates)}"
+        ),
+        input_summary=f"service={service_type} county={county_val} tier={tier}",
         output_summary=f"Teams message_id={message_id}",
         model_used=HUMAN_GATE_MODEL,
     )
-    log.info("invoice draft posted order=%s total=%.2f message_id=%s", order_id, draft.get("total_amount", 0), message_id)
-    return draft
+    log.info(
+        "invoice draft posted order=%s total=%.2f tier=%s confidence=%s message_id=%s",
+        order_id, ai_result.get("invoice_amount", 0), tier,
+        ai_result.get("confidence"), message_id,
+    )
+    return ai_result
 
 
 def run() -> dict:
@@ -353,8 +604,8 @@ def main(argv=None) -> None:
     args = parser.parse_args(argv)
 
     if args.order_id:
-        draft = compile_for_order(args.order_id)
-        print(json.dumps(draft, indent=2))
+        result = compile_for_order(args.order_id)
+        print(json.dumps(result, indent=2))
     elif args.run_now:
         summary = run()
         print(summary)
