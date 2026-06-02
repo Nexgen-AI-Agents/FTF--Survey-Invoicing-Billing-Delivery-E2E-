@@ -385,7 +385,7 @@ def _build_teams_post(
     # Client tier display
     tier_labels = {
         "individual": "Individual / One-off",
-        "new_title":  "New Title Company (2026+, low volume)",
+        "new_title":  f"New Title Company ({NEW_TITLE_YEAR_CUTOFF}+, low volume)",
         "old_title":  "Established Title Company",
     }
     ng_rate = company_info.get("ng_rate", 0)

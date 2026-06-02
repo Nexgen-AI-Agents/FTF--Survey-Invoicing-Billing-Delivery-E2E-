@@ -57,7 +57,7 @@ TOPO_REFERENCE: dict = {
 
 # New title company thresholds (registered on/after Jan 1 of NEW_TITLE_YEAR_CUTOFF
 # AND fewer than NEW_TITLE_ORDER_CUTOFF total orders)
-NEW_TITLE_YEAR_CUTOFF:  int = 2026
+NEW_TITLE_YEAR_CUTOFF:  int = 2025
 NEW_TITLE_ORDER_CUTOFF: int = 20
 
 # Legacy — kept for backward compatibility; superseded by PRICE_EC_BASE above

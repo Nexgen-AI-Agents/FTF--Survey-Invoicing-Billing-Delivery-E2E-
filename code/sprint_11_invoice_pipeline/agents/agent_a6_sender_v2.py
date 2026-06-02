@@ -42,6 +42,13 @@ from core.teams_graph_client import post_channel_reply
 AGENT_NAME = "agent_a6_sender_v2"
 log = get_logger(AGENT_NAME)
 
+_GOOGLE_REVIEW_URL = os.getenv("GOOGLE_REVIEW_URL", "")
+_review_link = (
+    f'<a href="{_GOOGLE_REVIEW_URL}">Google review</a>'
+    if _GOOGLE_REVIEW_URL
+    else "Google review"
+)
+
 _NEXGEN_SIGNATURE = f"""
 <hr>
 <p>
@@ -52,8 +59,7 @@ Phone: (561) 508-6272 | Email: nesa@nexgenlogix.com<br>
 </p>
 <p><em>
 If our service exceeded your expectations, we'd truly appreciate a quick
-<a href="{os.getenv('GOOGLE_REVIEW_URL', '')}">Google review</a> —
-it means the world to our small team. Thank you!
+{_review_link} — it means the world to our small team. Thank you!
 </em></p>
 """
 
