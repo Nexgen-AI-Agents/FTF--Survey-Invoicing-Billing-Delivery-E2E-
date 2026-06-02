@@ -23,7 +23,6 @@ import smtplib
 import sys
 import time
 from datetime import datetime, timezone
-from zoneinfo import ZoneInfo
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -31,7 +30,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared")
 
 from config.settings import (
     ESTIMATE_DELAY_MIN, ESTIMATE_DELAY_MAX,
-    SEND_HOUR_START, SEND_HOUR_END,
     SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM,
 )
 from core.excel_db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
@@ -62,12 +60,6 @@ If our service exceeded your expectations, we'd truly appreciate a quick
 {_review_link} — it means the world to our small team. Thank you!
 </em></p>
 """
-
-
-def _is_business_hours() -> bool:
-    # Use America/New_York to handle EST/EDT automatically — GA runners are UTC
-    hour = datetime.now(ZoneInfo("America/New_York")).hour
-    return SEND_HOUR_START <= hour < SEND_HOUR_END
 
 
 def _build_email_html(client_name: str, order_id: str, draft: dict) -> str:
@@ -156,11 +148,6 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
 
     if not to_email:
         raise AgentError(f"send_for_order: no email for order {order_id}")
-
-    # Business hours check
-    if not skip_delay and not _is_business_hours():
-        log.info("outside business hours — skipping send for order=%s", order_id)
-        return {"sent": False, "reason": "outside_business_hours"}
 
     # Random delay (human-like)
     if not skip_delay:
