@@ -1,0 +1,72 @@
+name: Approval Poller (Sprint 11)
+
+on:
+  schedule:
+    - cron: "*/2 * * * *"   # every 2 minutes — reply check + send
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Never cancel in-progress — runs are fast (~30s) and we never want to
+# drop a reply check mid-flight. Queue instead.
+concurrency:
+  group: approval-poller
+  cancel-in-progress: false
+
+jobs:
+  check-approvals:
+    runs-on: ubuntu-latest
+
+    env:
+      FTF_API_KEY:                ${{ secrets.FTF_API_KEY }}
+      FTF_API_BASE_URL:           ${{ secrets.FTF_API_BASE_URL }}
+      ANTHROPIC_API_KEY:          ${{ secrets.ANTHROPIC_API_KEY }}
+      MYSQL_HOST:                 ${{ secrets.MYSQL_HOST }}
+      MYSQL_PORT:                 ${{ secrets.MYSQL_PORT }}
+      MYSQL_USER:                 ${{ secrets.MYSQL_USER }}
+      MYSQL_PASSWORD:             ${{ secrets.MYSQL_PASSWORD }}
+      MYSQL_DB:                   ${{ secrets.MYSQL_DB }}
+      TEAMS_TENANT_ID:            ${{ secrets.TEAMS_TENANT_ID }}
+      TEAMS_APP_ID:               ${{ secrets.TEAMS_APP_ID }}
+      TEAMS_CLIENT_SECRET:        ${{ secrets.TEAMS_CLIENT_SECRET }}
+      TEAMS_TEAM_ID:              ${{ secrets.TEAMS_TEAM_ID }}
+      TEAMS_CHANNEL_ID:           ${{ secrets.TEAMS_CHANNEL_ID }}
+      TEAMS_INCOMING_WEBHOOK_URL: ${{ secrets.TEAMS_INCOMING_WEBHOOK_URL }}
+      SMTP_HOST:                  ${{ secrets.SMTP_HOST }}
+      SMTP_PORT:                  ${{ secrets.SMTP_PORT }}
+      SMTP_USER:                  ${{ secrets.SMTP_USER }}
+      SMTP_PASSWORD:              ${{ secrets.SMTP_PASSWORD }}
+      SMTP_FROM:                  ${{ secrets.SMTP_FROM }}
+      FTF_ORDER_URL:              ${{ secrets.FTF_ORDER_URL }}
+      GOOGLE_REVIEW_URL:          ${{ secrets.GOOGLE_REVIEW_URL }}
+      TEAMS_WEBHOOK_URL:          ${{ secrets.TEAMS_WEBHOOK_URL }}
+      NOTIFICATION_FROM_EMAIL:    ${{ secrets.NOTIFICATION_FROM_EMAIL }}
+      NOTIFICATION_TO_EMAILS:     ${{ secrets.NOTIFICATION_TO_EMAILS }}
+      APPROVED_SENDERS:           ${{ secrets.APPROVED_SENDERS }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check Teams replies and send approved invoices
+        run: |
+          cd code/sprint_11_invoice_pipeline
+          python run_approval_poller.py
+
+      - name: Commit updated pipeline state
+        if: always()
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add data/invoice_pipeline_state.xlsx data/pipeline_state.json data/learned_rules.json
+          git diff --cached --quiet || git commit -m "chore: update pipeline state [skip ci]"
+          git pull --rebase origin main
+          git push
