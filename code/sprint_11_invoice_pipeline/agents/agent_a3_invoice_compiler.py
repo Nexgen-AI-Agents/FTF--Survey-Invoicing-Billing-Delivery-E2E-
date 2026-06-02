@@ -92,6 +92,28 @@ def _detect_duplicates(order_id: str, order_details: dict) -> list[dict]:
     )
 
 
+# ── Learned rules (from A7 feedback learner) ─────────────────────────────────
+
+_RULES_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "learned_rules.json")
+
+
+def _load_learned_rules() -> str:
+    """Return active learned rules formatted for injection into the Claude pricing prompt."""
+    try:
+        with open(_RULES_FILE) as f:
+            data = json.load(f)
+        active = [r for r in data.get("rules", []) if r.get("status") == "active"]
+        if not active:
+            return ""
+        lines = []
+        for r in active[-20:]:  # cap at 20 most recent so the prompt stays bounded
+            label = r["type"].replace("_", " ").upper()
+            lines.append(f"  • [{label}] {r['description']}")
+        return "\n".join(lines)
+    except Exception:
+        return ""
+
+
 # ── Client tier classification ────────────────────────────────────────────────
 
 def _classify_client_tier(company_info: dict) -> str:
@@ -278,6 +300,19 @@ Return ONLY valid JSON (no markdown, no explanation outside JSON):
   "escalate_reason": null,
   "flags": []
 }}"""
+
+    # Inject field-user-learned rules so Claude applies human feedback
+    learned_block = _load_learned_rules()
+    if learned_block:
+        context = context.replace(
+            "── YOUR TASK ────────────────────────────────────",
+            (
+                "── FIELD USER RULES (from human feedback — apply to ALL orders) ────\n"
+                f"{learned_block}\n\n"
+                "── YOUR TASK ────────────────────────────────────"
+            ),
+            1,
+        )
 
     return context
 
