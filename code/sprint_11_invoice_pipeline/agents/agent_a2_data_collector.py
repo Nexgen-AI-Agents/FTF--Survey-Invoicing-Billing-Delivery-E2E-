@@ -610,9 +610,15 @@ def _min_confidence(packet: dict) -> str:
     return {3: "HIGH", 2: "MEDIUM", 1: "LOW"}.get(min_level, "LOW")
 
 
+MAX_PER_RUN = int(os.getenv("A2_MAX_PER_RUN", "20"))
+
+
 def run() -> dict:
-    """Process all orders with status=invoice_needed."""
-    orders  = get_orders_by_status("invoice_needed")
+    """Process up to MAX_PER_RUN orders with status=invoice_needed per cron tick."""
+    all_orders = get_orders_by_status("invoice_needed")
+    orders     = all_orders[:MAX_PER_RUN]
+    if len(all_orders) > MAX_PER_RUN:
+        log.info("data_collector: %d invoice_needed orders, processing first %d", len(all_orders), MAX_PER_RUN)
     summary = {"processed": 0, "data_collected": 0, "details_missing": 0, "errors": 0}
 
     for db_row in orders:
