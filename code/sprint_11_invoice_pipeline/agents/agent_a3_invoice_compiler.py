@@ -463,12 +463,10 @@ def _build_teams_post(
 <p><em>{ai_result.get('pricing_reasoning', '')}</em></p>
 {dup_html}{flags_html}
 <hr>
-<p><strong>Reply to approve, reject, or change:</strong><br>
-• <code>APPROVE</code> — send invoice as-is<br>
-• <code>REJECT [reason]</code> — hold, don't send<br>
-• <code>change price to $XXX</code> — update and repost<br>
-• <code>add [service]</code> / <code>remove [service]</code><br>
-• Any other instruction — I'll interpret and update<br>
+<p><strong>Reply to this message:</strong><br>
+✅ <strong>Approve</strong> — "approved", "looks good", "send it", "go ahead" (or any synonym)<br>
+❌ <strong>Reject</strong> — "reject", "don't send", "cancel", "hold this" (or any synonym)<br>
+💬 <strong>Feedback</strong> — any instruction, price change, question, or comment<br>
 <em>Only {", ".join(s.capitalize() for s in APPROVED_SENDERS)} can approve.</em></p>
 """.strip()
 
