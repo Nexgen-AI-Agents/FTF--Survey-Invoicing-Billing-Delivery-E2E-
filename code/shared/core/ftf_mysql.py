@@ -84,7 +84,8 @@ def get_order_details(order_id: str) -> dict:
                 """SELECT ng_company_id, ng_unit_number, ng_legal_description,
                           ng_property_address, ng_property_county, ng_folio_mls_number,
                           ng_service_requested, ng_flood, ng_commercial, ng_size,
-                          ng_certifications, ng_lat, ng_long
+                          ng_certifications, ng_lat, ng_long,
+                          ng_status, ng_status_desc
                    FROM ng_orders WHERE ng_order = %s LIMIT 1""",
                 (order_id,),
             )
