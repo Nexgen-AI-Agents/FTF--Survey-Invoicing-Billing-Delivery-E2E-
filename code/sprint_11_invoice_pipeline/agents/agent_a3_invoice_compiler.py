@@ -426,9 +426,12 @@ def _build_teams_post(
     if duplicates:
         dup_html = "<h4>⚠️ Possible Duplicate Orders</h4><ul>"
         for d in duplicates[:3]:
+            ts = str(d.get("timestamp", ""))[:10]   # "YYYY-MM-DD"
+            svc = d.get("service") or "Unknown service"
             dup_html += (
-                f"<li>Order <strong>{d['order_id']}</strong> — {d['address']}, {d['county']} "
-                f"— {', '.join(d['match_reasons'])}</li>"
+                f"<li>Order <strong>{d['order_id']}</strong> | {svc} | "
+                f"{d['address']}, {d['county']} | {ts} | "
+                f"{', '.join(d['match_reasons'])}</li>"
             )
         dup_html += "</ul>"
 
