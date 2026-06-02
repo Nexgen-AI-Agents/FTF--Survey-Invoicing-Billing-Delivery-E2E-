@@ -464,8 +464,8 @@ def _build_teams_post(
 {dup_html}{flags_html}
 <hr>
 <p><strong>Reply to this message:</strong><br>
-✅ <strong>Approve</strong> — "approved", "looks good", "send it", "go ahead" (or any synonym)<br>
-❌ <strong>Reject</strong> — "reject", "don't send", "cancel", "hold this" (or any synonym)<br>
+✅ <strong>Approve</strong><br>
+❌ <strong>Reject</strong><br>
 💬 <strong>Feedback</strong> — any instruction, price change, question, or comment<br>
 <em>Only {", ".join(s.capitalize() for s in APPROVED_SENDERS)} can approve.</em></p>
 """.strip()
