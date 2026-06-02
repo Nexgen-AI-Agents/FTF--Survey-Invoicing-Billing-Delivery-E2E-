@@ -434,9 +434,10 @@ def _get_thread_replies(message_id: str) -> list[dict]:
         if reply.get("messageType") != "message":
             continue
 
-        sender_name = user_ref.get("displayName") or "Unknown"
-        raw_body    = (reply.get("body") or {}).get("content", "")
-        plain       = _clean_message_body(raw_body)
+        sender_name  = user_ref.get("displayName") or "Unknown"
+        sender_email = (user_ref.get("userPrincipalName") or "").lower()
+        raw_body     = (reply.get("body") or {}).get("content", "")
+        plain        = _clean_message_body(raw_body)
 
         created_raw = reply.get("createdDateTime", "")
         try:
@@ -447,6 +448,7 @@ def _get_thread_replies(message_id: str) -> list[dict]:
         results.append({
             "id":            reply.get("id", ""),
             "sender":        sender_name,
+            "sender_email":  sender_email,
             "text":          plain,
             "created_at_dt": created_dt,
         })
@@ -796,9 +798,10 @@ def get_chat_thread_replies(message_id: str) -> list[dict]:
         if app_ref or not user_ref.get("id"):
             continue
 
-        sender_name = user_ref.get("displayName") or "Unknown"
-        raw_body    = (reply.get("body") or {}).get("content", "")
-        plain       = _clean_message_body(raw_body)
+        sender_name  = user_ref.get("displayName") or "Unknown"
+        sender_email = (user_ref.get("userPrincipalName") or "").lower()
+        raw_body     = (reply.get("body") or {}).get("content", "")
+        plain        = _clean_message_body(raw_body)
 
         created_raw = reply.get("createdDateTime", "")
         try:
@@ -809,6 +812,7 @@ def get_chat_thread_replies(message_id: str) -> list[dict]:
         results.append({
             "id":            reply.get("id", ""),
             "sender":        sender_name,
+            "sender_email":  sender_email,
             "text":          plain,
             "created_at_dt": created_dt,
         })
@@ -920,9 +924,10 @@ def get_channel_thread_replies(message_id: str) -> list[dict]:
         if app_ref or not user_ref.get("id"):
             continue
 
-        sender_name = user_ref.get("displayName") or "Unknown"
-        raw_body    = (reply.get("body") or {}).get("content", "")
-        plain       = _clean_message_body(raw_body)
+        sender_name  = user_ref.get("displayName") or "Unknown"
+        sender_email = (user_ref.get("userPrincipalName") or "").lower()
+        raw_body     = (reply.get("body") or {}).get("content", "")
+        plain        = _clean_message_body(raw_body)
 
         created_raw = reply.get("createdDateTime", "")
         try:
@@ -933,6 +938,7 @@ def get_channel_thread_replies(message_id: str) -> list[dict]:
         results.append({
             "id":            reply.get("id", ""),
             "sender":        sender_name,
+            "sender_email":  sender_email,
             "text":          plain,
             "created_at_dt": created_dt,
         })

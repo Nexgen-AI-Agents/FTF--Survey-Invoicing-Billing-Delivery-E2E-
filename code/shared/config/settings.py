@@ -106,12 +106,25 @@ TEAMS_INCOMING_WEBHOOK_URL: str | None = os.getenv("TEAMS_INCOMING_WEBHOOK_URL")
 # FROM must be a valid licensed mailbox in the same Azure AD tenant.
 NOTIFICATION_FROM_EMAIL:  str | None = os.getenv("NOTIFICATION_FROM_EMAIL")
 NOTIFICATION_TO_EMAILS:   str        = os.getenv("NOTIFICATION_TO_EMAILS", "")  # comma-sep
-# Approved senders for Teams APPROVE/REJECT commands (first-name match, case-insensitive)
-APPROVED_SENDERS: list[str] = [
-    s.strip().lower()
-    for s in os.getenv("APPROVED_SENDERS", "robert,ryan,prateek").split(",")
-    if s.strip()
-]
+# Approved senders for Teams APPROVE/REJECT commands.
+# Format A (name + email, double verification):  "robert:robert@nexgensurveying.com,ryan:ryan@nexgensurveying.com"
+# Format B (name only, legacy):                  "robert,ryan,prateek"
+# Mixed formats are supported per entry.
+# When any entry includes an email, email verification is enforced for ALL email-paired senders.
+_APPROVED_RAW = os.getenv("APPROVED_SENDERS", "robert,ryan,prateek")
+APPROVED_SENDERS: list[str] = []        # first names (lowercase)
+APPROVED_SENDER_EMAILS: set[str] = set()  # emails (lowercase) — empty = name-only check
+
+for _entry in _APPROVED_RAW.split(","):
+    _entry = _entry.strip()
+    if not _entry:
+        continue
+    if ":" in _entry:
+        _name, _email = _entry.split(":", 1)
+        APPROVED_SENDERS.append(_name.strip().lower())
+        APPROVED_SENDER_EMAILS.add(_email.strip().lower())
+    else:
+        APPROVED_SENDERS.append(_entry.lower())
 
 # SMTP — monthly statement email delivery
 SMTP_HOST:     str | None = os.getenv("SMTP_HOST")

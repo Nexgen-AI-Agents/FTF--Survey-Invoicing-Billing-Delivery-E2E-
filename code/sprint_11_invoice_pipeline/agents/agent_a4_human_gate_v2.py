@@ -38,7 +38,7 @@ from typing import Optional
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
 from config.models import HUMAN_GATE_MODEL
-from config.settings import APPROVED_SENDERS, FTF_ORDER_URL, MAX_INVOICE_MODIFICATIONS
+from config.settings import APPROVED_SENDERS, APPROVED_SENDER_EMAILS, FTF_ORDER_URL, MAX_INVOICE_MODIFICATIONS
 from core.claude_client import call as llm_call
 from core.excel_db import (
     get_orders_awaiting_invoice_approval, get_order_by_id,
@@ -56,9 +56,14 @@ AGENT_NAME = "agent_a4_human_gate_v2"
 log = get_logger(AGENT_NAME)
 
 
-def _is_approved_sender(sender_name: str) -> bool:
+def _is_approved_sender(sender_name: str, sender_email: str = "") -> bool:
     first = sender_name.strip().lower().split()[0] if sender_name.strip() else ""
-    return first in APPROVED_SENDERS
+    if first not in APPROVED_SENDERS:
+        return False
+    # Double-verify with email when APPROVED_SENDER_EMAILS is configured
+    if APPROVED_SENDER_EMAILS:
+        return sender_email.lower() in APPROVED_SENDER_EMAILS
+    return True
 
 
 def _ai_parse_instruction(
@@ -258,12 +263,13 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
 
     # Process newest-first — only the latest non-ignored reply counts
     for reply in sorted(new_replies, key=lambda r: r["created_at_dt"], reverse=True):
-        sender   = reply["sender"]
-        text     = reply["text"]
-        reply_id = reply["id"]
+        sender       = reply["sender"]
+        sender_email = reply.get("sender_email", "")
+        text         = reply["text"]
+        reply_id     = reply["id"]
 
-        if not _is_approved_sender(sender):
-            log.debug("ignoring reply from unapproved sender=%s", sender)
+        if not _is_approved_sender(sender, sender_email):
+            log.debug("ignoring reply from unapproved sender=%s email=%s", sender, sender_email)
             mark_reply_processed(order_id, reply_id)
             continue
 
