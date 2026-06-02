@@ -48,6 +48,7 @@ def get_invoice_needed_orders(limit: int = 50) -> list[dict]:
                           ng_status, ng_property_county
                    FROM ng_orders
                    WHERE ng_invoice_needed = 1
+                     AND ng_status != 0
                    ORDER BY ng_id DESC
                    LIMIT %s""",
                 (limit,),
