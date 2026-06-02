@@ -561,7 +561,8 @@ def compile_for_order(order_id: str) -> dict:
         order_id, packet, ai_result, link, company_info, tier,
         duplicates,
     )
-    post_result = post_channel_message(teams_html, subject=f"Invoice Draft — Order {order_id}", order_id=order_id)
+    subject_label = (service_type or "Invoice Draft").strip()
+    post_result = post_channel_message(teams_html, subject=f"{subject_label} — Order #{order_id}", order_id=order_id)
     message_id  = post_result.get("id", "")
 
     # ── 6. Save state ─────────────────────────────────────────────────────────
