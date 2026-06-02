@@ -461,12 +461,12 @@ Return ONLY valid JSON, no markdown:
 def _has_minimum_viable_data(packet: dict) -> bool:
     """Return True if we have enough data to build an invoice draft.
 
-    Minimum required: client_email with HIGH or MEDIUM confidence AND
-    at least one service_requested that isn't completely unknown.
+    Minimum required:
+      - client_email present (any confidence is fine; missing = block)
+      - at least one service_requested that isn't completely unknown
     """
-    email_conf = packet.get("client_email", {}).get("confidence", "LOW")
-    email_val  = packet.get("client_email", {}).get("value", "")
-    if not email_val or email_conf == "LOW":
+    email_val = packet.get("client_email", {}).get("value", "")
+    if not email_val:
         return False
 
     svcs = packet.get("services_requested", {}).get("value", [])
