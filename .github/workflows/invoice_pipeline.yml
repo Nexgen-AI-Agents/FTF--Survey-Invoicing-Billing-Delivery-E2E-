@@ -11,7 +11,7 @@ permissions:
 # Prevent concurrent runs — Excel state file has no locking; overlapping runs corrupt state
 # cancel-in-progress: true drops queued duplicates so manual burst triggers don't stack up
 concurrency:
-  group: invoice-pipeline
+  group: invoice-state-write
   cancel-in-progress: true
 
 jobs:

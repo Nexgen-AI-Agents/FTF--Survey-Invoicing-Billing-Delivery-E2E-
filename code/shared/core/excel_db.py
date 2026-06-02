@@ -109,9 +109,18 @@ def _find_row(ws, col_name: str, value: str) -> Optional[int]:
     return None
 
 
+_STR_COLS = {"order_id", "approval_message_id", "invoice_id"}
+
+
 def _row_to_dict(ws, row_num: int) -> dict:
     headers = _get_headers(ws)
-    return {headers[i]: ws.cell(row=row_num, column=i + 1).value for i in range(len(headers))}
+    out = {}
+    for i in range(len(headers)):
+        val = ws.cell(row=row_num, column=i + 1).value
+        if headers[i] in _STR_COLS and val is not None:
+            val = str(val).strip()
+        out[headers[i]] = val
+    return out
 
 
 # ── Public API ────────────────────────────────────────────────────────────────

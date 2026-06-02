@@ -40,6 +40,8 @@ from core.teams_graph_client import post_channel_reply
 AGENT_NAME = "agent_a6_sender_v2"
 log = get_logger(AGENT_NAME)
 
+_SKIP_DELAY = os.getenv("SKIP_SEND_DELAY", "0") == "1"
+
 _GOOGLE_REVIEW_URL = os.getenv("GOOGLE_REVIEW_URL", "")
 _review_link = (
     f'<a href="{_GOOGLE_REVIEW_URL}">Google review</a>'
@@ -149,8 +151,8 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
     if not to_email:
         raise AgentError(f"send_for_order: no email for order {order_id}")
 
-    # Random delay (human-like)
-    if not skip_delay:
+    # Random delay (human-like) — skipped when invoked from the 2-min poller
+    if not skip_delay and not _SKIP_DELAY:
         delay = random.randint(ESTIMATE_DELAY_MIN, ESTIMATE_DELAY_MAX)
         log.info("send delay=%ds order=%s", delay, order_id)
         time.sleep(delay)

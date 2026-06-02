@@ -11,7 +11,7 @@ permissions:
 # Never cancel in-progress — runs are fast (~30s) and we never want to
 # drop a reply check mid-flight. Queue instead.
 concurrency:
-  group: approval-poller
+  group: invoice-state-write
   cancel-in-progress: false
 
 jobs:
@@ -44,6 +44,7 @@ jobs:
       NOTIFICATION_FROM_EMAIL:    ${{ secrets.NOTIFICATION_FROM_EMAIL }}
       NOTIFICATION_TO_EMAILS:     ${{ secrets.NOTIFICATION_TO_EMAILS }}
       APPROVED_SENDERS:           ${{ secrets.APPROVED_SENDERS }}
+      SKIP_SEND_DELAY:            "1"
 
     steps:
       - uses: actions/checkout@v4

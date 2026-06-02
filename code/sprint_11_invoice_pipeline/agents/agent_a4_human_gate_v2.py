@@ -58,11 +58,19 @@ log = get_logger(AGENT_NAME)
 
 def _is_approved_sender(sender_name: str, sender_email: str = "") -> bool:
     first = sender_name.strip().lower().split()[0] if sender_name.strip() else ""
-    if first not in APPROVED_SENDERS:
+    email_local = sender_email.split("@")[0].lower() if "@" in sender_email else ""
+    name_match = first in APPROVED_SENDERS or email_local in APPROVED_SENDERS
+    if not name_match:
         return False
-    # Double-verify with email when APPROVED_SENDER_EMAILS is configured
     if APPROVED_SENDER_EMAILS:
-        return sender_email.lower() in APPROVED_SENDER_EMAILS
+        if sender_email.lower() in APPROVED_SENDER_EMAILS:
+            return True
+        # Accept on email local-part match to handle UPN drift (e.g. pchandra@ vs prateek@)
+        if email_local in APPROVED_SENDERS:
+            log.warning("sender=%s email=%s — accepting on local-part match (UPN drift)",
+                        sender_name, sender_email)
+            return True
+        return False
     return True
 
 
@@ -263,15 +271,19 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
 
     replies = get_channel_thread_replies(message_id)
     if not replies:
-        # Stored message_id may be wrong (race condition at post time).
-        # Scan recent channel messages and self-correct.
+        log.info("no replies from Graph for order=%s msg_id=%s — attempting self-correction",
+                 order_id, message_id)
         found_id = find_channel_message_for_order(order_id)
-        if found_id and found_id != message_id:
+        if found_id and str(found_id) != str(message_id):
             log.info("auto-corrected message_id order=%s: %s → %s", order_id, message_id, found_id)
             save_order_state(order_id, approval_message_id=found_id)
             message_id = found_id
             replies = get_channel_thread_replies(message_id)
+        elif not found_id:
+            log.warning("self-correction failed — order=%s not found in channel scan; "
+                        "card may have rolled past scan horizon", order_id)
     if not replies:
+        log.debug("no actionable replies for order=%s msg_id=%s", order_id, message_id)
         return None
 
     new_replies = [r for r in replies if r["id"] not in already_processed]
@@ -287,20 +299,23 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
         reply_id     = reply["id"]
 
         if not _is_approved_sender(sender, sender_email):
-            log.debug("ignoring reply from unapproved sender=%s email=%s", sender, sender_email)
+            log.warning("REJECTED reply from unapproved sender=%s email=%s order=%s",
+                        sender, sender_email, order_id)
             mark_reply_processed(order_id, reply_id)
             continue
 
         parsed = _ai_parse_instruction(text, current_draft, order_id)
-        action = parsed.get("action", "ignore")
+        action = parsed.get("action") or "question"
         learned_rule = parsed.get("learned_rule", "")
         confidence = parsed.get("confidence", "HIGH")
         status_msg = parsed.get("status_message", "")
 
-        log.info("order=%s sender=%s action=%s confidence=%s",
-                 order_id, sender, action, confidence)
+        log.info("order=%s sender=%s action=%s confidence=%s text=%r",
+                 order_id, sender, action, confidence, text[:120])
 
         if action == "ignore":
+            log.warning("LLM classified reply as IGNORE order=%s sender=%s text=%r",
+                        order_id, sender, text[:200])
             mark_reply_processed(order_id, reply_id)
             continue
 

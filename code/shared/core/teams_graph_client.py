@@ -878,20 +878,21 @@ def get_chat_thread_replies(message_id: str) -> list[dict]:
 #   ChannelMessage.Read.All      — read channel messages and thread replies
 
 
-def _fetch_latest_channel_msg_id(order_id: str = "", retries: int = 5, delay: float = 3.0) -> str:
-    """Fetch the ID of the invoice card just posted to the channel.
+def _fetch_latest_channel_msg_id(order_id: str = "", retries: int = 8, delay: float = 4.0) -> str:
+    """Fetch the ID of the invoice card just posted to the channel for this order.
 
-    If order_id is given, scans the 10 most recent messages and returns the one
-    whose body contains the order_id — far more reliable than assuming the
-    newest message is ours (Logic App latency can exceed the initial sleep).
-    Falls back to the most recent message if no content match is found.
-    Retries up to `retries` times with `delay` seconds between attempts.
+    Strict: only returns a msg_id whose body contains order_id.
+    Never falls back to "most recent message" — that causes ID collisions
+    when multiple orders are posted in quick succession.
     """
     if not TEAMS_TEAM_ID or not TEAMS_CHANNEL_ID:
         return ""
+    if not order_id:
+        log.error("_fetch_latest_channel_msg_id called without order_id — refusing to guess")
+        return ""
     url = (
         f"{_GRAPH_READ}/teams/{TEAMS_TEAM_ID}/channels/{TEAMS_CHANNEL_ID}"
-        "/messages?$top=10"
+        "/messages?$top=20"
     )
     for attempt in range(retries):
         if attempt > 0:
@@ -900,29 +901,18 @@ def _fetch_latest_channel_msg_id(order_id: str = "", retries: int = 5, delay: fl
             r = httpx.get(url, headers=_read_headers(), timeout=20.0)
             r.raise_for_status()
             messages = r.json().get("value", [])
-            if not messages:
-                continue
-            if order_id:
-                for msg in messages:
-                    content = (msg.get("body") or {}).get("content", "")
-                    if order_id in content:
-                        log.debug("channel msg matched by order_id=%s attempt=%d", order_id, attempt + 1)
-                        return msg.get("id", "")
-                log.debug("order_id=%s not found in top-10 messages (attempt %d/%d) — retrying", order_id, attempt + 1, retries)
-                continue
-            return messages[0].get("id", "")
+            for msg in messages:
+                content = (msg.get("body") or {}).get("content", "")
+                if order_id in content:
+                    log.info("channel msg matched order=%s msg_id=%s attempt=%d",
+                             order_id, msg.get("id"), attempt + 1)
+                    return msg.get("id", "")
+            log.warning("order_id=%s not found in top-20 channel messages (attempt %d/%d)",
+                        order_id, attempt + 1, retries)
         except Exception as exc:
-            log.warning("could not fetch latest channel message id (attempt %d): %s", attempt + 1, exc)
-    # Last resort: most recent message (may be wrong if order_id not found)
-    try:
-        r = httpx.get(url, headers=_read_headers(), timeout=20.0)
-        r.raise_for_status()
-        messages = r.json().get("value", [])
-        if messages:
-            log.warning("order_id=%s not matched — falling back to most recent message", order_id)
-            return messages[0].get("id", "")
-    except Exception:
-        pass
+            log.warning("could not fetch channel messages (attempt %d): %s", attempt + 1, exc)
+    log.error("FAILED to recover msg_id for order=%s after %d attempts — "
+              "approval replies cannot be tracked", order_id, retries)
     return ""
 
 
@@ -943,10 +933,15 @@ def post_channel_message(text_or_html: str, subject: str = "", order_id: str = "
 
     send_channel_message(text_or_html, subject)
 
-    # Give Logic App a head start; _fetch_latest_channel_msg_id retries internally
-    time.sleep(3)
+    time.sleep(5)  # Logic App typically takes 4-6s to appear in Graph API
     msg_id = _fetch_latest_channel_msg_id(order_id=order_id)
-    log.info("channel message posted via webhook id=%s order=%s subject=%r", msg_id, order_id, subject)
+    if not msg_id:
+        raise AgentError(
+            f"Card posted to Teams but channel message ID could not be recovered "
+            f"for order={order_id}. Cannot track approval replies."
+        )
+    log.info("channel message posted via webhook id=%s order=%s subject=%r",
+             msg_id, order_id, subject)
     return {"id": msg_id, "ok": True}
 
 
@@ -963,18 +958,32 @@ def post_channel_reply(message_id: str, text_or_html: str) -> dict:
     return {"id": "", "ok": True}
 
 
-def find_channel_message_for_order(order_id: str) -> str:
-    """Scan recent channel messages and return the ID of the one mentioning order_id.
+def find_channel_message_for_order(order_id) -> str:
+    """Scan up to 200 recent channel messages for one mentioning order_id.
 
-    Used by A4 to self-correct a stale/wrong approval_message_id without human
-    intervention. Returns empty string if not found.
+    Used by A4 to self-correct a stale/wrong approval_message_id.
+    Walks Graph API pagination so older cards are not missed.
     """
     try:
-        messages = get_recent_messages(limit=50)
-        for msg in messages:
-            if order_id in msg.get("text", ""):
-                log.info("found channel message for order=%s id=%s", order_id, msg["id"])
-                return msg["id"]
+        oid = str(order_id).strip()
+        url = (
+            f"{_GRAPH_READ}/teams/{TEAMS_TEAM_ID}/channels/{TEAMS_CHANNEL_ID}"
+            "/messages?$top=50"
+        )
+        scanned = 0
+        while url and scanned < 200:
+            r = httpx.get(url, headers=_read_headers(), timeout=20.0)
+            r.raise_for_status()
+            data = r.json()
+            for msg in data.get("value", []):
+                scanned += 1
+                content = (msg.get("body") or {}).get("content", "")
+                if oid in content:
+                    log.info("found channel message for order=%s id=%s (scanned %d msgs)",
+                             oid, msg.get("id"), scanned)
+                    return msg.get("id", "")
+            url = data.get("@odata.nextLink")
+        log.warning("order=%s NOT found after scanning %d channel messages", oid, scanned)
     except Exception as exc:
         log.warning("find_channel_message_for_order order=%s failed: %s", order_id, exc)
     return ""
@@ -996,9 +1005,17 @@ def get_channel_thread_replies(message_id: str) -> list[dict]:
     )
     try:
         r = httpx.get(url, headers=_read_headers(), timeout=20.0)
+        if r.status_code == 401:
+            log.warning("401 fetching replies msg_id=%s — refreshing token and retrying", message_id)
+            _cache.pop("token", None)
+            r = httpx.get(url, headers=_read_headers(), timeout=20.0)
         r.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        log.error("get_channel_thread_replies HTTP %d msg_id=%s body=%s",
+                  exc.response.status_code, message_id, exc.response.text[:200])
+        return []
     except Exception as exc:
-        log.warning("could not fetch channel replies for message=%s: %s", message_id, exc)
+        log.error("get_channel_thread_replies failed msg_id=%s: %s", message_id, exc)
         return []
 
     results: list[dict] = []
