@@ -38,7 +38,7 @@ from typing import Optional
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
 from config.models import HUMAN_GATE_MODEL
-from config.settings import APPROVED_SENDERS, APPROVED_SENDER_EMAILS, FTF_ORDER_URL, MAX_INVOICE_MODIFICATIONS
+from config.settings import APPROVED_SENDERS, APPROVED_SENDER_EMAILS, APPROVED_SENDER_EMAIL_MAP, FTF_ORDER_URL, MAX_INVOICE_MODIFICATIONS
 from core.claude_client import call as llm_call
 from core.excel_db import (
     get_orders_awaiting_invoice_approval, get_order_by_id,
@@ -75,7 +75,8 @@ def _ai_parse_instruction(
 
     Returns:
     {
-      "action": "approve" | "reject" | "modify" | "question" | "ignore",
+      "action": "approve" | "reject" | "hold" | "modify" | "question" | "ignore",
+      "email_override": "sender" | null,
       "modification": {   # only when action=modify
         "type": "change_price" | "add_service" | "remove_service" | "change_field" | "other",
         "description": "what to change",
@@ -85,6 +86,7 @@ def _ai_parse_instruction(
       "reject_reason": "..." | null,
       "question_text": "..." | null,
       "confidence": "HIGH" | "MEDIUM" | "LOW",
+      "status_message": "one natural sentence of what you understood",
       "learned_rule": "one sentence about what was learned from this correction"
     }
     """
@@ -98,6 +100,7 @@ Current invoice draft:
 Determine what the team member wants to do. Return ONLY valid JSON:
 {{
   "action": "approve | reject | hold | modify | question | ignore",
+  "email_override": "sender | null",
   "modification": {{
     "type": "change_price | add_service | remove_service | change_field | other",
     "description": "what specifically to change",
@@ -107,17 +110,23 @@ Determine what the team member wants to do. Return ONLY valid JSON:
   "reject_reason": null,
   "question_text": null,
   "confidence": "HIGH | MEDIUM | LOW",
+  "status_message": "one natural sentence describing exactly what you understood",
   "learned_rule": "short sentence about what we learned from this"
 }}
 
 Rules:
-- action=approve: they want to send the invoice as-is (synonyms: looks good, send it, ok, APPROVE etc.)
+- action=approve: they want to send the invoice (synonyms: looks good, send it, ok, APPROVE, approved, go ahead, create the invoice, proceed etc.)
 - action=reject: they want to cancel permanently (synonyms: don't send, reject, no, REJECT etc.)
-- action=hold: they want to pause this invoice for now but not reject it (synonyms: hold, skip, defer, wait, not yet, pause, hold on, hold this, skip this cycle)
+- action=hold: they want to pause without rejecting (synonyms: hold, skip, defer, wait, not yet, pause, hold this, skip this cycle)
 - action=modify: they want to change something (price, service, add/remove)
-- action=question: unclear — set question_text to what you'd ask them to clarify
+- action=question: you are genuinely unsure — set question_text to a specific, natural clarifying question that names what was ambiguous and offers 2-3 options
 - action=ignore: random chat not related to this invoice
-- confidence=LOW → set action=question
+- confidence=LOW → always set action=question; question_text must be specific and natural — do not use generic "could you clarify"
+- confidence=MEDIUM → proceed with your best interpretation; set status_message so the user can correct you
+- confidence=HIGH → proceed; still set status_message
+- email_override="sender": they said "send to me", "email me", "send it to me", "send to my email", "send the email to me", or referenced their own name as the recipient
+- email_override=null: they did not ask to redirect the email recipient
+- status_message: ALWAYS set — natural language, e.g. "You approved the invoice and want the email sent to you instead of the client." or "You want to change the price to $450."
 - If they say "change price to $500" → type=change_price, new_value=500
 - If they say "add elevation certificate" → type=add_service, service_name="Elevation Certificate"
 - If they say "remove boundary survey" → type=remove_service, service_name="Boundary Survey"
@@ -276,9 +285,11 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
         parsed = _ai_parse_instruction(text, current_draft, order_id)
         action = parsed.get("action", "ignore")
         learned_rule = parsed.get("learned_rule", "")
+        confidence = parsed.get("confidence", "HIGH")
+        status_msg = parsed.get("status_message", "")
 
         log.info("order=%s sender=%s action=%s confidence=%s",
-                 order_id, sender, action, parsed.get("confidence"))
+                 order_id, sender, action, confidence)
 
         if action == "ignore":
             mark_reply_processed(order_id, reply_id)
@@ -286,8 +297,34 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
 
         mark_reply_processed(order_id, reply_id)
 
+        # For MEDIUM confidence: post what was understood before acting so the user can correct
+        if confidence == "MEDIUM" and status_msg and action not in ("question",):
+            post_channel_reply(
+                message_id,
+                f"💬 I think I understood: <em>{status_msg}</em> Proceeding — reply to correct me if that's wrong."
+            )
+
         if action == "approve":
-            save_order_state(order_id, status="invoice_approved", approved_by=sender)
+            email_override = parsed.get("email_override")
+
+            # Resolve sender's actual email if they asked "send to me"
+            override_email = ""
+            if email_override == "sender":
+                first = sender.strip().lower().split()[0] if sender.strip() else ""
+                override_email = APPROVED_SENDER_EMAIL_MAP.get(first) or sender_email
+
+            # Embed override into the draft JSON so A6 can pick it up
+            draft_to_save = current_draft
+            if override_email:
+                draft_to_save = json.loads(json.dumps(current_draft))
+                draft_to_save["email_override_to"] = override_email
+
+            save_order_state(
+                order_id,
+                status="invoice_approved",
+                approved_by=sender,
+                **({} if not override_email else {"invoice_draft": json.dumps(draft_to_save, default=str)}),
+            )
             log_decision(
                 AGENT_NAME, "invoice_approved",
                 order_id=order_id,
@@ -299,8 +336,15 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
             if db_row.get("modification_count", 0) > 0 and learned_rule:
                 _store_learning(order_id, current_draft, text, learned_rule, data_sources, sender)
 
-            post_channel_reply(message_id, f"✅ <strong>Invoice approved by {sender}.</strong> Sending to client shortly...")
-            log.info("invoice approved order=%s by=%s", order_id, sender)
+            if override_email:
+                post_channel_reply(
+                    message_id,
+                    f"✅ <strong>Invoice approved by {sender}.</strong> "
+                    f"Email will be sent to you (<strong>{override_email}</strong>) — not to the client."
+                )
+            else:
+                post_channel_reply(message_id, f"✅ <strong>Invoice approved by {sender}.</strong> Sending to client shortly...")
+            log.info("invoice approved order=%s by=%s override_email=%r", order_id, sender, override_email)
             return "invoice_approved"
 
         elif action == "hold":

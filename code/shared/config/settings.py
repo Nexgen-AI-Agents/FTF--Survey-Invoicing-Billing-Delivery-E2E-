@@ -117,6 +117,7 @@ NOTIFICATION_TO_EMAILS:   str        = os.getenv("NOTIFICATION_TO_EMAILS", "")  
 _APPROVED_RAW = os.getenv("APPROVED_SENDERS", "robert,ryan,prateek")
 APPROVED_SENDERS: list[str] = []        # first names (lowercase)
 APPROVED_SENDER_EMAILS: set[str] = set()  # emails (lowercase) — empty = name-only check
+APPROVED_SENDER_EMAIL_MAP: dict[str, str] = {}  # first_name → email
 
 for _entry in _APPROVED_RAW.split(","):
     _entry = _entry.strip()
@@ -124,8 +125,11 @@ for _entry in _APPROVED_RAW.split(","):
         continue
     if ":" in _entry:
         _name, _email = _entry.split(":", 1)
-        APPROVED_SENDERS.append(_name.strip().lower())
-        APPROVED_SENDER_EMAILS.add(_email.strip().lower())
+        _n = _name.strip().lower()
+        _e = _email.strip().lower()
+        APPROVED_SENDERS.append(_n)
+        APPROVED_SENDER_EMAILS.add(_e)
+        APPROVED_SENDER_EMAIL_MAP[_n] = _e
     else:
         APPROVED_SENDERS.append(_entry.lower())
 

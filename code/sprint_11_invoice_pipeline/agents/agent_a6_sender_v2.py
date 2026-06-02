@@ -146,14 +146,16 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
     if not raw_draft:
         raise AgentError(f"send_for_order: no invoice_draft for order {order_id}")
 
-    draft        = json.loads(raw_draft) if isinstance(raw_draft, str) else raw_draft
-    client_name  = db_row.get("client_name", "")
-    client_email = db_row.get("customer_email", "")
-    message_id   = db_row.get("approval_message_id")
-    approved_by  = db_row.get("approved_by", "Unknown")
+    draft          = json.loads(raw_draft) if isinstance(raw_draft, str) else raw_draft
+    override_email = draft.get("email_override_to") or ""
+    client_name    = db_row.get("client_name", "")
+    client_email   = db_row.get("customer_email", "")
+    to_email       = override_email or client_email
+    message_id     = db_row.get("approval_message_id")
+    approved_by    = db_row.get("approved_by", "Unknown")
 
-    if not client_email:
-        raise AgentError(f"send_for_order: no client email for order {order_id}")
+    if not to_email:
+        raise AgentError(f"send_for_order: no email for order {order_id}")
 
     # Business hours check
     if not skip_delay and not _is_business_hours():
@@ -170,7 +172,7 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
     total   = draft.get("total_amount", 0)
     subject = f"Your Survey Invoice — Order #{order_id} — NexGen Surveying"
 
-    _send_smtp(client_email, subject, html)
+    _send_smtp(to_email, subject, html)
 
     save_order_state(
         order_id,
@@ -182,22 +184,29 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
         AGENT_NAME,
         decision="invoice_sent",
         order_id=order_id,
-        reason=f"Invoice email sent to {client_email} total=${total:.2f}",
+        reason=f"Invoice email sent to {to_email} total=${total:.2f}",
         input_summary=f"client={client_name}",
-        output_summary=f"to={client_email} total={total}",
+        output_summary=f"to={to_email} total={total}",
         model_used=None,
     )
 
     # Confirm in Teams channel thread
     if message_id:
-        post_channel_reply(
-            message_id,
-            f"✅ <strong>Email sent to {client_name} ({client_email}), approved by {approved_by}</strong><br>"
-            f"Order: {order_id} | Total: ${total:,.2f}"
-        )
+        if override_email:
+            post_channel_reply(
+                message_id,
+                f"📧 <strong>Email sent to approver ({override_email}) — client copy withheld.</strong><br>"
+                f"Order: {order_id} | Approved by: {approved_by} | Total: ${total:,.2f}"
+            )
+        else:
+            post_channel_reply(
+                message_id,
+                f"✅ <strong>Email sent to {client_name} ({client_email}), approved by {approved_by}.</strong><br>"
+                f"Order: {order_id} | Total: ${total:,.2f}"
+            )
 
-    log.info("invoice sent order=%s to=%s total=%.2f", order_id, client_email, total)
-    return {"sent": True, "to": client_email, "total": total}
+    log.info("invoice sent order=%s to=%s override=%r total=%.2f", order_id, to_email, bool(override_email), total)
+    return {"sent": True, "to": to_email, "total": total}
 
 
 def run() -> dict:
