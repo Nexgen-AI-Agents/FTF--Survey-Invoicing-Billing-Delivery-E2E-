@@ -42,7 +42,7 @@ from core.exceptions import AgentError
 from core.ftf_client import get_order, get_customer
 from core.ftf_mysql import get_county_urls
 from core.logger import get_logger
-from core.teams_graph_client import post_channel_message
+from core.teams_graph_client import send_teams_notification
 
 AGENT_NAME = "agent_a2_data_collector"
 log = get_logger(AGENT_NAME)
@@ -551,7 +551,7 @@ def collect_for_order(order_id: str) -> dict:
             model_used=CLASSIFIER_MODEL,
         )
         try:
-            post_channel_message(
+            send_teams_notification(
                 f"⚠️ <strong>Client details not found for order #{order_id}</strong><br>"
                 f"Property: {property_address or 'unknown'}<br>"
                 f"Checked: FTF order notes + nesa@nexgenlogix.com inbox (last {LOOKBACK_DAYS} days)<br>"

@@ -829,66 +829,59 @@ def get_chat_thread_replies(message_id: str) -> list[dict]:
 #   ChannelMessage.Read.All      — read channel messages and thread replies
 
 
+def _fetch_latest_channel_msg_id() -> str:
+    """Fetch the ID of the most recent message in the channel via Graph READ.
+
+    ChannelMessage.Read.All (Application) is sufficient — no Send permission needed.
+    Used after posting via webhook to recover the message_id for A4 polling.
+    """
+    if not TEAMS_TEAM_ID or not TEAMS_CHANNEL_ID:
+        return ""
+    url = (
+        f"{_GRAPH_READ}/teams/{TEAMS_TEAM_ID}/channels/{TEAMS_CHANNEL_ID}"
+        "/messages?$top=1"
+    )
+    try:
+        r = httpx.get(url, headers=_read_headers(), timeout=20.0)
+        r.raise_for_status()
+        messages = r.json().get("value", [])
+        return messages[0].get("id", "") if messages else ""
+    except Exception as exc:
+        log.warning("could not fetch latest channel message id: %s", exc)
+        return ""
+
+
 def post_channel_message(text_or_html: str, subject: str = "") -> dict:
     """Post a new top-level message to the invoice approval Teams channel.
 
-    Returns {"id": message_id, "ok": True} on success.
-    Requires ChannelMessage.Send application permission.
+    Posts via incoming webhook (no ChannelMessage.Send Application permission needed),
+    then fetches the latest channel message ID via Graph READ so callers get a
+    usable message_id for reply polling.
+
+    Returns {"id": message_id, "ok": True}.
     """
-    if not TEAMS_TEAM_ID or not TEAMS_CHANNEL_ID:
-        raise AgentError("TEAMS_TEAM_ID and TEAMS_CHANNEL_ID must be set in .env")
+    import time
 
-    header = f"<strong>{subject}</strong><br><br>" if subject else ""
-    body   = (header + text_or_html).replace("\n", "<br>")
+    send_teams_notification(text_or_html, subject)
 
-    payload = {"body": {"contentType": "html", "content": body}}
-    url     = f"{_GRAPH_READ}/teams/{TEAMS_TEAM_ID}/channels/{TEAMS_CHANNEL_ID}/messages"
-
-    try:
-        r = httpx.post(url, headers=_read_headers(), json=payload, timeout=20.0)
-        r.raise_for_status()
-    except httpx.HTTPStatusError as exc:
-        raise AgentError(
-            f"post_channel_message failed: HTTP {exc.response.status_code} -- {exc.response.text[:300]}"
-        ) from exc
-    except Exception as exc:
-        raise AgentError(f"post_channel_message failed: {exc}") from exc
-
-    data   = r.json()
-    msg_id = data.get("id", "")
-    log.info("channel message posted id=%s subject=%r", msg_id, subject)
+    # Give Teams ~3 s to process the webhook post, then read back the latest msg id
+    time.sleep(3)
+    msg_id = _fetch_latest_channel_msg_id()
+    log.info("channel message posted via webhook id=%s subject=%r", msg_id, subject)
     return {"id": msg_id, "ok": True}
 
 
 def post_channel_reply(message_id: str, text_or_html: str) -> dict:
-    """Post a thread reply to a channel message.
+    """Post a thread reply to a channel message via incoming webhook.
 
-    Returns {"id": reply_id, "ok": True} on success.
-    Requires ChannelMessage.Send application permission.
+    Uses send_teams_notification with parent_message_id so the Logic App posts
+    as a thread reply. No ChannelMessage.Send Application permission needed.
+
+    Returns {"id": "", "ok": True} — webhook replies don't return a reply ID.
     """
-    if not TEAMS_TEAM_ID or not TEAMS_CHANNEL_ID:
-        raise AgentError("TEAMS_TEAM_ID and TEAMS_CHANNEL_ID must be set in .env")
-
-    body_html = text_or_html.replace("\n", "<br>")
-    payload   = {"body": {"contentType": "html", "content": body_html}}
-    url       = (
-        f"{_GRAPH_READ}/teams/{TEAMS_TEAM_ID}/channels/{TEAMS_CHANNEL_ID}"
-        f"/messages/{message_id}/replies"
-    )
-
-    try:
-        r = httpx.post(url, headers=_read_headers(), json=payload, timeout=20.0)
-        r.raise_for_status()
-    except httpx.HTTPStatusError as exc:
-        raise AgentError(
-            f"post_channel_reply failed: HTTP {exc.response.status_code} -- {exc.response.text[:300]}"
-        ) from exc
-    except Exception as exc:
-        raise AgentError(f"post_channel_reply failed: {exc}") from exc
-
-    data = r.json()
-    log.info("channel reply posted to message=%s", message_id)
-    return {"id": data.get("id", ""), "ok": True}
+    send_teams_notification(text_or_html, parent_message_id=message_id)
+    log.info("channel reply posted via webhook parent_id=%s", message_id)
+    return {"id": "", "ok": True}
 
 
 def get_channel_thread_replies(message_id: str) -> list[dict]:
