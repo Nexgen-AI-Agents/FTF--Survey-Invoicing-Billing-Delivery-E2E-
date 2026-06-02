@@ -65,11 +65,15 @@ jobs:
           cd code/sprint_11_invoice_pipeline
           python -m agents.agent_a0_orchestrator
 
+      - name: Export pipeline state to JSON
+        if: always()
+        run: python scripts/export_pipeline_json.py
+
       - name: Commit updated pipeline state
         if: always()
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add data/invoice_pipeline_state.xlsx
+          git add data/invoice_pipeline_state.xlsx data/pipeline_state.json
           git diff --cached --quiet || git commit -m "chore: update pipeline state [skip ci]"
           git push

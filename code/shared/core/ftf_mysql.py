@@ -32,17 +32,24 @@ def _connect():
     )
 
 
-def get_invoice_needed_orders(limit: int = 500) -> list[dict]:
+def get_invoice_needed_orders(limit: int = 50) -> list[dict]:
     """Return orders with ng_invoice_needed = 1 from FTF stage MySQL DB.
 
     Maps DB columns (ng_ prefix convention) to standardized field names
-    expected by A1 flag hunter.
+    expected by A1 flag hunter. Returns newest first (ORDER BY ng_id DESC)
+    to prioritise recent orders over the 11k+ historical backlog.
     """
     conn = _connect()
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT * FROM ng_orders WHERE ng_invoice_needed = 1 LIMIT %s",
+                """SELECT ng_id, ng_order, ng_client_name, ng_email,
+                          ng_property_address, ng_service_requested,
+                          ng_status, ng_property_county
+                   FROM ng_orders
+                   WHERE ng_invoice_needed = 1
+                   ORDER BY ng_id DESC
+                   LIMIT %s""",
                 (limit,),
             )
             rows = cur.fetchall()
@@ -51,19 +58,16 @@ def get_invoice_needed_orders(limit: int = 500) -> list[dict]:
 
     results = []
     for row in rows:
-        order_id = (
-            row.get("ng_order_id") or
-            row.get("order_id") or
-            str(row.get("id", ""))
-        )
+        order_id = str(row.get("ng_order") or row.get("ng_id") or "")
         if not order_id:
             continue
         results.append({
-            "order_id":        str(order_id),
-            "service_type":    row.get("ng_job_type") or row.get("ng_service_type") or row.get("service_type") or "",
-            "customer_email":  row.get("ng_email") or row.get("customer_email") or row.get("email") or "",
-            "customer_name":   row.get("ng_customer") or row.get("ng_name") or row.get("customer_name") or "",
-            "property_address": row.get("ng_address") or row.get("ng_site_address") or row.get("address") or "",
+            "order_id":        order_id,
+            "service_type":    row.get("ng_service_requested") or "",
+            "customer_email":  row.get("ng_email") or "",
+            "customer_name":   row.get("ng_client_name") or "",
+            "property_address": row.get("ng_property_address") or "",
+            "county":          row.get("ng_property_county") or "",
         })
 
     logger.info("get_invoice_needed_orders: %d orders from MySQL", len(results))
