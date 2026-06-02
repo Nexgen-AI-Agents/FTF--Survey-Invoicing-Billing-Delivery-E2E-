@@ -26,16 +26,30 @@ log = get_logger(AGENT_NAME)
 
 STATUS_INVOICE_NEEDED = "invoice_needed"
 
+# Max new orders queued per run — prevents a sudden backlog from flooding the
+# Excel state in one cycle. Backlog drains across subsequent 30-min runs.
+# Normal daily volume is 1-10 new orders, so 100 is effectively unlimited for
+# routine operation but caps extreme burst/backlog scenarios.
+MAX_NEW_PER_RUN = 100
+
 
 def run() -> list[str]:
     """Scan for orders with invoice_needed flag; queue new ones.
 
     Returns list of newly queued order IDs.
+    MySQL returns ALL flagged orders (no SQL LIMIT); dedup via order_exists().
+    At most MAX_NEW_PER_RUN new orders are queued per cycle.
     """
     orders = get_invoice_needed_orders()
     new_ids: list[str] = []
 
     for order in orders:
+        if len(new_ids) >= MAX_NEW_PER_RUN:
+            log.info(
+                "flag_hunter: MAX_NEW_PER_RUN=%d reached — %d orders remain for next cycle",
+                MAX_NEW_PER_RUN, len(orders) - MAX_NEW_PER_RUN,
+            )
+            break
         order_id = str(order.get("order_id", ""))
         if not order_id:
             continue

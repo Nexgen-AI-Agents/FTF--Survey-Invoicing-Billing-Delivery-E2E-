@@ -32,12 +32,14 @@ def _connect():
     )
 
 
-def get_invoice_needed_orders(limit: int = 50) -> list[dict]:
-    """Return orders with ng_invoice_needed = 1 from FTF stage MySQL DB.
+def get_invoice_needed_orders() -> list[dict]:
+    """Return ALL orders with ng_invoice_needed = 1 from FTF stage MySQL DB.
 
-    Maps DB columns (ng_ prefix convention) to standardized field names
-    expected by A1 flag hunter. Returns newest first (ORDER BY ng_id DESC)
-    to prioritise recent orders over the 11k+ historical backlog.
+    No LIMIT — every flagged order is returned so none are permanently invisible.
+    A1 flag hunter deduplicates via order_exists() and caps new intake per run
+    to avoid flooding the Excel state on a sudden backlog.
+
+    Returns newest first (ORDER BY ng_id DESC) so recent orders get priority.
     """
     conn = _connect()
     try:
@@ -49,9 +51,7 @@ def get_invoice_needed_orders(limit: int = 50) -> list[dict]:
                    FROM ng_orders
                    WHERE ng_invoice_needed = 1
                      AND ng_status != 0
-                   ORDER BY ng_id DESC
-                   LIMIT %s""",
-                (limit,),
+                   ORDER BY ng_id DESC"""
             )
             rows = cur.fetchall()
     finally:
