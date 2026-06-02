@@ -1,3 +1,4 @@
+# Model IDs verified 2026-06-02
 CLAUDE_HAIKU  = "claude-haiku-4-5-20251001"
 CLAUDE_SONNET = "claude-sonnet-4-6"
 CLAUDE_OPUS   = "claude-opus-4-7"

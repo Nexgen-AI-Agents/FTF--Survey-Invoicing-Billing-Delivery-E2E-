@@ -41,7 +41,7 @@ from core.teams_graph_client import post_channel_reply
 AGENT_NAME = "agent_a6_sender_v2"
 log = get_logger(AGENT_NAME)
 
-_NEXGEN_SIGNATURE = """
+_NEXGEN_SIGNATURE = f"""
 <hr>
 <p>
 <strong>NexGen Surveying</strong><br>
@@ -51,7 +51,7 @@ Phone: (561) 508-6272 | Email: nesa@nexgenlogix.com<br>
 </p>
 <p><em>
 If our service exceeded your expectations, we'd truly appreciate a quick
-<a href="https://g.page/r/YOUR_PLACE_ID/review">Google review</a> —
+<a href="{os.getenv('GOOGLE_REVIEW_URL', '')}">Google review</a> —
 it means the world to our small team. Thank you!
 </em></p>
 """

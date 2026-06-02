@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code", "shared"))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
-from core.db import get_all_awaiting_orders, save_loop_state
+from core.excel_db import get_orders_awaiting_invoice_approval
 from core.logger import get_logger
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -28,14 +28,13 @@ from poll_teams_approvals import run_poll
 
 log = get_logger("run_approval_monitor")
 
-LOOP_NAME = "approval_monitor"
 ACTIVE_POLL_SECS = 30    # poll Teams every 30s while orders are pending
 IDLE_CHECK_SECS  = 120   # check DB every 2 min when nothing pending
 
 
 def _get_awaiting_count() -> int:
     try:
-        return len(get_all_awaiting_orders())
+        return len(get_orders_awaiting_invoice_approval())
     except Exception as exc:
         log.error("failed to query awaiting orders: %s", exc)
         return 0
@@ -49,18 +48,11 @@ def run_monitor(dry_run: bool = False, once: bool = False) -> None:
         count = _get_awaiting_count()
         now = datetime.now(timezone.utc)
 
-        def _try_save(status: str) -> None:
-            try:
-                save_loop_state(LOOP_NAME, status, last_run_at=now)
-            except Exception:
-                pass  # loop_state table may not exist yet — non-fatal
-
         if count > 0:
             if was_active is not True:
                 log.info("ACTIVE: %d order(s) pending — polling every %ds",
                          count, ACTIVE_POLL_SECS)
                 print(f"\n[{now.strftime('%H:%M:%S')}] {count} order(s) pending — polling Teams...", flush=True)
-            _try_save("running")
             result = run_poll(since_hours=2, dry_run=dry_run)
             if result["approved"] or result["rejected"] or result["failed"]:
                 print(f"[{datetime.now(timezone.utc).strftime('%H:%M:%S')}] "
@@ -74,7 +66,6 @@ def run_monitor(dry_run: bool = False, once: bool = False) -> None:
             if was_active is not False:
                 log.info("IDLE: no pending orders — checking every %ds", IDLE_CHECK_SECS)
                 print(f"\n[{now.strftime('%H:%M:%S')}] No pending orders — checking every {IDLE_CHECK_SECS}s", flush=True)
-            _try_save("idle")
             was_active = False
             if once:
                 log.info("--once: no pending orders, exiting")
@@ -99,10 +90,6 @@ def main() -> None:
     except KeyboardInterrupt:
         print("\nMonitor stopped.")
         log.info("Monitor stopped by user (Ctrl+C)")
-        try:
-            save_loop_state(LOOP_NAME, "idle")
-        except Exception:
-            pass
 
 
 if __name__ == "__main__":

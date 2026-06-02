@@ -150,6 +150,7 @@ def _get_fallback_survey_rate(tier: str) -> float:
 def _build_ai_context(
     order_id: str,
     packet: dict,
+    data_sources: dict,
     order_details: dict,
     company_info: dict,
     tier: str,
@@ -212,9 +213,9 @@ def _build_ai_context(
     certifications = (order_details.get("ng_certifications") or "").strip()
     notes        = packet.get("summary", "")
 
-    # A2 analysis blocks
-    appraiser_data   = packet.get("appraiser_data") or {}
-    aerial_analysis  = packet.get("aerial_analysis") or {}
+    # A2 analysis blocks — stored at top level of data_sources, not inside packet
+    appraiser_data   = data_sources.get("appraiser_data") or {}
+    aerial_analysis  = data_sources.get("aerial_analysis") or {}
 
     aerial_summary = ""
     if aerial_analysis:
@@ -293,8 +294,8 @@ Lot > 5.00 acres: ESCALATE — do not price for any service type.
 
 Return ONLY valid JSON (no markdown, no explanation outside JSON):
 {{
-  "invoice_amount": 0.00,
-  "line_items": [
+  "total_amount": 0.00,
+  "services": [
     {{"name": "...", "description": "...", "amount": 0.00}}
   ],
   "pricing_reasoning": "2-3 sentence explanation of how you determined the price",
@@ -329,19 +330,19 @@ def _ai_compile_price(context: str) -> dict:
 
         result = json.loads(raw)
 
-        # Sanity check: recompute total from line items
-        if result.get("line_items"):
-            computed = sum(item.get("amount", 0) for item in result["line_items"])
-            if abs(computed - result.get("invoice_amount", 0)) > 0.01:
-                result["invoice_amount"] = round(computed, 2)
+        # Sanity check: recompute total from services
+        if result.get("services"):
+            computed = sum(item.get("amount", 0) for item in result["services"])
+            if abs(computed - result.get("total_amount", 0)) > 0.01:
+                result["total_amount"] = round(computed, 2)
 
         return result
 
     except Exception as exc:
         log.warning("_ai_compile_price failed: %s", exc)
         return {
-            "invoice_amount": 0.0,
-            "line_items": [],
+            "total_amount": 0.0,
+            "services": [],
             "pricing_reasoning": f"AI pricing failed: {exc}. Manual review required.",
             "confidence": "LOW",
             "escalate_flag": True,
@@ -368,7 +369,7 @@ def _build_teams_post(
     address = packet.get("property_address", {}).get("value") or "Unknown"
     county  = packet.get("property_county", {}).get("value") or "Unknown"
     summary = packet.get("summary", "")
-    total   = ai_result.get("invoice_amount", 0)
+    total   = ai_result.get("total_amount", 0)
 
     # Header and status tag
     if condo_reason:
@@ -395,7 +396,7 @@ def _build_teams_post(
 
     # Line items
     items_html = ""
-    for item in ai_result.get("line_items", []):
+    for item in ai_result.get("services", []):
         items_html += f"<li><strong>{item['name']}</strong> — ${item['amount']:,.2f}<br><small>{item['description']}</small></li>"
     if not items_html:
         items_html = "<li>No line items — see escalation/rejection reason above</li>"
@@ -482,8 +483,8 @@ def compile_for_order(order_id: str) -> dict:
     # Hard stops — build a minimal result and post to Teams
     if condo_reason or escalate_reason:
         stop_result = {
-            "invoice_amount": 0.0,
-            "line_items": [],
+            "total_amount": 0.0,
+            "services": [],
             "pricing_reasoning": condo_reason or escalate_reason,
             "confidence": "N/A",
             "escalate_flag": True,
@@ -530,7 +531,7 @@ def compile_for_order(order_id: str) -> dict:
 
     # ── 4. AI pricing pass ────────────────────────────────────────────────────
     context   = _build_ai_context(
-        order_id, packet, order_details, company_info, tier,
+        order_id, packet, data_sources, order_details, company_info, tier,
         duplicates, link, pricing_ctx,
     )
     ai_result = _ai_compile_price(context)
@@ -550,7 +551,7 @@ def compile_for_order(order_id: str) -> dict:
         invoice_draft=json.dumps(ai_result, default=str),
         approval_message_id=message_id,
         modification_count=0,
-        estimate_amount=ai_result.get("invoice_amount"),
+        estimate_amount=ai_result.get("total_amount"),
         draft_posted_at=datetime.now(timezone.utc).isoformat(),
     )
 
@@ -560,7 +561,7 @@ def compile_for_order(order_id: str) -> dict:
         order_id=order_id,
         reason=(
             f"tier={tier} rate_source={'negotiated' if company_info.get('ng_rate', 0) > 100 else 'default'} "
-            f"total=${ai_result.get('invoice_amount', 0):.2f} "
+            f"total=${ai_result.get('total_amount', 0):.2f} "
             f"confidence={ai_result.get('confidence')} "
             f"escalate={ai_result.get('escalate_flag')} "
             f"duplicates={len(duplicates)}"
@@ -571,7 +572,7 @@ def compile_for_order(order_id: str) -> dict:
     )
     log.info(
         "invoice draft posted order=%s total=%.2f tier=%s confidence=%s message_id=%s",
-        order_id, ai_result.get("invoice_amount", 0), tier,
+        order_id, ai_result.get("total_amount", 0), tier,
         ai_result.get("confidence"), message_id,
     )
     return ai_result
