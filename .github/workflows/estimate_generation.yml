@@ -1,9 +1,7 @@
 name: Estimate Generation Loop
 
 on:
-  schedule:
-    - cron: "0 * * * *"   # every hour — Sprint 9+ activates the full orchestrator
-  workflow_dispatch:
+  workflow_dispatch:   # Sprint 9 superseded by Sprint 11 invoice_pipeline — schedule disabled
 
 jobs:
   run-estimate-loop:

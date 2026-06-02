@@ -1,9 +1,7 @@
 name: Teams Approval Monitor
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"   # every 5 minutes — GitHub Actions minimum interval
-  workflow_dispatch:          # manual trigger from GitHub UI
+  workflow_dispatch:   # approval polling merged into invoice_pipeline A4 — schedule disabled
 
 jobs:
   poll:
