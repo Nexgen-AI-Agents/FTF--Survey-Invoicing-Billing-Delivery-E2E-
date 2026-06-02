@@ -330,45 +330,58 @@ Return ONLY valid JSON (no markdown, no explanation outside JSON):
 
 # ── AI pricing pass ───────────────────────────────────────────────────────────
 
+_MAX_PRICE_RETRIES = 2
+
+
 def _ai_compile_price(context: str) -> dict:
     """Claude Sonnet reasons from real order data and returns a pricing decision."""
-    try:
-        raw = llm_call(
-            model=HUMAN_GATE_MODEL,
-            system=(
-                "You are a pricing expert for a Florida land surveying company. "
-                "You reason from real property data — aerial analysis, legal descriptions, "
-                "lot size, county, FEMA zone — to propose accurate invoice prices. "
-                "Your output is always valid JSON."
-            ),
-            user=context,
-            max_tokens=800,
-        ).strip()
+    last_exc: Exception | None = None
 
-        if raw.startswith("```"):
-            raw = re.sub(r"^```[a-z]*\n?", "", raw).rstrip("`").strip()
+    for attempt in range(_MAX_PRICE_RETRIES + 1):
+        try:
+            raw = llm_call(
+                model=HUMAN_GATE_MODEL,
+                system=(
+                    "You are a pricing expert for a Florida land surveying company. "
+                    "You reason from real property data — aerial analysis, legal descriptions, "
+                    "lot size, county, FEMA zone — to propose accurate invoice prices. "
+                    "Your output is always valid JSON."
+                ),
+                user=context,
+                max_tokens=2000,
+            ).strip()
 
-        result = json.loads(raw)
+            if raw.startswith("```"):
+                raw = re.sub(r"^```[a-z]*\n?", "", raw).rstrip("`").strip()
 
-        # Sanity check: recompute total from services
-        if result.get("services"):
-            computed = sum(item.get("amount", 0) for item in result["services"])
-            if abs(computed - result.get("total_amount", 0)) > 0.01:
-                result["total_amount"] = round(computed, 2)
+            result = json.loads(raw)
 
-        return result
+            # Sanity check: recompute total from services
+            if result.get("services"):
+                computed = sum(item.get("amount", 0) for item in result["services"])
+                if abs(computed - result.get("total_amount", 0)) > 0.01:
+                    result["total_amount"] = round(computed, 2)
 
-    except Exception as exc:
-        log.warning("_ai_compile_price failed: %s", exc)
-        return {
-            "total_amount": 0.0,
-            "services": [],
-            "pricing_reasoning": f"AI pricing failed: {exc}. Manual review required.",
-            "confidence": "LOW",
-            "escalate_flag": True,
-            "escalate_reason": "AI pricing error — needs manual quote",
-            "flags": ["ai_error"],
-        }
+            return result
+
+        except Exception as exc:
+            last_exc = exc
+            if attempt < _MAX_PRICE_RETRIES:
+                log.warning("_ai_compile_price attempt %d/%d failed: %s — retrying",
+                            attempt + 1, _MAX_PRICE_RETRIES + 1, exc)
+            else:
+                log.error("_ai_compile_price failed after %d attempts: %s",
+                          _MAX_PRICE_RETRIES + 1, exc)
+
+    return {
+        "total_amount": 0.0,
+        "services": [],
+        "pricing_reasoning": f"AI pricing failed: {last_exc}. Manual review required.",
+        "confidence": "LOW",
+        "escalate_flag": True,
+        "escalate_reason": "AI pricing error — needs manual quote",
+        "flags": ["ai_error"],
+    }
 
 
 # ── Teams card ────────────────────────────────────────────────────────────────
