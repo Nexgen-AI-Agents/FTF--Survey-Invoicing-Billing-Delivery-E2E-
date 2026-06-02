@@ -3,7 +3,7 @@
 # Python 3.11+ required
 
 # Anthropic Claude API
-anthropic>=0.25.0
+anthropic>=0.25.0,<0.106.0
 
 # OpenAI API — shared/core/openai_client.py
 openai>=1.0.0
