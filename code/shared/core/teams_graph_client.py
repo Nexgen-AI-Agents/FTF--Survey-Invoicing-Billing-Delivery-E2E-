@@ -28,6 +28,7 @@ Required env vars:
   TEAMS_CHANNEL_ID           -- Teams channel ID
 """
 
+import json
 import re
 import time
 from datetime import datetime, timezone
@@ -540,6 +541,53 @@ def _looks_like_order_id(token: str) -> bool:
     return False
 
 
+def _llm_classify_command(text: str) -> list[tuple[str, list[str] | None, str | None]]:
+    """LLM fallback: detect approval/rejection intent in natural human language.
+
+    Called when rigid regex finds no APPROVE/REJECT/DEFER keyword.
+    Uses Haiku (fast/cheap) to understand phrasing like:
+      "approved and send to me", "looks good go ahead", "don't send this one"
+    Returns the same tuple format as _parse_all_commands.
+    """
+    try:
+        from config.models import MONITOR_MODEL
+        from core.claude_client import call as llm_call
+
+        prompt = (
+            f'Teams reply from a survey manager: "{text}"\n\n'
+            "Does this express APPROVAL or REJECTION of an invoice?\n"
+            "  APPROVE: approved, looks good, go ahead, proceed, yes do it, create it, send it, confirmed, etc.\n"
+            "  REJECT: rejected, don't send, hold it, cancel, not this one, on hold, etc.\n"
+            "  NONE: pure feedback/instructions, questions, general chat\n\n"
+            'Return ONLY valid JSON: {"intent": "approve_all|reject_all|none", "confidence": "high|medium|low"}'
+        )
+        raw = llm_call(
+            model=MONITOR_MODEL,
+            system="Detect approval or rejection intent in survey manager messages. JSON only.",
+            user=prompt,
+            max_tokens=40,
+        ).strip()
+        if raw.startswith("```"):
+            raw = re.sub(r"^```[a-z]*\n?", "", raw).rstrip("`").strip()
+
+        result     = json.loads(raw)
+        intent     = result.get("intent", "none")
+        confidence = result.get("confidence", "low")
+
+        if confidence == "low" or intent == "none":
+            return [("unknown", None, None)]
+        if intent == "approve_all":
+            log.info("llm detected natural-language approval: %s", text[:80])
+            return [("approve_all", None, None)]
+        if intent == "reject_all":
+            log.info("llm detected natural-language rejection: %s", text[:80])
+            return [("reject_bare", None, None)]
+    except Exception as exc:
+        log.debug("llm command classification failed: %s", exc)
+
+    return [("unknown", None, None)]
+
+
 def _parse_all_commands(text: str) -> list[tuple[str, list[str] | None, str | None]]:
     """Parse ALL APPROVE/REJECT commands from a single Teams message.
 
@@ -578,7 +626,8 @@ def _parse_all_commands(text: str) -> list[tuple[str, list[str] | None, str | No
 
     keyword_matches = list(re.finditer(r"\bAPPROVE\b|\bREJECT\b|\bDEFER\b", upper))
     if not keyword_matches:
-        return [("unknown", None, None)]
+        # No exact keyword — ask the LLM to understand natural human phrasing
+        return _llm_classify_command(text)
 
     for i, match in enumerate(keyword_matches):
         keyword = match.group()

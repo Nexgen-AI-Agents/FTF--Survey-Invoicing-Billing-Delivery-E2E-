@@ -280,35 +280,28 @@ def _classify_feedback(order_id: str, sender: str, feedback: str) -> dict | None
     Returns None if the LLM call fails.
     """
     prompt = (
-        f"You analyze a Teams reply from a land survey field user on order {order_id}.\n"
+        f"You analyze a Teams reply from a land survey manager on order {order_id}.\n"
         f"Sender: {sender}\n"
         f'Reply: "{feedback}"\n\n'
-        "Classify this feedback into EXACTLY ONE of these types:\n\n"
-        "LOGIC RULES — Claude can apply these by reading them as pricing/detection context:\n"
+        "STEP 1 — Does the message contain an APPROVAL or REJECTION?\n"
+        "  approval_detected: true if the person says approved, looks good, go ahead, yes do it, "
+        "create it, confirmed, proceed, etc.\n"
+        "  approval_detected: false if it is purely feedback, a question, or a rejection.\n\n"
+        "STEP 2 — Does the message ALSO contain a separate INSTRUCTION (even if approval was detected)?\n"
+        "Classify the instruction (ignore the approval part) into ONE of:\n"
         "  pricing_rule: adjusts how similar orders should be priced\n"
-        '    Examples: "add $150 for Monroe County access", '
-        '"boundary surveys with pools cost more", "reduce 10% for repeat clients"\n'
         "  detection_rule: teaches which orders to reject, skip, or flag\n"
-        '    Examples: "mobile home park lot numbers are not condos", '
-        '"skip orders where lot > 10 acres", "flag commercial orders for review"\n'
-        "  general_instruction: workflow/process guidance that applies to all orders\n"
-        '    Examples: "always verify FEMA zone before pricing", '
-        '"check county appraiser for lot size confirmation"\n\n'
-        "CODE CHANGE — requires a developer to edit Python/YAML/SQL source files:\n"
-        "  code_change: the user is reporting a bug, requesting a new feature, asking to\n"
-        "    change how the system works at a code level, or flagging a system error\n"
-        '    Examples: "the duplicate detection is broken", "add a new Teams notification",\n'
-        '    "fix the condo detection algorithm", "the invoice email format is wrong",\n'
-        '    "add a new status to the pipeline", "integrate with a new API"\n\n'
-        "  noise: vague, conversational, or not actionable\n\n"
-        "CRITICAL RULE: If the feedback is about how the SYSTEM BEHAVES (bugs, features,\n"
-        "format changes, new integrations, status changes) → it is ALWAYS code_change.\n"
-        "If the feedback is about how to PRICE or CLASSIFY a type of order → it is a logic rule.\n\n"
-        "If actionable as a logic rule, write a GENERALIZED one-sentence rule for FUTURE orders "
-        "(not specific to this one order). Empty string for code_change and noise.\n\n"
+        "  general_instruction: workflow/process guidance\n"
+        "  code_change: requires a developer to edit code (bugs, new features, system changes)\n"
+        "  noise: no actionable instruction found\n\n"
+        "CRITICAL: If approval_detected is true AND there is also an instruction, set both.\n"
+        "CRITICAL: system behaviour changes (bugs, new features) → always code_change.\n\n"
+        "If there is an actionable instruction, write a GENERALIZED one-sentence rule "
+        "for future orders (not specific to this order). Empty string otherwise.\n\n"
         "Respond ONLY with valid JSON:\n"
-        '{"type": "pricing_rule|detection_rule|general_instruction|code_change|noise", '
-        '"description": "one-sentence rule (empty if code_change or noise)", '
+        '{"approval_detected": true|false, '
+        '"type": "pricing_rule|detection_rule|general_instruction|code_change|noise", '
+        '"description": "one-sentence rule or empty string", '
         '"confidence": "high|medium|low"}'
     )
 
@@ -401,9 +394,22 @@ def run() -> dict:
                 skipped += 1
                 continue
 
-            feedback_type = result.get("type", "noise")
-            description   = (result.get("description") or "").strip()
-            confidence    = result.get("confidence", "low")
+            feedback_type     = result.get("type", "noise")
+            description       = (result.get("description") or "").strip()
+            confidence        = result.get("confidence", "low")
+            approval_detected = bool(result.get("approval_detected", False))
+
+            # ── Approval intent handled by A4 via LLM — just log and skip ────
+            # A4's check_for_approvals() now has an LLM fallback that will
+            # pick up natural language approvals on the same cycle.
+            if approval_detected:
+                log.info(
+                    "approval_detected in reply from=%s order=%s — A4 will handle it",
+                    sender, eff_order_id,
+                )
+                # If the reply is ONLY an approval with no separate instruction, skip
+                if feedback_type == "noise" or not description:
+                    continue
 
             # ── Code change: direct to dev team ──────────────────────────────
             if feedback_type == "code_change":
