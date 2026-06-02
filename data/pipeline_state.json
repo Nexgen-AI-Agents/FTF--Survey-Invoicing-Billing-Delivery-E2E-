@@ -1395,13 +1395,13 @@
       "data_collected_at": "2026-06-02T14:39:06.712640+00:00",
       "draft_posted_at": "2026-06-02T15:01:07.528334+00:00",
       "invoice_created_at": null,
-      "processed_reply_ids": null,
+      "processed_reply_ids": "[\"1780412453502\", \"1780412432203\"]",
       "approved_by": null,
       "sent_at": null,
       "estimate_amount": 1000,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.752552+00:00",
-      "updated_at": "2026-06-02T15:01:07.543464+00:00"
+      "updated_at": "2026-06-02T15:21:29.808845+00:00"
     },
     {
       "order_id": "1000283564",
@@ -1648,13 +1648,13 @@
       "data_collected_at": "2026-06-02T15:06:39.583345+00:00",
       "draft_posted_at": "2026-06-02T15:08:34.935507+00:00",
       "invoice_created_at": null,
-      "processed_reply_ids": null,
+      "processed_reply_ids": "[\"1780412903005\"]",
       "approved_by": null,
       "sent_at": null,
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:48.172564+00:00",
-      "updated_at": "2026-06-02T15:08:34.950291+00:00"
+      "updated_at": "2026-06-02T15:21:31.488079+00:00"
     },
     {
       "order_id": "1000282513",
@@ -1773,33 +1773,32 @@
     },
     {
       "order_id": "1000282200",
-      "status": "data_collected",
+      "status": "invoice_draft_posted",
       "service_type": "Land Survey and Elevation",
       "customer_email": "manny@rackelectric.com",
       "client_name": "Rack Electric LLC",
       "property_address": "2717 SE 14TH ST, POMPANO BEACH, FL 33062",
-      "invoice_draft": null,
+      "invoice_draft": "{\"total_amount\": 725.0, \"services\": [{\"name\": \"Land Survey (Boundary)\", \"description\": \"Boundary survey at 2717 SE 14TH ST, Pompano Beach, Broward County. Negotiated rate for Rack Electric LLC (OLD_TITLE tier) applied per management agreement. Lot is 0.14 acres \\u2014 no lot-size upcharge warranted. No pool, waterfront, metes-and-bounds, heavy vegetation, or Monroe County complexity factors identified from available data.\", \"amount\": 450.0}, {\"name\": \"Elevation Certificate\", \"description\": \"FEMA Elevation Certificate for FEMA Map Panel 12011C0378J, Zone AE, BFE 7 ft, effective 07/31/2024. Standard EC rate applies \\u2014 Zone AE, not VE, so no coastal $50 surcharge.\", \"amount\": 275.0}], \"pricing_reasoning\": \"Service is a combined Land Survey and Elevation Certificate. The company's management-agreed negotiated rate of $450.00 is used as the base survey price for Rack Electric LLC. The EC is priced at the fixed $275.00 rate; no VE surcharge applies as the zone is AE. The 0.14-acre residential lot in Broward County presents no identifiable complexity upcharges (no Monroe County, no pool, no waterfront canal, no metes-and-bounds description, no heavy vegetation, and lot size is well below the 0.31-acre upcharge threshold), yielding a clean total of $725.00.\", \"confidence\": \"MEDIUM\", \"escalate_flag\": false, \"escalate_reason\": null, \"flags\": [\"DUPLICATE_WARNING: Three prior orders exist for this exact property and folio (494306130710) \\u2014 Order 1000062185 (Land Survey and Elevation), Order 1000236143 (Land Survey and Elevation), and Order 1000248190 (Land Survey Only). Human review is strongly recommended before fulfillment to determine whether prior surveys can be re-certified or whether a new field visit is truly required.\", \"LEGAL_DESCRIPTION_MISSING: No legal description was provided in the order. This should be sourced from the county property appraiser or prior survey before fieldwork is scheduled.\", \"ORDER_COUNT_ZERO: Rack Electric LLC shows 0 prior orders despite being classified OLD_TITLE tier with a negotiated rate. Confirm client relationship and rate agreement with management before finalizing invoice.\"]}",
       "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 202412091849570674, \"created_at\": \"2026-04-16T19:27:16\", \"customer_email\": \"manny@rackelectric.com\", \"customer_id\": 202604091955480655, \"customer_name\": \"Manny  Lopez\", \"customer_type\": \"b2b\", \"delivered_at\": null, \"due_amount\": 0.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": \"12011C0378J\\nZONE: AE\\nELEV: 07 FT\\nEFF: 07/31/2024\", \"invoiced\": false, \"order_id\": 1000282200, \"paid\": false, \"property_address\": \"2717 SE 14TH ST\", \"property_city\": \"POMPANO BEACH\", \"property_county\": \"BROWARD COUNTY\", \"property_lat\": \"26.212896\", \"property_lng\": \"-80.0998106\", \"property_state\": \"FL\", \"property_zip\": \"33062\", \"service_type\": \"Land Survey and Elevation\", \"special_pricing\": true, \"status\": \"Quote\", \"status_code\": 12, \"updated_at\": \"2026-04-17T16:00:19\"}, \"success\": true, \"order_id\": \"1000282200\", \"customer_email\": \"manny@rackelectric.com\", \"service_type\": \"Land Survey and Elevation\", \"county\": \"\", \"property_address\": \"2717 SE 14TH ST\", \"customer_name\": \"Rack Electric LLC\"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"Rack Electric LLC\", \"confidence\": \"MEDIUM\"}, \"client_email\": {\"value\": \"manny@rackelectric.com\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"2717 SE 14TH ST, POMPANO BEACH, FL 33062\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"BROWARD COUNTY\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"Boundary Survey\", \"Elevation Certificate\"], \"confidence\": \"MEDIUM\", \"notes\": \"Service type listed as 'Land Survey and Elevation' \\u2014 interpreted as Boundary Survey plus Elevation Certificate; elevation_cert flag is false but service type explicitly includes elevation, likely a data entry inconsistency requiring human review\"}, \"special_requirements\": {\"value\": \"Special pricing applies; property is in Flood Zone AE (FIRM panel 12011C0378J, effective 07/31/2024, base flood elevation 7 ft)\", \"confidence\": \"HIGH\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property features available; county appraiser data unavailable and no emails or attachments provided\"}, \"client_tier\": {\"value\": \"b2b\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Client name discrepancy: order lists 'Manny Lopez' as customer_name but outer payload says 'Rack Electric LLC' \\u2014 confirm correct billing name\", \"elevation_cert flag is false but service type includes 'Elevation' \\u2014 clarify whether Elevation Certificate is included in scope\", \"Lot size unknown \\u2014 county appraiser data unavailable\", \"Legal description unknown \\u2014 county appraiser data unavailable\", \"Structure square footage unknown\", \"Property features unknown (pool, fences, sheds, driveways, etc.)\", \"No fieldwork date scheduled\", \"Invoice has not been generated and order is still in Quote status \\u2014 pricing approval needed\", \"Special pricing flag is true \\u2014 confirm approved pricing amount\"], \"summary\": \"B2B order for Rack Electric LLC requesting a Land Survey and Elevation Certificate at 2717 SE 14TH ST, Pompano Beach, FL (Broward County, Flood Zone AE), currently in Quote status with special pricing applied and key property details missing.\"}}",
-      "approval_message_id": null,
-      "modification_count": null,
+      "approval_message_id": "1780413513520",
+      "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-02T15:13:04.489783+00:00",
-      "draft_posted_at": null,
+      "draft_posted_at": "2026-06-02T15:21:29.413937+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": null,
       "approved_by": null,
       "sent_at": null,
-      "estimate_amount": null,
+      "estimate_amount": 725,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:48.451145+00:00",
-      "updated_at": "2026-06-02T15:13:04.505877+00:00"
+      "updated_at": "2026-06-02T15:21:29.429432+00:00"
     }
   ],
   "status_counts": {
     "details_missing": 61,
-    "invoice_draft_posted": 16,
-    "data_collected": 1
+    "invoice_draft_posted": 17
   },
   "total": 78,
-  "generated_at": "2026-06-02T15:14:46.714110+00:00"
+  "generated_at": "2026-06-02T15:21:32.660768+00:00"
 }
