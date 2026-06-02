@@ -89,6 +89,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git add data/invoice_pipeline_state.xlsx data/pipeline_state.json data/learned_rules.json
           git diff --cached --quiet || git commit -m "chore: update pipeline state [skip ci]"
+          git pull --rebase origin main
           git push
 
       - name: Push pipeline state to public dashboard repo
