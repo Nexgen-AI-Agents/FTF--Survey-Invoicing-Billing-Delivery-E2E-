@@ -265,7 +265,7 @@ def run() -> dict:
                     f"workflow instructions) — system-level changes require a developer."
                 )
                 try:
-                    send_channel_message(dev_msg, parent_message_id=msg["id"])
+                    send_channel_message(dev_msg)
                 except Exception as exc:
                     log.warning("could not post code_change notice: %s", exc)
                 skipped += 1
@@ -298,15 +298,17 @@ def run() -> dict:
                 rule_id, feedback_type, sender, eff_order_id, description[:80],
             )
 
-            # Acknowledge in the Teams thread
+            # Acknowledge in the channel (standalone message — thread-reply via webhook
+            # is unreliable; order_id makes it clear which order this applies to)
             label = feedback_type.replace("_", " ").title()
             ack = (
-                f"[INFO] ✅ Learned ({label}) from <strong>{sender}</strong>:<br>"
+                f"[INFO] ✅ <strong>Rule learned</strong> from <strong>{sender}</strong> "
+                f"on order <strong>{eff_order_id}</strong> ({label}):<br>"
                 f"<em>{description}</em><br>"
-                f"<small>Applied to all future orders. Rule: <code>{rule_id}</code></small>"
+                f"<small>Applied to all future orders. Rule ID: <code>{rule_id}</code></small>"
             )
             try:
-                send_channel_message(ack, parent_message_id=msg["id"])
+                send_channel_message(ack)
             except Exception as exc:
                 log.warning("could not post ack for rule=%s: %s", rule_id, exc)
 
