@@ -80,7 +80,7 @@ def _init_agents() -> None:
     import agent_07_reviewer         as m7;  _reviewer      = m7   # noqa: E702
     import agent_08_sender           as m8;  _sender        = m8   # noqa: E702
     import agent_09_reporter         as m9;  _reporter      = m9   # noqa: E702
-    import agent_12_email_monitor    as m12; _email_monitor = m12  # noqa: E702
+    # agent_12_email_monitor removed — email-based approvals replaced by Teams flow
 
 
 # ── Step runners ─────────────────────────────────────────────────────────────
@@ -155,7 +155,6 @@ def run_estimate_loop() -> dict:
         log.warning("escalation_check failed (non-critical): %s", exc)
 
     steps = [
-        ("email_monitor", _email_monitor.run),   # Gap 4: check info@ for customer quote approvals
         ("monitor",       _monitor.run),
         ("classifier",    _classifier.run),
         ("pricing",       _pricing.run),
