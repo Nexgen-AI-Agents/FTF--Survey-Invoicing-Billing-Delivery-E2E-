@@ -8,6 +8,11 @@ on:
 permissions:
   contents: write
 
+# Prevent concurrent runs — Excel state file has no locking; overlapping runs corrupt state
+concurrency:
+  group: invoice-pipeline
+  cancel-in-progress: false
+
 jobs:
   run-invoice-pipeline:
     runs-on: ubuntu-latest
@@ -42,6 +47,7 @@ jobs:
       TEAMS_WEBHOOK_URL:          ${{ secrets.TEAMS_WEBHOOK_URL }}
       NOTIFICATION_FROM_EMAIL:    ${{ secrets.NOTIFICATION_FROM_EMAIL }}
       NOTIFICATION_TO_EMAILS:     ${{ secrets.NOTIFICATION_TO_EMAILS }}
+      APPROVED_SENDERS:           ${{ secrets.APPROVED_SENDERS }}
 
     steps:
       - uses: actions/checkout@v4

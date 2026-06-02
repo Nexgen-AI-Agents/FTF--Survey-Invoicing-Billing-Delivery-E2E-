@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code", "shared
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
 from config.settings import FTF_ORDER_URL
-from core.excel_db import get_orders_by_status
+from core.excel_db import get_orders_awaiting_invoice_approval
 from core.logger import get_logger
 from core.teams_graph_client import send_channel_message
 
@@ -42,9 +42,7 @@ def run_reminder(dry_run: bool = False) -> dict:
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(hours=12)   # only remind about orders pending > 12h
 
-    flagged  = get_orders_by_status("flagged")
-    awaiting = get_orders_by_status("awaiting_approval")
-    all_pending = flagged + awaiting
+    all_pending = get_orders_awaiting_invoice_approval()   # invoice_draft_posted, on_hold, invoice_modification_requested
 
     # Filter to orders pending longer than the cutoff
     leftover = []

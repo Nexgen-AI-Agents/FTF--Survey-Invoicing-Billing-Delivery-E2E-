@@ -24,7 +24,7 @@ _STATE_COLS = [
     "property_address", "invoice_draft", "data_sources", "approval_message_id",
     "modification_count", "invoice_id", "data_collected_at", "draft_posted_at",
     "invoice_created_at", "processed_reply_ids", "approved_by", "sent_at",
-    "estimate_amount", "created_at", "updated_at",
+    "estimate_amount", "deferred_until", "created_at", "updated_at",
 ]
 
 _LEARNINGS_COLS = [
@@ -311,10 +311,8 @@ def save_pending_confirmations(confs: list[dict]) -> None:
     _init_sheets(wb)
     ws = wb["pending_confirmations"]
     # Clear all data rows (keep header)
-    for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
-        for cell in row:
-            cell.value = None
-    ws.delete_rows(2, ws.max_row)
+    if ws.max_row > 1:
+        ws.delete_rows(2, ws.max_row - 1)
     for conf in confs:
         entry = dict(conf)
         raw_ids = entry.get("order_ids", [])

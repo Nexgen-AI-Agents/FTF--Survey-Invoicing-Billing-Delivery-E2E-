@@ -112,13 +112,11 @@ def test_superuser_ryan_permitted_any_domain(mock_save, mock_log):
     assert result["id"] == 99
 
 
-# ── 8. Mark permitted for pricing domain ─────────────────────────────────────
+# ── 8. Mark denied for all domains (removed stakeholder) ─────────────────────
 
-@patch("agent_13_pricing_trainer.log_decision")
-@patch("agent_13_pricing_trainer.save_pricing_example", return_value=7)
-def test_mark_permitted_pricing(mock_save, mock_log):
-    result = submit_pricing_example(_base_example(entered_by="mark", domain="pricing"))
-    assert result["saved"] is True
+def test_mark_denied_pricing():
+    with pytest.raises(Exception):   # GovernanceError — mark no longer in ROLE_DOMAINS
+        submit_pricing_example(_base_example(entered_by="mark", domain="pricing"))
 
 
 # ── 9. Jessica permitted for ar domain ───────────────────────────────────────

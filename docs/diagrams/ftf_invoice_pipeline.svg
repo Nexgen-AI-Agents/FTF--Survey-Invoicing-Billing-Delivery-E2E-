@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1840" height="889" style="background:#ffffff; font-family:monospace;">
+<defs><marker id="arr_c2410c" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#c2410c"/></marker><marker id="arr_1e3a5f" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#1e3a5f"/></marker><marker id="arr_6d28d9" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6d28d9"/></marker><marker id="arr_b45309" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#b45309"/></marker></defs>
+<rect x="0" y="0" width="1840" height="889" fill="#ffffff"/>
+<text x="920.0" y="100.0" fill="#1e293b" font-size="40" font-family="monospace" text-anchor="middle">OUR PIPELINE HAS TWO HALVES.</text>
+<text x="920.0" y="147.0" fill="#c2410c" font-size="40" font-family="monospace" text-anchor="middle">ONE FUNNEL.  ONE INVOICE.</text>
+<text x="920.0" y="169.0" fill="#64748b" font-size="14" font-family="monospace" text-anchor="middle">We hunt every invoice-needed order. Our AI prices it. You approve. It sends.</text>
+<polyline points="60.0,181.0 1780.0,181.0" fill="none" stroke="#e2e8f0" stroke-width="2"/>
+<rect x="60" y="189" width="660" height="640" fill="#fff7ed" stroke="#c2410c" stroke-width="2" rx="0" ry="0"/>
+<rect x="73" y="202" width="70" height="22" fill="#c2410c" stroke="#c2410c" stroke-width="1" rx="8" ry="8"/>
+<text x="108.0" y="213.0" fill="#ffffff" font-size="11" font-family="monospace" text-anchor="middle">HALF 1</text>
+<text x="73.0" y="259.0" fill="#c2410c" font-size="28" font-family="monospace" text-anchor="start">DATA ENGINE</text>
+<text x="73.0" y="280.0" fill="#64748b" font-size="13" font-family="monospace" text-anchor="start">AI agents collect and analyze every order before pricing.</text>
+<rect x="73" y="293" width="636" height="68" fill="#fed7aa" stroke="#c2410c" stroke-width="2" rx="8" ry="8"/>
+<text x="88.0" y="317.0" fill="#92400e" font-size="15" font-family="monospace" text-anchor="start">A0  ·  CRON TRIGGER</text>
+<text x="88.0" y="338.0" fill="#78350f" font-size="13" font-family="monospace" text-anchor="start">GitHub Actions cron — every 5 minutes</text>
+<polyline points="391.0,361.0 391.0,375.0" fill="none" stroke="#c2410c" stroke-width="2" marker-end="url(#arr_c2410c)"/>
+<rect x="73" y="375" width="636" height="78" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text x="88.0" y="400.0" fill="#ffffff" font-size="15" font-family="monospace" text-anchor="start">A1  ·  FLAG HUNTER</text>
+<text x="88.0" y="421.0" fill="#bfdbfe" font-size="13" font-family="monospace" text-anchor="start">MySQL — scans every order where invoice_needed = 1</text>
+<polyline points="391.0,453.0 391.0,467.0" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arr_1e3a5f)"/>
+<rect x="73" y="467" width="636" height="172" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text x="88.0" y="492.0" fill="#5b21b6" font-size="15" font-family="monospace" text-anchor="start">A2  ·  DATA COLLECTOR</text>
+<ellipse cx="92.0" cy="510.0" rx="4.0" ry="4.0" fill="#6d28d9" stroke="#6d28d9" stroke-width="1"/>
+<text x="103.0" y="515.0" fill="#4c1d95" font-size="13" font-family="monospace" text-anchor="start">FTF API — order fields, services, client history</text>
+<ellipse cx="92.0" cy="530.0" rx="4.0" ry="4.0" fill="#6d28d9" stroke="#6d28d9" stroke-width="1"/>
+<text x="103.0" y="535.0" fill="#4c1d95" font-size="13" font-family="monospace" text-anchor="start">County property appraiser — parcel data + legal description</text>
+<ellipse cx="92.0" cy="550.0" rx="4.0" ry="4.0" fill="#6d28d9" stroke="#6d28d9" stroke-width="1"/>
+<text x="103.0" y="555.0" fill="#4c1d95" font-size="13" font-family="monospace" text-anchor="start">Email inbox — nesa@nexgenlogix.com (IMAP scan)</text>
+<ellipse cx="92.0" cy="570.0" rx="4.0" ry="4.0" fill="#6d28d9" stroke="#6d28d9" stroke-width="1"/>
+<text x="103.0" y="575.0" fill="#4c1d95" font-size="13" font-family="monospace" text-anchor="start">Google Aerial + Claude Vision — lot analysis + complexity</text>
+<text x="920.0" y="210.0" fill="#b45309" font-size="13" font-family="monospace" text-anchor="middle">ORDER ENTERS</text>
+<text x="920.0" y="227.6" fill="#b45309" font-size="13" font-family="monospace" text-anchor="middle">invoice_needed = 1</text>
+<polygon points="770.0,240.0 1070.0,240.0 920.0,655.0 770.0,240.0" fill="#fed7aa" stroke="#c2410c" stroke-width="2"/>
+<text x="920.0" y="677.0" fill="#047857" font-size="14" font-family="monospace" text-anchor="middle">INVOICE SENT  ✓</text>
+<rect x="1120" y="189" width="660" height="640" fill="#eff6ff" stroke="#1e3a5f" stroke-width="2" rx="0" ry="0"/>
+<rect x="1133" y="202" width="70" height="22" fill="#1e3a5f" stroke="#1e3a5f" stroke-width="1" rx="8" ry="8"/>
+<text x="1168.0" y="213.0" fill="#ffffff" font-size="11" font-family="monospace" text-anchor="middle">HALF 2</text>
+<text x="1133.0" y="259.0" fill="#1e3a5f" font-size="28" font-family="monospace" text-anchor="start">INVOICE ENGINE</text>
+<text x="1133.0" y="280.0" fill="#64748b" font-size="13" font-family="monospace" text-anchor="start">Claude prices. Humans approve. System delivers.</text>
+<rect x="1133" y="293" width="636" height="78" fill="#ddd6fe" stroke="#6d28d9" stroke-width="2" rx="8" ry="8"/>
+<text x="1148.0" y="317.0" fill="#5b21b6" font-size="15" font-family="monospace" text-anchor="start">A3  ·  INVOICE COMPILER</text>
+<text x="1148.0" y="338.0" fill="#4c1d95" font-size="13" font-family="monospace" text-anchor="start">Claude Sonnet — reasons the price from real data, not a lookup table</text>
+<polyline points="1451.0,371.0 1451.0,385.0" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#arr_6d28d9)"/>
+<rect x="1133" y="385" width="636" height="112" fill="#fef3c7" stroke="#b45309" stroke-width="2" rx="8" ry="8"/>
+<text x="1148.0" y="410.0" fill="#92400e" font-size="15" font-family="monospace" text-anchor="start">A4  ·  HUMAN GATE</text>
+<text x="1148.0" y="431.0" fill="#78350f" font-size="13" font-family="monospace" text-anchor="start">Teams card — Robert / Ryan / Prateek approve or adjust</text>
+<text x="1148.0" y="451.0" fill="#78350f" font-size="13" font-family="monospace" text-anchor="start">APPROVE / REJECT / HOLD / modify price / add or remove service</text>
+<text x="1148.0" y="471.0" fill="#b45309" font-size="13" font-family="monospace" text-anchor="start">AI interprets natural language — not just keywords</text>
+<polyline points="1451.0,497.0 1451.0,511.0" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arr_b45309)"/>
+<rect x="1133" y="511" width="636" height="68" fill="#3b82f6" stroke="#1e3a5f" stroke-width="2" rx="8" ry="8"/>
+<text x="1148.0" y="536.0" fill="#ffffff" font-size="15" font-family="monospace" text-anchor="start">A5  ·  INVOICE CREATOR</text>
+<text x="1148.0" y="557.0" fill="#bfdbfe" font-size="13" font-family="monospace" text-anchor="start">Creates the invoice record in FTF system via REST API</text>
+<polyline points="1451.0,579.0 1451.0,593.0" fill="none" stroke="#1e3a5f" stroke-width="2" marker-end="url(#arr_1e3a5f)"/>
+<rect x="1133" y="593" width="636" height="68" fill="#a7f3d0" stroke="#047857" stroke-width="2" rx="8" ry="8"/>
+<text x="1148.0" y="618.0" fill="#065f46" font-size="15" font-family="monospace" text-anchor="start">A6  ·  EMAIL DELIVERY</text>
+<text x="1148.0" y="639.0" fill="#047857" font-size="13" font-family="monospace" text-anchor="start">Sends PDF invoice to client — NexGen → client inbox</text>
+</svg>

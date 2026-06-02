@@ -69,7 +69,7 @@ def finalize_order(order_id: str) -> dict:
             invoice_id = str(result.get("invoice_id") or result.get("id") or "")
             log.info("invoice created order=%s invoice_id=%s attempt=%d", order_id, invoice_id, attempt)
             break
-        except AgentError as exc:
+        except Exception as exc:
             last_exc = exc
             log.warning("create_invoice attempt=%d failed order=%s: %s", attempt, order_id, exc)
     else:

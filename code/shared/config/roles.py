@@ -12,10 +12,9 @@ Domains:
 """
 
 ROLE_DOMAINS: dict[str, set[str]] = {
-    "robert": {"pricing", "logistics"},
-    "mark":   {"pricing", "logistics"},
+    "robert":  {"pricing", "logistics"},
     "jessica": {"ar", "refund"},
-    "ryan":   {"all"},
+    "ryan":    {"all"},
     "prateek": {"all"},
 }
 

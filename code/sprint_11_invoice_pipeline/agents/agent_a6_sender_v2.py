@@ -23,6 +23,7 @@ import smtplib
 import sys
 import time
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -58,7 +59,8 @@ it means the world to our small team. Thank you!
 
 
 def _is_business_hours() -> bool:
-    hour = datetime.now().hour
+    # Use America/New_York to handle EST/EDT automatically — GA runners are UTC
+    hour = datetime.now(ZoneInfo("America/New_York")).hour
     return SEND_HOUR_START <= hour < SEND_HOUR_END
 
 

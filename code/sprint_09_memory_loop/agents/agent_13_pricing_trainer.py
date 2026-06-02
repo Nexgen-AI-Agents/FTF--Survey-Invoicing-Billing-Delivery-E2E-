@@ -4,12 +4,12 @@ Ryan (2026-05-26): "Robert should be able to say 'this 100-acre job, here's how 
 and why' and the AI stores it and uses it going forward. Just like training a new person
 — build on it each time."
 
-Accepts a structured pricing example from Robert or Mark and persists it to the
+Accepts a structured pricing example from Robert and persists it to the
 pricing_examples table. The pricing engine loads these examples as context when
 estimating future jobs of the same service type / county.
 
 Hard rules (I-069 governance):
-  - Only 'robert' or 'mark' roles may submit pricing/logistics domain entries
+  - Only 'robert' role may submit pricing/logistics domain entries
   - Only 'jessica' may submit ar/refund domain entries
   - Cross-domain attempts → GovernanceError; never silently overwritten
   - Superusers (ryan, prateek) bypass domain checks

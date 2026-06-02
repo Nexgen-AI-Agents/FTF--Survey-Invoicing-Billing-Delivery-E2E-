@@ -18,7 +18,7 @@ from core.refund_guard import alert_jessica_refund, detect_refund_intent
 logger = get_logger(__name__)
 
 _JESSICA_MENTION = "Jessica"
-_STAKEHOLDERS    = "Jessica, Ryan, Mark, Robert, Wyatt"
+_STAKEHOLDERS    = "Jessica, Ryan, Robert, Prateek, Wyatt"
 
 
 def _send_teams_alert(order_id: str, customer_email: str, days_overdue: int,

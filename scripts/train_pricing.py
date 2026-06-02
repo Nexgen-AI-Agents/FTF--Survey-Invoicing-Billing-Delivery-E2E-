@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Pricing Trainer CLI — FTF Agentic AI (I-067)
-Robert or Mark describes a job and the AI stores the pricing rationale permanently.
+Robert describes a job and the AI stores the pricing rationale permanently.
 
 Usage:
   python scripts/train_pricing.py                  # interactive mode
@@ -9,13 +9,13 @@ Usage:
   python scripts/train_pricing.py --json '{"entered_by":"Robert","job_description":"...","final_price":700}'
 
 Role governance (I-069):
-  Only 'robert' / 'mark' may enter pricing/logistics domain entries.
+  Only 'robert' may enter pricing/logistics domain entries.
   Only 'jessica' may enter ar/refund domain entries.
   Cross-domain attempts are blocked and Prateek is notified.
 
 Examples:
   python scripts/train_pricing.py
-  > Who is entering this? (robert/mark/jessica/ryan): robert
+  > Who is entering this? (robert/jessica/ryan/prateek): robert
   > Describe the job: Half-acre residential in Palm Beach, pool + 2 sheds, 30 corners
   > Service type (or Enter to skip): Boundary Survey
   > County (or Enter to skip): Palm Beach
@@ -75,9 +75,9 @@ def interactive_mode():
     print()
 
     entered_by = ""
-    while entered_by.lower() not in ("robert", "mark", "jessica", "ryan", "prateek"):
-        entered_by = input("  Who is entering this? (robert / mark / jessica / ryan): ").strip()
-        if entered_by.lower() not in ("robert", "mark", "jessica", "ryan", "prateek"):
+    while entered_by.lower() not in ("robert", "jessica", "ryan", "prateek"):
+        entered_by = input("  Who is entering this? (robert / jessica / ryan / prateek): ").strip()
+        if entered_by.lower() not in ("robert", "jessica", "ryan", "prateek"):
             print("  (enter a valid role name)")
 
     domains = get_role_domains(entered_by)

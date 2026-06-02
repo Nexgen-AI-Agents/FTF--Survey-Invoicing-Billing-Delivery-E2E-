@@ -4,7 +4,7 @@ Foundation tests — Governance module (I-069)
 All external calls (Teams webhook, httpx) are mocked.
 Tests verify:
   1.  check_permission allows Robert to access pricing domain
-  2.  check_permission allows Mark to access logistics domain
+  2.  check_permission raises GovernanceError for Mark (removed stakeholder)
   3.  check_permission allows Jessica to access ar domain
   4.  check_permission allows Jessica to access refund domain
   5.  check_permission raises GovernanceError for Robert → ar domain
@@ -40,8 +40,6 @@ from core.governance import (
 @pytest.mark.parametrize("role,domain", [
     ("Robert", "pricing"),
     ("robert", "pricing"),
-    ("Mark", "logistics"),
-    ("mark", "logistics"),
     ("Jessica", "ar"),
     ("jessica", "refund"),
 ])
@@ -49,9 +47,11 @@ def test_check_permission_allowed(role, domain):
     check_permission(role, domain)  # must not raise
 
 
-# ── 5-6. Denied role→domain pairs ────────────────────────────────────────────
+# ── 2, 5-6. Denied role→domain pairs (including removed stakeholder Mark) ────
 
 @pytest.mark.parametrize("role,domain", [
+    ("Mark",   "logistics"),   # removed stakeholder — must be denied
+    ("mark",   "pricing"),     # removed stakeholder — must be denied
     ("Robert", "ar"),
     ("robert", "refund"),
     ("Jessica", "pricing"),

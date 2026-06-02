@@ -65,22 +65,22 @@ def get_all_flagged_orders() -> list[dict]:
 
 
 def _process_decision(order_id: str, decision: str) -> None:
-    """Write approve/reject decision to excel_db state store."""
+    """Write approve/reject decision to excel_db state store using Sprint 11 status names."""
     if decision == "approve":
-        save_order_state(order_id, status="approved")
+        save_order_state(order_id, status="invoice_approved")   # A5 picks up invoice_approved
     elif decision == "reject":
-        save_order_state(order_id, status="rejected")
+        save_order_state(order_id, status="invoice_rejected")
     else:
         raise AgentError(f"_process_decision: invalid decision '{decision}'")
 
 _CONF_TTL_HOURS    = 24
 
-# Statuses that can be approved/rejected immediately (no confirmation needed)
-_APPROVABLE_STATUSES = {"awaiting_approval", "flagged", "priced"}
-_REJECTABLE_STATUSES = {"awaiting_approval", "flagged", "priced"}
+# Sprint 11 statuses that can be approved/rejected immediately (no confirmation needed)
+_APPROVABLE_STATUSES = {"awaiting_approval", "flagged", "priced", "invoice_draft_posted", "on_hold", "invoice_needs_human"}
+_REJECTABLE_STATUSES = {"awaiting_approval", "flagged", "priced", "invoice_draft_posted", "on_hold", "invoice_needs_human"}
 
 # Statuses that require an override confirmation before reversing
-_REVERSIBLE_STATUSES = {"approved", "rejected"}
+_REVERSIBLE_STATUSES = {"approved", "rejected", "invoice_approved", "invoice_rejected"}
 
 
 # ── State persistence (Excel-backed — persists across GitHub Actions runs) ───

@@ -16,12 +16,12 @@ The FTF Invoice Pipeline is a multi-agent agentic AI system that automates the e
 | Agent | File | Purpose | Integrations |
 |-------|------|---------|--------------|
 | A0 — Orchestrator | `code/sprint_11_invoice_pipeline/agents/agent_a0_orchestrator.py` | Entry point; runs all agents in sequence; loads Excel state | Excel state store |
-| A1 — Order Detector | `code/sprint_11_invoice_pipeline/agents/agent_a1_order_detector.py` | Queries MySQL for completed FTF orders that need invoicing; writes new rows to Excel | MySQL (`nexgen_ftf_db`) |
+| A1 — Flag Hunter | `code/sprint_11_invoice_pipeline/agents/agent_a1_flag_hunter.py` | Queries MySQL for completed FTF orders that need invoicing; writes new rows to Excel | MySQL (`nexgen_ftf_db`) |
 | A2 — Data Collector | `code/sprint_11_invoice_pipeline/agents/agent_a2_data_collector.py` | Collects all data needed to price an order: FTF API details, email replies, county lookups, aerial imagery | FTF API, IMAP, Google Maps API, county URL list |
-| A3 — Invoice Drafter | `code/sprint_11_invoice_pipeline/agents/agent_a3_invoice_drafter.py` | Uses Claude to generate invoice line items, total, and reasoning; posts draft to Teams for approval | Claude (Anthropic API), Microsoft Teams |
-| A4 — Approval Monitor | `code/sprint_11_invoice_pipeline/agents/agent_a4_approval_monitor.py` | Polls Teams channel for APPROVE/REJECT/HOLD replies from authorized senders | Microsoft Teams Graph API |
+| A3 — Invoice Compiler | `code/sprint_11_invoice_pipeline/agents/agent_a3_invoice_compiler.py` | Uses Claude to generate invoice line items, total, and reasoning; posts draft to Teams for approval | Claude (Anthropic API), Microsoft Teams |
+| A4 — Human Gate | `code/sprint_11_invoice_pipeline/agents/agent_a4_human_gate_v2.py` | Polls Teams thread replies for APPROVE/REJECT/HOLD from authorized senders; supports natural-language modifications | Microsoft Teams Graph API |
 | A5 — Invoice Finalizer | `code/sprint_11_invoice_pipeline/agents/agent_a5_invoice_finalizer.py` | Creates the approved invoice in FTF Books; captures invoice ID and URL | FTF Books API |
-| A6 — Invoice Sender | `code/sprint_11_invoice_pipeline/agents/agent_a6_invoice_sender.py` | Sends finalized invoice to the client via FTF; records sent timestamp | FTF API, SMTP |
+| A6 — Sender v2 | `code/sprint_11_invoice_pipeline/agents/agent_a6_sender_v2.py` | Sends finalized invoice email to client via SMTP; enforces ET business-hours gate; records sent timestamp | SMTP |
 
 ---
 
