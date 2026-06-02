@@ -9,7 +9,7 @@ Changes vs old monitor:
 - No status filter — catches orders in any FTF status
 - Queues with status='invoice_needed' (new pipeline status)
 
-Run: every 15 minutes via GitHub Actions.
+Run: every 5 minutes via GitHub Actions.
 """
 
 import os

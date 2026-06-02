@@ -1,5 +1,7 @@
 # Sprint 11 — Limited Production (Milestone)
 
+> NOTE: Production agents live in `code/sprint_11_invoice_pipeline/` — this directory is a milestone stub (scope, prerequisites, and sign-off criteria only).
+
 ## What This Sprint Does
 
 Limited production rollout — system runs live for a subset of real orders. Monitor for 2 weeks before full production.
@@ -12,8 +14,12 @@ Limited production rollout — system runs live for a subset of real orders. Mon
 - Daily monitoring by Prateek
 
 ## How to Run Tests
+
+No automated tests implemented for this milestone. Manual QA test cases are defined in `TEAM/qa/test_cases/sprint_11_test_cases.md`. To run the production pipeline directly:
+
 ```bash
-pytest code/sprint_11_limited_production/tests/ -v
+cd code/sprint_11_invoice_pipeline
+python -m agents.agent_a0_orchestrator
 ```
 
 ## Prerequisites

@@ -1,7 +1,7 @@
 """Agent A0 — Invoice Pipeline Orchestrator
 
 Runs the full invoice pipeline in sequence.
-Called by GitHub Actions every 15 minutes.
+Called by GitHub Actions every 5 minutes.
 
 Pipeline:
   A1 → A2 → A3 → A4 (loop) → A5 → A6

@@ -40,6 +40,8 @@ jobs:
       GOOGLE_MAPS_API_KEY:        ${{ secrets.GOOGLE_MAPS_API_KEY }}
       GOOGLE_REVIEW_URL:          ${{ secrets.GOOGLE_REVIEW_URL }}
       TEAMS_WEBHOOK_URL:          ${{ secrets.TEAMS_WEBHOOK_URL }}
+      NOTIFICATION_FROM_EMAIL:    ${{ secrets.NOTIFICATION_FROM_EMAIL }}
+      NOTIFICATION_TO_EMAILS:     ${{ secrets.NOTIFICATION_TO_EMAILS }}
 
     steps:
       - uses: actions/checkout@v4

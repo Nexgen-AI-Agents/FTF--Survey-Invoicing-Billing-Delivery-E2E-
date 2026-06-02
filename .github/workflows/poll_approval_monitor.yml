@@ -22,7 +22,6 @@ jobs:
 
       - name: Poll Teams channel for APPROVE/REJECT commands
         env:
-          DATABASE_URL:               ${{ secrets.DATABASE_URL }}
           TEAMS_INCOMING_WEBHOOK_URL: ${{ secrets.TEAMS_INCOMING_WEBHOOK_URL }}
           TEAMS_TENANT_ID:            ${{ secrets.TEAMS_TENANT_ID }}
           TEAMS_APP_ID:               ${{ secrets.TEAMS_APP_ID }}

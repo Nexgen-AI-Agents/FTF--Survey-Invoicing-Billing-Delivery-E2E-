@@ -1,10 +1,15 @@
 # ADR-001 — PostgreSQL as Primary State Store
 
+> WARNING: SUPERSEDED — See CLAUDE.md for current architecture.
+
 ## Date
 2026-05-21
 
 ## Status
-`Accepted`
+`Superseded`
+
+## Superseded By
+Excel-based state store (openpyxl) + direct MySQL (pymysql). See CLAUDE.md. Migrated in commit a169d22 (May 2026).
 
 ## Context
 

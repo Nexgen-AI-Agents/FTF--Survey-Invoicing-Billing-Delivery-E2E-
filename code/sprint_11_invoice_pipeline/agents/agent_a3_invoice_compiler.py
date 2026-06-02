@@ -38,6 +38,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared")
 
 from config.models import HUMAN_GATE_MODEL
 from config.settings import (
+    APPROVED_SENDERS,
     FTF_ORDER_URL,
     PRICE_SURVEY_FALLBACK_INDIVIDUAL,
     PRICE_SURVEY_FALLBACK_OLD_TITLE,
@@ -446,7 +447,7 @@ def _build_teams_post(
 • <code>change price to $XXX</code> — update and repost<br>
 • <code>add [service]</code> / <code>remove [service]</code><br>
 • Any other instruction — I'll interpret and update<br>
-<em>Only Robert, Ryan, or Prateek can approve.</em></p>
+<em>Only {", ".join(s.capitalize() for s in APPROVED_SENDERS)} can approve.</em></p>
 """.strip()
 
     return html
