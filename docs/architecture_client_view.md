@@ -1,137 +1,146 @@
-# NexGen AI Invoice System
-## Client Overview — How It Works
-*Non-technical. Plain English.*
+# NexGen AI Invoice System — Client Overview
+*Plain English. No technical jargon.*
+Last updated: 2026-06-03
 
 ---
 
 ## The Problem We're Solving
 
-Right now, every time a client orders a survey, someone on your team has to:
-1. Find the order in the system
-2. Hunt through emails and chat messages to figure out exactly what was requested
-3. Build the invoice manually
-4. Email it back and forth for review
-5. Send it to the client
+Every survey order that comes in needs an invoice. Someone has to:
+1. Find the order
+2. Look up what was requested (emails, chat, order notes)
+3. Price it correctly
+4. Get approval from Robert, Ryan, or Prateek
+5. Send the invoice to the client
 
-This takes hours — sometimes days — and only happens during business hours. Orders sit overnight. Clients wait.
-
-**The AI system does all of this automatically, 24 hours a day.**
+This used to take hours — and only happened during business hours. Now the AI does it automatically, 24 hours a day, 7 days a week.
 
 ---
 
 ## How an Order Flows Through the System
 
 ```
-CLIENT                          YOUR TEAM                        AI SYSTEM
-  │                                 │                                │
-  │  Sends email or submits         │                                │
-  │  order via portal ─────────────►│                                │
-  │                                 │  Creates order in FTF          │
-  │                                 │  system with $ flag ──────────►│
-  │                                 │                                │ 1. Sees the $ flag
-  │                                 │                                │    (every 15 min scan)
-  │                                 │                                │
-  │                                 │                                │ 2. Reads the order
-  │                                 │                                │    Searches emails
-  │                                 │                                │    Reads Teams chat
-  │                                 │                                │    Builds full picture
-  │                                 │                                │
-  │                                 │◄───────────────────────────────│ 3. Posts invoice draft
-  │                                 │  "Here's what I found.         │    to Teams group chat
-  │                                 │   Order 12345 — John Smith     │
-  │                                 │   123 Main St, Miami           │
-  │                                 │   Land Survey Only — $450      │
-  │                                 │   Ready to send?"              │
-  │                                 │                                │
-  │                                 │  Robert/Ryan/Prateek           │
-  │                                 │  reviews in Teams              │
-  │                                 │                                │
-  │                                 │  Option A: Reply "APPROVE"    │
-  │                                 │  ──────────────────────────── ►│ 4a. Creates invoice in FTF
-  │                                 │                                │     Sends email to client
-  │◄───────────────────────────────────────────────────────────────  │
-  │  Receives professional                                            │
-  │  invoice email                                                    │
-  │                                 │  Option B: Reply "change       │
-  │                                 │  price to $500"               │
-  │                                 │  ─────────────────────────── ►│ 4b. Updates draft
-  │                                 │◄───────────────────────────── │     Reposts to Teams
-  │                                 │  "Updated. Total now $500.     │     "Anything else?"
-  │                                 │   Still approve?"              │
-  │                                 │                                │
-  │                                 │  Option C: Reply "REJECT"     │
-  │                                 │  ─────────────────────────── ►│ 4c. Holds order
-  │                                 │                                │     Does NOT send to client
-  │                                 │                                │     Waits for next instruction
+CLIENT                     YOUR TEAM                    AI SYSTEM
+  │                             │                            │
+  │  Orders a survey            │                            │
+  │  (web, email, phone)        │                            │
+  │                             │  Sets invoice_needed       │
+  │                             │  flag in FTF ─────────────►│
+  │                             │                            │ Sees the flag
+  │                             │                            │ (every 30 min scan)
+  │                             │                            │
+  │                             │                            │ Reads order from FTF
+  │                             │                            │ Searches email inbox
+  │                             │                            │ Checks county records
+  │                             │                            │ Prices the job
+  │                             │                            │
+  │                         ◄───────────────────────────────│ Posts invoice draft
+  │                             │  Order 1000273343           │ to Teams channel
+  │                             │  Johanne Beaumont           │
+  │                             │  Land Survey Only — $475   │
+  │                             │  [Approve] [Reject]        │
+  │                             │  [Feedback]                │
+  │                             │                            │
+  │                             │  Robert / Ryan / Prateek   │
+  │                             │  replies in Teams          │
+  │                             │                            │
+  │                             │  "Approve" ───────────────►│ Creates FTF invoice
+  │                             │                            │ Sends email to client
+  │◄────────────────────────────────────────────────────────│
+  │  Receives invoice email                                   │
+  │                             │                            │
+  │                             │  "Change price to $500" ──►│ Updates draft
+  │                         ◄───────────────────────────────│ Reposts in Teams
+  │                             │  "Updated to $500.         │
+  │                             │   Approve?"                │
+  │                             │                            │
+  │                             │  "Reject" ────────────────►│ Holds order
+  │                             │                            │ No email sent
 ```
 
 ---
 
-## What the AI Does (and Does Not Do)
+## The 8 AI Agents — What Each One Does
 
-### The AI does:
-- Watches for every order that needs an invoice — 24/7, not just 9–5
-- Reads the order details from your FTF system
-- Searches your email inbox (`nesa@nexgenlogix.com`) for related client emails
-- Reads your Teams group chat for messages about that order
-- Builds a complete invoice draft with services and pricing
-- Posts the draft to Teams and explains what it found and what it's unsure about
-- Updates the draft based on your team's feedback (plain English — no special commands needed)
-- Creates the final invoice in FTF once approved
-- Sends a personalized email to the client
-- Learns from every correction so it gets better over time
-
-### The AI does NOT:
-- Send any invoice to a client without explicit approval from Robert, Ryan, or Prateek
-- Make pricing decisions without showing its work
-- Handle refund requests — those always go to Jessica immediately
-- Touch any order that's already been invoiced
+| Agent | Plain English Name | What It Does |
+|-------|--------------------|--------------|
+| **A0** | The Manager | Wakes up every 30 minutes and tells all other agents to do their jobs in order. |
+| **A1** | The Flag Hunter | Scans every order in FTF looking for the "invoice needed" flag. Queues them for processing. |
+| **A2** | The Researcher | For each queued order: reads FTF order details, searches the email inbox, looks up the county property record, checks Google Maps. Builds a complete picture of the job. |
+| **A3** | The Pricer | Uses all the research plus your past corrections to price the job. Explains its reasoning. Posts the invoice draft to Teams for your approval. |
+| **A4** | The Listener | Watches your Teams replies every 2 minutes. Understands plain English — "approve", "change the price", "hold this", "reject". Acts on your instructions. |
+| **A5** | The Invoice Creator | When you approve: creates the official invoice inside FTF and records the invoice number. |
+| **A6** | The Sender | Sends a personalized invoice email directly to the client on NexGen letterhead. |
+| **A7** | The Learner | Reads your Teams feedback (even comments that aren't approve/reject). Extracts pricing rules and remembers them for next time. |
 
 ---
 
 ## What Your Team Does
 
-Your team's only job in this pipeline is to **review and respond in Teams**. That's it.
+Your team's only job is to **reply in Teams**. That's it.
 
-You can reply to the AI's message with:
-- **"Approve"** — send it as-is
-- **"Change price to $X"** — AI updates and reposts
-- **"Add elevation certificate"** — AI adds the service and recalculates
-- **"Remove X"** — AI removes and recalculates
-- **"Reject"** — hold the order, don't send to client
-- Any question or instruction in plain English — the AI will interpret it
+The AI posts a card in the Teams channel for every order. You reply with:
 
-The AI will ask you a question back if it's confused about anything.
+- **Approve** — AI creates FTF invoice and sends email to client
+- **Reject** — AI holds the order, does not send to client
+- **Change price to $X** — AI updates draft and reposts, asks again
+- **Add elevation certificate** — AI adds service and recalculates
+- **Hold this** — AI pauses without rejecting
+- Any plain English instruction — AI interprets and acts
+
+The AI replies in the same thread confirming what it understood. If it's unsure, it asks a clarifying question.
+
+Only **Robert, Ryan, and Prateek** can trigger approve/reject/modify actions.
 
 ---
 
 ## The Learning System
 
-Every time your team makes a correction ("change this price," "always add this service for flood zone properties"), the AI stores that as a rule. Next time it sees a similar order, it applies the lesson automatically. Over time, the AI needs fewer corrections because it's learned your team's judgment.
+Every time your team corrects the AI ("change price to $X", "always add EC for flood zones"), the AI:
+1. Stores the correction as a rule
+2. Applies that rule automatically to similar orders next time
 
-This learning is permanent — it builds up with every order processed.
+Over time, the AI needs fewer corrections because it has learned your team's judgment.
 
 ---
 
-## What This Means for Your Business
+## Two Speeds
+
+The system runs at two speeds to be both thorough and fast:
+
+| Speed | How Often | What It Does |
+|-------|-----------|--------------|
+| Full pipeline | Every 30 minutes | Discovers new orders, researches them, prices them, posts to Teams |
+| Reply check | Every 2 minutes | Checks if you've replied to any pending approval cards |
+
+This means after you reply "Approve" in Teams, the invoice is created and email sent within 2–4 minutes.
+
+---
+
+## What the AI Does NOT Do
+
+- Send any invoice without explicit approval from Robert, Ryan, or Prateek
+- Touch any order that is already invoiced
+- Handle refund requests — those go directly to the team
+- Make pricing decisions without showing its reasoning in Teams
+
+---
+
+## Business Impact
 
 | Before AI | After AI |
 |-----------|----------|
-| Invoice built manually: 30–60 min per order | Invoice drafted automatically in ~3 min |
-| Only during business hours | 24 hours a day, 7 days a week |
-| Human must hunt through emails + chat | AI searches all sources automatically |
-| Invoice sent only when someone remembers | Every $ flag cleared within hours |
-| Corrections never saved | Every correction becomes a permanent rule |
-| Client waits overnight for invoice | Client receives invoice same-day or next morning |
+| Invoice drafted manually: 30–60 min | Drafted automatically in ~3 min |
+| Business hours only | 24 / 7 |
+| Price from memory or spreadsheet | Priced from 18,000+ real orders + learned rules |
+| Corrections lost after the call | Every correction saved as a permanent rule |
+| Client waits overnight | Client receives invoice same day |
+| Invoice only if someone remembers | Every flagged order cleared within hours |
 
 ---
 
-## Phase 1 Scope (What's Live Now)
+## Scope
 
-Phase 1 ends the moment the invoice email is sent to the client. Everything in this document is Phase 1.
+**Phase 1 (live now):** Find order → research → price → Teams approval → FTF invoice → email to client.
 
-**Not included in Phase 1** (coming later):
-- Automatic payment reminders (Phase 2)
-- Monthly statements for business clients (Phase 2)
-- Upsell campaigns (Phase 2)
-- Website chat integration (Phase 3)
+**Phase 2 (planned):** Payment follow-up reminders, AR aging reports, monthly client statements.
