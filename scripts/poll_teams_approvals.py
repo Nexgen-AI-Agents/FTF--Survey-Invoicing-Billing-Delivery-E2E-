@@ -34,13 +34,16 @@ import os
 import sys
 import uuid
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code", "shared"))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code"))
 
 from config.settings import APPROVED_SENDERS
-from core.excel_db import get_order_by_id, get_orders_by_status, save_order_state
+from core.excel_db import (
+    get_order_by_id, get_orders_by_status, save_order_state,
+    get_pending_confirmations, save_pending_confirmations,
+    get_last_polled, save_last_polled,
+)
 from core.exceptions import AgentError
 from core.logger import get_logger
 from core.teams_graph_client import (
@@ -70,9 +73,6 @@ def _process_decision(order_id: str, decision: str) -> None:
     else:
         raise AgentError(f"_process_decision: invalid decision '{decision}'")
 
-_STATE_FILE        = Path(__file__).parent / "poll_state.json"
-_PENDING_CONF_FILE = Path(__file__).parent / "pending_confirmations.json"
-_POLL_LOOP_NAME    = "poll_teams_approvals"
 _CONF_TTL_HOURS    = 24
 
 # Statuses that can be approved/rejected immediately (no confirmation needed)
@@ -83,44 +83,38 @@ _REJECTABLE_STATUSES = {"awaiting_approval", "flagged", "priced"}
 _REVERSIBLE_STATUSES = {"approved", "rejected"}
 
 
-# ── State persistence ─────────────────────────────────────────────────────────
+# ── State persistence (Excel-backed — persists across GitHub Actions runs) ───
 
 def _load_last_polled() -> datetime | None:
-    if not _STATE_FILE.exists():
-        return None
     try:
-        data = json.loads(_STATE_FILE.read_text())
-        ts   = data.get("last_processed_at")
-        return datetime.fromisoformat(ts) if ts else None
-    except Exception:
+        return get_last_polled()
+    except Exception as exc:
+        log.warning("could not load last_polled from Excel: %s", exc)
         return None
 
 
 def _save_last_polled(dt: datetime) -> None:
     try:
-        _STATE_FILE.write_text(json.dumps({"last_processed_at": dt.isoformat()}))
+        save_last_polled(dt)
     except Exception as exc:
-        log.warning("could not save poll state file: %s", exc)
+        log.warning("could not save last_polled to Excel: %s", exc)
 
 
 # ── Pending confirmation state machine ───────────────────────────────────────
 
 def _load_pending_confirmations() -> list[dict]:
-    if not _PENDING_CONF_FILE.exists():
-        return []
     try:
-        return json.loads(_PENDING_CONF_FILE.read_text()).get("confirmations", [])
-    except Exception:
+        return get_pending_confirmations()
+    except Exception as exc:
+        log.warning("could not load pending_confirmations from Excel: %s", exc)
         return []
 
 
 def _save_pending_confirmations(confs: list[dict]) -> None:
     try:
-        _PENDING_CONF_FILE.write_text(
-            json.dumps({"confirmations": confs}, indent=2, default=str)
-        )
+        save_pending_confirmations(confs)
     except Exception as exc:
-        log.warning("could not save pending_confirmations: %s", exc)
+        log.warning("could not save pending_confirmations to Excel: %s", exc)
 
 
 def _add_pending_confirmation(

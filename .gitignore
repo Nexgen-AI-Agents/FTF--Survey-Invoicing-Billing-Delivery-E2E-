@@ -28,8 +28,9 @@ htmlcov/
 logs/
 *.log
 
-# Teams approval polling state (local timestamp tracker)
+# Teams approval polling state — now stored in Excel (data/invoice_pipeline_state.xlsx)
 scripts/poll_state.json
+scripts/pending_confirmations.json
 
 # IDE
 .vscode/
