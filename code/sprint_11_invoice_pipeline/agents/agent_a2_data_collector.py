@@ -483,14 +483,28 @@ def collect_for_order(order_id: str) -> dict:
         raise AgentError(f"collect_for_order: order {order_id} not in processed_orders")
 
     property_address = db_row.get("property_address", "")
-    client_name      = db_row.get("client_name", "")
+    client_name      = db_row.get("client_name", "") or db_row.get("customer_name", "")
+    # MySQL fields already fetched by A1 from ng_orders — ground truth even when FTF API is down
+    _db_email   = db_row.get("customer_email", "")
+    _db_service = db_row.get("service_type", "")
+    _db_county  = db_row.get("county", "")
 
     # 1 — FTF API
     try:
         ftf_order = get_order(order_id)
     except Exception as exc:
         log.warning("FTF order fetch failed order=%s: %s", order_id, exc)
-        ftf_order = {"order_id": order_id}
+        ftf_order = {}
+
+    ftf_order.setdefault("order_id", order_id)
+    # Merge MySQL state fields into ftf_order when FTF API returned nothing.
+    # An order in FTF always has at minimum email + service — never block on API failure alone.
+    if not ftf_order.get("customer_email"):
+        ftf_order["customer_email"] = _db_email
+    if not ftf_order.get("service_type"):
+        ftf_order["service_type"] = _db_service
+    if not ftf_order.get("county") and not ftf_order.get("property_county"):
+        ftf_order["county"] = _db_county
 
     if not property_address:
         property_address = str(
