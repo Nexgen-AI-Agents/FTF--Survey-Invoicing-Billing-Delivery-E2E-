@@ -87,14 +87,12 @@ def _detect_condo(order_details: dict) -> Optional[str]:
 
 
 def _detect_duplicates(order_id: str, order_details: dict) -> list[dict]:
-    """Run multi-signal duplicate check. Returns candidate list (may be empty)."""
+    """Duplicate check using Latitude, Longitude, and Folio/MLS number."""
     return find_duplicate_orders(
         order_id=order_id,
-        address=order_details.get("ng_property_address") or "",
-        county=order_details.get("ng_property_county") or "",
-        parcel_id=order_details.get("ng_folio_mls_number") or "",
-        company_id=int(order_details.get("ng_company_id") or 0),
-        service_type=order_details.get("ng_service_requested") or "",
+        lat=order_details.get("ng_lat") or "",
+        lng=order_details.get("ng_long") or "",
+        folio_mls=order_details.get("ng_folio_mls_number") or "",
     )
 
 
@@ -177,8 +175,7 @@ def _build_ai_context(
     if duplicates:
         dup_lines = "\n".join(
             f"  • Order {d['order_id']} — {d['address']}, {d['county']} — "
-            f"service: {d['service']} — match: {', '.join(d['match_reasons'])} "
-            f"(score {d['match_score']})"
+            f"service: {d['service']} — match: {', '.join(d['match_reasons'])}"
             for d in duplicates[:3]
         )
         dup_block = f"\n⚠️ POSSIBLE DUPLICATE ORDERS (flagged for human review):\n{dup_lines}\n"
@@ -388,8 +385,8 @@ def _build_teams_post(
         dup_html = "<h4>⚠️ Possible Duplicate Orders</h4><ul>"
         for d in duplicates[:3]:
             dup_html += (
-                f"<li>Order <strong>{d['order_id']}</strong> — {d['address']}, {d['county']} — "
-                f"service: {d['service']} — match: {', '.join(d['match_reasons'])}</li>"
+                f"<li>Order <strong>{d['order_id']}</strong> — {d['address']}, {d['county']} "
+                f"— {', '.join(d['match_reasons'])}</li>"
             )
         dup_html += "</ul>"
 

@@ -84,7 +84,7 @@ def get_order_details(order_id: str) -> dict:
                 """SELECT ng_company_id, ng_unit_number, ng_legal_description,
                           ng_property_address, ng_property_county, ng_folio_mls_number,
                           ng_service_requested, ng_flood, ng_commercial, ng_size,
-                          ng_certifications
+                          ng_certifications, ng_lat, ng_long
                    FROM ng_orders WHERE ng_order = %s LIMIT 1""",
                 (order_id,),
             )
@@ -128,81 +128,81 @@ def get_company_info(company_id: int) -> dict:
 
 def find_duplicate_orders(
     order_id: str,
-    address: str,
-    county: str,
-    parcel_id: str,
-    company_id: int,
-    service_type: str,
+    lat: str,
+    lng: str,
+    folio_mls: str,
 ) -> list[dict]:
-    """Multi-signal duplicate detection within a 6-month window.
+    """Duplicate detection using Latitude, Longitude, and Folio/MLS number.
 
-    Scoring: same address+county = 3 pts, same parcel_id = 3 pts,
-             same company = 1 pt, same service type = 1 pt.
-    Score >= 3 is included in results. AI and human decide — never auto-rejects.
+    Checks within a 6-month window. Either signal alone flags a duplicate —
+    human decides in Teams; never auto-rejects.
+
+    Lat/lng match uses 0.0001° tolerance (~11 m) and skips zero coordinates.
     """
     conn = _connect()
     try:
         with conn.cursor() as cur:
             cutoff = (datetime.now() - timedelta(days=180)).strftime("%Y-%m-%d")
-            svc_pattern   = f"%{service_type[:20]}%" if service_type else "%"
-            parcel_guard  = parcel_id if parcel_id else "__NO_PARCEL__"
-            addr_guard    = address or "__NO_ADDR__"
-            county_guard  = county or "__NO_COUNTY__"
-            cur.execute(
-                """SELECT ng_order, ng_property_address, ng_property_county,
-                          ng_folio_mls_number, ng_company_id, ng_service_requested,
-                          ng_timestamp
-                   FROM ng_orders
-                   WHERE ng_order != %s
-                     AND ng_timestamp >= %s
-                     AND (
-                       (ng_property_address = %s AND ng_property_county = %s)
-                       OR ng_folio_mls_number = %s
-                       OR (ng_company_id = %s AND ng_service_requested LIKE %s)
-                     )
-                   LIMIT 10""",
-                (
-                    order_id, cutoff,
-                    addr_guard, county_guard,
-                    parcel_guard,
-                    company_id or 0,
-                    svc_pattern,
-                ),
+
+            # Build WHERE clause dynamically based on which signals are available
+            conditions = ["ng_order != %s", "ng_timestamp >= %s"]
+            params: list = [order_id, cutoff]
+            signal_parts = []
+
+            lat_val  = float(lat)  if lat  else 0.0
+            lng_val  = float(lng)  if lng  else 0.0
+            has_coords = lat_val != 0.0 and lng_val != 0.0
+
+            if has_coords:
+                signal_parts.append(
+                    "(ABS(CAST(ng_lat AS DECIMAL(12,6)) - %s) < 0.0001 "
+                    "AND ABS(CAST(ng_long AS DECIMAL(12,6)) - %s) < 0.0001 "
+                    "AND CAST(ng_lat AS DECIMAL(12,6)) != 0)"
+                )
+                params += [lat_val, lng_val]
+
+            folio_clean = (folio_mls or "").strip()
+            if folio_clean:
+                signal_parts.append("ng_folio_mls_number = %s")
+                params.append(folio_clean)
+
+            if not signal_parts:
+                return []  # nothing to match on
+
+            conditions.append(f"({' OR '.join(signal_parts)})")
+            sql = (
+                "SELECT ng_order, ng_property_address, ng_property_county, "
+                "ng_folio_mls_number, ng_service_requested, ng_lat, ng_long, ng_timestamp "
+                "FROM ng_orders WHERE " + " AND ".join(conditions) + " LIMIT 10"
             )
+            cur.execute(sql, params)
             rows = cur.fetchall()
     finally:
         conn.close()
 
     candidates = []
     for row in rows:
-        score, reasons = 0, []
-        row_addr   = row.get("ng_property_address", "")
-        row_county = row.get("ng_property_county", "")
-        row_parcel = row.get("ng_folio_mls_number", "")
-        row_svc    = row.get("ng_service_requested", "")
-        row_co     = row.get("ng_company_id")
+        reasons = []
+        row_lat    = row.get("ng_lat") or "0"
+        row_lng    = row.get("ng_long") or "0"
+        row_folio  = (row.get("ng_folio_mls_number") or "").strip()
 
-        if address and county and row_addr == address and row_county == county:
-            score += 3; reasons.append("same address+county")
-        if parcel_id and row_parcel and row_parcel == parcel_id:
-            score += 3; reasons.append("same parcel ID")
-        if company_id and row_co == company_id:
-            score += 1; reasons.append("same client")
-        if service_type and service_type[:10].lower() in row_svc.lower():
-            score += 1; reasons.append("same service type")
+        if has_coords and float(row_lat) != 0.0:
+            if abs(float(row_lat) - lat_val) < 0.0001 and abs(float(row_lng) - lng_val) < 0.0001:
+                reasons.append(f"same location ({row_lat}, {row_lng})")
+        if folio_clean and row_folio and row_folio == folio_clean:
+            reasons.append(f"same Folio/MLS ({row_folio})")
 
-        if score >= 3:
+        if reasons:
             candidates.append({
                 "order_id":      str(row.get("ng_order", "")),
-                "address":       row_addr,
-                "county":        row_county,
-                "service":       row_svc,
-                "match_score":   score,
+                "address":       row.get("ng_property_address", ""),
+                "county":        row.get("ng_property_county", ""),
+                "service":       row.get("ng_service_requested", ""),
                 "match_reasons": reasons,
                 "timestamp":     str(row.get("ng_timestamp", "")),
             })
 
-    candidates.sort(key=lambda x: -x["match_score"])
     if candidates:
         logger.info("find_duplicate_orders: %d candidate(s) for order=%s", len(candidates), order_id)
     return candidates
