@@ -105,6 +105,18 @@ def _is_noise(text: str) -> bool:
 def _classify_feedback(order_id: str, sender: str, feedback: str) -> dict | None:
     """Ask Claude (Haiku) to classify feedback and extract a generalized rule.
 
+    Type values:
+      pricing_rule       — adjusts how future orders are priced (Claude applies as context)
+      detection_rule     — teaches which orders to skip/reject/flag (Claude applies as context)
+      general_instruction — workflow guidance Claude should follow for all orders
+      code_change        — requires editing Python/YAML/SQL — must NOT be auto-applied;
+                           user is directed to the development team instead
+      noise              — vague, conversational, or not actionable
+
+    The critical distinction:
+      Logic rules → Claude can apply them by reading natural language (store as rule)
+      Code changes → require a developer to edit source files (never store; alert user)
+
     Returns a dict with keys: type, description, confidence.
     Returns None if the LLM call fails.
     """
@@ -112,18 +124,32 @@ def _classify_feedback(order_id: str, sender: str, feedback: str) -> dict | None
         f"You analyze a Teams reply from a land survey field user on order {order_id}.\n"
         f"Sender: {sender}\n"
         f'Reply: "{feedback}"\n\n'
-        "Classify this feedback:\n"
-        "- pricing_rule: teaches how to price similar orders "
-        '(e.g., "add $X for Y", "this type should cost $Z", "reduce price when...")\n'
-        "- detection_rule: teaches what orders to reject/skip/flag "
-        '(e.g., "don\'t invoice these", "skip if property type is X")\n'
-        "- general_instruction: general workflow or process guidance that should always apply\n"
-        "- noise: not actionable (vague, conversational, or already covered)\n\n"
-        "If actionable, write a GENERALIZED one-sentence rule for FUTURE orders "
-        "(not specific to this one order).\n\n"
+        "Classify this feedback into EXACTLY ONE of these types:\n\n"
+        "LOGIC RULES — Claude can apply these by reading them as pricing/detection context:\n"
+        "  pricing_rule: adjusts how similar orders should be priced\n"
+        '    Examples: "add $150 for Monroe County access", '
+        '"boundary surveys with pools cost more", "reduce 10% for repeat clients"\n'
+        "  detection_rule: teaches which orders to reject, skip, or flag\n"
+        '    Examples: "mobile home park lot numbers are not condos", '
+        '"skip orders where lot > 10 acres", "flag commercial orders for review"\n'
+        "  general_instruction: workflow/process guidance that applies to all orders\n"
+        '    Examples: "always verify FEMA zone before pricing", '
+        '"check county appraiser for lot size confirmation"\n\n'
+        "CODE CHANGE — requires a developer to edit Python/YAML/SQL source files:\n"
+        "  code_change: the user is reporting a bug, requesting a new feature, asking to\n"
+        "    change how the system works at a code level, or flagging a system error\n"
+        '    Examples: "the duplicate detection is broken", "add a new Teams notification",\n'
+        '    "fix the condo detection algorithm", "the invoice email format is wrong",\n'
+        '    "add a new status to the pipeline", "integrate with a new API"\n\n'
+        "  noise: vague, conversational, or not actionable\n\n"
+        "CRITICAL RULE: If the feedback is about how the SYSTEM BEHAVES (bugs, features,\n"
+        "format changes, new integrations, status changes) → it is ALWAYS code_change.\n"
+        "If the feedback is about how to PRICE or CLASSIFY a type of order → it is a logic rule.\n\n"
+        "If actionable as a logic rule, write a GENERALIZED one-sentence rule for FUTURE orders "
+        "(not specific to this one order). Empty string for code_change and noise.\n\n"
         "Respond ONLY with valid JSON:\n"
-        '{"type": "pricing_rule|detection_rule|general_instruction|noise", '
-        '"description": "one-sentence rule (empty string if noise)", '
+        '{"type": "pricing_rule|detection_rule|general_instruction|code_change|noise", '
+        '"description": "one-sentence rule (empty if code_change or noise)", '
         '"confidence": "high|medium|low"}'
     )
 
@@ -223,12 +249,35 @@ def run() -> dict:
             description   = (result.get("description") or "").strip()
             confidence    = result.get("confidence", "low")
 
+            # ── Code change: never store — direct user to dev team ─────────────
+            if feedback_type == "code_change":
+                log.info(
+                    "code_change feedback from=%s order=%s — directing to dev team: %s",
+                    sender, eff_order_id, text[:120],
+                )
+                dev_msg = (
+                    f"[INFO] 🛠️ <strong>{sender}</strong> — your feedback on order "
+                    f"<strong>{eff_order_id}</strong> requires a <strong>code change</strong> "
+                    f"and cannot be applied automatically.<br><br>"
+                    f"<strong>What you said:</strong> <em>{text[:300]}</em><br><br>"
+                    f"Please contact the <strong>development team</strong> to implement this. "
+                    f"The AI pipeline only learns order logic (pricing rules, detection rules, "
+                    f"workflow instructions) — system-level changes require a developer."
+                )
+                try:
+                    send_channel_message(dev_msg, parent_message_id=msg["id"])
+                except Exception as exc:
+                    log.warning("could not post code_change notice: %s", exc)
+                skipped += 1
+                continue
+
+            # ── Noise / low-confidence: discard silently ───────────────────────
             if feedback_type == "noise" or not description or confidence == "low":
                 skipped += 1
                 log.debug("noise/low-confidence feedback skipped: %s", text[:80])
                 continue
 
-            # Store the rule
+            # ── Valid logic rule: store and acknowledge ────────────────────────
             rule_id = f"rule_{uuid.uuid4().hex[:8]}"
             rule = {
                 "id":           rule_id,
