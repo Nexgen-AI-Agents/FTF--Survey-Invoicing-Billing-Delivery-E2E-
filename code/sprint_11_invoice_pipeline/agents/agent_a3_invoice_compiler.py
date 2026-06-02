@@ -384,24 +384,25 @@ def _build_teams_post(
     condo_reason: Optional[str] = None,
 ) -> str:
     """Build the Teams approval card HTML."""
-    client  = packet.get("client_name", {}).get("value") or company_info.get("company_name") or "Unknown"
-    address = packet.get("property_address", {}).get("value") or "Unknown"
-    county  = packet.get("property_county", {}).get("value") or "Unknown"
-    summary = packet.get("summary", "")
-    total   = ai_result.get("total_amount", 0)
+    client        = packet.get("client_name", {}).get("value") or company_info.get("company_name") or "Unknown"
+    client_email  = packet.get("client_email", {}).get("value") or "—"
+    address       = packet.get("property_address", {}).get("value") or "Unknown"
+    county        = packet.get("property_county", {}).get("value") or "Unknown"
+    summary       = packet.get("summary", "")
+    total         = ai_result.get("total_amount", 0)
 
-    # Header and status tag
+    # Status / confidence banner
     if condo_reason:
-        status_tag = "<p><strong>🚫 REJECTED — CONDO ORDER (no land parcel to survey)</strong></p>"
+        banner = "<p><strong>🚫 REJECTED — CONDO ORDER (no land parcel to survey)</strong></p>"
     elif ai_result.get("escalate_flag"):
         reason = ai_result.get("escalate_reason") or "AI flagged for manual review"
-        status_tag = f"<p><strong>📤 ESCALATED — {reason}</strong></p>"
+        banner = f"<p><strong>📤 ESCALATED — {reason}</strong></p>"
     else:
         confidence = ai_result.get("confidence", "MEDIUM")
-        conf_icon = {"HIGH": "✅", "MEDIUM": "⚠️", "LOW": "❌"}.get(confidence, "⚠️")
-        status_tag = f"<p>{conf_icon} AI confidence: <strong>{confidence}</strong></p>"
+        conf_icon  = {"HIGH": "✅", "MEDIUM": "⚠️", "LOW": "❌"}.get(confidence, "⚠️")
+        banner     = f"<p>{conf_icon} <strong>AI Confidence: {confidence}</strong></p>"
 
-    # Client tier display
+    # Client tier + rate
     tier_labels = {
         "individual": "Individual / One-off",
         "new_title":  f"New Title Company ({NEW_TITLE_YEAR_CUTOFF}+, low volume)",
@@ -409,59 +410,69 @@ def _build_teams_post(
     }
     ng_rate = company_info.get("ng_rate", 0)
     if ng_rate and ng_rate > 100:
-        rate_source = f"Negotiated rate: <strong>${ng_rate:,.2f}</strong> (from account profile)"
+        rate_label = f"Negotiated — <strong>${ng_rate:,.2f}</strong>"
     else:
-        fallback = _get_fallback_survey_rate(tier)
-        rate_source = f"Default rate: <strong>${fallback:,.2f}</strong> (no rate on file — tier default)"
+        fallback   = _get_fallback_survey_rate(tier)
+        rate_label = f"Default — <strong>${fallback:,.2f}</strong> (no rate on file)"
 
     # Line items
     items_html = ""
     for item in ai_result.get("services", []):
-        items_html += f"<li><strong>{item['name']}</strong> — ${item['amount']:,.2f}<br><small>{item['description']}</small></li>"
+        items_html += (
+            f"<li><strong>{item['name']}</strong> — <strong>${item['amount']:,.2f}</strong><br>"
+            f"<small>{item['description']}</small></li>"
+        )
     if not items_html:
-        items_html = "<li>No line items — see escalation/rejection reason above</li>"
+        items_html = "<li>No line items — see banner above</li>"
 
     # Duplicate alert
     dup_html = ""
     if duplicates:
         dup_html = "<h4>⚠️ Possible Duplicate Orders</h4><ul>"
         for d in duplicates[:3]:
-            ts = str(d.get("timestamp", ""))[:10]   # "YYYY-MM-DD"
+            ts  = str(d.get("timestamp", ""))[:10]
             svc = d.get("service") or "Unknown service"
             dup_html += (
-                f"<li>Order <strong>{d['order_id']}</strong> | {svc} | "
+                f"<li>Order <strong>{d['order_id']}</strong> — {svc} | "
                 f"{d['address']}, {d['county']} | {ts} | "
                 f"{', '.join(d['match_reasons'])}</li>"
             )
         dup_html += "</ul>"
 
     # Flags
-    flags = ai_result.get("flags", [])
+    flags      = ai_result.get("flags", [])
     flags_html = ""
     if flags:
-        flags_html = "<h4>Flags</h4><ul>" + "".join(f"<li>🔸 {f}</li>" for f in flags) + "</ul>"
+        flags_html = "<h4>🔸 Flags</h4><ul>" + "".join(f"<li>{f}</li>" for f in flags) + "</ul>"
 
     html = f"""
-<h3>📋 Invoice Draft — Order {order_id}</h3>
-<p><a href="{link}">[View in FTF →]</a></p>
+<h3>📋 Invoice Draft — Order #{order_id}</h3>
+{banner}
 
+<h4>👤 Client</h4>
 <ul>
-<li><strong>Client:</strong> {client}</li>
+<li><strong>Name:</strong> {client}</li>
+<li><strong>Email:</strong> {client_email}</li>
 <li><strong>Tier:</strong> {tier_labels.get(tier, tier)}</li>
-<li><strong>Rate source:</strong> {rate_source}</li>
-<li><strong>Property:</strong> {address}, {county} County</li>
-<li><strong>Summary:</strong> {summary}</li>
+<li><strong>Rate:</strong> {rate_label}</li>
 </ul>
 
-{status_tag}
+<h4>📍 Property</h4>
+<ul>
+<li><strong>Address:</strong> {address}</li>
+<li><strong>County:</strong> {county}</li>
+{f'<li><strong>Summary:</strong> {summary}</li>' if summary else ''}
+</ul>
 
-<h4>Services</h4>
+<h4>🧾 Services</h4>
 <ul>{items_html}</ul>
-<p><strong>Total: ${total:,.2f}</strong></p>
+<p>💰 <strong>Total: ${total:,.2f}</strong></p>
 
-<h4>Pricing Reasoning</h4>
+<h4>🧠 Pricing Reasoning</h4>
 <p><em>{ai_result.get('pricing_reasoning', '')}</em></p>
+
 {dup_html}{flags_html}
+<p><a href="{link}">🔗 View Order in FTF →</a></p>
 <hr>
 <p><strong>Reply to this message:</strong><br>
 ✅ <strong>Approve</strong><br>

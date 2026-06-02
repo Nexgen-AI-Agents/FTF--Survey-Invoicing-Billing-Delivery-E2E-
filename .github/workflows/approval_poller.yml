@@ -44,6 +44,7 @@ jobs:
       NOTIFICATION_FROM_EMAIL:    ${{ secrets.NOTIFICATION_FROM_EMAIL }}
       NOTIFICATION_TO_EMAILS:     ${{ secrets.NOTIFICATION_TO_EMAILS }}
       APPROVED_SENDERS:           ${{ secrets.APPROVED_SENDERS }}
+      EMAIL_OVERRIDE_ALL:         ${{ secrets.EMAIL_OVERRIDE_ALL }}
       SKIP_SEND_DELAY:            "1"
 
     steps:

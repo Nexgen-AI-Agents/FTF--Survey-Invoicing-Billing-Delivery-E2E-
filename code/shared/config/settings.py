@@ -165,6 +165,9 @@ LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
 # Invoice pipeline
 MAX_INVOICE_MODIFICATIONS: int = int(os.getenv("MAX_INVOICE_MODIFICATIONS", "5"))
+# Testing override — when set, ALL invoice emails are redirected to this address.
+# No client ever receives an email while this is active. Set via GitHub secret.
+EMAIL_OVERRIDE_ALL: str = os.getenv("EMAIL_OVERRIDE_ALL", "")
 
 # IMAP — email inbox for nesa@nexgenlogix.com
 IMAP_HOST:     str = os.getenv("IMAP_HOST", "outlook.office365.com")

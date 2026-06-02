@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared")
 from config.settings import (
     ESTIMATE_DELAY_MIN, ESTIMATE_DELAY_MAX,
     SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM,
+    EMAIL_OVERRIDE_ALL,
 )
 from core.excel_db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
 from core.exceptions import AgentError
@@ -144,12 +145,16 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
     override_email = draft.get("email_override_to") or ""
     client_name    = db_row.get("client_name", "")
     client_email   = db_row.get("customer_email", "")
-    to_email       = override_email or client_email
+    to_email       = EMAIL_OVERRIDE_ALL or override_email or client_email
     message_id     = db_row.get("approval_message_id")
     approved_by    = db_row.get("approved_by", "Unknown")
+    test_mode      = bool(EMAIL_OVERRIDE_ALL)
 
     if not to_email:
         raise AgentError(f"send_for_order: no email for order {order_id}")
+    if test_mode:
+        log.warning("TEST MODE — email for order=%s redirected from %s to %s",
+                    order_id, client_email, EMAIL_OVERRIDE_ALL)
 
     # Random delay (human-like) — skipped when invoked from the 2-min poller
     if not skip_delay and not _SKIP_DELAY:
@@ -181,7 +186,13 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
 
     # Confirm in Teams channel thread
     if message_id:
-        if override_email:
+        if test_mode:
+            post_channel_reply(
+                message_id,
+                f"🧪 <strong>TEST MODE — Email redirected to {EMAIL_OVERRIDE_ALL} (client NOT notified).</strong><br>"
+                f"Order: {order_id} | Client would have received: {client_email} | Approved by: {approved_by} | Total: ${total:,.2f}"
+            )
+        elif override_email:
             post_channel_reply(
                 message_id,
                 f"📧 <strong>Email sent to approver ({override_email}) — client copy withheld.</strong><br>"
