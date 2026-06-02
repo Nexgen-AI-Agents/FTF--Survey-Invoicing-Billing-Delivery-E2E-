@@ -49,7 +49,7 @@ from core.excel_db import (
 from core.exceptions import AgentError
 from core.logger import get_logger
 from core.teams_graph_client import (
-    get_channel_thread_replies, post_channel_reply,
+    find_channel_message_for_order, get_channel_thread_replies, post_channel_reply,
 )
 
 AGENT_NAME = "agent_a4_human_gate_v2"
@@ -262,6 +262,15 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
     already_processed = get_processed_reply_ids(order_id)
 
     replies = get_channel_thread_replies(message_id)
+    if not replies:
+        # Stored message_id may be wrong (race condition at post time).
+        # Scan recent channel messages and self-correct.
+        found_id = find_channel_message_for_order(order_id)
+        if found_id and found_id != message_id:
+            log.info("auto-corrected message_id order=%s: %s → %s", order_id, message_id, found_id)
+            save_order_state(order_id, approval_message_id=found_id)
+            message_id = found_id
+            replies = get_channel_thread_replies(message_id)
     if not replies:
         return None
 

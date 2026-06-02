@@ -878,34 +878,64 @@ def get_chat_thread_replies(message_id: str) -> list[dict]:
 #   ChannelMessage.Read.All      — read channel messages and thread replies
 
 
-def _fetch_latest_channel_msg_id() -> str:
-    """Fetch the ID of the most recent message in the channel via Graph READ.
+def _fetch_latest_channel_msg_id(order_id: str = "", retries: int = 5, delay: float = 3.0) -> str:
+    """Fetch the ID of the invoice card just posted to the channel.
 
-    ChannelMessage.Read.All (Application) is sufficient — no Send permission needed.
-    Used after posting via webhook to recover the message_id for A4 polling.
+    If order_id is given, scans the 10 most recent messages and returns the one
+    whose body contains the order_id — far more reliable than assuming the
+    newest message is ours (Logic App latency can exceed the initial sleep).
+    Falls back to the most recent message if no content match is found.
+    Retries up to `retries` times with `delay` seconds between attempts.
     """
     if not TEAMS_TEAM_ID or not TEAMS_CHANNEL_ID:
         return ""
     url = (
         f"{_GRAPH_READ}/teams/{TEAMS_TEAM_ID}/channels/{TEAMS_CHANNEL_ID}"
-        "/messages?$top=1"
+        "/messages?$top=10"
     )
+    for attempt in range(retries):
+        if attempt > 0:
+            time.sleep(delay)
+        try:
+            r = httpx.get(url, headers=_read_headers(), timeout=20.0)
+            r.raise_for_status()
+            messages = r.json().get("value", [])
+            if not messages:
+                continue
+            if order_id:
+                for msg in messages:
+                    content = (msg.get("body") or {}).get("content", "")
+                    if order_id in content:
+                        log.debug("channel msg matched by order_id=%s attempt=%d", order_id, attempt + 1)
+                        return msg.get("id", "")
+                log.debug("order_id=%s not found in top-10 messages (attempt %d/%d) — retrying", order_id, attempt + 1, retries)
+                continue
+            return messages[0].get("id", "")
+        except Exception as exc:
+            log.warning("could not fetch latest channel message id (attempt %d): %s", attempt + 1, exc)
+    # Last resort: most recent message (may be wrong if order_id not found)
     try:
         r = httpx.get(url, headers=_read_headers(), timeout=20.0)
         r.raise_for_status()
         messages = r.json().get("value", [])
-        return messages[0].get("id", "") if messages else ""
-    except Exception as exc:
-        log.warning("could not fetch latest channel message id: %s", exc)
-        return ""
+        if messages:
+            log.warning("order_id=%s not matched — falling back to most recent message", order_id)
+            return messages[0].get("id", "")
+    except Exception:
+        pass
+    return ""
 
 
-def post_channel_message(text_or_html: str, subject: str = "") -> dict:
+def post_channel_message(text_or_html: str, subject: str = "", order_id: str = "") -> dict:
     """Post a new top-level message to the invoice approval Teams channel.
 
     Posts via incoming webhook (no ChannelMessage.Send Application permission needed),
-    then fetches the latest channel message ID via Graph READ so callers get a
-    usable message_id for reply polling.
+    then fetches the channel message ID via Graph READ so callers get a usable
+    message_id for reply polling.
+
+    order_id — when provided, the ID-recovery step scans message bodies and matches
+    by content instead of blindly taking the newest message (avoids race conditions
+    where the Logic App is slower than the 3s sleep).
 
     Returns {"id": message_id, "ok": True}.
     """
@@ -913,10 +943,10 @@ def post_channel_message(text_or_html: str, subject: str = "") -> dict:
 
     send_channel_message(text_or_html, subject)
 
-    # Give Teams ~3 s to process the webhook post, then read back the latest msg id
+    # Give Logic App a head start; _fetch_latest_channel_msg_id retries internally
     time.sleep(3)
-    msg_id = _fetch_latest_channel_msg_id()
-    log.info("channel message posted via webhook id=%s subject=%r", msg_id, subject)
+    msg_id = _fetch_latest_channel_msg_id(order_id=order_id)
+    log.info("channel message posted via webhook id=%s order=%s subject=%r", msg_id, order_id, subject)
     return {"id": msg_id, "ok": True}
 
 
@@ -931,6 +961,23 @@ def post_channel_reply(message_id: str, text_or_html: str) -> dict:
     send_channel_message(text_or_html, parent_message_id=message_id)
     log.info("channel reply posted via webhook parent_id=%s", message_id)
     return {"id": "", "ok": True}
+
+
+def find_channel_message_for_order(order_id: str) -> str:
+    """Scan recent channel messages and return the ID of the one mentioning order_id.
+
+    Used by A4 to self-correct a stale/wrong approval_message_id without human
+    intervention. Returns empty string if not found.
+    """
+    try:
+        messages = get_recent_messages(limit=50)
+        for msg in messages:
+            if order_id in msg.get("text", ""):
+                log.info("found channel message for order=%s id=%s", order_id, msg["id"])
+                return msg["id"]
+    except Exception as exc:
+        log.warning("find_channel_message_for_order order=%s failed: %s", order_id, exc)
+    return ""
 
 
 def get_channel_thread_replies(message_id: str) -> list[dict]:

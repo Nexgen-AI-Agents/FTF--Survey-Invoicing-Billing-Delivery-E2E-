@@ -259,27 +259,10 @@ def _resolve_pending_confirmations(
     return count
 
 
-# ── Claude classification ─────────────────────────────────────────────────────
+# ── Classification ────────────────────────────────────────────────────────────
 
-def _classify_feedback(order_id: str, sender: str, feedback: str) -> dict | None:
-    """Ask Claude (Haiku) to classify feedback and extract a generalized rule.
-
-    Type values:
-      pricing_rule       — adjusts how future orders are priced (Claude applies as context)
-      detection_rule     — teaches which orders to skip/reject/flag (Claude applies as context)
-      general_instruction — workflow guidance Claude should follow for all orders
-      code_change        — requires editing Python/YAML/SQL — must NOT be auto-applied;
-                           user is directed to the development team instead
-      noise              — vague, conversational, or not actionable
-
-    The critical distinction:
-      Logic rules → Claude can apply them by reading natural language (store as rule)
-      Code changes → require a developer to edit source files (never store; alert user)
-
-    Returns a dict with keys: type, description, confidence.
-    Returns None if the LLM call fails.
-    """
-    prompt = (
+def _build_classification_prompt(order_id: str, sender: str, feedback: str) -> str:
+    return (
         f"You analyze a Teams reply from a land survey manager on order {order_id}.\n"
         f"Sender: {sender}\n"
         f'Reply: "{feedback}"\n\n'
@@ -305,6 +288,37 @@ def _classify_feedback(order_id: str, sender: str, feedback: str) -> dict | None
         '"confidence": "high|medium|low"}'
     )
 
+
+def _classify_with_hermes(prompt: str) -> dict | None:
+    """Try local Hermes (Ollama) for classification — no API cost, works offline.
+
+    Returns None immediately if Hermes is not reachable (e.g. GitHub Actions runners).
+    Caller falls back to Claude Haiku on None.
+    """
+    from config.settings import HERMES_BASE_URL, HERMES_MODEL
+    if not HERMES_BASE_URL:
+        return None
+    try:
+        import httpx as _httpx
+        r = _httpx.post(
+            f"{HERMES_BASE_URL}/api/generate",
+            json={"model": HERMES_MODEL, "prompt": prompt, "stream": False, "format": "json"},
+            timeout=30.0,
+        )
+        r.raise_for_status()
+        raw = r.json().get("response", "").strip()
+        if raw.startswith("```"):
+            raw = re.sub(r"^```[a-z]*\n?", "", raw).rstrip("`").strip()
+        result = json.loads(raw)
+        log.debug("hermes classification succeeded")
+        return result
+    except Exception as exc:
+        log.debug("hermes unavailable: %s — falling back to Claude", exc)
+        return None
+
+
+def _classify_with_claude(prompt: str, order_id: str) -> dict | None:
+    """Claude Haiku classification — fallback when Hermes is not reachable."""
     try:
         raw = llm_call(
             model=MONITOR_MODEL,
@@ -312,15 +326,32 @@ def _classify_feedback(order_id: str, sender: str, feedback: str) -> dict | None
             user=prompt,
             max_tokens=150,
         ).strip()
-
         if raw.startswith("```"):
             raw = re.sub(r"^```[a-z]*\n?", "", raw).rstrip("`").strip()
-
         return json.loads(raw)
-
     except Exception as exc:
-        log.warning("classification LLM call failed order=%s: %s", order_id, exc)
+        log.warning("claude classification failed order=%s: %s", order_id, exc)
         return None
+
+
+def _classify_feedback(order_id: str, sender: str, feedback: str) -> dict | None:
+    """Classify feedback and extract a generalized rule.
+
+    Tries Hermes (local Ollama) first — zero API cost, works for local runs.
+    Falls back to Claude Haiku when Hermes is not reachable (e.g. GitHub Actions).
+
+    Type values:
+      pricing_rule        — adjusts how future orders are priced
+      detection_rule      — teaches which orders to skip/reject/flag
+      general_instruction — workflow guidance Claude should follow for all orders
+      code_change         — requires editing Python/YAML — directed to dev team
+      noise               — vague, conversational, or not actionable
+    """
+    prompt = _build_classification_prompt(order_id, sender, feedback)
+    result = _classify_with_hermes(prompt)
+    if result is None:
+        result = _classify_with_claude(prompt, order_id)
+    return result
 
 
 # ── Main run ──────────────────────────────────────────────────────────────────
