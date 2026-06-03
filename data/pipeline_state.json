@@ -3946,15 +3946,15 @@
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-02T18:00:52.626325+00:00",
-      "draft_posted_at": "2026-06-03T14:20:32.532690+00:00",
+      "draft_posted_at": "2026-06-03T19:04:42.880361+00:00",
       "invoice_created_at": null,
-      "processed_reply_ids": null,
+      "processed_reply_ids": "[\"1780513482622\"]",
       "approved_by": null,
       "sent_at": null,
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:18.705053+00:00",
-      "updated_at": "2026-06-03T14:20:32.664136+00:00"
+      "updated_at": "2026-06-03T19:04:57.130678+00:00"
     },
     {
       "order_id": "1000273343",
@@ -3967,7 +3967,7 @@
       "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 202510211448162837, \"created_at\": \"2025-10-21T11:11:01\", \"customer_email\": \"bacall40@hotmail.com\", \"customer_id\": 202510211448162936, \"customer_name\": \"Johanne Beaumont\", \"customer_type\": \"individual\", \"delivered_at\": null, \"due_amount\": 475.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": \"12127C0366H\\nZONE: X\\nEFF: 02/19/2014\", \"invoiced\": false, \"order_id\": 1000273343, \"paid\": false, \"property_address\": \"152 WOODBRIDGE CIR\", \"property_city\": \"DAYTONA BEACH\", \"property_county\": \"Volusia County\", \"property_lat\": \"29.1619689\", \"property_lng\": \"-81.0390599\", \"property_state\": \"FLORIDA\", \"property_zip\": \"32119\", \"service_type\": \"Land Survey Only\", \"special_pricing\": false, \"status\": \"On Hold\", \"status_code\": 11, \"updated_at\": \"2026-01-16T06:04:08\"}, \"success\": true, \"order_id\": \"1000273343\", \"customer_email\": \"bacall40@hotmail.com\", \"service_type\": \"Land Survey Only\", \"county\": \"\", \"property_address\": \"152 WOODBRIDGE CIR\", \"customer_name\": \"Johanne Beaumont \"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"Johanne Beaumont\", \"confidence\": \"HIGH\"}, \"client_email\": {\"value\": \"bacall40@hotmail.com\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"152 Woodbridge Cir, Daytona Beach, FL 32119\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Volusia County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"Land Survey Only\"], \"confidence\": \"HIGH\", \"notes\": \"Service type explicitly stated as 'Land Survey Only' in FTF order data; no elevation certificate required per elevation_cert flag.\"}, \"special_requirements\": {\"value\": null, \"confidence\": \"LOW\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property features available; county appraiser unavailable and no emails or attachments to reference.\"}, \"client_tier\": {\"value\": \"residential\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Lot size unknown \\u2014 county appraiser unavailable\", \"Legal description missing \\u2014 no appraiser data or supporting documents\", \"Structure square footage unknown\", \"Property features (pool, shed, fencing, etc.) unknown\", \"Special requirements or access instructions not provided\", \"Order is currently On Hold \\u2014 reason for hold not stated\", \"No customer profile data returned from FTF customer lookup\", \"No matching emails found to supplement order details\"], \"summary\": \"Residential land survey only order for Johanne Beaumont at 152 Woodbridge Cir, Daytona Beach, FL (Volusia County), currently on hold with a $475 balance due and no delivery or fieldwork dates scheduled.\"}}",
       "approval_message_id": "1780428017959",
       "modification_count": 0,
-      "invoice_id": "TEST-OVERRIDE-CHECK",
+      "invoice_id": "349394",
       "data_collected_at": "2026-06-02T18:01:01.624011+00:00",
       "draft_posted_at": "2026-06-02T19:20:20.753326+00:00",
       "invoice_created_at": null,
@@ -3977,7 +3977,7 @@
       "estimate_amount": 475,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:18.772653+00:00",
-      "updated_at": "2026-06-03T14:53:00.972248+00:00"
+      "updated_at": "2026-06-03T18:11:44.117003+00:00"
     },
     {
       "order_id": "1000273161",
@@ -5075,13 +5075,13 @@
       "data_collected_at": "2026-06-02T19:00:55.107755+00:00",
       "draft_posted_at": "2026-06-03T14:20:35.832526+00:00",
       "invoice_created_at": null,
-      "processed_reply_ids": null,
+      "processed_reply_ids": "[\"1780496691667\"]",
       "approved_by": null,
       "sent_at": null,
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:12:16.551865+00:00",
-      "updated_at": "2026-06-03T14:20:35.908110+00:00"
+      "updated_at": "2026-06-03T19:05:00.950373+00:00"
     },
     {
       "order_id": "1000268354",
@@ -6062,15 +6062,15 @@
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-02T19:57:39.537025+00:00",
-      "draft_posted_at": "2026-06-03T14:20:39.839084+00:00",
+      "draft_posted_at": "2026-06-03T19:04:49.486299+00:00",
       "invoice_created_at": null,
-      "processed_reply_ids": null,
+      "processed_reply_ids": "[\"1780513489174\"]",
       "approved_by": null,
       "sent_at": null,
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:12:20.742292+00:00",
-      "updated_at": "2026-06-03T14:20:39.913674+00:00"
+      "updated_at": "2026-06-03T19:04:55.843690+00:00"
     },
     {
       "order_id": "1000263710",
@@ -6823,13 +6823,13 @@
       "data_collected_at": "2026-06-02T20:40:26.502580+00:00",
       "draft_posted_at": "2026-06-03T14:20:43.171939+00:00",
       "invoice_created_at": null,
-      "processed_reply_ids": null,
+      "processed_reply_ids": "[\"1780510326616\"]",
       "approved_by": null,
       "sent_at": null,
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:20:22.783553+00:00",
-      "updated_at": "2026-06-03T14:20:43.245081+00:00"
+      "updated_at": "2026-06-03T19:04:59.427579+00:00"
     },
     {
       "order_id": "1000259818",
@@ -8525,13 +8525,13 @@
       "data_collected_at": "2026-06-02T22:16:23.323081+00:00",
       "draft_posted_at": "2026-06-03T14:20:46.514396+00:00",
       "invoice_created_at": null,
-      "processed_reply_ids": null,
+      "processed_reply_ids": "[\"1780496706204\"]",
       "approved_by": null,
       "sent_at": null,
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:20:32.662907+00:00",
-      "updated_at": "2026-06-03T14:20:46.589232+00:00"
+      "updated_at": "2026-06-03T19:04:58.274370+00:00"
     },
     {
       "order_id": "1000251157",
@@ -9202,33 +9202,80 @@
     },
     {
       "order_id": "1000284562",
-      "status": "invoice_draft_posted",
+      "status": "invoice_sent",
       "service_type": "Elevation Certificate, Elevation Certificate",
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Missy Vancil / Hillsborough Title of South Shore",
       "property_address": "1547 Florida Ave S, Lakeland, FL 33803",
       "invoice_draft": "{\"total_amount\": 275.0, \"services\": [{\"name\": \"Elevation Certificate\", \"description\": \"FEMA Elevation Certificate for 1547 Florida Ave S, Lakeland, FL 33803 (Polk County). Standard EC rate applies per company pricing guidelines \\u2014 EC is always $275.00 regardless of client tier or negotiated survey rate. FEMA flood zone is listed as unknown; no VE coastal upcharge applied. No lot-size complexity upcharge is applicable to EC-only orders.\", \"amount\": 275.0}], \"pricing_reasoning\": \"This is an EC-only order. Per pricing guidelines, the Elevation Certificate is a flat $275.00 regardless of client type or negotiated rate \\u2014 the $300.00 negotiated rate applies to boundary/survey services, not ECs. The FEMA flood zone is unknown so no VE upcharge of $50.00 can be applied; if the zone is confirmed as VE prior to fieldwork, the EC line should be revised to $325.00. The lot size of 0.59 acres would normally trigger a complexity upcharge, but that upcharge applies to boundary surveys, not standalone ECs, so it is not added here.\", \"confidence\": \"MEDIUM\", \"escalate_flag\": false, \"escalate_reason\": null, \"flags\": [\"DUPLICATE_SERVICE: Order lists 'Elevation Certificate' twice \\u2014 appears to be a data entry duplicate. Confirm with client (Missy Vancil / Hillsborough Title of South Shore) whether two separate ECs are needed (e.g., two structures or two legal parcels) or if this is a single EC. If two ECs are legitimately required, total should be revised to $550.00.\", \"FEMA_ZONE_UNKNOWN: Flood zone could not be confirmed. If zone resolves to VE (coastal), add $50.00 per EC line item. Polk County is inland so VE is unlikely, but should be verified against FEMA FIRM map before invoicing.\", \"LEGAL_DESCRIPTION_MISSING: No legal description was provided. Confirm parcel identity against county records before scheduling field work.\", \"B2B_PRICING_NOTE: Client negotiated rate of $300.00 does NOT override the flat EC rate of $275.00 per pricing guidelines. EC is always $275.00 regardless of client tier.\"]}",
       "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 201801311051344926, \"created_at\": \"2026-06-03T09:17:13\", \"customer_email\": \"missy.vancil@flagency.net\", \"customer_id\": 201911011657090565, \"customer_name\": \"Missy Missy\", \"customer_type\": \"b2b\", \"delivered_at\": null, \"due_amount\": 0.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": null, \"invoiced\": false, \"order_id\": 1000284562, \"paid\": false, \"property_address\": \"1547 FLORIDA AVE S\", \"property_city\": \"LAKELAND\", \"property_county\": \"Polk County\", \"property_lat\": \"28.0237089\", \"property_lng\": \"-81.95731769999999\", \"property_state\": \"FL\", \"property_zip\": \"33803\", \"service_type\": \"Elevation Certificate, Elevation Certificate\", \"special_pricing\": true, \"status\": \"Pending\", \"status_code\": 1, \"updated_at\": \"2026-06-03T09:17:17\"}, \"success\": true, \"order_id\": \"1000284562\", \"customer_email\": \"missy.vancil@flagency.net\", \"service_type\": \"Elevation Certificate, Elevation Certificate\", \"county\": \"\", \"property_address\": \"1547 FLORIDA AVE S\", \"customer_name\": \"Hillsborough Title of South Shore\"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"Missy Vancil / Hillsborough Title of South Shore\", \"confidence\": \"LOW\"}, \"client_email\": {\"value\": \"missy.vancil@flagency.net\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"1547 Florida Ave S, Lakeland, FL 33803\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Polk County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"Elevation Certificate\", \"Elevation Certificate\"], \"confidence\": \"MEDIUM\", \"notes\": \"Service type lists 'Elevation Certificate' twice \\u2014 likely a data entry duplicate; confirm whether one or two separate Elevation Certificates are needed, or if a second service (e.g., flood zone determination) was intended.\"}, \"special_requirements\": {\"value\": \"Special pricing applies\", \"confidence\": \"HIGH\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property features available; county appraiser data unavailable and no aerial or email data provided.\"}, \"client_tier\": {\"value\": \"b2b\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Client name conflict: order contact is 'Missy Vancil' but customer_name field shows 'Missy Missy' and order-level customer_name shows 'Hillsborough Title of South Shore' \\u2014 confirm correct billing client name\", \"Duplicate service type entry \\u2014 confirm whether one or two Elevation Certificates are needed and for what purpose\", \"No lot size or legal description available \\u2014 county appraiser lookup failed due to missing county in request\", \"No structure square footage available\", \"No property features data (pool, shed, structures, etc.)\", \"Flood zone is null \\u2014 will be determined during fieldwork but should be confirmed post-delivery\", \"Special pricing flag is set \\u2014 confirm agreed pricing before invoicing\"], \"summary\": \"B2B order from Missy Vancil (flagency.net / possibly Hillsborough Title of South Shore) requesting one or more Elevation Certificates for 1547 Florida Ave S, Lakeland, FL 33803 (Polk County), with special pricing applied and several data conflicts requiring human review.\"}}",
-      "approval_message_id": null,
+      "approval_message_id": "1780499567711",
       "modification_count": 0,
-      "invoice_id": null,
+      "invoice_id": "349393",
       "data_collected_at": "2026-06-03T14:45:12.592745+00:00",
       "draft_posted_at": "2026-06-03T15:12:47.920123+00:00",
-      "invoice_created_at": null,
+      "invoice_created_at": "2026-06-03T17:55:19.020855+00:00",
       "processed_reply_ids": null,
-      "approved_by": null,
-      "sent_at": null,
+      "approved_by": "Prateek Chandra",
+      "sent_at": "2026-06-03T18:01:56.414242+00:00",
       "estimate_amount": 275,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:53.430620+00:00",
-      "updated_at": "2026-06-03T15:12:48.000259+00:00"
+      "updated_at": "2026-06-03T18:01:56.640783+00:00"
+    },
+    {
+      "order_id": "__orphan__",
+      "status": null,
+      "service_type": null,
+      "customer_email": null,
+      "client_name": null,
+      "property_address": null,
+      "invoice_draft": null,
+      "data_sources": null,
+      "approval_message_id": null,
+      "modification_count": null,
+      "invoice_id": null,
+      "data_collected_at": null,
+      "draft_posted_at": null,
+      "invoice_created_at": null,
+      "processed_reply_ids": "[\"1780498381932\", \"1780499790730\", \"1780498646676\", \"1780509719112\", \"1780499567711\", \"1780509420416\", \"1780502489963\"]",
+      "approved_by": null,
+      "sent_at": null,
+      "estimate_amount": null,
+      "deferred_until": null,
+      "created_at": "2026-06-03T19:05:06.409164+00:00",
+      "updated_at": "2026-06-03T19:05:13.721496+00:00"
+    },
+    {
+      "order_id": "__nesa__",
+      "status": null,
+      "service_type": null,
+      "customer_email": null,
+      "client_name": null,
+      "property_address": null,
+      "invoice_draft": null,
+      "data_sources": null,
+      "approval_message_id": null,
+      "modification_count": null,
+      "invoice_id": null,
+      "data_collected_at": null,
+      "draft_posted_at": null,
+      "invoice_created_at": null,
+      "processed_reply_ids": "[\"1780513489174\", \"1780513482622\"]",
+      "approved_by": null,
+      "sent_at": null,
+      "estimate_amount": null,
+      "deferred_until": null,
+      "created_at": "2026-06-03T19:05:14.822372+00:00",
+      "updated_at": "2026-06-03T19:05:16.016004+00:00"
     }
   ],
   "status_counts": {
     "details_missing": 82,
-    "invoice_draft_posted": 318,
-    "invoice_sent": 1
+    "invoice_draft_posted": 317,
+    "invoice_sent": 2,
+    "unknown": 2
   },
-  "total": 401,
-  "generated_at": "2026-06-03T15:13:49.205469+00:00"
+  "total": 403,
+  "generated_at": "2026-06-03T19:05:22.206340+00:00"
 }
