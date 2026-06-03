@@ -78,10 +78,13 @@ Last updated: 2026-06-03
 **A2 — Data Collector**
 - Sources: FTF order API, FTF customer API, IMAP email search, county appraiser URL lookup, Google Maps Static API (aerial)
 - Produces structured `packet` JSON with confidence scores per field
-- Sets status → `data_collected`
+- Sets status → `data_collected`; sets `details_missing` if critical fields (email, address) cannot be resolved
 
 **A3 — Invoice Compiler**
 - Loads `learned_rules.json` and `pricing_examples` sheet into Claude context
+- Calls `_ai_compile_price()` with `max_tokens=2000` and `_MAX_PRICE_RETRIES=2`
+  - On JSON parse failure: logs warning and retries (up to 2 additional attempts)
+  - On all retries exhausted: returns escalation dict with `escalate_flag=True`, `flags=["ai_error"]`
 - Builds `invoice_draft` JSON: services list, amounts, `pricing_reasoning`, `confidence`, `escalate_flag`
 - Posts approval card to Teams via Logic App webhook
 - Captures `approval_message_id` from Graph API (strict order_id search, 8 retries)
@@ -104,11 +107,16 @@ Last updated: 2026-06-03
 - Sets status → `invoice_finalized`
 
 **A6 — Sender v2**
-- Sends HTML email via SMTP (TLS port 587)
+- Sends HTML email via SMTP (TLS port 587); from `nesa@nexgenlogix.com`
+- Email routing priority: `EMAIL_OVERRIDE_ALL` → `email_override_to` (in draft) → `customer_email`
+- When `EMAIL_OVERRIDE_ALL` is set (TEST MODE): all emails go to that address; client is never notified;
+  Teams thread reply confirms: `🧪 TEST MODE — Email redirected to {EMAIL_OVERRIDE_ALL} (client NOT notified).`
 - Respects `email_override_to` in draft JSON if approver asked "send to me"
 - `SKIP_SEND_DELAY=1` env var (set by approval_poller.yml) bypasses 6–13 min human-like delay
 - Posts Teams thread confirmation after send
 - Sets status → `invoice_sent`
+- **Current status:** SMTP credentials not yet configured — `SMTP_PASSWORD` for `nesa@nexgenlogix.com` is missing
+  from both local `.env` and GitHub secrets. Email send will fail with `AgentError: SMTP not configured` until fixed.
 
 **A7 — Feedback Learner**
 - Reads all Teams channel messages from last 48h
@@ -131,11 +139,12 @@ Last updated: 2026-06-03
                         │
               A2 runs — enriches order
                         │
-              ┌─────────┴──────────┐
-              │ success            │ failure (skipped to next cycle)
-              ▼                    ▼
-       data_collected          [retry next run]
-              │
+              ┌─────────┴──────────┬──────────────────────┐
+              │ success            │ partial data          │ hard failure
+              ▼                    ▼                       ▼
+       data_collected         details_missing         [retry next run]
+              │                    │
+              │                    └──► [stays here until data found]
      A3 runs — prices + posts Teams card
               │
        invoice_draft_posted  ◄──── A4: modify → repost
@@ -159,6 +168,17 @@ A6 runs — sends email to client
     │
 invoice_sent ← Phase 1 complete
 ```
+
+### Status Count Snapshot (2026-06-03)
+
+| Status | Count | Notes |
+|--------|-------|-------|
+| `invoice_draft_posted` | ~121 | Waiting for Teams approval |
+| `invoice_needed` | ~116 | Queued — A2 not yet run |
+| `data_collected` | ~80 | A2 done — A3 not yet run |
+| `details_missing` | ~61 | Missing email / address |
+| `invoice_finalized` | 1 | Test order — will send when SMTP configured |
+| `invoice_sent` | 0 | Email delivery blocked (SMTP unconfigured) |
 
 ---
 
@@ -206,6 +226,17 @@ All pipeline state lives in `data/invoice_pipeline_state.xlsx` (committed to git
 | `processed_reply_ids` | JSON str | List of reply IDs already acted on |
 | `approved_by` | str | Sender name who approved |
 | `invoice_id` | str | FTF invoice ID after A5 |
+
+### Bot commit conflicts
+
+GitHub Actions bot commits the binary Excel file after every run. Direct `git pull --rebase` conflicts with bot commits. Fix pattern:
+```
+git rebase --abort
+Remove-Item -Recurse -Force ".git\rebase-merge"   # if rebase-merge dir stuck
+git reset --hard origin/main
+# re-apply local change, then:
+git add <file> && git commit -m "..." && git push origin main
+```
 
 ---
 
@@ -302,6 +333,15 @@ A2 produces a `data_sources` JSON stored in the Excel row. A3 reads it for prici
    - B2B client:               × 1.3
 ```
 
+### A3 AI Pricing — Reliability Guard
+
+`_ai_compile_price()` in `agent_a3_invoice_compiler.py`:
+
+- `max_tokens=2000` — raised from 800; prevents truncation on complex pricing JSON
+- `_MAX_PRICE_RETRIES = 2` — retries twice on JSON parse failure before escalating
+- On all retries exhausted: returns `{"escalate_flag": True, "flags": ["ai_error"], ...}` and posts ESCALATED Teams card
+- Committed: `43e7326`
+
 ---
 
 ## 9. Shared Core (`code/shared/`)
@@ -351,11 +391,11 @@ IMAP_PORT=993
 IMAP_USER=nesa@nexgenlogix.com
 IMAP_PASSWORD=
 
-# Email send (A6)
-SMTP_HOST=
+# Email send (A6) — CRITICAL BLOCKER: not yet configured
+SMTP_HOST=smtp.office365.com
 SMTP_PORT=587
 SMTP_USER=nesa@nexgenlogix.com
-SMTP_PASSWORD=
+SMTP_PASSWORD=                 # ← MISSING — needs password for nesa@nexgenlogix.com
 SMTP_FROM=nesa@nexgenlogix.com
 
 # Approvals
@@ -364,6 +404,9 @@ MAX_INVOICE_MODIFICATIONS=5
 
 # Poller behavior
 SKIP_SEND_DELAY=1              # Set by approval_poller.yml — bypasses A6 random sleep
+
+# Test mode — when set, ALL invoice emails redirect to this address; client never notified
+EMAIL_OVERRIDE_ALL=            # Set as GitHub secret; leave empty in prod to send to real clients
 
 # Optional
 GOOGLE_MAPS_API_KEY=
@@ -385,5 +428,16 @@ DASHBOARD_GITHUB_TOKEN=        # Push pipeline_state.json to public dashboard re
 | Teams read | MS Graph API v1.0, `ChannelMessage.Read.All` application permission |
 | FTF | REST API + direct MySQL read (ng_status_desc) |
 | Email read | IMAP SSL port 993 |
-| Email send | SMTP TLS port 587 |
+| Email send | SMTP TLS port 587 — **not yet active; SMTP_PASSWORD missing** |
 | Repo | `Nexgen-AI-Agents/FTF--Survey-Invoicing-Billing-Delivery-E2E-` (private) |
+
+---
+
+## 12. Known Gaps / Pending Actions
+
+| # | Item | Owner | Blocker? |
+|---|------|-------|----------|
+| 1 | `SMTP_PASSWORD` for `nesa@nexgenlogix.com` — add to `.env` + GitHub secrets | Prateek | **Yes — no emails can send** |
+| 2 | Rotate `FTF_API_KEY` — currently exposed in git history; remove from tracked files | Prateek | No (security hygiene) |
+| 3 | Reply to Teams card for order 1000271787 (ESCALATED — ai_error) with correct price | Robert/Ryan/Prateek | No |
+| 4 | Mark's GitHub Outside Collaborator access — review if he should still receive Actions failure emails | Prateek | No |

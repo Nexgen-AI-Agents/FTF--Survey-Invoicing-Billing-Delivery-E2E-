@@ -67,7 +67,7 @@ CLIENT                     YOUR TEAM                    AI SYSTEM
 | **A0** | The Manager | Wakes up every 30 minutes and tells all other agents to do their jobs in order. |
 | **A1** | The Flag Hunter | Scans every order in FTF looking for the "invoice needed" flag. Queues them for processing. |
 | **A2** | The Researcher | For each queued order: reads FTF order details, searches the email inbox, looks up the county property record, checks Google Maps. Builds a complete picture of the job. |
-| **A3** | The Pricer | Uses all the research plus your past corrections to price the job. Explains its reasoning. Posts the invoice draft to Teams for your approval. |
+| **A3** | The Pricer | Uses all the research plus your past corrections to price the job. Explains its reasoning. Posts the invoice draft to Teams for your approval. Retries up to 2 times if the AI response is incomplete before escalating. |
 | **A4** | The Listener | Watches your Teams replies every 2 minutes. Understands plain English — "approve", "change the price", "hold this", "reject". Acts on your instructions. |
 | **A5** | The Invoice Creator | When you approve: creates the official invoice inside FTF and records the invoice number. |
 | **A6** | The Sender | Sends a personalized invoice email directly to the client on NexGen letterhead. |
@@ -91,6 +91,18 @@ The AI posts a card in the Teams channel for every order. You reply with:
 The AI replies in the same thread confirming what it understood. If it's unsure, it asks a clarifying question.
 
 Only **Robert, Ryan, and Prateek** can trigger approve/reject/modify actions.
+
+---
+
+## When the AI Can't Determine the Price
+
+Occasionally the AI posts an **ESCALATED** card. This happens when:
+
+- The order is unusually complex (lot > 5 acres, commercial, custom legal description)
+- The AI's pricing response was incomplete after 3 attempts
+- The service type does not match any known pattern
+
+**What to do:** Reply to the escalated card with the correct price or service details (e.g., "Land Survey Only at $475"). The AI will update the draft and repost the approval card.
 
 ---
 
@@ -136,6 +148,20 @@ This means after you reply "Approve" in Teams, the invoice is created and email 
 | Corrections lost after the call | Every correction saved as a permanent rule |
 | Client waits overnight | Client receives invoice same day |
 | Invoice only if someone remembers | Every flagged order cleared within hours |
+
+---
+
+## Current Pipeline Status (as of 2026-06-03)
+
+| Stage | Count |
+|-------|-------|
+| Waiting for your Teams approval | ~121 |
+| Being researched / priced | ~80 |
+| Flagged in FTF — not yet started | ~116 |
+| Missing client details | ~61 |
+| Sent to client | growing |
+
+Most of the "waiting for approval" orders were queued during pipeline testing. Once email delivery is enabled, approvals will clear rapidly.
 
 ---
 
