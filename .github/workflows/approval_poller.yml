@@ -65,6 +65,10 @@ jobs:
           cd code/sprint_11_invoice_pipeline
           python run_approval_poller.py
 
+      - name: Export pipeline state to JSON
+        if: always()
+        run: python scripts/export_pipeline_json.py
+
       - name: Commit updated pipeline state
         if: always()
         run: |

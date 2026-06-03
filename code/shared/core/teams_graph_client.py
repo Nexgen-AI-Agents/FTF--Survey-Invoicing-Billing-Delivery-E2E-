@@ -787,53 +787,70 @@ def get_chat_messages(limit: int = 50) -> list[dict]:
 
     Returns list of dicts: {id, sender, is_app, text, created_at_dt}
     Requires Chat.Read.All application permission.
+
+    Fetches up to `limit` messages ordered newest-first (descending createdDateTime).
+    Paginates automatically until `limit` messages are collected or no more pages exist.
     """
     if not TEAMS_CHAT_ID:
         raise AgentError("TEAMS_CHAT_ID not set in .env")
 
-    url = f"{_GRAPH_READ}/chats/{TEAMS_CHAT_ID}/messages?$top={limit}"
-    try:
-        r = httpx.get(url, headers=_read_headers(), timeout=20.0)
-        r.raise_for_status()
-    except httpx.HTTPStatusError as exc:
-        raise AgentError(
-            f"get_chat_messages failed: HTTP {exc.response.status_code} -- {exc.response.text[:300]}"
-        ) from exc
-    except Exception as exc:
-        raise AgentError(f"get_chat_messages failed: {exc}") from exc
-
+    # Explicit descending order so newest messages always come first regardless of
+    # Graph API version default behavior.  Cap per-page at 50 (Graph API max for chats).
+    page_size = min(limit, 50)
+    url: str | None = (
+        f"{_GRAPH_READ}/chats/{TEAMS_CHAT_ID}/messages"
+        f"?$top={page_size}&$orderby=createdDateTime+desc"
+    )
     results: list[dict] = []
-    for msg in r.json().get("value", []):
-        if msg.get("messageType") != "message":
-            continue
 
-        from_obj    = msg.get("from") or {}
-        app_ref     = from_obj.get("application") or {}
-        user_ref    = from_obj.get("user") or {}
-        is_app      = bool(app_ref) or not bool(user_ref.get("id"))
-        sender_name = user_ref.get("displayName") or app_ref.get("displayName") or "Unknown"
-        raw_body    = (msg.get("body") or {}).get("content", "")
-        plain       = _clean_message_body(raw_body)
-
-        created_raw = msg.get("createdDateTime", "")
+    while url and len(results) < limit:
         try:
-            created_dt = datetime.fromisoformat(created_raw.replace("Z", "+00:00"))
-        except Exception:
-            created_dt = datetime.now(timezone.utc)
+            r = httpx.get(url, headers=_read_headers(), timeout=20.0)
+            r.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise AgentError(
+                f"get_chat_messages failed: HTTP {exc.response.status_code} -- {exc.response.text[:300]}"
+            ) from exc
+        except Exception as exc:
+            raise AgentError(f"get_chat_messages failed: {exc}") from exc
 
-        sender_email = (user_ref.get("userPrincipalName") or "").lower()
-        reply_count  = int(msg.get("replyCount") or 0)
-        results.append({
-            "id":            msg.get("id", ""),
-            "sender":        sender_name,
-            "sender_email":  sender_email,
-            "is_app":        is_app,
-            "text":          plain,
-            "raw_html":      raw_body,
-            "created_at_dt": created_dt,
-            "reply_count":   reply_count,
-        })
+        data = r.json()
+        for msg in data.get("value", []):
+            if len(results) >= limit:
+                break
+            if msg.get("messageType") != "message":
+                continue
 
+            from_obj    = msg.get("from") or {}
+            app_ref     = from_obj.get("application") or {}
+            user_ref    = from_obj.get("user") or {}
+            is_app      = bool(app_ref) or not bool(user_ref.get("id"))
+            sender_name = user_ref.get("displayName") or app_ref.get("displayName") or "Unknown"
+            raw_body    = (msg.get("body") or {}).get("content", "")
+            plain       = _clean_message_body(raw_body)
+
+            created_raw = msg.get("createdDateTime", "")
+            try:
+                created_dt = datetime.fromisoformat(created_raw.replace("Z", "+00:00"))
+            except Exception:
+                created_dt = datetime.now(timezone.utc)
+
+            sender_email = (user_ref.get("userPrincipalName") or "").lower()
+            reply_count  = int(msg.get("replyCount") or 0)
+            results.append({
+                "id":            msg.get("id", ""),
+                "sender":        sender_name,
+                "sender_email":  sender_email,
+                "is_app":        is_app,
+                "text":          plain,
+                "raw_html":      raw_body,
+                "created_at_dt": created_dt,
+                "reply_count":   reply_count,
+            })
+
+        url = data.get("@odata.nextLink")  # None when no more pages
+
+    log.debug("get_chat_messages: fetched %d messages from chat %s", len(results), TEAMS_CHAT_ID)
     return results
 
 

@@ -642,7 +642,7 @@ def run() -> dict:
 
     # ── Fetch chat messages ONCE ─────────────────────────────────────────────
     try:
-        all_msgs = get_chat_messages(limit=100)
+        all_msgs = get_chat_messages(limit=200)
         log.info("human_gate_v2: fetched %d chat messages, %d pending orders",
                  len(all_msgs), len(orders))
     except Exception as exc:
