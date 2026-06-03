@@ -264,6 +264,25 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
         return None
 
     current_draft = json.loads(raw_draft) if isinstance(raw_draft, str) else raw_draft
+
+    # Guard: condo-rejected orders cannot be approved — reply and skip
+    if "condo_rejected" in current_draft.get("flags", []):
+        log.info("order %s is condo-rejected — skipping approval scan", order_id)
+        # Post one-time clarification if there's a reply mentioning this order
+        all_check = get_chat_messages(limit=40)
+        for m in all_check:
+            if not m["is_app"] and str(order_id) in m["text"]:
+                already = get_processed_reply_ids(order_id)
+                if m["id"] not in already:
+                    mark_reply_processed(order_id, m["id"])
+                    post_chat_reply(
+                        message_id,
+                        f"🚫 Order <strong>#{order_id}</strong> was rejected as a condo order — "
+                        f"no land parcel to survey. Cannot approve. "
+                        f"Contact @Robert @Ryan if this needs manual review."
+                    )
+                    break
+        return None
     raw_sources   = db_row.get("data_sources")
     data_sources  = json.loads(raw_sources) if isinstance(raw_sources, str) else (raw_sources or {})
 

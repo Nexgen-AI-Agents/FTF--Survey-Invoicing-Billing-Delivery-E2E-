@@ -454,47 +454,41 @@ def _build_teams_post(
         dup_html += "</ul>"
 
     # Flags
-    flags      = ai_result.get("flags", [])
-    flags_html = ""
-    if flags:
-        flags_html = "<h4>🔸 Flags</h4><ul>" + "".join(f"<li>{f}</li>" for f in flags) + "</ul>"
+    flags = ai_result.get("flags", [])
+    flags_line = ("🔸 <strong>Flags:</strong> " + " · ".join(flags) + "<br>") if flags else ""
 
-    html = f"""
-<h3>📋 Invoice Draft — Order #{order_id}</h3>
-{banner}
+    # Compact service lines
+    svc_lines = "".join(
+        f"&nbsp;&nbsp;• <strong>{item['name']}</strong> — <strong>${item['amount']:,.2f}</strong>"
+        f"<small> ({item['description']})</small><br>"
+        for item in ai_result.get("services", [])
+    ) or "&nbsp;&nbsp;• No line items — see status above<br>"
 
-<h4>👤 Client</h4>
-<ul>
-<li><strong>Name:</strong> {client}</li>
-<li><strong>Email:</strong> {client_email}</li>
-<li><strong>Tier:</strong> {tier_labels.get(tier, tier)}</li>
-<li><strong>Rate:</strong> {rate_label}</li>
-</ul>
+    summary_part = f" · {summary}" if summary else ""
 
-<h4>📍 Property</h4>
-<ul>
-<li><strong>Address:</strong> {address}</li>
-<li><strong>County:</strong> {county}</li>
-{f'<li><strong>Summary:</strong> {summary}</li>' if summary else ''}
-</ul>
-
-<h4>🧾 Services</h4>
-<ul>{items_html}</ul>
-<p>💰 <strong>Total: ${total:,.2f}</strong></p>
-
-<h4>🧠 Pricing Reasoning</h4>
-<p><em>{ai_result.get('pricing_reasoning', '')}</em></p>
-
-{dup_html}{flags_html}
-<p><a href="{link}">🔗 View Order in FTF →</a></p>
-<hr>
-<p><strong>Reply in this chat:</strong><br>
-✅ <code>APPROVE {order_id}</code><br>
-❌ <code>REJECT {order_id} [reason]</code><br>
-⏸️ <code>HOLD {order_id}</code><br>
-💬 Or any feedback / price change — just include <strong>#{order_id}</strong> in your reply.<br>
-<em>Only {", ".join(s.capitalize() for s in APPROVED_SENDERS)} can approve.</em></p>
-""".strip()
+    html = (
+        f"<strong>📋 Order #{order_id}</strong> &nbsp;|&nbsp; <strong>Stage-FTF</strong><br>"
+        f"{banner}"
+        f"<strong>👤</strong> {client} · {client_email}<br>"
+        f"<strong>Tier:</strong> {tier_labels.get(tier, tier)} &nbsp;·&nbsp; <strong>Rate:</strong> {rate_label}<br>"
+        f"<strong>📍</strong> {address}, {county}{summary_part}<br>"
+        f"<br>"
+        f"<strong>🧾 Services</strong><br>"
+        f"{svc_lines}"
+        f"<strong>💰 Total: ${total:,.2f}</strong><br>"
+        f"<br>"
+        f"<strong>🧠 Reasoning:</strong> <em>{ai_result.get('pricing_reasoning', '')}</em><br>"
+        + (f"<br>{dup_html}" if dup_html else "")
+        + (f"{flags_line}" if flags_line else "")
+        + f"<br>"
+        f"<a href=\"{link}\">🔗 View in FTF</a><br>"
+        f"<strong>Reply:</strong> "
+        f"<code>APPROVE {order_id}</code> &nbsp;·&nbsp; "
+        f"<code>REJECT {order_id} [reason]</code> &nbsp;·&nbsp; "
+        f"<code>HOLD {order_id}</code><br>"
+        f"<small>Or use Reply with Quote + any message — just mention #{order_id}. "
+        f"Approvers: {', '.join(s.capitalize() for s in APPROVED_SENDERS)}</small>"
+    )
 
     return html
 
@@ -541,7 +535,7 @@ def compile_for_order(order_id: str) -> dict:
             order_id, packet, stop_result, link, company_info, tier,
             duplicates, condo_reason,
         )
-        post_result = post_chat_message(teams_html, subject=f"Invoice — Order {order_id}")
+        post_result = post_chat_message(teams_html, subject=f"Invoice — Order {order_id} | Stage-FTF")
         save_order_state(
             order_id,
             status="invoice_draft_posted",
@@ -588,7 +582,7 @@ def compile_for_order(order_id: str) -> dict:
         duplicates,
     )
     status_label = order_details["ng_status_desc"].strip()
-    post_result = post_chat_message(teams_html, subject=f"{status_label} — Order #{order_id}", order_id=order_id)
+    post_result = post_chat_message(teams_html, subject=f"{status_label} — Order #{order_id} | Stage-FTF", order_id=order_id)
     message_id  = post_result.get("id", "")
 
     # ── 6. Save state ─────────────────────────────────────────────────────────
