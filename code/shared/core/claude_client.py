@@ -59,6 +59,8 @@ def call_with_image(
                     }
                 ],
             )
+            if not message.content:
+                raise LLMUnavailableError("Claude returned empty content block")
             return message.content[0].text
 
         except anthropic.RateLimitError as exc:
@@ -123,6 +125,8 @@ def call(model: str, system: str, user: str, max_tokens: int = 1024,
                 system=system_param,
                 messages=[{"role": "user", "content": user}],
             )
+            if not message.content:
+                raise LLMUnavailableError("Claude returned empty content block")
             return message.content[0].text
 
         except anthropic.RateLimitError as exc:

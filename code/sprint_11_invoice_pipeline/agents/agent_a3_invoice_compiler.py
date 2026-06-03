@@ -397,97 +397,83 @@ def _build_teams_post(
     duplicates: list[dict],
     condo_reason: Optional[str] = None,
 ) -> str:
-    """Build the Teams approval card HTML."""
-    client        = packet.get("client_name", {}).get("value") or company_info.get("company_name") or "Unknown"
-    client_email  = packet.get("client_email", {}).get("value") or "—"
-    address       = packet.get("property_address", {}).get("value") or "Unknown"
-    county        = packet.get("property_county", {}).get("value") or "Unknown"
-    summary       = packet.get("summary", "")
-    total         = ai_result.get("total_amount", 0)
+    """Build the Teams approval card HTML — compact single-line style."""
+    client       = packet.get("client_name", {}).get("value") or company_info.get("company_name") or "Unknown"
+    client_email = packet.get("client_email", {}).get("value") or "—"
+    address      = packet.get("property_address", {}).get("value") or "Unknown"
+    county       = packet.get("property_county", {}).get("value") or "Unknown"
+    total        = ai_result.get("total_amount", 0)
 
-    # Status / confidence banner
+    # Banner: one compact line
     if condo_reason:
-        banner = "<p><strong>🚫 REJECTED — CONDO ORDER (no land parcel to survey)</strong></p>"
+        banner = "🚫 <strong>CONDO — rejected (no land parcel to survey)</strong>"
     elif ai_result.get("escalate_flag"):
-        reason = ai_result.get("escalate_reason") or "AI flagged for manual review"
-        banner = f"<p><strong>📤 ESCALATED — {reason}</strong><br>⚠️ Needs manual review — @Robert @Ryan</p>"
+        reason = (ai_result.get("escalate_reason") or "manual review needed")[:70]
+        banner = f"📤 <strong>ESCALATED</strong> — {reason} · @Robert @Ryan"
     else:
         confidence = ai_result.get("confidence", "MEDIUM")
         conf_icon  = {"HIGH": "✅", "MEDIUM": "⚠️", "LOW": "❌"}.get(confidence, "⚠️")
-        banner     = f"<p>{conf_icon} <strong>AI Confidence: {confidence}</strong></p>"
+        banner     = f"{conf_icon} AI Confidence: <strong>{confidence}</strong>"
 
-    # Client tier + rate
-    tier_labels = {
-        "individual": "Individual / One-off",
-        "new_title":  f"New Title Company ({NEW_TITLE_YEAR_CUTOFF}+, low volume)",
-        "old_title":  "Established Title Company",
-    }
+    # Rate: short
     ng_rate = company_info.get("ng_rate", 0)
     if ng_rate and ng_rate > 100:
-        rate_label = f"Negotiated — <strong>${ng_rate:,.2f}</strong>"
+        rate_str = f"${ng_rate:,.0f} (negotiated)"
     else:
-        fallback   = _get_fallback_survey_rate(tier)
-        rate_label = f"Default — <strong>${fallback:,.2f}</strong> (no rate on file)"
+        rate_str = f"${_get_fallback_survey_rate(tier):,.0f} (default)"
+    tier_short = {"individual": "Individual", "new_title": "New Title", "old_title": "Est. Title"}.get(tier, tier)
 
-    # Line items
-    items_html = ""
-    for item in ai_result.get("services", []):
-        items_html += (
-            f"<li><strong>{item['name']}</strong> — <strong>${item['amount']:,.2f}</strong><br>"
-            f"<small>{item['description']}</small></li>"
-        )
-    if not items_html:
-        items_html = "<li>No line items — see banner above</li>"
-
-    # Duplicate alert
-    dup_html = ""
-    if duplicates:
-        dup_html = "<h4>⚠️ Possible Duplicate Orders</h4><ul>"
-        for d in duplicates[:3]:
-            ts  = str(d.get("timestamp", ""))[:10]
-            svc = d.get("service") or "Unknown service"
-            dup_html += (
-                f"<li>Order <strong>{d['order_id']}</strong> — {svc} | "
-                f"{d['address']}, {d['county']} | {ts} | "
-                f"{', '.join(d['match_reasons'])}</li>"
-            )
-        dup_html += "</ul>"
-
-    # Flags
-    flags = ai_result.get("flags", [])
-    flags_line = ("🔸 <strong>Flags:</strong> " + " · ".join(flags) + "<br>") if flags else ""
-
-    # Compact service lines
+    # Services: name + amount only (no inline description block)
     svc_lines = "".join(
-        f"&nbsp;&nbsp;• <strong>{item['name']}</strong> — <strong>${item['amount']:,.2f}</strong>"
-        f"<small> ({item['description']})</small><br>"
+        f"&nbsp;&nbsp;• {item['name']} — <strong>${item['amount']:,.2f}</strong><br>"
         for item in ai_result.get("services", [])
-    ) or "&nbsp;&nbsp;• No line items — see status above<br>"
+    ) or "&nbsp;&nbsp;• (none)<br>"
 
-    summary_part = f" · {summary}" if summary else ""
+    # Reasoning: first sentence, max 120 chars
+    reasoning_full = ai_result.get("pricing_reasoning", "")
+    reasoning_short = reasoning_full.split(".")[0].strip()
+    if len(reasoning_short) > 120:
+        reasoning_short = reasoning_short[:117] + "..."
+
+    # Flags: one short bullet per flag (first 90 chars of each)
+    flags = ai_result.get("flags", [])
+    flags_block = ""
+    if flags:
+        flag_lines = "".join(
+            f"&nbsp;&nbsp;🔸 {str(f)[:90]}<br>"
+            for f in flags
+        )
+        flags_block = f"<br><strong>Flags:</strong><br>{flag_lines}"
+
+    # Duplicates: compact
+    dup_block = ""
+    if duplicates:
+        dup_lines = "".join(
+            f"&nbsp;&nbsp;⚠️ Order {d['order_id']} · {str(d.get('address',''))[:35]}, {d.get('county','')} ({', '.join(d.get('match_reasons',[]))})<br>"
+            for d in duplicates[:3]
+        )
+        dup_block = f"<br><strong>⚠️ Possible Duplicates:</strong><br>{dup_lines}"
 
     html = (
-        f"<strong>📋 Order #{order_id}</strong> &nbsp;|&nbsp; <strong>Stage-FTF</strong><br>"
-        f"{banner}"
-        f"<strong>👤</strong> {client} · {client_email}<br>"
-        f"<strong>Tier:</strong> {tier_labels.get(tier, tier)} &nbsp;·&nbsp; <strong>Rate:</strong> {rate_label}<br>"
-        f"<strong>📍</strong> {address}, {county}{summary_part}<br>"
+        f"<strong>📋 Order #{order_id}</strong> | {banner}<br>"
         f"<br>"
-        f"<strong>🧾 Services</strong><br>"
+        f"👤 <strong>{client}</strong> · {client_email}<br>"
+        f"&nbsp;&nbsp;{tier_short} · Rate: {rate_str}<br>"
+        f"📍 {address[:55]}, {county}<br>"
+        f"<br>"
+        f"🧾 <strong>Services</strong><br>"
         f"{svc_lines}"
-        f"<strong>💰 Total: ${total:,.2f}</strong><br>"
+        f"💰 <strong>Total: ${total:,.2f}</strong><br>"
         f"<br>"
-        f"<strong>🧠 Reasoning:</strong> <em>{ai_result.get('pricing_reasoning', '')}</em><br>"
-        + (f"<br>{dup_html}" if dup_html else "")
-        + (f"{flags_line}" if flags_line else "")
-        + f"<br>"
+        f"🧠 <em>{reasoning_short}</em>"
+        f"{flags_block}"
+        f"{dup_block}"
+        f"<br><br>"
         f"<a href=\"{link}\">🔗 View in FTF</a><br>"
-        f"<strong>Reply:</strong> "
         f"<code>APPROVE {order_id}</code> &nbsp;·&nbsp; "
         f"<code>REJECT {order_id} [reason]</code> &nbsp;·&nbsp; "
         f"<code>HOLD {order_id}</code><br>"
-        f"<small>Or use Reply with Quote + any message — just mention #{order_id}. "
-        f"Approvers: {', '.join(s.capitalize() for s in APPROVED_SENDERS)}</small>"
+        f"<small>Approvers: {', '.join(s.capitalize() for s in APPROVED_SENDERS)}</small>"
     )
 
     return html

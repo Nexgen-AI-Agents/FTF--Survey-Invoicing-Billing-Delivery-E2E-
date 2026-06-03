@@ -253,10 +253,9 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
 
     Returns new status, or None if no actionable reply found.
     """
-    message_id = db_row.get("approval_message_id")
+    message_id = db_row.get("approval_message_id") or ""
     if not message_id:
-        log.warning("order %s has no approval_message_id — cannot check replies", order_id)
-        return None
+        log.debug("order %s has no approval_message_id — replies will post as flat chat messages", order_id)
 
     raw_draft = db_row.get("invoice_draft")
     if not raw_draft:
