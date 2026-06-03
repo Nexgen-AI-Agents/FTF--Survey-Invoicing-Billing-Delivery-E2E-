@@ -794,12 +794,12 @@ def get_chat_messages(limit: int = 50) -> list[dict]:
     if not TEAMS_CHAT_ID:
         raise AgentError("TEAMS_CHAT_ID not set in .env")
 
-    # Explicit descending order so newest messages always come first regardless of
-    # Graph API version default behavior.  Cap per-page at 50 (Graph API max for chats).
+    # Graph API returns messages newest-first by default for /chats/{id}/messages.
+    # $orderby is NOT supported on this endpoint — do not add it.
+    # Cap per-page at 50 (Graph API max for chat messages).
     page_size = min(limit, 50)
     url: str | None = (
-        f"{_GRAPH_READ}/chats/{TEAMS_CHAT_ID}/messages"
-        f"?$top={page_size}&$orderby=createdDateTime+desc"
+        f"{_GRAPH_READ}/chats/{TEAMS_CHAT_ID}/messages?$top={page_size}"
     )
     results: list[dict] = []
 
