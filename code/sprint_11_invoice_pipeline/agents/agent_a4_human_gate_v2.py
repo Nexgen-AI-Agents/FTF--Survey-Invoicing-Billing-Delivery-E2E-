@@ -49,7 +49,7 @@ from core.excel_db import (
 from core.exceptions import AgentError
 from core.logger import get_logger
 from core.teams_graph_client import (
-    get_chat_messages, post_chat_reply,
+    get_chat_messages, post_chat_message, post_chat_reply,
 )
 
 AGENT_NAME = "agent_a4_human_gate_v2"
@@ -270,11 +270,16 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
     already_processed = get_processed_reply_ids(order_id)
 
     # In group chat, team members reply as flat messages (not thread replies).
-    # Scan recent messages for any from approved senders that mention this order.
+    # Match messages that mention the full order_id OR its last 6 digits (e.g. "1787" for 1000271787).
     all_msgs = get_chat_messages(limit=80)
+    order_str    = str(order_id)
+    order_suffix = order_str[-6:]
     replies = [
         m for m in all_msgs
-        if not m["is_app"] and str(order_id) in m["text"]
+        if not m["is_app"] and (
+            order_str in m["text"] or
+            bool(re.search(r'\b' + re.escape(order_suffix) + r'\b', m["text"]))
+        )
     ]
     if not replies:
         log.debug("no chat messages mentioning order=%s", order_id)
@@ -439,8 +444,10 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
 
         elif action == "question":
             q_text = parsed.get("question_text", "Could you clarify what change you'd like?")
+            if confidence == "LOW":
+                q_text += "<br>@Robert @Ryan — help needed with this one."
             post_chat_reply(message_id, f"❓ {q_text}")
-            log.info("clarification requested order=%s", order_id)
+            log.info("clarification requested order=%s confidence=%s", order_id, confidence)
             return None
 
     return None
@@ -476,6 +483,97 @@ def _store_learning(
         log.warning("failed to save learning order=%s: %s", order_id, exc)
 
 
+# Matches common approval/rejection keywords for orphan reply detection
+_ACTION_KEYWORDS = re.compile(
+    r'\b(approve|approved|reject|rejected|hold|send it|looks good|go ahead|ok|okay)\b',
+    re.IGNORECASE,
+)
+
+
+def _handle_orphan_replies(all_pending_orders: list[dict]) -> None:
+    """Handle action messages that mention no specific order_id.
+
+    If 1 order is pending and the reply is a clear simple action → handle it.
+    If multiple orders pending → post a clarifying question tagging @Robert @Ryan.
+    """
+    if not all_pending_orders:
+        return
+
+    pending_ids      = [str(row["order_id"]) for row in all_pending_orders]
+    pending_suffixes = {str(oid)[-6:] for oid in pending_ids}
+
+    all_msgs = get_chat_messages(limit=80)
+    already  = get_processed_reply_ids("__orphan__")
+
+    for msg in all_msgs:
+        if msg["is_app"] or msg["id"] in already:
+            continue
+
+        text = msg["text"]
+
+        # Skip messages already handled by process_order_replies (mention a known order)
+        if any(oid in text for oid in pending_ids):
+            continue
+        if any(bool(re.search(r'\b' + re.escape(sfx) + r'\b', text)) for sfx in pending_suffixes):
+            continue
+
+        if not _ACTION_KEYWORDS.search(text):
+            continue
+
+        sender       = msg["sender"]
+        sender_email = msg.get("sender_email", "")
+        if not _is_approved_sender(sender, sender_email):
+            continue
+
+        mark_reply_processed("__orphan__", msg["id"])
+
+        if len(all_pending_orders) == 1:
+            target_row = all_pending_orders[0]
+            target_id  = pending_ids[0]
+            message_id = target_row.get("approval_message_id", "")
+
+            try:
+                current_draft = json.loads(target_row.get("invoice_draft") or "{}")
+            except Exception:
+                current_draft = {}
+
+            parsed     = _ai_parse_instruction(text, current_draft, target_id)
+            action     = parsed.get("action", "question")
+            confidence = parsed.get("confidence", "LOW")
+
+            log.info("orphan reply order=%s sender=%s action=%s confidence=%s text=%r",
+                     target_id, sender, action, confidence, text[:80])
+
+            if action in ("approve", "reject", "hold") and confidence == "HIGH":
+                if action == "approve":
+                    save_order_state(target_id, status="invoice_approved", approved_by=sender)
+                    post_chat_reply(message_id, f"✅ <strong>Invoice approved by {sender}.</strong> Sending to client shortly...")
+                elif action == "reject":
+                    reason = parsed.get("reject_reason") or text
+                    save_order_state(target_id, status="invoice_rejected")
+                    post_chat_reply(message_id, f"❌ <strong>Invoice rejected.</strong> Reason: {reason}")
+                elif action == "hold":
+                    save_order_state(target_id, status="on_hold")
+                    post_chat_reply(message_id, f"⏸️ <strong>Invoice held by {sender}.</strong> Reply APPROVE {target_id} or REJECT {target_id} when ready.")
+            else:
+                # Ambiguous or modification — ask to include order number
+                post_chat_reply(
+                    message_id,
+                    f"💬 Looks like you're responding about order <strong>#{target_id}</strong>.<br>"
+                    f"Please include the order number so I process it correctly, e.g.:<br>"
+                    f"<code>APPROVE {target_id}</code> or <code>REJECT {target_id} [reason]</code>"
+                )
+        else:
+            order_list = " / ".join(f"<code>{oid}</code>" for oid in pending_ids[:5])
+            post_chat_message(
+                f"❓ <strong>Multiple orders are pending approval.</strong><br>"
+                f"Which order are you responding to? {order_list}<br>"
+                f"Reply with the order number, e.g. <code>APPROVE {pending_ids[0]}</code><br>"
+                f"@Robert @Ryan — please clarify.",
+                subject="",
+            )
+
+
 def run() -> dict:
     """Check all orders awaiting invoice approval for new replies."""
     orders  = get_orders_awaiting_invoice_approval()
@@ -499,6 +597,12 @@ def run() -> dict:
         except Exception as exc:
             log.error("gate check failed order=%s: %s", order_id, exc)
             summary["errors"] += 1
+
+    # Handle messages with no order_id (user replied without specifying which order)
+    try:
+        _handle_orphan_replies(orders)
+    except Exception as exc:
+        log.warning("orphan reply handler failed: %s", exc)
 
     log.info("human_gate_v2 complete: %s", summary)
     return summary

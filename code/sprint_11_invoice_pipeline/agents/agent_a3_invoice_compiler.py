@@ -39,6 +39,7 @@ from config.models import HUMAN_GATE_MODEL
 from config.settings import (
     APPROVED_SENDERS,
     FTF_ORDER_URL,
+    INVOICE_BATCH_SIZE,
     PRICE_SURVEY_FALLBACK_INDIVIDUAL,
     PRICE_SURVEY_FALLBACK_OLD_TITLE,
     PRICE_EC_BASE,
@@ -409,7 +410,7 @@ def _build_teams_post(
         banner = "<p><strong>🚫 REJECTED — CONDO ORDER (no land parcel to survey)</strong></p>"
     elif ai_result.get("escalate_flag"):
         reason = ai_result.get("escalate_reason") or "AI flagged for manual review"
-        banner = f"<p><strong>📤 ESCALATED — {reason}</strong></p>"
+        banner = f"<p><strong>📤 ESCALATED — {reason}</strong><br>⚠️ Needs manual review — @Robert @Ryan</p>"
     else:
         confidence = ai_result.get("confidence", "MEDIUM")
         conf_icon  = {"HIGH": "✅", "MEDIUM": "⚠️", "LOW": "❌"}.get(confidence, "⚠️")
@@ -487,10 +488,11 @@ def _build_teams_post(
 {dup_html}{flags_html}
 <p><a href="{link}">🔗 View Order in FTF →</a></p>
 <hr>
-<p><strong>Reply to this message:</strong><br>
-✅ <strong>Approve</strong><br>
-❌ <strong>Reject</strong><br>
-💬 <strong>Feedback</strong> — any instruction, price change, question, or comment<br>
+<p><strong>Reply in this chat:</strong><br>
+✅ <code>APPROVE {order_id}</code><br>
+❌ <code>REJECT {order_id} [reason]</code><br>
+⏸️ <code>HOLD {order_id}</code><br>
+💬 Or any feedback / price change — just include <strong>#{order_id}</strong> in your reply.<br>
 <em>Only {", ".join(s.capitalize() for s in APPROVED_SENDERS)} can approve.</em></p>
 """.strip()
 
@@ -624,8 +626,8 @@ def compile_for_order(order_id: str) -> dict:
 
 
 def run() -> dict:
-    """Process all orders with status=data_collected."""
-    orders  = get_orders_by_status("data_collected")
+    """Process up to INVOICE_BATCH_SIZE orders with status=data_collected."""
+    orders  = get_orders_by_status("data_collected")[:INVOICE_BATCH_SIZE]
     summary = {"processed": 0, "posted": 0, "errors": 0}
 
     for db_row in orders:
