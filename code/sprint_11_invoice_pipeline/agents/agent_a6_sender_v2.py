@@ -152,6 +152,15 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
 
     if not to_email:
         raise AgentError(f"send_for_order: no email for order {order_id}")
+
+    # Must have a real FTF invoice_id before sending — never send without one
+    invoice_id = db_row.get("invoice_id") or ""
+    if not invoice_id or "TEST" in str(invoice_id).upper():
+        raise AgentError(
+            f"send_for_order: order {order_id} has no real invoice_id ({invoice_id!r}) — "
+            "run A5 first to create the invoice in FTF"
+        )
+
     if test_mode:
         log.warning("TEST MODE — email for order=%s redirected from %s to %s",
                     order_id, client_email, EMAIL_OVERRIDE_ALL)
@@ -161,6 +170,13 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
         delay = random.randint(ESTIMATE_DELAY_MIN, ESTIMATE_DELAY_MAX)
         log.info("send delay=%ds order=%s", delay, order_id)
         time.sleep(delay)
+
+    # Re-check status after delay — another process may have sent it already
+    fresh = get_order_by_id(order_id)
+    if fresh and fresh.get("status") != "invoice_finalized":
+        log.warning("order %s already processed (status=%s) — skipping duplicate send",
+                    order_id, fresh.get("status"))
+        return {"sent": False, "skipped": True, "reason": "already_sent"}
 
     html    = _build_email_html(client_name, order_id, draft)
     total   = draft.get("total_amount", 0)
