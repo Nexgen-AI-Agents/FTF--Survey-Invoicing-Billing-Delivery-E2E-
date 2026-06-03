@@ -33,6 +33,8 @@ jobs:
       TEAMS_TEAM_ID:              ${{ secrets.TEAMS_TEAM_ID }}
       TEAMS_CHANNEL_ID:           ${{ secrets.TEAMS_CHANNEL_ID }}
       TEAMS_INCOMING_WEBHOOK_URL: ${{ secrets.TEAMS_INCOMING_WEBHOOK_URL }}
+      TEAMS_CHAT_ID:              ${{ secrets.TEAMS_CHAT_ID }}
+      TEAMS_CHAT_WEBHOOK_URL:     ${{ secrets.TEAMS_CHAT_WEBHOOK_URL }}
       SMTP_HOST:                  ${{ secrets.SMTP_HOST }}
       SMTP_PORT:                  ${{ secrets.SMTP_PORT }}
       SMTP_USER:                  ${{ secrets.SMTP_USER }}
