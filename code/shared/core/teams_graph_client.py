@@ -42,6 +42,7 @@ from config.settings import (
     TEAMS_APP_ID,
     TEAMS_CHANNEL_ID,
     TEAMS_CHAT_ID,
+    TEAMS_CHAT_WEBHOOK_URL,
     TEAMS_CLIENT_SECRET,
     TEAMS_INCOMING_WEBHOOK_URL,
     TEAMS_TEAM_ID,
@@ -710,62 +711,75 @@ def _parse_command(text: str) -> tuple[str, list[str] | None, str | None]:
 
 
 def post_chat_message(text_or_html: str, subject: str = "") -> dict:
-    """Post a new message to the invoice approval group chat.
+    """Post a new message to the invoice approval group chat via Logic App webhook.
+
+    Microsoft Graph API does not support posting to group chats with application
+    permissions — the Logic App webhook (TEAMS_CHAT_WEBHOOK_URL) relays the message
+    through a delegated user connection that IS in the chat.
 
     Returns {"id": message_id, "ok": True} on success.
-    Requires Chat.ReadWrite.All application permission.
+    The Logic App should return {"id": "<teams_message_id>"} in its response body
+    so callers can track the message for reply polling.
     """
-    if not TEAMS_CHAT_ID:
-        raise AgentError("TEAMS_CHAT_ID not set in .env")
+    if not TEAMS_CHAT_WEBHOOK_URL:
+        raise AgentError(
+            "TEAMS_CHAT_WEBHOOK_URL not set — create a Logic App webhook for the group chat "
+            "and set this env var. See docs for setup steps."
+        )
 
-    header = f"<strong>{subject}</strong><br><br>" if subject else ""
-    body   = (header + text_or_html).replace("\n", "<br>")
-
-    payload = {"body": {"contentType": "html", "content": body}}
-    url     = f"{_GRAPH_READ}/chats/{TEAMS_CHAT_ID}/messages"
+    header  = f"<strong>{subject}</strong><br><br>" if subject else ""
+    body    = (header + text_or_html).replace("\n", "<br>")
+    payload = {"text": body, "subject": subject}
 
     try:
-        r = httpx.post(url, headers=_read_headers(), json=payload, timeout=20.0)
+        r = httpx.post(TEAMS_CHAT_WEBHOOK_URL, json=payload, timeout=30.0)
         r.raise_for_status()
     except httpx.HTTPStatusError as exc:
         raise AgentError(
-            f"post_chat_message failed: HTTP {exc.response.status_code} -- {exc.response.text[:300]}"
+            f"post_chat_message webhook failed: HTTP {exc.response.status_code} -- "
+            f"{exc.response.text[:200]}"
         ) from exc
     except Exception as exc:
-        raise AgentError(f"post_chat_message failed: {exc}") from exc
+        raise AgentError(f"post_chat_message webhook failed: {exc}") from exc
 
-    data = r.json()
-    msg_id = data.get("id", "")
-    log.info("chat message posted id=%s subject=%r", msg_id, subject)
+    try:
+        data   = r.json()
+        msg_id = data.get("id", "")
+    except Exception:
+        msg_id = ""
+
+    log.info("chat message posted via webhook id=%s subject=%r", msg_id, subject)
     return {"id": msg_id, "ok": True}
 
 
 def post_chat_reply(message_id: str, text_or_html: str) -> dict:
-    """Post a reply in a chat message thread.
+    """Post a confirmation/status message to the group chat via Logic App webhook.
 
-    Returns {"id": reply_id, "ok": True} on success.
-    Requires Chat.ReadWrite.All application permission.
+    Group chat application permissions don't support posting, so this sends via
+    the same webhook as post_chat_message — the message appears as a flat (non-threaded)
+    message in the chat rather than a thread reply. This is fine for status confirmations.
+
+    Returns {"id": "", "ok": True} — webhook replies don't return a reply ID.
     """
-    if not TEAMS_CHAT_ID:
-        raise AgentError("TEAMS_CHAT_ID not set in .env")
+    if not TEAMS_CHAT_WEBHOOK_URL:
+        raise AgentError("TEAMS_CHAT_WEBHOOK_URL not set in .env")
 
     body_html = text_or_html.replace("\n", "<br>")
-    payload   = {"body": {"contentType": "html", "content": body_html}}
-    url       = f"{_GRAPH_READ}/chats/{TEAMS_CHAT_ID}/messages/{message_id}/replies"
+    payload   = {"text": body_html}
 
     try:
-        r = httpx.post(url, headers=_read_headers(), json=payload, timeout=20.0)
+        r = httpx.post(TEAMS_CHAT_WEBHOOK_URL, json=payload, timeout=30.0)
         r.raise_for_status()
     except httpx.HTTPStatusError as exc:
         raise AgentError(
-            f"post_chat_reply failed: HTTP {exc.response.status_code} -- {exc.response.text[:300]}"
+            f"post_chat_reply webhook failed: HTTP {exc.response.status_code} -- "
+            f"{exc.response.text[:200]}"
         ) from exc
     except Exception as exc:
-        raise AgentError(f"post_chat_reply failed: {exc}") from exc
+        raise AgentError(f"post_chat_reply webhook failed: {exc}") from exc
 
-    data = r.json()
-    log.info("chat reply posted to message=%s", message_id)
-    return {"id": data.get("id", ""), "ok": True}
+    log.info("chat reply posted via webhook (flat) parent_id=%s", message_id)
+    return {"id": "", "ok": True}
 
 
 def get_chat_messages(limit: int = 50) -> list[dict]:
@@ -807,9 +821,11 @@ def get_chat_messages(limit: int = 50) -> list[dict]:
         except Exception:
             created_dt = datetime.now(timezone.utc)
 
+        sender_email = (user_ref.get("userPrincipalName") or "").lower()
         results.append({
             "id":            msg.get("id", ""),
             "sender":        sender_name,
+            "sender_email":  sender_email,
             "is_app":        is_app,
             "text":          plain,
             "raw_html":      raw_body,

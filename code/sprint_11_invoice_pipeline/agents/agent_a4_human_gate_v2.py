@@ -49,7 +49,7 @@ from core.excel_db import (
 from core.exceptions import AgentError
 from core.logger import get_logger
 from core.teams_graph_client import (
-    get_chat_thread_replies, post_chat_reply,
+    get_chat_messages, post_chat_reply,
 )
 
 AGENT_NAME = "agent_a4_human_gate_v2"
@@ -269,9 +269,15 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
 
     already_processed = get_processed_reply_ids(order_id)
 
-    replies = get_chat_thread_replies(message_id)
+    # In group chat, team members reply as flat messages (not thread replies).
+    # Scan recent messages for any from approved senders that mention this order.
+    all_msgs = get_chat_messages(limit=80)
+    replies = [
+        m for m in all_msgs
+        if not m["is_app"] and str(order_id) in m["text"]
+    ]
     if not replies:
-        log.debug("no actionable replies for order=%s msg_id=%s", order_id, message_id)
+        log.debug("no chat messages mentioning order=%s", order_id)
         return None
 
     new_replies = [r for r in replies if r["id"] not in already_processed]

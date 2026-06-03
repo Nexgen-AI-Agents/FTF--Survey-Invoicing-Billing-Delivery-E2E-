@@ -98,10 +98,11 @@ TEAMS_APP_ID:        str | None = os.getenv("TEAMS_APP_ID")
 TEAMS_CLIENT_SECRET: str | None = os.getenv("TEAMS_CLIENT_SECRET")
 TEAMS_TEAM_ID:       str | None = os.getenv("TEAMS_TEAM_ID")
 TEAMS_CHANNEL_ID:    str | None = os.getenv("TEAMS_CHANNEL_ID")
-# Teams group chat mirror (thread.v2) — when set, invoice notifications are
-# also posted here in addition to the channel.
-TEAMS_CHAT_ID:       str | None = os.getenv("TEAMS_CHAT_ID")
-# Incoming webhook URL (Logic App / Workflows) — for posting TO Teams channel
+# Teams group chat (thread.v2) — primary notification/approval channel
+TEAMS_CHAT_ID:            str | None = os.getenv("TEAMS_CHAT_ID")
+# Logic App webhook for posting TO the group chat (Graph API app permissions can't post to chats)
+TEAMS_CHAT_WEBHOOK_URL:   str | None = os.getenv("TEAMS_CHAT_WEBHOOK_URL")
+# Incoming webhook URL (Logic App) — for posting TO Teams CHANNEL (legacy — channel retired)
 TEAMS_INCOMING_WEBHOOK_URL: str | None = os.getenv("TEAMS_INCOMING_WEBHOOK_URL")
 # Alias used by Sprint 9 reporter — falls back to TEAMS_INCOMING_WEBHOOK_URL
 TEAMS_WEBHOOK_URL: str | None = os.getenv("TEAMS_WEBHOOK_URL") or os.getenv("TEAMS_INCOMING_WEBHOOK_URL")
