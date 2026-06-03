@@ -8,10 +8,10 @@ on:
 permissions:
   contents: write
 
-# Prevent concurrent runs — Excel state file has no locking; overlapping runs corrupt state
-# cancel-in-progress: true drops queued duplicates so manual burst triggers don't stack up
+# Separate group from approval-poller so the 2-min poller doesn't starve this 30-min pipeline.
+# cancel-in-progress: true drops any queued duplicate pipeline runs (e.g. manual burst triggers).
 concurrency:
-  group: invoice-state-write
+  group: invoice-pipeline-main
   cancel-in-progress: true
 
 jobs:
@@ -33,6 +33,8 @@ jobs:
       TEAMS_TEAM_ID:              ${{ secrets.TEAMS_TEAM_ID }}
       TEAMS_CHANNEL_ID:           ${{ secrets.TEAMS_CHANNEL_ID }}
       TEAMS_INCOMING_WEBHOOK_URL: ${{ secrets.TEAMS_INCOMING_WEBHOOK_URL }}
+      TEAMS_CHAT_ID:              ${{ secrets.TEAMS_CHAT_ID }}
+      TEAMS_CHAT_WEBHOOK_URL:     ${{ secrets.TEAMS_CHAT_WEBHOOK_URL }}
       IMAP_HOST:                  ${{ secrets.IMAP_HOST }}
       IMAP_PORT:                  ${{ secrets.IMAP_PORT }}
       IMAP_USER:                  ${{ secrets.IMAP_USER }}
