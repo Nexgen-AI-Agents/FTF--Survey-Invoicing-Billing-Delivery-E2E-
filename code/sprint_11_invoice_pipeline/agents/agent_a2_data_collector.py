@@ -42,7 +42,6 @@ from core.exceptions import AgentError
 from core.ftf_client import get_order, get_customer
 from core.ftf_mysql import get_county_urls
 from core.logger import get_logger
-from core.teams_graph_client import send_teams_notification
 
 AGENT_NAME = "agent_a2_data_collector"
 log = get_logger(AGENT_NAME)
@@ -568,16 +567,6 @@ def collect_for_order(order_id: str) -> dict:
             output_summary="status → details_missing; Teams alert posted",
             model_used=CLASSIFIER_MODEL,
         )
-        try:
-            send_teams_notification(
-                f"⚠️ <strong>Client details not found for order #{order_id}</strong><br>"
-                f"Property: {property_address or 'unknown'}<br>"
-                f"Checked: FTF order notes + nesa@nexgenlogix.com inbox (last {LOOKBACK_DAYS} days)<br>"
-                f"Please add notes to the FTF order or forward relevant emails to nesa@nexgenlogix.com",
-                subject=f"Client Details Missing — Order {order_id}",
-            )
-        except Exception as exc:
-            log.warning("failed to post details_missing alert for order=%s: %s", order_id, exc)
         log.warning("details_missing order=%s emails=%d", order_id, len(emails))
         return packet
 
