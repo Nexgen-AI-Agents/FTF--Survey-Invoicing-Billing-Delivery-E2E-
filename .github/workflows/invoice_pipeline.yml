@@ -2,8 +2,7 @@ name: Invoice Pipeline (Sprint 11)
 
 on:
   schedule:
-    - cron: "0,30 * * * *"   # every 30 minutes
-  workflow_dispatch:
+    - cron: "0,30 * * * *"   # every 30 minutes — only trigger; no manual dispatch
 
 permissions:
   contents: write
