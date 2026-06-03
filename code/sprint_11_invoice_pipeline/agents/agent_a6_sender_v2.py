@@ -36,7 +36,7 @@ from config.settings import (
 from core.excel_db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
 from core.exceptions import AgentError
 from core.logger import get_logger
-from core.teams_graph_client import post_channel_reply
+from core.teams_graph_client import post_chat_reply
 
 AGENT_NAME = "agent_a6_sender_v2"
 log = get_logger(AGENT_NAME)
@@ -187,19 +187,19 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
     # Confirm in Teams channel thread
     if message_id:
         if test_mode:
-            post_channel_reply(
+            post_chat_reply(
                 message_id,
                 f"🧪 <strong>TEST MODE — Email redirected to {EMAIL_OVERRIDE_ALL} (client NOT notified).</strong><br>"
                 f"Order: {order_id} | Client would have received: {client_email} | Approved by: {approved_by} | Total: ${total:,.2f}"
             )
         elif override_email:
-            post_channel_reply(
+            post_chat_reply(
                 message_id,
                 f"📧 <strong>Email sent to approver ({override_email}) — client copy withheld.</strong><br>"
                 f"Order: {order_id} | Approved by: {approved_by} | Total: ${total:,.2f}"
             )
         else:
-            post_channel_reply(
+            post_chat_reply(
                 message_id,
                 f"✅ <strong>Email sent to {client_name} ({client_email}), approved by {approved_by}.</strong><br>"
                 f"Order: {order_id} | Total: ${total:,.2f}"

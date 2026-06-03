@@ -49,7 +49,7 @@ from core.excel_db import (
 from core.exceptions import AgentError
 from core.logger import get_logger
 from core.teams_graph_client import (
-    find_channel_message_for_order, get_channel_thread_replies, post_channel_reply,
+    get_chat_thread_replies, post_chat_reply,
 )
 
 AGENT_NAME = "agent_a4_human_gate_v2"
@@ -269,19 +269,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
 
     already_processed = get_processed_reply_ids(order_id)
 
-    replies = get_channel_thread_replies(message_id)
-    if not replies:
-        log.info("no replies from Graph for order=%s msg_id=%s — attempting self-correction",
-                 order_id, message_id)
-        found_id = find_channel_message_for_order(order_id)
-        if found_id and str(found_id) != str(message_id):
-            log.info("auto-corrected message_id order=%s: %s → %s", order_id, message_id, found_id)
-            save_order_state(order_id, approval_message_id=found_id)
-            message_id = found_id
-            replies = get_channel_thread_replies(message_id)
-        elif not found_id:
-            log.warning("self-correction failed — order=%s not found in channel scan; "
-                        "card may have rolled past scan horizon", order_id)
+    replies = get_chat_thread_replies(message_id)
     if not replies:
         log.debug("no actionable replies for order=%s msg_id=%s", order_id, message_id)
         return None
@@ -323,7 +311,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
 
         # For MEDIUM confidence: post what was understood before acting so the user can correct
         if confidence == "MEDIUM" and status_msg and action not in ("question",):
-            post_channel_reply(
+            post_chat_reply(
                 message_id,
                 f"💬 I think I understood: <em>{status_msg}</em> Proceeding — reply to correct me if that's wrong."
             )
@@ -361,13 +349,13 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
                 _store_learning(order_id, current_draft, text, learned_rule, data_sources, sender)
 
             if override_email:
-                post_channel_reply(
+                post_chat_reply(
                     message_id,
                     f"✅ <strong>Invoice approved by {sender}.</strong> "
                     f"Email will be sent to you (<strong>{override_email}</strong>) — not to the client."
                 )
             else:
-                post_channel_reply(message_id, f"✅ <strong>Invoice approved by {sender}.</strong> Sending to client shortly...")
+                post_chat_reply(message_id, f"✅ <strong>Invoice approved by {sender}.</strong> Sending to client shortly...")
             log.info("invoice approved order=%s by=%s override_email=%r", order_id, sender, override_email)
             return "invoice_approved"
 
@@ -379,7 +367,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
                 reason=f"Held by {sender} via Teams thread",
                 model_used=HUMAN_GATE_MODEL,
             )
-            post_channel_reply(message_id, f"⏸️ <strong>Invoice held by {sender}.</strong> Will skip this cycle. Reply APPROVE or REJECT when ready.")
+            post_chat_reply(message_id, f"⏸️ <strong>Invoice held by {sender}.</strong> Will skip this cycle. Reply APPROVE or REJECT when ready.")
             log.info("invoice on_hold order=%s by=%s", order_id, sender)
             return "on_hold"
 
@@ -392,7 +380,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
                 reason=f"Rejected by {sender}: {reason}",
                 model_used=HUMAN_GATE_MODEL,
             )
-            post_channel_reply(message_id, f"❌ <strong>Invoice rejected.</strong> Reason: {reason}<br>Will not send to client.")
+            post_chat_reply(message_id, f"❌ <strong>Invoice rejected.</strong> Reason: {reason}<br>Will not send to client.")
             log.info("invoice rejected order=%s by=%s reason=%s", order_id, sender, reason)
             return "invoice_rejected"
 
@@ -401,7 +389,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
 
             if mod_count > MAX_INVOICE_MODIFICATIONS:
                 save_order_state(order_id, status="invoice_needs_human")
-                post_channel_reply(
+                post_chat_reply(
                     message_id,
                     f"⚠️ I've made {mod_count - 1} modifications on this order and I'm still not getting it right. "
                     f"Please handle order {order_id} manually. I've flagged it for human review."
@@ -429,7 +417,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
             # Repost updated draft as a thread reply
             link = f"{FTF_ORDER_URL}/?order={order_id}"
             reply_html = _build_updated_draft_post(order_id, updated_draft, mod_count, link)
-            post_channel_reply(message_id, reply_html)
+            post_chat_reply(message_id, reply_html)
 
             log_decision(
                 AGENT_NAME, "invoice_modified",
@@ -445,7 +433,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
 
         elif action == "question":
             q_text = parsed.get("question_text", "Could you clarify what change you'd like?")
-            post_channel_reply(message_id, f"❓ {q_text}")
+            post_chat_reply(message_id, f"❓ {q_text}")
             log.info("clarification requested order=%s", order_id)
             return None
 

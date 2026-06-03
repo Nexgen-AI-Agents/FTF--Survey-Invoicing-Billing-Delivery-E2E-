@@ -56,7 +56,7 @@ from core.exceptions import AgentError
 from core.ftf_client import get_historical_pricing_orders
 from core.ftf_mysql import get_order_details, get_company_info, find_duplicate_orders
 from core.logger import get_logger
-from core.teams_graph_client import post_channel_message
+from core.teams_graph_client import post_chat_message
 
 AGENT_NAME = "agent_a3_invoice_compiler"
 log = get_logger(AGENT_NAME)
@@ -539,7 +539,7 @@ def compile_for_order(order_id: str) -> dict:
             order_id, packet, stop_result, link, company_info, tier,
             duplicates, condo_reason,
         )
-        post_result = post_channel_message(teams_html, subject=f"Invoice — Order {order_id}")
+        post_result = post_chat_message(teams_html, subject=f"Invoice — Order {order_id}")
         save_order_state(
             order_id,
             status="invoice_draft_posted",
@@ -586,7 +586,7 @@ def compile_for_order(order_id: str) -> dict:
         duplicates,
     )
     status_label = order_details["ng_status_desc"].strip()
-    post_result = post_channel_message(teams_html, subject=f"{status_label} — Order #{order_id}", order_id=order_id)
+    post_result = post_chat_message(teams_html, subject=f"{status_label} — Order #{order_id}", order_id=order_id)
     message_id  = post_result.get("id", "")
 
     # ── 6. Save state ─────────────────────────────────────────────────────────

@@ -35,9 +35,9 @@ from config.settings import APPROVED_SENDERS
 from core.claude_client import call as llm_call
 from core.logger import get_logger
 from core.teams_graph_client import (
-    get_channel_thread_replies,
-    get_recent_messages,
-    send_channel_message,
+    get_chat_thread_replies,
+    get_chat_messages,
+    post_chat_message,
 )
 
 log = get_logger("agent_a7_feedback_learner")
@@ -163,7 +163,7 @@ def _find_confirm_response(
 
         # Thread replies on any recent message
         try:
-            for reply in get_channel_thread_replies(msg["id"]):
+            for reply in get_chat_thread_replies(msg["id"]):
                 if reply["created_at_dt"] <= asked_at:
                     continue
                 if (reply["sender"] or "").split()[0].lower() == sender_first:
@@ -225,7 +225,7 @@ def _resolve_pending_confirmations(
             data.setdefault("rules", []).append(rule)
             log.info("confirmation resolved global rule_id=%s order=%s", rule_id, order_id)
             try:
-                send_channel_message(
+                post_chat_message(
                     f"[INFO] ✅ <strong>Rule saved globally</strong> (from <strong>{sender}</strong> on order "
                     f"<strong>{order_id}</strong>):<br><em>{cls['description']}</em><br>"
                     f"<small>Applied to all future orders. Rule ID: <code>{rule_id}</code></small>"
@@ -238,7 +238,7 @@ def _resolve_pending_confirmations(
             overrides.setdefault(order_id, []).append(cls["description"])
             log.info("confirmation resolved this-order order=%s", order_id)
             try:
-                send_channel_message(
+                post_chat_message(
                     f"[INFO] ✅ <strong>Got it</strong> — <strong>{sender}</strong>'s instruction applied to order "
                     f"<strong>{order_id}</strong> only. No global rule saved."
                 )
@@ -248,7 +248,7 @@ def _resolve_pending_confirmations(
         elif response == "skip":
             log.info("confirmation skipped id=%s order=%s", conf_id, order_id)
             try:
-                send_channel_message(
+                post_chat_message(
                     f"[INFO] Feedback from <strong>{sender}</strong> on order "
                     f"<strong>{order_id}</strong> discarded — no rule saved."
                 )
@@ -368,7 +368,7 @@ def run() -> dict:
     cutoff            = datetime.now(timezone.utc) - timedelta(hours=_SCAN_HOURS)
 
     try:
-        messages = get_recent_messages(limit=100)
+        messages = get_chat_messages(limit=100)
     except Exception as exc:
         log.error("could not fetch Teams messages: %s", exc)
         return {"new_pending": 0, "skipped": 0, "error": str(exc)}
@@ -386,7 +386,7 @@ def run() -> dict:
         parent_order_id = _extract_order_id(msg["text"])
 
         try:
-            replies = get_channel_thread_replies(msg["id"])
+            replies = get_chat_thread_replies(msg["id"])
         except Exception as exc:
             log.warning("could not fetch replies msg=%s: %s", msg["id"], exc)
             continue
@@ -455,7 +455,7 @@ def run() -> dict:
                     f"workflow instructions) — system-level changes require a developer."
                 )
                 try:
-                    send_channel_message(dev_msg)
+                    post_chat_message(dev_msg)
                 except Exception as exc:
                     log.warning("could not post code_change notice: %s", exc)
                 skipped += 1
@@ -503,7 +503,7 @@ def run() -> dict:
                 f"<small>Confirmation ID: {confirm_id} | Expires in 24h</small>"
             )
             try:
-                send_channel_message(confirm_msg)
+                post_chat_message(confirm_msg)
             except Exception as exc:
                 log.warning("could not post confirmation question id=%s: %s", confirm_id, exc)
 
