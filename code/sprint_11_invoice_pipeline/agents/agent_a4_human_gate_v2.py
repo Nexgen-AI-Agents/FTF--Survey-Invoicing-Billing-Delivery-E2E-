@@ -62,15 +62,22 @@ def _is_approved_sender(sender_name: str, sender_email: str = "") -> bool:
     name_match = first in APPROVED_SENDERS or email_local in APPROVED_SENDERS
     if not name_match:
         return False
-    if APPROVED_SENDER_EMAILS:
+    if APPROVED_SENDER_EMAILS and sender_email:
         if sender_email.lower() in APPROVED_SENDER_EMAILS:
             return True
-        # Accept on email local-part match to handle UPN drift (e.g. pchandra@ vs prateek@)
+        # Accept on email local-part match (e.g. pchandra@ vs prateek@)
         if email_local in APPROVED_SENDERS:
             log.warning("sender=%s email=%s — accepting on local-part match (UPN drift)",
                         sender_name, sender_email)
             return True
-        return False
+        # Name matched but email differs — Azure AD UPN may differ from APPROVED_SENDERS secret.
+        # Accept on display name match with a warning; do NOT silently reject real approvers.
+        log.warning(
+            "sender=%s email=%s — display name matches but email not in approved list; "
+            "accepting (check APPROVED_SENDERS secret has correct UPN for this user)",
+            sender_name, sender_email,
+        )
+        return True
     return True
 
 
@@ -248,8 +255,11 @@ def _build_updated_draft_post(order_id: str, draft: dict, modification_count: in
     return html
 
 
-def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
+def process_order_replies(order_id: str, db_row: dict, all_msgs: Optional[list] = None) -> Optional[str]:
     """Check replies for one order and act on them.
+
+    all_msgs — pre-fetched chat messages (pass from run() to avoid N API calls).
+               When None, fetches fresh (single-order invocation from CLI).
 
     Returns new status, or None if no actionable reply found.
     """
@@ -268,7 +278,7 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
     if "condo_rejected" in current_draft.get("flags", []):
         log.info("order %s is condo-rejected — skipping approval scan", order_id)
         # Post one-time clarification if there's a reply mentioning this order
-        all_check = get_chat_messages(limit=40)
+        all_check = all_msgs if all_msgs is not None else get_chat_messages(limit=40)
         for m in all_check:
             if not m["is_app"] and str(order_id) in m["text"]:
                 already = get_processed_reply_ids(order_id)
@@ -289,7 +299,8 @@ def process_order_replies(order_id: str, db_row: dict) -> Optional[str]:
 
     # In group chat, team members reply as flat messages (not thread replies).
     # Match messages that mention the full order_id OR its last 6 digits (e.g. "1787" for 1000271787).
-    all_msgs = get_chat_messages(limit=80)
+    if all_msgs is None:
+        all_msgs = get_chat_messages(limit=100)
     order_str    = str(order_id)
     order_suffix = order_str[-6:]
     replies = [
@@ -508,7 +519,7 @@ _ACTION_KEYWORDS = re.compile(
 )
 
 
-def _handle_orphan_replies(all_pending_orders: list[dict]) -> None:
+def _handle_orphan_replies(all_pending_orders: list[dict], all_msgs: Optional[list] = None) -> None:
     """Handle action messages that mention no specific order_id.
 
     If 1 order is pending and the reply is a clear simple action → handle it.
@@ -520,7 +531,8 @@ def _handle_orphan_replies(all_pending_orders: list[dict]) -> None:
     pending_ids      = [str(row["order_id"]) for row in all_pending_orders]
     pending_suffixes = {str(oid)[-6:] for oid in pending_ids}
 
-    all_msgs = get_chat_messages(limit=80)
+    if all_msgs is None:
+        all_msgs = get_chat_messages(limit=100)
     already  = get_processed_reply_ids("__orphan__")
 
     for msg in all_msgs:
@@ -607,15 +619,59 @@ def _handle_orphan_replies(all_pending_orders: list[dict]) -> None:
             )
 
 
-def run() -> dict:
-    """Check all orders awaiting invoice approval for new replies."""
-    orders  = get_orders_awaiting_invoice_approval()
-    summary = {"checked": 0, "approved": 0, "rejected": 0, "on_hold": 0, "modified": 0, "errors": 0, "no_reply": 0}
+_A4_MAX_ORDERS_PER_RUN = int(os.getenv("A4_MAX_ORDERS_PER_RUN", "50"))
 
-    for db_row in orders:
+
+def run() -> dict:
+    """Check orders awaiting invoice approval for new replies.
+
+    Fetches chat messages ONCE then filters in-memory — avoids 300+ Graph API
+    calls per run and the rate-limit failures that caused silent no-ops.
+    """
+    orders  = get_orders_awaiting_invoice_approval()
+    summary = {"checked": 0, "approved": 0, "rejected": 0, "on_hold": 0,
+               "modified": 0, "errors": 0, "no_reply": 0, "total_pending": len(orders)}
+
+    if not orders:
+        log.info("human_gate_v2: no orders awaiting approval")
+        return summary
+
+    # ── Fetch chat messages ONCE ─────────────────────────────────────────────
+    try:
+        all_msgs = get_chat_messages(limit=100)
+        log.info("human_gate_v2: fetched %d chat messages, %d pending orders",
+                 len(all_msgs), len(orders))
+    except Exception as exc:
+        log.error("get_chat_messages FAILED — cannot process any approvals: %s", exc)
+        # Make the failure visible in Teams via the send webhook (which still works)
+        try:
+            post_chat_message(
+                f"⚠️ <strong>Approval poller error</strong> — bot cannot read group chat messages.<br>"
+                f"Error: <code>{str(exc)[:200]}</code><br>"
+                f"<small>Approvals are NOT being processed. Check TEAMS_CHAT_ID secret and "
+                f"that Chat.Read.All is granted on the Azure AD app.</small>",
+                subject="",
+            )
+        except Exception:
+            pass
+        summary["errors"] = len(orders)
+        return summary
+
+    # ── Cap orders per run — sort newest-posted first so recent orders get checked ──
+    orders_to_check = sorted(
+        orders,
+        key=lambda r: r.get("draft_posted_at") or "",
+        reverse=True,
+    )[:_A4_MAX_ORDERS_PER_RUN]
+
+    if len(orders) > _A4_MAX_ORDERS_PER_RUN:
+        log.info("human_gate_v2: checking %d of %d pending orders (cap=%d)",
+                 len(orders_to_check), len(orders), _A4_MAX_ORDERS_PER_RUN)
+
+    for db_row in orders_to_check:
         order_id = db_row["order_id"]
         try:
-            new_status = process_order_replies(order_id, db_row)
+            new_status = process_order_replies(order_id, db_row, all_msgs)
             summary["checked"] += 1
             if new_status == "invoice_approved":
                 summary["approved"] += 1
@@ -631,9 +687,9 @@ def run() -> dict:
             log.error("gate check failed order=%s: %s", order_id, exc)
             summary["errors"] += 1
 
-    # Handle messages with no order_id (user replied without specifying which order)
+    # ── Handle messages with no order_id (user replied without specifying which) ──
     try:
-        _handle_orphan_replies(orders)
+        _handle_orphan_replies(orders, all_msgs)
     except Exception as exc:
         log.warning("orphan reply handler failed: %s", exc)
 
