@@ -66,7 +66,9 @@ def finalize_order(order_id: str) -> dict:
     for attempt in range(1, MAX_RETRY + 1):
         try:
             result = create_invoice(order_id, total, ftf_services)
-            invoice_id = str(result.get("invoice_id") or result.get("id") or "")
+            # API returns {"invoice_ids": [349393], ...} — take first element
+            ids = result.get("invoice_ids") or []
+            invoice_id = str(ids[0]) if ids else str(result.get("invoice_id") or result.get("id") or "")
             log.info("invoice created order=%s invoice_id=%s attempt=%d", order_id, invoice_id, attempt)
             break
         except Exception as exc:

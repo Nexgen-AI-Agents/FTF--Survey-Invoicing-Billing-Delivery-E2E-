@@ -175,7 +175,7 @@ def get_invoice(invoice_id: str) -> dict:
 
 
 def create_invoice(order_id: str, amount: float, services: list[dict]) -> dict:
-    payload = {"order_id": order_id, "amount": amount, "services": services}
+    payload = {"order_id": order_id, "amount": amount, "line_items": services}
     try:
         r = httpx.post(
             f"{FTF_API_BASE_URL}/invoices",
