@@ -9202,34 +9202,33 @@
     },
     {
       "order_id": "1000284562",
-      "status": "data_collected",
+      "status": "invoice_draft_posted",
       "service_type": "Elevation Certificate, Elevation Certificate",
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Missy Vancil / Hillsborough Title of South Shore",
       "property_address": "1547 Florida Ave S, Lakeland, FL 33803",
-      "invoice_draft": null,
+      "invoice_draft": "{\"total_amount\": 275.0, \"services\": [{\"name\": \"Elevation Certificate\", \"description\": \"FEMA Elevation Certificate for 1547 Florida Ave S, Lakeland, FL 33803 (Polk County). Standard EC rate applies per company pricing guidelines \\u2014 EC is always $275.00 regardless of client tier or negotiated survey rate. FEMA flood zone is listed as unknown; no VE coastal upcharge applied. No lot-size complexity upcharge is applicable to EC-only orders.\", \"amount\": 275.0}], \"pricing_reasoning\": \"This is an EC-only order. Per pricing guidelines, the Elevation Certificate is a flat $275.00 regardless of client type or negotiated rate \\u2014 the $300.00 negotiated rate applies to boundary/survey services, not ECs. The FEMA flood zone is unknown so no VE upcharge of $50.00 can be applied; if the zone is confirmed as VE prior to fieldwork, the EC line should be revised to $325.00. The lot size of 0.59 acres would normally trigger a complexity upcharge, but that upcharge applies to boundary surveys, not standalone ECs, so it is not added here.\", \"confidence\": \"MEDIUM\", \"escalate_flag\": false, \"escalate_reason\": null, \"flags\": [\"DUPLICATE_SERVICE: Order lists 'Elevation Certificate' twice \\u2014 appears to be a data entry duplicate. Confirm with client (Missy Vancil / Hillsborough Title of South Shore) whether two separate ECs are needed (e.g., two structures or two legal parcels) or if this is a single EC. If two ECs are legitimately required, total should be revised to $550.00.\", \"FEMA_ZONE_UNKNOWN: Flood zone could not be confirmed. If zone resolves to VE (coastal), add $50.00 per EC line item. Polk County is inland so VE is unlikely, but should be verified against FEMA FIRM map before invoicing.\", \"LEGAL_DESCRIPTION_MISSING: No legal description was provided. Confirm parcel identity against county records before scheduling field work.\", \"B2B_PRICING_NOTE: Client negotiated rate of $300.00 does NOT override the flat EC rate of $275.00 per pricing guidelines. EC is always $275.00 regardless of client tier.\"]}",
       "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 201801311051344926, \"created_at\": \"2026-06-03T09:17:13\", \"customer_email\": \"missy.vancil@flagency.net\", \"customer_id\": 201911011657090565, \"customer_name\": \"Missy Missy\", \"customer_type\": \"b2b\", \"delivered_at\": null, \"due_amount\": 0.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": null, \"invoiced\": false, \"order_id\": 1000284562, \"paid\": false, \"property_address\": \"1547 FLORIDA AVE S\", \"property_city\": \"LAKELAND\", \"property_county\": \"Polk County\", \"property_lat\": \"28.0237089\", \"property_lng\": \"-81.95731769999999\", \"property_state\": \"FL\", \"property_zip\": \"33803\", \"service_type\": \"Elevation Certificate, Elevation Certificate\", \"special_pricing\": true, \"status\": \"Pending\", \"status_code\": 1, \"updated_at\": \"2026-06-03T09:17:17\"}, \"success\": true, \"order_id\": \"1000284562\", \"customer_email\": \"missy.vancil@flagency.net\", \"service_type\": \"Elevation Certificate, Elevation Certificate\", \"county\": \"\", \"property_address\": \"1547 FLORIDA AVE S\", \"customer_name\": \"Hillsborough Title of South Shore\"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"Missy Vancil / Hillsborough Title of South Shore\", \"confidence\": \"LOW\"}, \"client_email\": {\"value\": \"missy.vancil@flagency.net\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"1547 Florida Ave S, Lakeland, FL 33803\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Polk County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"Elevation Certificate\", \"Elevation Certificate\"], \"confidence\": \"MEDIUM\", \"notes\": \"Service type lists 'Elevation Certificate' twice \\u2014 likely a data entry duplicate; confirm whether one or two separate Elevation Certificates are needed, or if a second service (e.g., flood zone determination) was intended.\"}, \"special_requirements\": {\"value\": \"Special pricing applies\", \"confidence\": \"HIGH\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property features available; county appraiser data unavailable and no aerial or email data provided.\"}, \"client_tier\": {\"value\": \"b2b\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Client name conflict: order contact is 'Missy Vancil' but customer_name field shows 'Missy Missy' and order-level customer_name shows 'Hillsborough Title of South Shore' \\u2014 confirm correct billing client name\", \"Duplicate service type entry \\u2014 confirm whether one or two Elevation Certificates are needed and for what purpose\", \"No lot size or legal description available \\u2014 county appraiser lookup failed due to missing county in request\", \"No structure square footage available\", \"No property features data (pool, shed, structures, etc.)\", \"Flood zone is null \\u2014 will be determined during fieldwork but should be confirmed post-delivery\", \"Special pricing flag is set \\u2014 confirm agreed pricing before invoicing\"], \"summary\": \"B2B order from Missy Vancil (flagency.net / possibly Hillsborough Title of South Shore) requesting one or more Elevation Certificates for 1547 Florida Ave S, Lakeland, FL 33803 (Polk County), with special pricing applied and several data conflicts requiring human review.\"}}",
       "approval_message_id": null,
-      "modification_count": null,
+      "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-03T14:45:12.592745+00:00",
-      "draft_posted_at": null,
+      "draft_posted_at": "2026-06-03T15:12:47.920123+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": null,
       "approved_by": null,
       "sent_at": null,
-      "estimate_amount": null,
+      "estimate_amount": 275,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:53.430620+00:00",
-      "updated_at": "2026-06-03T14:45:12.666498+00:00"
+      "updated_at": "2026-06-03T15:12:48.000259+00:00"
     }
   ],
   "status_counts": {
     "details_missing": 82,
-    "invoice_draft_posted": 317,
-    "invoice_sent": 1,
-    "data_collected": 1
+    "invoice_draft_posted": 318,
+    "invoice_sent": 1
   },
   "total": 401,
-  "generated_at": "2026-06-03T14:53:02.667013+00:00"
+  "generated_at": "2026-06-03T15:13:49.205469+00:00"
 }
