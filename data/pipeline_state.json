@@ -2177,13 +2177,13 @@
       "data_collected_at": "2026-06-02T16:27:02.461418+00:00",
       "draft_posted_at": "2026-06-02T16:36:40.985615+00:00",
       "invoice_created_at": null,
-      "processed_reply_ids": null,
+      "processed_reply_ids": "[\"1780417941316\"]",
       "approved_by": null,
       "sent_at": null,
       "estimate_amount": 1025,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:13.878980+00:00",
-      "updated_at": "2026-06-02T16:36:41.031882+00:00"
+      "updated_at": "2026-06-03T03:03:14.311268+00:00"
     },
     {
       "order_id": "1000279100",
@@ -2269,13 +2269,13 @@
       "data_collected_at": "2026-06-02T16:35:41.102524+00:00",
       "draft_posted_at": "2026-06-02T16:43:27.222200+00:00",
       "invoice_created_at": null,
-      "processed_reply_ids": null,
+      "processed_reply_ids": "[\"1780418526805\"]",
       "approved_by": null,
       "sent_at": null,
       "estimate_amount": 500,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:14.113381+00:00",
-      "updated_at": "2026-06-02T16:43:27.268205+00:00"
+      "updated_at": "2026-06-03T03:03:18.059453+00:00"
     },
     {
       "order_id": "1000278938",
@@ -2407,13 +2407,13 @@
       "data_collected_at": "2026-06-02T16:42:09.795889+00:00",
       "draft_posted_at": "2026-06-02T16:58:08.216204+00:00",
       "invoice_created_at": null,
-      "processed_reply_ids": null,
+      "processed_reply_ids": "[\"1780419535019\"]",
       "approved_by": null,
       "sent_at": null,
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:14.407352+00:00",
-      "updated_at": "2026-06-02T16:58:08.265583+00:00"
+      "updated_at": "2026-06-03T03:03:23.972293+00:00"
     },
     {
       "order_id": "1000278523",
@@ -2614,13 +2614,13 @@
       "data_collected_at": "2026-06-02T16:57:04.251852+00:00",
       "draft_posted_at": "2026-06-02T17:16:04.805349+00:00",
       "invoice_created_at": null,
-      "processed_reply_ids": null,
+      "processed_reply_ids": "[\"1780420601366\"]",
       "approved_by": null,
       "sent_at": null,
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:14.910495+00:00",
-      "updated_at": "2026-06-02T17:16:04.920986+00:00"
+      "updated_at": "2026-06-03T03:03:33.259185+00:00"
     },
     {
       "order_id": "1000277746",
@@ -2637,13 +2637,13 @@
       "data_collected_at": "2026-06-02T16:57:14.712157+00:00",
       "draft_posted_at": "2026-06-02T17:16:22.296649+00:00",
       "invoice_created_at": null,
-      "processed_reply_ids": null,
+      "processed_reply_ids": "[\"1780420601366\"]",
       "approved_by": null,
       "sent_at": null,
       "estimate_amount": 50,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:14.962330+00:00",
-      "updated_at": "2026-06-02T17:16:22.347667+00:00"
+      "updated_at": "2026-06-03T03:03:33.722831+00:00"
     },
     {
       "order_id": "1000277740",
@@ -8696,34 +8696,34 @@
     },
     {
       "order_id": "1000245231",
-      "status": "data_collected",
+      "status": "invoice_draft_posted",
       "service_type": "Land Survey Only",
       "customer_email": "seattlefootdoctor@yahoo.com",
       "client_name": "MIKHAIL BURAKOVSKIY AND ALLA BURAKOVSKIY",
       "property_address": "8548 GRAND PRIX LN, BOYNTON BEACH, FL 33472",
-      "invoice_draft": null,
+      "invoice_draft": "{\"total_amount\": 150.0, \"services\": [{\"name\": \"Land Survey Only\", \"description\": \"Residential boundary survey for Lot 184, Palm Meadows Estates, Palm Beach County. FEMA Zone X (no flood zone upcharge). No complexity upcharges supported by available data.\", \"amount\": 150.0}], \"pricing_reasoning\": \"The client has a management-approved negotiated base rate of $150.00 for this specific order. The property is a residential platted lot (Lot 184, Palm Meadows Estates) in Palm Beach County \\u2014 not Monroe County, not a metes-and-bounds description, and in FEMA Zone X (minimal flood hazard), so no EC is required and no flood-related upcharge applies. Lot size is not provided in the database, but as a single platted lot within a standard residential subdivision (Palm Meadows Estates, Plat Book 120), it is presumed to be a typical residential lot well under 0.31 acres or within normal range with no aerial indicators of pool, waterfront canal, or heavy vegetation complexity warranting an upcharge \\u2014 the $150.00 negotiated rate stands as the full invoice amount.\", \"confidence\": \"MEDIUM\", \"escalate_flag\": false, \"escalate_reason\": null, \"flags\": [\"DUPLICATE_ORDER: Order 1000240414 references the same property at 8548 Grand Prix Ln, Palm Beach County, same Folio/MLS (00424517100001840), same service type (Land Survey Only). Human review required to confirm whether this is a true duplicate or a rebilled/reactivated order before invoice is sent.\", \"LOT_SIZE_MISSING: Lot size is not populated in the database. Platted subdivision lot assumed to be standard residential size (<0.31 ac) based on Palm Meadows Estates context. If lot size is confirmed at 0.31 ac or above, a complexity upcharge may apply.\", \"ORDER_ON_HOLD: Per order notes, this order is currently On Hold with special pricing applied and no invoice sent. Do not send invoice until hold reason is resolved and confirmed by management.\", \"NEGOTIATED_RATE: $150.00 base rate is a management-approved special price for this specific client \\u2014 do not adjust without management authorization.\"]}",
       "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 202406271537488487, \"created_at\": \"2024-06-27T13:09:04\", \"customer_email\": \"seattlefootdoctor@yahoo.com\", \"customer_id\": 202406271537489224, \"customer_name\": \"MIKHAIL BURAKOVSKIY AND ALLA BURAKOVSKIY\", \"customer_type\": \"individual\", \"delivered_at\": null, \"due_amount\": 0.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": \"12099C0770F\\nZONE: X\\nEFF: 10/05/2017\", \"invoiced\": false, \"order_id\": 1000245231, \"paid\": true, \"property_address\": \"8548 GRAND PRIX LN\", \"property_city\": \"BOYNTON BEACH\", \"property_county\": \"Palm Beach County\", \"property_lat\": \"26.5404179\", \"property_lng\": \"-80.1839538\", \"property_state\": \"FL\", \"property_zip\": \"33472\", \"service_type\": \"Land Survey Only\", \"special_pricing\": true, \"status\": \"On Hold\", \"status_code\": 11, \"updated_at\": \"2026-01-16T06:04:08\"}, \"success\": true, \"order_id\": \"1000245231\", \"customer_email\": \"seattlefootdoctor@yahoo.com\", \"service_type\": \"Land Survey Only\", \"county\": \"\", \"property_address\": \"8548 GRAND PRIX LN\", \"customer_name\": \"MIKHAIL BURAKOVSKIY AND ALLA BURAKOVSKIY\"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"MIKHAIL BURAKOVSKIY AND ALLA BURAKOVSKIY\", \"confidence\": \"HIGH\"}, \"client_email\": {\"value\": \"seattlefootdoctor@yahoo.com\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"8548 GRAND PRIX LN, BOYNTON BEACH, FL 33472\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Palm Beach County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"Land Survey Only\"], \"confidence\": \"HIGH\", \"notes\": \"Service type explicitly stated as 'Land Survey Only' in order data. No additional services indicated.\"}, \"special_requirements\": {\"value\": \"Special pricing applied; order currently On Hold (status code 11). Flood zone data available: Panel 12099C0770F, Zone X, effective 10/05/2017.\", \"confidence\": \"MEDIUM\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property features available \\u2014 no appraiser data, no emails, and no aerial imagery reviewed. Pool, shed, driveway, and other features unknown.\"}, \"client_tier\": {\"value\": \"residential\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Lot size not provided \\u2014 needed for accurate quote\", \"Legal description not available \\u2014 required for survey\", \"Structure square footage unknown\", \"Property features (pool, shed, fences, driveways) not documented\", \"Order is On Hold \\u2014 reason for hold not specified, needs human review\", \"No invoice has been sent despite 'paid: true' \\u2014 possible discrepancy to investigate\", \"Special pricing flag is set but no pricing details or justification provided\", \"No matching emails found \\u2014 no additional context from client communications\", \"County Appraiser data unavailable \\u2014 county was blank in the outer payload despite being set in order data\"], \"summary\": \"Residential land survey order for Mikhail and Alla Burakovskiy at 8548 Grand Prix Ln, Boynton Beach, FL (Palm Beach County) is currently On Hold with special pricing applied and no invoice sent, pending resolution of hold reason and missing property details.\"}}",
-      "approval_message_id": null,
-      "modification_count": null,
+      "approval_message_id": "1780455758282",
+      "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-02T22:28:00.146700+00:00",
-      "draft_posted_at": null,
+      "draft_posted_at": "2026-06-03T03:02:41.273736+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": null,
       "approved_by": null,
       "sent_at": null,
-      "estimate_amount": null,
+      "estimate_amount": 150,
       "deferred_until": null,
       "created_at": "2026-06-02T16:26:42.131098+00:00",
-      "updated_at": "2026-06-02T22:28:00.209913+00:00"
+      "updated_at": "2026-06-03T03:02:41.350259+00:00"
     }
   ],
   "status_counts": {
     "details_missing": 61,
-    "invoice_draft_posted": 311,
-    "data_collected": 6,
+    "invoice_draft_posted": 312,
+    "data_collected": 5,
     "invoice_finalized": 1
   },
   "total": 379,
-  "generated_at": "2026-06-03T02:57:40.854976+00:00"
+  "generated_at": "2026-06-03T03:03:41.726647+00:00"
 }
