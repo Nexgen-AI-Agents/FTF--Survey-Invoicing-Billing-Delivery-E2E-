@@ -3958,7 +3958,7 @@
     },
     {
       "order_id": "1000273343",
-      "status": "invoice_finalized",
+      "status": "invoice_sent",
       "service_type": "Land Survey Only",
       "customer_email": "bacall40@hotmail.com",
       "client_name": "Johanne Beaumont",
@@ -3973,11 +3973,11 @@
       "invoice_created_at": null,
       "processed_reply_ids": null,
       "approved_by": "Prateek",
-      "sent_at": null,
+      "sent_at": "2026-06-03T14:53:00.900012+00:00",
       "estimate_amount": 475,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:18.772653+00:00",
-      "updated_at": "2026-06-02T20:05:31.763216+00:00"
+      "updated_at": "2026-06-03T14:53:00.972248+00:00"
     },
     {
       "order_id": "1000273161",
@@ -9179,7 +9179,7 @@
     },
     {
       "order_id": "1000284563",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9189,7 +9189,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": null,
+      "data_collected_at": "2026-06-03T14:44:59.846719+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -9198,21 +9198,21 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:53.138350+00:00",
-      "updated_at": "2026-06-03T14:18:53.138350+00:00"
+      "updated_at": "2026-06-03T14:44:59.920518+00:00"
     },
     {
       "order_id": "1000284562",
-      "status": "invoice_needed",
+      "status": "data_collected",
       "service_type": "Elevation Certificate, Elevation Certificate",
       "customer_email": "missy.vancil@flagency.net",
-      "client_name": "Hillsborough Title of South Shore",
-      "property_address": "1547 FLORIDA AVE S",
+      "client_name": "Missy Vancil / Hillsborough Title of South Shore",
+      "property_address": "1547 Florida Ave S, Lakeland, FL 33803",
       "invoice_draft": null,
-      "data_sources": null,
+      "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 201801311051344926, \"created_at\": \"2026-06-03T09:17:13\", \"customer_email\": \"missy.vancil@flagency.net\", \"customer_id\": 201911011657090565, \"customer_name\": \"Missy Missy\", \"customer_type\": \"b2b\", \"delivered_at\": null, \"due_amount\": 0.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": null, \"invoiced\": false, \"order_id\": 1000284562, \"paid\": false, \"property_address\": \"1547 FLORIDA AVE S\", \"property_city\": \"LAKELAND\", \"property_county\": \"Polk County\", \"property_lat\": \"28.0237089\", \"property_lng\": \"-81.95731769999999\", \"property_state\": \"FL\", \"property_zip\": \"33803\", \"service_type\": \"Elevation Certificate, Elevation Certificate\", \"special_pricing\": true, \"status\": \"Pending\", \"status_code\": 1, \"updated_at\": \"2026-06-03T09:17:17\"}, \"success\": true, \"order_id\": \"1000284562\", \"customer_email\": \"missy.vancil@flagency.net\", \"service_type\": \"Elevation Certificate, Elevation Certificate\", \"county\": \"\", \"property_address\": \"1547 FLORIDA AVE S\", \"customer_name\": \"Hillsborough Title of South Shore\"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"Missy Vancil / Hillsborough Title of South Shore\", \"confidence\": \"LOW\"}, \"client_email\": {\"value\": \"missy.vancil@flagency.net\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"1547 Florida Ave S, Lakeland, FL 33803\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Polk County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"Elevation Certificate\", \"Elevation Certificate\"], \"confidence\": \"MEDIUM\", \"notes\": \"Service type lists 'Elevation Certificate' twice \\u2014 likely a data entry duplicate; confirm whether one or two separate Elevation Certificates are needed, or if a second service (e.g., flood zone determination) was intended.\"}, \"special_requirements\": {\"value\": \"Special pricing applies\", \"confidence\": \"HIGH\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property features available; county appraiser data unavailable and no aerial or email data provided.\"}, \"client_tier\": {\"value\": \"b2b\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Client name conflict: order contact is 'Missy Vancil' but customer_name field shows 'Missy Missy' and order-level customer_name shows 'Hillsborough Title of South Shore' \\u2014 confirm correct billing client name\", \"Duplicate service type entry \\u2014 confirm whether one or two Elevation Certificates are needed and for what purpose\", \"No lot size or legal description available \\u2014 county appraiser lookup failed due to missing county in request\", \"No structure square footage available\", \"No property features data (pool, shed, structures, etc.)\", \"Flood zone is null \\u2014 will be determined during fieldwork but should be confirmed post-delivery\", \"Special pricing flag is set \\u2014 confirm agreed pricing before invoicing\"], \"summary\": \"B2B order from Missy Vancil (flagency.net / possibly Hillsborough Title of South Shore) requesting one or more Elevation Certificates for 1547 Florida Ave S, Lakeland, FL 33803 (Polk County), with special pricing applied and several data conflicts requiring human review.\"}}",
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": null,
+      "data_collected_at": "2026-06-03T14:45:12.592745+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -9221,15 +9221,15 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:53.430620+00:00",
-      "updated_at": "2026-06-03T14:18:53.430620+00:00"
+      "updated_at": "2026-06-03T14:45:12.666498+00:00"
     }
   ],
   "status_counts": {
-    "details_missing": 81,
+    "details_missing": 82,
     "invoice_draft_posted": 317,
-    "invoice_finalized": 1,
-    "invoice_needed": 2
+    "invoice_sent": 1,
+    "data_collected": 1
   },
   "total": 401,
-  "generated_at": "2026-06-03T14:40:43.727110+00:00"
+  "generated_at": "2026-06-03T14:53:02.667013+00:00"
 }
