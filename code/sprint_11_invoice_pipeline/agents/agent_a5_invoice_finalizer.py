@@ -74,12 +74,11 @@ def finalize_order(order_id: str) -> dict:
             log.warning("create_invoice attempt=%d failed order=%s: %s", attempt, order_id, exc)
     else:
         # All retries exhausted
-        if message_id:
-            post_chat_reply(
-                message_id,
-                f"❌ <strong>Failed to create invoice in FTF for order {order_id} after {MAX_RETRY} attempts.</strong><br>"
-                f"Error: {last_exc}<br>Please create the invoice manually and reply APPROVE to continue."
-            )
+        post_chat_reply(
+            message_id,
+            f"❌ <strong>Failed to create invoice in FTF for order {order_id} after {MAX_RETRY} attempts.</strong><br>"
+            f"Error: {last_exc}<br>Please create the invoice manually and reply APPROVE to continue."
+        )
         raise AgentError(f"finalize_order: all retries exhausted for order {order_id}: {last_exc}")
 
     # Optional: verify invoice exists
@@ -107,12 +106,11 @@ def finalize_order(order_id: str) -> dict:
         model_used=None,
     )
 
-    # Confirm in Teams thread
-    if message_id:
-        post_chat_reply(
-            message_id,
-            f"📄 Invoice created in FTF (ID: {invoice_id}). Sending to client now..."
-        )
+    # Confirm in Teams
+    post_chat_reply(
+        message_id,
+        f"📄 Invoice created in FTF (ID: {invoice_id}). Sending to client now..."
+    )
 
     return {"invoice_id": invoice_id, "ok": True}
 

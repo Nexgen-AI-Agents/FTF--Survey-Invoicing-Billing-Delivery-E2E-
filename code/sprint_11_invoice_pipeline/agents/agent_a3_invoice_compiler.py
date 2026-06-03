@@ -582,7 +582,7 @@ def compile_for_order(order_id: str) -> dict:
         duplicates,
     )
     status_label = order_details["ng_status_desc"].strip()
-    post_result = post_chat_message(teams_html, subject=f"{status_label} — Order #{order_id} | Stage-FTF", order_id=order_id)
+    post_result = post_chat_message(teams_html, subject=f"{status_label} — Order #{order_id} | Stage-FTF")
     message_id  = post_result.get("id", "")
 
     # ── 6. Save state ─────────────────────────────────────────────────────────
