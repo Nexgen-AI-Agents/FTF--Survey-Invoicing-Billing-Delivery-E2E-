@@ -229,7 +229,7 @@ def _build_updated_draft_post(order_id: str, draft: dict, modification_count: in
     total = draft.get("total_amount", 0)
     services_lines = ""
     for svc in draft.get("services", []):
-        services_lines += f"<li><strong>{svc['name']}</strong> — ${svc.get('amount', 0):,.2f}</li>"
+        services_lines += f"<li><strong>{svc.get('name', 'Service')}</strong> — ${svc.get('amount', 0):,.2f}</li>"
 
     notes = draft.get("invoice_notes", "")
     questions = draft.get("questions_for_approver", [])

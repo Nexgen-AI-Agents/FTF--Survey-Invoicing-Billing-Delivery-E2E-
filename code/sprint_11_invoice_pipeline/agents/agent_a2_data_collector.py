@@ -564,7 +564,7 @@ def collect_for_order(order_id: str) -> dict:
                 f"emails_found={len(emails)}"
             ),
             input_summary=f"property={property_address[:60]} client={client_name[:40]}",
-            output_summary="status → details_missing; Teams alert posted",
+            output_summary="status → details_missing",
             model_used=CLASSIFIER_MODEL,
         )
         log.warning("details_missing order=%s emails=%d", order_id, len(emails))
@@ -632,7 +632,7 @@ def run() -> dict:
         order_id = db_row["order_id"]
         try:
             packet = collect_for_order(order_id)
-            if db_row.get("status") == "details_missing" or not _has_minimum_viable_data(packet):
+            if not _has_minimum_viable_data(packet):
                 summary["details_missing"] += 1
             else:
                 summary["data_collected"] += 1

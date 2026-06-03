@@ -425,7 +425,7 @@ def _build_teams_post(
 
     # Services: name + amount only (no inline description block)
     svc_lines = "".join(
-        f"&nbsp;&nbsp;• {item['name']} — <strong>${item['amount']:,.2f}</strong><br>"
+        f"&nbsp;&nbsp;• {item.get('name', 'Service')} — <strong>${item.get('amount', 0):,.2f}</strong><br>"
         for item in ai_result.get("services", [])
     ) or "&nbsp;&nbsp;• (none)<br>"
 
@@ -567,7 +567,7 @@ def compile_for_order(order_id: str) -> dict:
         order_id, packet, ai_result, link, company_info, tier,
         duplicates,
     )
-    status_label = order_details["ng_status_desc"].strip()
+    status_label = (order_details.get("ng_status_desc") or "Invoice").strip()
     post_result = post_chat_message(teams_html, subject=f"{status_label} — Order #{order_id} | Stage-FTF")
     message_id  = post_result.get("id", "")
 
