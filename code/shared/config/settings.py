@@ -98,8 +98,8 @@ TEAMS_APP_ID:        str | None = os.getenv("TEAMS_APP_ID")
 TEAMS_CLIENT_SECRET: str | None = os.getenv("TEAMS_CLIENT_SECRET")
 TEAMS_TEAM_ID:       str | None = os.getenv("TEAMS_TEAM_ID")
 TEAMS_CHANNEL_ID:    str | None = os.getenv("TEAMS_CHANNEL_ID")
-# Legacy group chat ID (thread.v2) — no longer used by the invoice pipeline.
-# Sprint 11+ uses Teams CHANNEL (tacv2) via TEAMS_TEAM_ID + TEAMS_CHANNEL_ID.
+# Teams group chat mirror (thread.v2) — when set, invoice notifications are
+# also posted here in addition to the channel.
 TEAMS_CHAT_ID:       str | None = os.getenv("TEAMS_CHAT_ID")
 # Incoming webhook URL (Logic App / Workflows) — for posting TO Teams channel
 TEAMS_INCOMING_WEBHOOK_URL: str | None = os.getenv("TEAMS_INCOMING_WEBHOOK_URL")

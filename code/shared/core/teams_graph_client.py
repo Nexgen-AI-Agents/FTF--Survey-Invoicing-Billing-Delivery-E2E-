@@ -916,6 +916,20 @@ def _fetch_latest_channel_msg_id(order_id: str = "", retries: int = 8, delay: fl
     return ""
 
 
+def _mirror_to_chat(text_or_html: str, subject: str = "") -> None:
+    """Fire-and-forget mirror of a channel message to the group chat (if configured).
+
+    Errors are logged as warnings — a chat mirror failure never blocks the channel flow.
+    Requires Chat.ReadWrite.All application permission on the Azure AD app.
+    """
+    if not TEAMS_CHAT_ID:
+        return
+    try:
+        post_chat_message(text_or_html, subject=subject)
+    except Exception as exc:
+        log.warning("chat mirror failed (non-fatal): %s", exc)
+
+
 def post_channel_message(text_or_html: str, subject: str = "", order_id: str = "") -> dict:
     """Post a new top-level message to the invoice approval Teams channel.
 
@@ -942,6 +956,7 @@ def post_channel_message(text_or_html: str, subject: str = "", order_id: str = "
         )
     log.info("channel message posted via webhook id=%s order=%s subject=%r",
              msg_id, order_id, subject)
+    _mirror_to_chat(text_or_html, subject=subject)
     return {"id": msg_id, "ok": True}
 
 
@@ -955,6 +970,7 @@ def post_channel_reply(message_id: str, text_or_html: str) -> dict:
     """
     send_channel_message(text_or_html, parent_message_id=message_id)
     log.info("channel reply posted via webhook parent_id=%s", message_id)
+    _mirror_to_chat(text_or_html)
     return {"id": "", "ok": True}
 
 
