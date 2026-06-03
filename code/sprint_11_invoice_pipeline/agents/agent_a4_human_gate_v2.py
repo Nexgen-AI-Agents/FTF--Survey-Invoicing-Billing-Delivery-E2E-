@@ -49,7 +49,7 @@ from core.excel_db import (
 from core.exceptions import AgentError
 from core.logger import get_logger
 from core.teams_graph_client import (
-    get_chat_messages, post_chat_message, post_chat_reply,
+    get_chat_messages, get_chat_thread_replies, post_chat_message, post_chat_reply,
 )
 
 AGENT_NAME = "agent_a4_human_gate_v2"
@@ -280,7 +280,7 @@ def process_order_replies(order_id: str, db_row: dict, all_msgs: Optional[list] 
         # Post one-time clarification if there's a reply mentioning this order
         all_check = all_msgs if all_msgs is not None else get_chat_messages(limit=40)
         for m in all_check:
-            if not m["is_app"] and str(order_id) in m["text"]:
+            if not m.get("is_app", False) and str(order_id) in m["text"]:
                 already = get_processed_reply_ids(order_id)
                 if m["id"] not in already:
                     mark_reply_processed(order_id, m["id"])
@@ -305,9 +305,10 @@ def process_order_replies(order_id: str, db_row: dict, all_msgs: Optional[list] 
     order_suffix = order_str[-6:]
     replies = [
         m for m in all_msgs
-        if not m["is_app"] and (
+        if not m.get("is_app", False) and (
             order_str in m["text"] or
-            bool(re.search(r'\b' + re.escape(order_suffix) + r'\b', m["text"]))
+            bool(re.search(r'\b' + re.escape(order_suffix) + r'\b', m["text"])) or
+            m.get("_order_id_tag") == order_str   # thread reply from this order's message
         )
     ]
     if not replies:
@@ -667,6 +668,39 @@ def run() -> dict:
     if len(orders) > _A4_MAX_ORDERS_PER_RUN:
         log.info("human_gate_v2: checking %d of %d pending orders (cap=%d)",
                  len(orders_to_check), len(orders), _A4_MAX_ORDERS_PER_RUN)
+
+    # ── Fetch thread replies (user clicked Reply on bot message) ─────────────
+    # get_chat_messages() only returns top-level messages. When users click the
+    # Teams Reply button on a bot invoice card, the reply goes to the thread and
+    # is invisible to A4 without this extra fetch. One API call per unique msg_id.
+    seen_thread_msg_ids: set[str] = set()
+    null_mid_count = 0
+    for row in orders_to_check:
+        mid = (row.get("approval_message_id") or "").strip()
+        if not mid:
+            null_mid_count += 1
+            continue
+        if mid in seen_thread_msg_ids:
+            continue
+        seen_thread_msg_ids.add(mid)
+        try:
+            thread_replies = get_chat_thread_replies(mid)
+            for reply in thread_replies:
+                reply["is_app"] = False
+                reply.setdefault("_order_id_tag", str(row["order_id"]))
+            if thread_replies:
+                all_msgs.extend(thread_replies)
+                log.info("thread replies fetched: %d for msg=%s order=%s",
+                         len(thread_replies), mid, row["order_id"])
+        except Exception as exc:
+            log.warning("thread reply fetch failed msg=%s order=%s: %s",
+                        mid, row.get("order_id"), exc)
+
+    if null_mid_count:
+        log.warning("%d orders have no approval_message_id — thread replies cannot be fetched for them; "
+                    "these orders require a flat chat message like: APPROVE {order_id}", null_mid_count)
+
+    log.info("human_gate_v2: %d total messages (flat+thread) ready to scan", len(all_msgs))
 
     for db_row in orders_to_check:
         order_id = db_row["order_id"]

@@ -878,6 +878,7 @@ def get_chat_thread_replies(message_id: str) -> list[dict]:
             "id":            reply.get("id", ""),
             "sender":        sender_name,
             "sender_email":  sender_email,
+            "is_app":        False,
             "text":          plain,
             "created_at_dt": created_dt,
         })
