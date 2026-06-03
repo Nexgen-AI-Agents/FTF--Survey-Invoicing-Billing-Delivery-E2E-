@@ -53,9 +53,9 @@ _review_link = (
 _NEXGEN_SIGNATURE = f"""
 <hr>
 <p>
-<strong>NexGen Surveying</strong><br>
+<strong>Nexgen Land Solutions</strong><br>
 Licensed Professional Surveyors & Mappers — Florida<br>
-Phone: (561) 508-6272 | Email: nesa@nexgenlogix.com<br>
+Phone: (561) 508-6272 | Email: info@nexgensurveying.com<br>
 <a href="https://nexgensurveying.com">nexgensurveying.com</a>
 </p>
 <p><em>
@@ -84,7 +84,7 @@ def _build_email_html(client_name: str, order_id: str, draft: dict) -> str:
 <html><body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:auto;">
 <p>Hi {first_name},</p>
 
-<p>Thank you for choosing NexGen Surveying. Please find your invoice details below for order <strong>#{order_id}</strong>.</p>
+<p>Thank you for choosing Nexgen Land Solutions. Please find your invoice details below for order <strong>#{order_id}</strong>.</p>
 
 <table width="100%" style="border-collapse:collapse;margin:20px 0;">
   <thead>
@@ -180,7 +180,7 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
 
     html    = _build_email_html(client_name, order_id, draft)
     total   = draft.get("total_amount", 0)
-    subject = f"Your Survey Invoice — Order #{order_id} — NexGen Surveying"
+    subject = f"Your Survey Invoice — Order #{order_id} — Nexgen Land Solutions"
 
     _send_smtp(to_email, subject, html)
 
