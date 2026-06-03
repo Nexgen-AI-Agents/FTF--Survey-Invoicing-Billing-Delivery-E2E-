@@ -224,6 +224,17 @@ def run() -> dict:
         except Exception as exc:
             log.error("send failed order=%s: %s", order_id, exc)
             summary["errors"] += 1
+            # Alert in Teams so the team knows the email failed — not just a log line
+            try:
+                msg_id = db_row.get("approval_message_id") or ""
+                post_chat_reply(
+                    msg_id,
+                    f"❌ <strong>Email send FAILED for order {order_id}.</strong><br>"
+                    f"Error: <code>{str(exc)[:200]}</code><br>"
+                    f"Check SMTP secrets (SMTP_HOST, SMTP_USER, SMTP_PASSWORD) in GitHub."
+                )
+            except Exception:
+                pass
         summary["processed"] += 1
 
     log.info("sender_v2 complete: %s", summary)

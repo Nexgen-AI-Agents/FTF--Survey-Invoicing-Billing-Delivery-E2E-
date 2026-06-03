@@ -513,6 +513,9 @@ def _store_learning(
         log.warning("failed to save learning order=%s: %s", order_id, exc)
 
 
+# Matches FTF order IDs (10-digit numbers starting with 1000)
+_ORDER_RE = re.compile(r'\b(1000\d{5,9})\b')
+
 # Matches common approval/rejection keywords for orphan reply detection
 _ACTION_KEYWORDS = re.compile(
     r'\b(approve|approved|reject|rejected|hold|send it|looks good|go ahead|ok|okay)\b',
@@ -706,13 +709,14 @@ def run() -> dict:
     # pattern, then fetches that message's thread replies.
     # reply_count == 0 means the API confirmed no replies → skip to save API calls.
     # reply_count == -1 (field absent in API response) → try anyway to be safe.
-    _ORDER_RE = re.compile(r'\b(1000\d{5,9})\b')
     _BOT_SCAN_LIMIT = 25
     bot_scan_count = 0
     for _msg in list(all_msgs):  # snapshot — list() prevents mutation during iteration
         if not _msg.get("is_app", False):
             continue
-        if _msg.get("id", "") in seen_thread_msg_ids:
+        if not _msg.get("id"):
+            continue  # no message ID → cannot fetch replies
+        if _msg["id"] in seen_thread_msg_ids:
             continue  # already fetched via known approval_message_id
         if _msg.get("reply_count", -1) == 0:
             continue  # API confirmed zero replies — skip
