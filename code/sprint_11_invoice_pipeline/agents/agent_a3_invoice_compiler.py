@@ -469,10 +469,12 @@ def _build_teams_post(
         f"{flags_block}"
         f"{dup_block}"
         f"<br><br>"
-        f"<a href=\"{link}\">🔗 View in FTF</a><br>"
-        f"<code>APPROVE {order_id}</code> &nbsp;·&nbsp; "
-        f"<code>REJECT {order_id} [reason]</code> &nbsp;·&nbsp; "
-        f"<code>HOLD {order_id}</code><br>"
+        f"<a href=\"{link}\">🔗 View in FTF</a><br><br>"
+        f"<strong>Reply options:</strong><br>"
+        f"&nbsp;&nbsp;<code>Hey @Nesa approve {order_id}</code><br>"
+        f"&nbsp;&nbsp;<code>Hey @Nesa reject {order_id} [reason]</code><br>"
+        f"&nbsp;&nbsp;<code>Hey @Nesa hold {order_id}</code><br>"
+        f"&nbsp;&nbsp;<code>Hey @Nesa change price to $[amount] for {order_id}</code><br>"
         f"<small>Approvers: {', '.join(s.capitalize() for s in APPROVED_SENDERS)}</small>"
     )
 
@@ -577,9 +579,9 @@ def compile_for_order(order_id: str) -> dict:
             f"<strong>Service:</strong> {service_type or 'Unknown'}<br>"
             f"<strong>Reason AI couldn't price:</strong> {reason_text}</p>"
             f"<p>Please reply in this chat:<br>"
-            f"&nbsp;&nbsp;<code>PRICE {order_id} $[amount]</code> — to set price and auto-approve<br>"
-            f"&nbsp;&nbsp;<code>PRICE {order_id} [service] $[amount]</code> — to name the line item<br>"
-            f"&nbsp;&nbsp;<code>SKIP {order_id}</code> — to skip this order<br>"
+            f"&nbsp;&nbsp;<code>Hey @Nesa price {order_id} $[amount]</code> — set price and auto-approve<br>"
+            f"&nbsp;&nbsp;<code>Hey @Nesa price {order_id} [service name] $[amount]</code> — name the line item<br>"
+            f"&nbsp;&nbsp;<code>Hey @Nesa skip {order_id}</code> — skip this order<br>"
             f"I'll learn your pricing rule for future similar orders.</p>"
         )
         post_result = post_chat_message(ask_html, subject=f"Pricing needed — Order {order_id}")

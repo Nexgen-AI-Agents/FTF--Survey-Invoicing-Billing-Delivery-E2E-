@@ -523,6 +523,9 @@ _ACTION_KEYWORDS = re.compile(
     re.IGNORECASE,
 )
 
+# Matches "Hey @Nesa" with optional space between Hey and @Nesa
+_NESA_MENTION_RE = re.compile(r'hey\s*@\s*nesa\b', re.IGNORECASE)
+
 
 def _handle_orphan_replies(all_pending_orders: list[dict], all_msgs: Optional[list] = None) -> None:
     """Handle action messages that mention no specific order_id.
@@ -630,8 +633,167 @@ _SKIP_RE    = re.compile(r'\bSKIP\s+(\d{9,12})\b', re.IGNORECASE)
 
 _A4_MAX_ORDERS_PER_RUN = int(os.getenv("A4_MAX_ORDERS_PER_RUN", "50"))
 
+_NESA_PROMPT = """You are Nesa, an AI invoice assistant for NexGen Land Solutions.
+A user has tagged you directly in a Teams message. Analyze their message and decide what to do.
 
-def _save_learned_price(service_type: str, county: str, amount: float, learned_from: str, order_id: str) -> None:
+Pending orders context:
+{orders_context}
+
+User message (everything after "Hey @Nesa"):
+\"\"\"{command}\"\"\"
+
+Respond with JSON only:
+{{
+  "intent": "approve|reject|hold|price|skip|question|reprice|general",
+  "order_id": "1000XXXXXX or null if unclear",
+  "amount": 0.0,
+  "service_name": "service name if repricing",
+  "reject_reason": "reason string if rejecting",
+  "reply_text": "your conversational reply to post back in Teams (plain text, max 2 sentences)",
+  "confidence": "HIGH|MEDIUM|LOW"
+}}
+
+intent definitions:
+- approve: user wants to approve an order
+- reject: user wants to reject/cancel an order
+- hold: user wants to defer/pause an order
+- price: user is providing a price for an unpriced order (pricing_needed status)
+- skip: user wants to skip/ignore an order
+- reprice: user wants to change the price on an already-drafted order
+- question: user is asking Nesa something (answer in reply_text)
+- general: general chat/comment (acknowledge politely in reply_text)
+"""
+
+
+def _handle_nesa_mentions(all_msgs: list[dict], all_orders: list[dict],
+                           pricing_orders: list[dict]) -> dict:
+    """Handle any message that directly tags 'Hey @Nesa [command]'."""
+    summary = {"handled": 0}
+    already_handled = get_processed_reply_ids("__nesa__")
+
+    # Build a short context of pending orders for the LLM
+    all_pending = all_orders + pricing_orders
+    orders_context = "\n".join(
+        f"  - {str(r['order_id'])} | {r.get('service_type','?')} | "
+        f"{r.get('property_address','?')[:40]} | status={r.get('status','?')} | "
+        f"${r.get('estimate_amount') or 0:.0f}"
+        for r in all_pending[:20]
+    ) or "  (none currently pending)"
+
+    for msg in all_msgs:
+        if msg.get("is_app", False):
+            continue
+        if msg["id"] in already_handled:
+            continue
+        if not _NESA_MENTION_RE.search(msg["text"]):
+            continue
+
+        sender       = msg["sender"]
+        sender_email = msg.get("sender_email", "")
+        if not _is_approved_sender(sender, sender_email):
+            mark_reply_processed("__nesa__", msg["id"])
+            continue
+
+        mark_reply_processed("__nesa__", msg["id"])
+
+        # Extract the command — everything after "Hey @Nesa"
+        command = _NESA_MENTION_RE.sub("", msg["text"]).strip(" ,:.\n")
+        if not command:
+            command = "(no further text)"
+
+        log.info("nesa mention from %s: %r", sender, command[:120])
+
+        # Ask Claude to interpret
+        try:
+            prompt  = _NESA_PROMPT.format(orders_context=orders_context, command=command)
+            raw     = llm_call(prompt, max_tokens=400)
+            parsed  = json.loads(re.sub(r"^```[a-z]*\n?", "", raw).rstrip("`").strip())
+        except Exception as exc:
+            log.warning("nesa mention LLM parse failed: %s", exc)
+            post_chat_message(
+                f"Hey {sender}! I saw your message but had trouble understanding it. "
+                f"Try: <code>Hey @Nesa approve [order_id]</code> or <code>Hey @Nesa price [order_id] $[amount]</code>",
+                subject="",
+            )
+            continue
+
+        intent      = parsed.get("intent", "general")
+        order_id    = str(parsed.get("order_id") or "").strip()
+        amount      = float(parsed.get("amount") or 0)
+        reply_text  = parsed.get("reply_text") or ""
+        confidence  = parsed.get("confidence", "LOW")
+
+        log.info("nesa intent=%s order=%s amount=%.2f confidence=%s", intent, order_id, amount, confidence)
+
+        # Route by intent
+        if intent == "approve" and order_id and confidence in ("HIGH", "MEDIUM"):
+            db = get_order_by_id(order_id)
+            if db:
+                save_order_state(order_id, status="invoice_approved", approved_by=sender)
+                post_chat_message(
+                    f"✅ Got it {sender}! Order {order_id} approved. Creating invoice in FTF and sending email shortly.",
+                    subject="",
+                )
+                summary["handled"] += 1
+
+        elif intent == "reject" and order_id and confidence in ("HIGH", "MEDIUM"):
+            reason = parsed.get("reject_reason") or command
+            save_order_state(order_id, status="invoice_rejected")
+            post_chat_message(
+                f"❌ Order {order_id} rejected. Reason: {reason[:100]}",
+                subject="",
+            )
+            summary["handled"] += 1
+
+        elif intent == "hold" and order_id:
+            save_order_state(order_id, status="invoice_draft_posted")
+            post_chat_message(
+                f"⏸️ Order {order_id} put on hold. I'll wait for your next instruction.",
+                subject="",
+            )
+            summary["handled"] += 1
+
+        elif intent in ("price", "reprice") and order_id and amount > 0:
+            svc = parsed.get("service_name") or (get_order_by_id(order_id) or {}).get("service_type") or "Survey Service"
+            new_draft = {
+                "total_amount": amount,
+                "services": [{"name": svc, "description": f"Priced manually by {sender}.", "amount": amount}],
+                "pricing_reasoning": f"Manual price set by {sender} via Hey @Nesa: ${amount:.2f}",
+                "confidence": "HIGH", "escalate_flag": False, "escalate_reason": None,
+                "flags": [f"MANUAL_PRICE: Set by {sender}."],
+            }
+            county = ""
+            try:
+                db  = get_order_by_id(order_id)
+                ds  = json.loads(db.get("data_sources") or "{}") if db else {}
+                county = ds.get("ftf_order", {}).get("data", {}).get("property_county") or ""
+            except Exception:
+                pass
+            _save_learned_price(svc, county, amount, sender, order_id)
+            save_order_state(order_id, status="invoice_approved", invoice_draft=json.dumps(new_draft),
+                             approved_by=sender, estimate_amount=amount)
+            post_chat_message(
+                f"✅ Price set to ${amount:,.2f} for order {order_id}, approved by {sender}. "
+                f"Creating invoice and sending email shortly. I've learned this pricing rule for future {svc} orders.",
+                subject="",
+            )
+            summary["handled"] += 1
+
+        elif reply_text:
+            post_chat_message(f"Hey {sender}! {reply_text}", subject="")
+            summary["handled"] += 1
+
+        elif confidence == "LOW" or intent in ("question", "general"):
+            post_chat_message(
+                f"Hey {sender}! {reply_text or 'Understood — let me know if you need anything specific.'}<br>"
+                f"<small>Tip: <code>Hey @Nesa approve [order_id]</code> · "
+                f"<code>Hey @Nesa reject [order_id] [reason]</code> · "
+                f"<code>Hey @Nesa price [order_id] $[amount]</code></small>",
+                subject="",
+            )
+            summary["handled"] += 1
+
+    return summary(service_type: str, county: str, amount: float, learned_from: str, order_id: str) -> None:
     """Persist a user-provided price to learned_rules.json for A3 to reuse."""
     try:
         try:
@@ -804,13 +966,19 @@ def run() -> dict:
         summary["errors"] = len(orders)
         return summary
 
-    # ── Handle pricing_needed even if no invoice_draft_posted orders ─────────
-    if not orders and pricing_orders:
-        pricing_result = _handle_pricing_needed(pricing_orders, all_msgs)
-        summary["priced"]   = pricing_result.get("priced", 0)
-        summary["skipped"]  = pricing_result.get("skipped", 0)
-        summary["approved"] = pricing_result.get("priced", 0)
-        log.info("human_gate_v2 complete (pricing only): %s", summary)
+    # ── Handle pricing_needed + @Nesa mentions even if no approval orders ──────
+    if not orders:
+        if pricing_orders:
+            pricing_result = _handle_pricing_needed(pricing_orders, all_msgs)
+            summary["priced"]   = pricing_result.get("priced", 0)
+            summary["skipped"]  = pricing_result.get("skipped", 0)
+            summary["approved"] = pricing_result.get("priced", 0)
+        try:
+            nesa_result = _handle_nesa_mentions(all_msgs, orders, pricing_orders)
+            summary["nesa_handled"] = nesa_result.get("handled", 0)
+        except Exception as exc:
+            log.warning("nesa mention handler failed: %s", exc)
+        log.info("human_gate_v2 complete (pricing/nesa only): %s", summary)
         return summary
 
     # ── Cap orders per run — sort newest-posted first so recent orders get checked ──
@@ -936,6 +1104,13 @@ def run() -> dict:
                 summary["approved"] += pricing_result["priced"]
         except Exception as exc:
             log.warning("pricing_needed handler failed: %s", exc)
+
+    # ── Handle direct @Nesa mentions — "Hey @Nesa [command]" ──────────────────
+    try:
+        nesa_result = _handle_nesa_mentions(all_msgs, orders, pricing_orders)
+        summary["nesa_handled"] = nesa_result.get("handled", 0)
+    except Exception as exc:
+        log.warning("nesa mention handler failed: %s", exc)
 
     log.info("human_gate_v2 complete: %s", summary)
     return summary
