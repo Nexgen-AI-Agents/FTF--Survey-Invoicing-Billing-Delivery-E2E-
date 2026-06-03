@@ -50,65 +50,134 @@ _review_link = (
     else "Google review"
 )
 
-_NEXGEN_SIGNATURE = f"""
-<hr>
-<p>
-<strong>Nexgen Land Solutions</strong><br>
-Licensed Professional Surveyors & Mappers — Florida<br>
-Phone: (561) 508-6272 | Email: info@nexgensurveying.com<br>
-<a href="https://nexgensurveying.com">nexgensurveying.com</a>
-</p>
-<p><em>
-If our service exceeded your expectations, we'd truly appreciate a quick
-{_review_link} — it means the world to our small team. Thank you!
-</em></p>
-"""
+_SMTP_FROM_DISPLAY = "Nexgen Land Solutions <nesa@nexgenlogix.com>"
+_CONTACT_PHONE     = "(561) 508-6272"
+_CONTACT_EMAIL     = "info@nexgensurveying.com"
+_CONTACT_WEB       = "nexgensurveying.com"
 
 
 def _build_email_html(client_name: str, order_id: str, draft: dict) -> str:
-    services = draft.get("services", [])
-    total    = draft.get("total_amount", 0)
-
+    services   = draft.get("services", [])
+    total      = draft.get("total_amount", 0)
     first_name = client_name.split()[0] if client_name else "there"
 
-    rows = ""
+    # Service rows — name on left, amount on right, description as small grey note
+    svc_rows = ""
     for svc in services:
-        rows += f"""
-<tr>
-  <td style="padding:8px;border-bottom:1px solid #eee;">{svc.get('name', '')}</td>
-  <td style="padding:8px;border-bottom:1px solid #eee;">{svc.get('description', '')}</td>
-  <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${svc.get('amount', 0):,.2f}</td>
-</tr>"""
+        name   = svc.get("name", "Service")
+        desc   = svc.get("description", "")
+        amount = svc.get("amount", 0)
+        desc_row = (
+            f'<tr><td colspan="2" style="padding:0 12px 10px;color:#888;font-size:12px;">{desc}</td></tr>'
+            if desc else ""
+        )
+        svc_rows += f"""
+<tr style="border-top:1px solid #e8e8e8;">
+  <td style="padding:12px 12px 4px;font-size:14px;color:#333;">{name}</td>
+  <td style="padding:12px 12px 4px;text-align:right;font-size:14px;color:#333;font-weight:600;">${amount:,.2f}</td>
+</tr>{desc_row}"""
 
-    return f"""
-<html><body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:auto;">
-<p>Hi {first_name},</p>
+    # mailto action links — pre-fill subject so the client just hits Send
+    accept_href  = f"mailto:{_CONTACT_EMAIL}?subject=ACCEPT%20Order%20%23{order_id}&body=Hi%2C%20I%20accept%20the%20estimate%20for%20order%20%23{order_id}.%20Please%20proceed."
+    question_href = f"mailto:{_CONTACT_EMAIL}?subject=Question%20about%20Order%20%23{order_id}&body=Hi%2C%20I%20have%20a%20question%20about%20my%20estimate%20for%20order%20%23{order_id}."
+    decline_href  = f"mailto:{_CONTACT_EMAIL}?subject=DECLINE%20Order%20%23{order_id}&body=Hi%2C%20I%20would%20like%20to%20decline%20the%20estimate%20for%20order%20%23{order_id}.%20Reason%3A%20"
 
-<p>Thank you for choosing Nexgen Land Solutions. Please find your invoice details below for order <strong>#{order_id}</strong>.</p>
+    review_block = (
+        f'<p style="margin:12px 0 0;font-size:12px;color:#999;">'
+        f'Loved our service? A quick {_review_link} means the world to our team. Thank you!'
+        f'</p>'
+    ) if _GOOGLE_REVIEW_URL else ""
 
-<table width="100%" style="border-collapse:collapse;margin:20px 0;">
-  <thead>
-    <tr style="background:#f5f5f5;">
-      <th style="padding:10px;text-align:left;">Service</th>
-      <th style="padding:10px;text-align:left;">Description</th>
-      <th style="padding:10px;text-align:right;">Amount</th>
-    </tr>
-  </thead>
-  <tbody>{rows}</tbody>
-  <tfoot>
-    <tr style="font-weight:bold;">
-      <td colspan="2" style="padding:10px;">Total</td>
-      <td style="padding:10px;text-align:right;">${total:,.2f}</td>
-    </tr>
-  </tfoot>
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Survey Estimate — Order #{order_id}</title></head>
+<body style="margin:0;padding:0;background:#f2f4f7;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f2f4f7;">
+<tr><td align="center" style="padding:32px 16px;">
+
+  <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+
+    <!-- Header -->
+    <tr><td style="background:#1a3a5c;padding:28px 32px;">
+      <p style="margin:0;color:#ffffff;font-size:22px;font-weight:bold;letter-spacing:-0.3px;">Nexgen Land Solutions</p>
+      <p style="margin:6px 0 0;color:#8eb8d8;font-size:13px;">Licensed Professional Surveyors &amp; Mappers — Florida</p>
+    </td></tr>
+
+    <!-- Greeting -->
+    <tr><td style="padding:28px 32px 0;">
+      <p style="margin:0 0 6px;color:#222;font-size:17px;font-weight:600;">Hi {first_name},</p>
+      <p style="margin:0;color:#555;font-size:14px;line-height:1.7;">
+        Thank you for choosing Nexgen Land Solutions.<br>
+        Here is your survey estimate for order <strong>#{order_id}</strong>. Please review it and let us know how you'd like to proceed.
+      </p>
+    </td></tr>
+
+    <!-- Services table -->
+    <tr><td style="padding:20px 32px 0;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e8e8;border-radius:6px;overflow:hidden;">
+        <tr style="background:#f7f9fc;">
+          <td style="padding:10px 12px;font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Service</td>
+          <td style="padding:10px 12px;font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;text-align:right;">Amount</td>
+        </tr>
+        {svc_rows}
+      </table>
+    </td></tr>
+
+    <!-- Total -->
+    <tr><td style="padding:16px 32px 0;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#eef4fb;border:1px solid #c5d9ef;border-radius:6px;">
+        <tr>
+          <td style="padding:16px 20px;color:#1a3a5c;font-size:14px;font-weight:600;">Total Amount Due</td>
+          <td style="padding:16px 20px;text-align:right;color:#1a3a5c;font-size:28px;font-weight:700;">${total:,.2f}</td>
+        </tr>
+      </table>
+    </td></tr>
+
+    <!-- Payment info -->
+    <tr><td style="padding:16px 32px 0;">
+      <p style="margin:0;color:#666;font-size:13px;line-height:1.7;">
+        <strong>Payment due upon survey completion.</strong><br>
+        We accept: &nbsp; ✔ Credit / Debit Card &nbsp; ✔ ACH / Bank Transfer &nbsp; ✔ Check
+      </p>
+    </td></tr>
+
+    <!-- Action buttons -->
+    <tr><td style="padding:24px 32px 0;">
+      <p style="margin:0 0 14px;color:#333;font-size:14px;font-weight:600;">What would you like to do?</p>
+      <table cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="border-radius:6px;background:#1e7e34;">
+            <a href="{accept_href}" style="display:inline-block;padding:12px 22px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">&#10003;&nbsp; Accept &amp; Pay</a>
+          </td>
+          <td style="width:10px;"></td>
+          <td style="border-radius:6px;background:#1a3a5c;">
+            <a href="{question_href}" style="display:inline-block;padding:12px 22px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;">&#63;&nbsp; Ask a Question</a>
+          </td>
+          <td style="width:10px;"></td>
+          <td style="border-radius:6px;border:1px solid #cccccc;">
+            <a href="{decline_href}" style="display:inline-block;padding:12px 22px;color:#777777;text-decoration:none;font-size:14px;font-weight:600;">Decline</a>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:12px 0 0;color:#aaa;font-size:12px;">
+        You can also reply directly to this email — we usually respond within one business day.
+      </p>
+    </td></tr>
+
+    <!-- Footer -->
+    <tr><td style="padding:28px 32px;margin-top:20px;border-top:1px solid #eeeeee;">
+      <p style="margin:0;color:#888;font-size:12px;line-height:1.8;">
+        <strong style="color:#555;">Nexgen Land Solutions</strong><br>
+        {_CONTACT_PHONE} &nbsp;|&nbsp; <a href="mailto:{_CONTACT_EMAIL}" style="color:#1a3a5c;text-decoration:none;">{_CONTACT_EMAIL}</a><br>
+        <a href="https://{_CONTACT_WEB}" style="color:#1a3a5c;text-decoration:none;">{_CONTACT_WEB}</a>
+      </p>
+      {review_block}
+    </td></tr>
+
+  </table>
+</td></tr>
 </table>
-
-<p>
-Payment is due upon completion of the survey. We accept check, ACH, or credit card.
-If you have any questions about this invoice, please don't hesitate to reach out.
-</p>
-
-{_NEXGEN_SIGNATURE}
 </body></html>""".strip()
 
 
@@ -117,9 +186,10 @@ def _send_smtp(to_email: str, subject: str, html_body: str) -> bool:
         raise AgentError("SMTP not configured — set SMTP_HOST, SMTP_USER, SMTP_PASSWORD in .env")
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"]    = SMTP_FROM
-    msg["To"]      = to_email
+    msg["Subject"]  = subject
+    msg["From"]     = _SMTP_FROM_DISPLAY
+    msg["To"]       = to_email
+    msg["Reply-To"] = _CONTACT_EMAIL
     msg.attach(MIMEText(html_body, "html"))
 
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
