@@ -1,12 +1,12 @@
 name: Feedback Learner (A7)
 
-# Runs every 5 minutes — lightweight standalone A7 only.
+# Runs every 30 minutes — lightweight standalone A7 only.
 # Checks Teams threads for new user replies and pending confirmation responses.
 # Full invoice pipeline (A0-A6) runs separately every 30 min.
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "15,45 * * * *"
   workflow_dispatch:
 
 permissions:
