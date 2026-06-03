@@ -546,10 +546,17 @@ def _handle_orphan_replies(all_pending_orders: list[dict]) -> None:
 
         mark_reply_processed("__orphan__", msg["id"])
 
+        def _reply(mid: str, html: str) -> None:
+            """Post to the order's message if we have its ID, else post as new chat message."""
+            if mid:
+                post_chat_reply(mid, html)
+            else:
+                post_chat_message(html, subject="")
+
         if len(all_pending_orders) == 1:
             target_row = all_pending_orders[0]
             target_id  = pending_ids[0]
-            message_id = target_row.get("approval_message_id", "")
+            message_id = target_row.get("approval_message_id") or ""
 
             try:
                 current_draft = json.loads(target_row.get("invoice_draft") or "{}")
@@ -566,29 +573,37 @@ def _handle_orphan_replies(all_pending_orders: list[dict]) -> None:
             if action in ("approve", "reject", "hold") and confidence == "HIGH":
                 if action == "approve":
                     save_order_state(target_id, status="invoice_approved", approved_by=sender)
-                    post_chat_reply(message_id, f"✅ <strong>Invoice approved by {sender}.</strong> Sending to client shortly...")
+                    _reply(message_id, f"✅ <strong>Invoice approved by {sender}.</strong> Sending to client shortly...")
                 elif action == "reject":
                     reason = parsed.get("reject_reason") or text
                     save_order_state(target_id, status="invoice_rejected")
-                    post_chat_reply(message_id, f"❌ <strong>Invoice rejected.</strong> Reason: {reason}")
+                    _reply(message_id, f"❌ <strong>Invoice rejected.</strong> Reason: {reason}")
                 elif action == "hold":
                     save_order_state(target_id, status="on_hold")
-                    post_chat_reply(message_id, f"⏸️ <strong>Invoice held by {sender}.</strong> Reply APPROVE {target_id} or REJECT {target_id} when ready.")
+                    _reply(message_id, f"⏸️ <strong>Invoice held by {sender}.</strong> Reply APPROVE {target_id} or REJECT {target_id} when ready.")
             else:
-                # Ambiguous or modification — ask to include order number
-                post_chat_reply(
+                _reply(
                     message_id,
                     f"💬 Looks like you're responding about order <strong>#{target_id}</strong>.<br>"
                     f"Please include the order number so I process it correctly, e.g.:<br>"
                     f"<code>APPROVE {target_id}</code> or <code>REJECT {target_id} [reason]</code>"
                 )
         else:
-            order_list = " / ".join(f"<code>{oid}</code>" for oid in pending_ids[:5])
+            # Show the 5 most recently posted orders — most likely what the user just saw in Teams
+            recent = sorted(
+                all_pending_orders,
+                key=lambda r: r.get("draft_posted_at") or "",
+                reverse=True,
+            )[:5]
+            recent_ids  = [str(r["order_id"]) for r in recent]
+            order_lines = "<br>".join(
+                f"&nbsp;&nbsp;• <code>{r['order_id']}</code> — {r.get('client_name','?')} · {r.get('property_address','?')[:40]}"
+                for r in recent
+            )
             post_chat_message(
-                f"❓ <strong>Multiple orders are pending approval.</strong><br>"
-                f"Which order are you responding to? {order_list}<br>"
-                f"Reply with the order number, e.g. <code>APPROVE {pending_ids[0]}</code><br>"
-                f"@Robert @Ryan — please clarify.",
+                f"❓ <strong>Which order?</strong> You said <em>\"{text[:60]}\"</em> but didn't include an order number.<br>"
+                f"Most recent orders waiting for approval:<br>{order_lines}<br><br>"
+                f"Reply with: <code>APPROVE {recent_ids[0]}</code> or <code>REJECT {recent_ids[0]} [reason]</code>",
                 subject="",
             )
 
