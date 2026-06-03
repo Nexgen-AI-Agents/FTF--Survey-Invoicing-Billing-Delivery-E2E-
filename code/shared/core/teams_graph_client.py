@@ -822,6 +822,7 @@ def get_chat_messages(limit: int = 50) -> list[dict]:
             created_dt = datetime.now(timezone.utc)
 
         sender_email = (user_ref.get("userPrincipalName") or "").lower()
+        reply_count  = int(msg.get("replyCount") or 0)
         results.append({
             "id":            msg.get("id", ""),
             "sender":        sender_name,
@@ -830,6 +831,7 @@ def get_chat_messages(limit: int = 50) -> list[dict]:
             "text":          plain,
             "raw_html":      raw_body,
             "created_at_dt": created_dt,
+            "reply_count":   reply_count,
         })
 
     return results

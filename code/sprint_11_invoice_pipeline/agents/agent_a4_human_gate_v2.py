@@ -537,7 +537,7 @@ def _handle_orphan_replies(all_pending_orders: list[dict], all_msgs: Optional[li
     already  = get_processed_reply_ids("__orphan__")
 
     for msg in all_msgs:
-        if msg["is_app"] or msg["id"] in already:
+        if msg.get("is_app", False) or msg["id"] in already:
             continue
 
         text = msg["text"]
@@ -697,10 +697,53 @@ def run() -> dict:
                         mid, row.get("order_id"), exc)
 
     if null_mid_count:
-        log.warning("%d orders have no approval_message_id — thread replies cannot be fetched for them; "
-                    "these orders require a flat chat message like: APPROVE {order_id}", null_mid_count)
+        log.warning("%d orders have no approval_message_id — will cover via bot-scan below",
+                    null_mid_count)
 
-    log.info("human_gate_v2: %d total messages (flat+thread) ready to scan", len(all_msgs))
+    # ── Bot-scan: fetch thread replies from bot invoice cards in the flat list ──
+    # Covers orders where approval_message_id was never stored (Logic App didn't
+    # return {"id": "..."}). Scans every app/bot message that contains an order_id
+    # pattern, then fetches that message's thread replies.
+    # reply_count == 0 means the API confirmed no replies → skip to save API calls.
+    # reply_count == -1 (field absent in API response) → try anyway to be safe.
+    _ORDER_RE = re.compile(r'\b(1000\d{5,9})\b')
+    _BOT_SCAN_LIMIT = 25
+    bot_scan_count = 0
+    for _msg in list(all_msgs):  # snapshot — list() prevents mutation during iteration
+        if not _msg.get("is_app", False):
+            continue
+        if _msg.get("id", "") in seen_thread_msg_ids:
+            continue  # already fetched via known approval_message_id
+        if _msg.get("reply_count", -1) == 0:
+            continue  # API confirmed zero replies — skip
+        if bot_scan_count >= _BOT_SCAN_LIMIT:
+            break
+
+        _order_match = _ORDER_RE.search(_msg.get("text", ""))
+        if not _order_match:
+            continue  # not an invoice card
+
+        _bot_msg_id   = _msg["id"]
+        _bot_order_id = _order_match.group(0)
+        seen_thread_msg_ids.add(_bot_msg_id)
+        bot_scan_count += 1
+
+        try:
+            _thread = get_chat_thread_replies(_bot_msg_id)
+            for _r in _thread:
+                _r["is_app"] = False
+                _r.setdefault("_order_id_tag", _bot_order_id)
+            if _thread:
+                all_msgs.extend(_thread)
+                log.info("bot-scan: %d thread replies msg=%s order=%s",
+                         len(_thread), _bot_msg_id, _bot_order_id)
+        except Exception as _exc:
+            log.warning("bot-scan thread fetch failed msg=%s order=%s: %s",
+                        _bot_msg_id, _bot_order_id, _exc)
+
+    log.info("human_gate_v2: bot-scan checked %d bot messages; "
+             "%d total messages (flat+thread) ready to scan",
+             bot_scan_count, len(all_msgs))
 
     for db_row in orders_to_check:
         order_id = db_row["order_id"]
