@@ -42,6 +42,7 @@ from config.settings import APPROVED_SENDERS, APPROVED_SENDER_EMAILS, APPROVED_S
 from core.claude_client import call as llm_call
 from core.excel_db import (
     get_orders_awaiting_invoice_approval, get_order_by_id,
+    get_orders_by_status,
     get_processed_reply_ids, increment_modification_count,
     mark_reply_processed, save_invoice_learning,
     save_order_state, log_decision,
@@ -623,7 +624,146 @@ def _handle_orphan_replies(all_pending_orders: list[dict], all_msgs: Optional[li
             )
 
 
+_RULES_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "learned_rules.json")
+_PRICE_RE   = re.compile(r'\$?\s*(\d+(?:\.\d{1,2})?)', re.IGNORECASE)
+_SKIP_RE    = re.compile(r'\bSKIP\s+(\d{9,12})\b', re.IGNORECASE)
+
 _A4_MAX_ORDERS_PER_RUN = int(os.getenv("A4_MAX_ORDERS_PER_RUN", "50"))
+
+
+def _save_learned_price(service_type: str, county: str, amount: float, learned_from: str, order_id: str) -> None:
+    """Persist a user-provided price to learned_rules.json for A3 to reuse."""
+    try:
+        try:
+            with open(_RULES_FILE) as f:
+                data = json.load(f)
+        except Exception:
+            data = {"rules": [], "order_overrides": {}}
+
+        data.setdefault("rules", [])
+        data["rules"].append({
+            "type": "user_price_override",
+            "status": "active",
+            "service_type": service_type,
+            "county": county,
+            "price": amount,
+            "description": (
+                f"User-taught price: {service_type} in {county or 'any county'} = ${amount:.2f}"
+                f" (taught by {learned_from}, order {order_id})"
+            ),
+        })
+        with open(_RULES_FILE, "w") as f:
+            json.dump(data, f, indent=2)
+        log.info("learned price saved: %s / %s = $%.2f (from %s)", service_type, county, amount, learned_from)
+    except Exception as exc:
+        log.warning("failed to save learned price: %s", exc)
+
+
+def _handle_pricing_needed(pricing_orders: list[dict], all_msgs: list[dict]) -> dict:
+    """Process PRICE / SKIP replies for orders stuck at pricing_needed."""
+    summary = {"priced": 0, "skipped": 0, "errors": 0}
+
+    for row in pricing_orders:
+        order_id   = str(row["order_id"])
+        message_id = (row.get("approval_message_id") or "").strip()
+        already    = get_processed_reply_ids(order_id)
+
+        # Also fetch thread replies for this order's "pricing needed" message
+        thread_msgs: list[dict] = []
+        if message_id:
+            try:
+                thread_msgs = get_chat_thread_replies(message_id)
+                for m in thread_msgs:
+                    m.setdefault("is_app", False)
+            except Exception:
+                pass
+
+        candidates = [m for m in (all_msgs + thread_msgs)
+                      if not m.get("is_app", False) and m["id"] not in already
+                      and (order_id in m["text"] or m.get("_order_id_tag") == order_id)]
+
+        for msg in candidates:
+            sender       = msg["sender"]
+            sender_email = msg.get("sender_email", "")
+            if not _is_approved_sender(sender, sender_email):
+                mark_reply_processed(order_id, msg["id"])
+                continue
+
+            text = msg["text"].strip()
+            mark_reply_processed(order_id, msg["id"])
+
+            # SKIP command
+            if _SKIP_RE.search(text) or (re.search(r'\bskip\b', text, re.I) and order_id in text):
+                save_order_state(order_id, status="pricing_skipped")
+                post_chat_reply(message_id, f"⏭️ Order {order_id} skipped. It won't be processed unless you reopen it.")
+                log.info("order=%s pricing_skipped by %s", order_id, sender)
+                summary["skipped"] += 1
+                break
+
+            # PRICE command — parse amount from "PRICE 1000263795 $475" or free text
+            price_match = _PRICE_RE.search(text)
+            if not price_match:
+                # Ask for clarification
+                post_chat_reply(
+                    message_id,
+                    f"❓ I couldn't read a dollar amount from your reply for order {order_id}.<br>"
+                    f"Please reply: <code>PRICE {order_id} $[amount]</code>"
+                )
+                continue
+
+            amount = float(price_match.group(1))
+            if amount <= 0:
+                post_chat_reply(message_id, f"❓ Amount must be > $0. Reply: <code>PRICE {order_id} $[amount]</code>")
+                continue
+
+            # Extract service name from message (after PRICE {order_id})
+            svc_name = row.get("service_type") or "Survey Service"
+            svc_match = re.search(r'PRICE\s+\d+\s+([\w\s]+?)\s+\$', text, re.I)
+            if svc_match:
+                svc_name = svc_match.group(1).strip().title()
+
+            # Build a proper invoice draft
+            new_draft = {
+                "total_amount": amount,
+                "services": [{"name": svc_name, "description": f"Per pricing provided by {sender}.", "amount": amount}],
+                "pricing_reasoning": f"Price set manually by {sender}: ${amount:.2f}",
+                "confidence": "HIGH",
+                "escalate_flag": False,
+                "escalate_reason": None,
+                "flags": [f"MANUAL_PRICE: Set by {sender} on order {order_id}."],
+            }
+
+            # Save learned rule
+            county = ""
+            try:
+                db = get_order_by_id(order_id)
+                import json as _json
+                ds = _json.loads(db.get("data_sources") or "{}") if db else {}
+                county = (ds.get("ftf_order", {}).get("data", {}).get("property_county") or "")
+            except Exception:
+                pass
+            _save_learned_price(svc_name, county, amount, sender, order_id)
+
+            # Approve directly — user set the price AND implicitly approved it
+            save_order_state(
+                order_id,
+                status="invoice_approved",
+                invoice_draft=json.dumps(new_draft),
+                approved_by=sender,
+                estimate_amount=amount,
+            )
+            post_chat_reply(
+                message_id,
+                f"✅ <strong>Price set to ${amount:,.2f} by {sender}.</strong> Invoice approved — creating in FTF and sending email shortly.<br>"
+                f"<small>I've learned this pricing rule for future {svc_name} orders{' in ' + county if county else ''}.</small>"
+            )
+            log.info("order=%s priced by %s: $%.2f -> invoice_approved", order_id, sender, amount)
+            log_decision(AGENT_NAME, "invoice_approved", order_id,
+                         f"manual price ${amount:.2f} set by {sender}", f"service={svc_name}", f"total={amount}")
+            summary["priced"] += 1
+            break
+
+    return summary
 
 
 def run() -> dict:
@@ -633,11 +773,14 @@ def run() -> dict:
     calls per run and the rate-limit failures that caused silent no-ops.
     """
     orders  = get_orders_awaiting_invoice_approval()
+    pricing_orders = get_orders_by_status("pricing_needed")
     summary = {"checked": 0, "approved": 0, "rejected": 0, "on_hold": 0,
-               "modified": 0, "errors": 0, "no_reply": 0, "total_pending": len(orders)}
+               "modified": 0, "errors": 0, "no_reply": 0,
+               "priced": 0, "skipped": 0,
+               "total_pending": len(orders), "total_pricing_needed": len(pricing_orders)}
 
-    if not orders:
-        log.info("human_gate_v2: no orders awaiting approval")
+    if not orders and not pricing_orders:
+        log.info("human_gate_v2: no orders awaiting approval or pricing")
         return summary
 
     # ── Fetch chat messages ONCE ─────────────────────────────────────────────
@@ -659,6 +802,15 @@ def run() -> dict:
         except Exception:
             pass
         summary["errors"] = len(orders)
+        return summary
+
+    # ── Handle pricing_needed even if no invoice_draft_posted orders ─────────
+    if not orders and pricing_orders:
+        pricing_result = _handle_pricing_needed(pricing_orders, all_msgs)
+        summary["priced"]   = pricing_result.get("priced", 0)
+        summary["skipped"]  = pricing_result.get("skipped", 0)
+        summary["approved"] = pricing_result.get("priced", 0)
+        log.info("human_gate_v2 complete (pricing only): %s", summary)
         return summary
 
     # ── Cap orders per run — sort newest-posted first so recent orders get checked ──
@@ -773,6 +925,17 @@ def run() -> dict:
         _handle_orphan_replies(orders, all_msgs)
     except Exception as exc:
         log.warning("orphan reply handler failed: %s", exc)
+
+    # ── Handle pricing_needed orders — user provided manual price ──────────────
+    if pricing_orders:
+        try:
+            pricing_result = _handle_pricing_needed(pricing_orders, all_msgs)
+            summary["priced"]  += pricing_result.get("priced", 0)
+            summary["skipped"] += pricing_result.get("skipped", 0)
+            if pricing_result.get("priced"):
+                summary["approved"] += pricing_result["priced"]
+        except Exception as exc:
+            log.warning("pricing_needed handler failed: %s", exc)
 
     log.info("human_gate_v2 complete: %s", summary)
     return summary

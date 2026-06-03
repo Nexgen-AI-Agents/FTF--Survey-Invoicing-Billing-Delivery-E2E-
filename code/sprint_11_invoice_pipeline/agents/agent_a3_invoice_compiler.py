@@ -562,6 +562,40 @@ def compile_for_order(order_id: str) -> dict:
     )
     ai_result = _ai_compile_price(context)
 
+    # ── 4b. Pricing failed — ask human in Teams ───────────────────────────────
+    total = ai_result.get("total_amount", 0)
+    no_services = not ai_result.get("services")
+    if total == 0 or no_services:
+        client      = packet.get("client_name", {}).get("value") or "Unknown"
+        address     = packet.get("property_address", {}).get("value") or "Unknown"
+        county_disp = packet.get("property_county", {}).get("value") or county_val or "Unknown"
+        reason_text = (ai_result.get("escalate_reason") or "Pricing could not be determined automatically.").strip()
+        ask_html = (
+            f"<p>❓ <strong>Pricing needed — Order <a href='{link}'>{order_id}</a></strong></p>"
+            f"<p><strong>Client:</strong> {client}<br>"
+            f"<strong>Address:</strong> {address} ({county_disp})<br>"
+            f"<strong>Service:</strong> {service_type or 'Unknown'}<br>"
+            f"<strong>Reason AI couldn't price:</strong> {reason_text}</p>"
+            f"<p>Please reply in this chat:<br>"
+            f"&nbsp;&nbsp;<code>PRICE {order_id} $[amount]</code> — to set price and auto-approve<br>"
+            f"&nbsp;&nbsp;<code>PRICE {order_id} [service] $[amount]</code> — to name the line item<br>"
+            f"&nbsp;&nbsp;<code>SKIP {order_id}</code> — to skip this order<br>"
+            f"I'll learn your pricing rule for future similar orders.</p>"
+        )
+        post_result = post_chat_message(ask_html, subject=f"Pricing needed — Order {order_id}")
+        message_id  = post_result.get("id", "")
+        save_order_state(
+            order_id,
+            status="pricing_needed",
+            invoice_draft=json.dumps(ai_result, default=str),
+            approval_message_id=message_id,
+            modification_count=0,
+            estimate_amount=0.0,
+            draft_posted_at=datetime.now(timezone.utc).isoformat(),
+        )
+        log.info("order=%s pricing_needed: posted ask-human message id=%s", order_id, message_id)
+        return ai_result
+
     # ── 5. Post to Teams ──────────────────────────────────────────────────────
     teams_html  = _build_teams_post(
         order_id, packet, ai_result, link, company_info, tier,
