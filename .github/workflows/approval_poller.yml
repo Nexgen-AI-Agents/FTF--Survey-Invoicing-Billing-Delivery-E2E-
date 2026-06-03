@@ -2,7 +2,7 @@ name: Approval Poller (Sprint 11)
 
 on:
   schedule:
-    - cron: "*/2 * * * *"    # every 2 minutes — reply check + send
+    - cron: "*/5 * * * *"    # every 5 minutes — reply check + send
   workflow_dispatch:
 
 permissions:

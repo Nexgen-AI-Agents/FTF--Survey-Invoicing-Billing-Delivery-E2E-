@@ -39,6 +39,7 @@ import httpx
 from config.settings import (
     NOTIFICATION_FROM_EMAIL,
     NOTIFICATION_TO_EMAILS,
+    SMTP_FROM,
     TEAMS_APP_ID,
     TEAMS_CHANNEL_ID,
     TEAMS_CHAT_ID,
@@ -821,13 +822,19 @@ def get_chat_messages(limit: int = 50) -> list[dict]:
             if msg.get("messageType") != "message":
                 continue
 
-            from_obj    = msg.get("from") or {}
-            app_ref     = from_obj.get("application") or {}
-            user_ref    = from_obj.get("user") or {}
-            is_app      = bool(app_ref) or not bool(user_ref.get("id"))
-            sender_name = user_ref.get("displayName") or app_ref.get("displayName") or "Unknown"
-            raw_body    = (msg.get("body") or {}).get("content", "")
-            plain       = _clean_message_body(raw_body)
+            from_obj     = msg.get("from") or {}
+            app_ref      = from_obj.get("application") or {}
+            user_ref     = from_obj.get("user") or {}
+            sender_name  = user_ref.get("displayName") or app_ref.get("displayName") or "Unknown"
+            sender_email = (user_ref.get("userPrincipalName") or "").lower()
+            # Treat our own bot account as is_app=True — Logic App webhook posts
+            # on behalf of nesa@nexgenlogix.com which has a real user ID in Graph,
+            # so the normal `not bool(user_ref.get("id"))` check misses it.
+            # Without this, Nesa reads her own messages as human replies and loops.
+            _bot_emails = {SMTP_FROM.lower(), "nesa@nexgenlogix.com"}
+            is_app       = bool(app_ref) or not bool(user_ref.get("id")) or sender_email in _bot_emails
+            raw_body     = (msg.get("body") or {}).get("content", "")
+            plain        = _clean_message_body(raw_body)
 
             created_raw = msg.get("createdDateTime", "")
             try:
@@ -835,7 +842,6 @@ def get_chat_messages(limit: int = 50) -> list[dict]:
             except Exception:
                 created_dt = datetime.now(timezone.utc)
 
-            sender_email = (user_ref.get("userPrincipalName") or "").lower()
             reply_count  = int(msg.get("replyCount") or 0)
             results.append({
                 "id":            msg.get("id", ""),
