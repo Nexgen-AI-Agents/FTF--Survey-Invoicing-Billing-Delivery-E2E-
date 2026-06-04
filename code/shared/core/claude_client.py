@@ -1,3 +1,4 @@
+import os
 import time
 from typing import Optional
 
@@ -9,16 +10,60 @@ from core.logger import get_logger
 logger = get_logger(__name__)
 
 _MAX_RETRIES = 3
-_RETRY_BASE_DELAY = 5.0  # seconds; multiplied by attempt number on rate limit
+_RETRY_BASE_DELAY = 5.0
 
 _client: Optional[anthropic.Anthropic] = None
+_OPENAI_FALLBACK_MODEL = "gpt-4o"
 
 
 def _get_client() -> anthropic.Anthropic:
     global _client
     if _client is None:
-        _client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from environment
+        _client = anthropic.Anthropic()
     return _client
+
+
+def _openai_call(system: str, user: str, max_tokens: int) -> str:
+    """Fallback to OpenAI gpt-4o when Anthropic is unavailable."""
+    import openai as _openai
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise LLMUnavailableError("OpenAI fallback unavailable — OPENAI_API_KEY not set")
+    oc = _openai.OpenAI(api_key=api_key)
+    resp = oc.chat.completions.create(
+        model=_OPENAI_FALLBACK_MODEL,
+        max_tokens=max_tokens,
+        messages=[
+            {"role": "system", "content": system},
+            {"role": "user",   "content": user},
+        ],
+    )
+    return resp.choices[0].message.content or ""
+
+
+def _openai_call_with_image(system: str, user_text: str, image_b64: str,
+                             media_type: str, max_tokens: int) -> str:
+    """Fallback to OpenAI gpt-4o vision when Anthropic is unavailable."""
+    import openai as _openai
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise LLMUnavailableError("OpenAI fallback unavailable — OPENAI_API_KEY not set")
+    oc = _openai.OpenAI(api_key=api_key)
+    resp = oc.chat.completions.create(
+        model=_OPENAI_FALLBACK_MODEL,
+        max_tokens=max_tokens,
+        messages=[
+            {"role": "system", "content": system},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image_url", "image_url": {"url": f"data:{media_type};base64,{image_b64}"}},
+                    {"type": "text", "text": user_text},
+                ],
+            },
+        ],
+    )
+    return resp.choices[0].message.content or ""
 
 
 def call_with_image(
@@ -29,10 +74,6 @@ def call_with_image(
     media_type: str = "image/png",
     max_tokens: int = 1024,
 ) -> str:
-    """Send a text + base64 image to Claude. Returns response text.
-
-    For property aerial analysis and any other vision tasks.
-    """
     client = _get_client()
     last_exc: Optional[Exception] = None
 
@@ -71,10 +112,8 @@ def call_with_image(
 
         except anthropic.APIConnectionError as exc:
             cause = exc.__cause__ or exc
-            logger.warning(
-                "Claude connection error (attempt %d/%d): %s | cause: %r",
-                attempt, _MAX_RETRIES, exc, cause,
-            )
+            logger.warning("Claude connection error (attempt %d/%d): %s | cause: %r",
+                           attempt, _MAX_RETRIES, exc, cause)
             last_exc = exc
             if attempt < _MAX_RETRIES:
                 time.sleep(_RETRY_BASE_DELAY * attempt)
@@ -85,35 +124,22 @@ def call_with_image(
             if attempt < _MAX_RETRIES:
                 time.sleep(_RETRY_BASE_DELAY)
 
-    raise LLMUnavailableError(
-        f"Claude unavailable after {_MAX_RETRIES} attempts"
-    ) from last_exc
+    logger.warning("Claude exhausted — falling back to OpenAI %s", _OPENAI_FALLBACK_MODEL)
+    try:
+        return _openai_call_with_image(system, user_text, image_b64, media_type, max_tokens)
+    except Exception as exc:
+        raise LLMUnavailableError(
+            f"Both Claude and OpenAI unavailable: claude={last_exc!r} openai={exc!r}"
+        ) from exc
 
 
 def call(model: str, system: str, user: str, max_tokens: int = 1024,
          cache_system: bool = True) -> str:
-    """Send a prompt to Claude and return the response text.
-
-    cache_system=True (default): marks the system prompt for prompt caching
-    (I-019). System prompts are static per agent run — caching saves cost at
-    scale (7,000+ Quote orders). Cache TTL is 5 minutes; re-use within that
-    window is free. Set False only for one-off dynamic system prompts.
-
-    Retries up to _MAX_RETRIES times on rate limit or transient API errors.
-    Raises LLMUnavailableError after all retries are exhausted.
-    """
     client = _get_client()
     last_exc: Optional[Exception] = None
 
-    # Build system param — list format required for cache_control
     if cache_system:
-        system_param = [
-            {
-                "type": "text",
-                "text": system,
-                "cache_control": {"type": "ephemeral"},
-            }
-        ]
+        system_param = [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]
     else:
         system_param = system
 
@@ -137,10 +163,8 @@ def call(model: str, system: str, user: str, max_tokens: int = 1024,
 
         except anthropic.APIConnectionError as exc:
             cause = exc.__cause__ or exc
-            logger.warning(
-                "Claude connection error (attempt %d/%d): %s | cause: %r",
-                attempt, _MAX_RETRIES, exc, cause,
-            )
+            logger.warning("Claude connection error (attempt %d/%d): %s | cause: %r",
+                           attempt, _MAX_RETRIES, exc, cause)
             last_exc = exc
             if attempt < _MAX_RETRIES:
                 time.sleep(_RETRY_BASE_DELAY * attempt)
@@ -151,6 +175,10 @@ def call(model: str, system: str, user: str, max_tokens: int = 1024,
             if attempt < _MAX_RETRIES:
                 time.sleep(_RETRY_BASE_DELAY)
 
-    raise LLMUnavailableError(
-        f"Claude unavailable after {_MAX_RETRIES} attempts"
-    ) from last_exc
+    logger.warning("Claude exhausted — falling back to OpenAI %s", _OPENAI_FALLBACK_MODEL)
+    try:
+        return _openai_call(system, user, max_tokens)
+    except Exception as exc:
+        raise LLMUnavailableError(
+            f"Both Claude and OpenAI unavailable: claude={last_exc!r} openai={exc!r}"
+        ) from exc
