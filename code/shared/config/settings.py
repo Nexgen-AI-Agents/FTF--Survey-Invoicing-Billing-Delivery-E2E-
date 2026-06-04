@@ -69,6 +69,12 @@ SERVICE_STATE:        str = "FL"
 FTF_API_BASE_URL: str = os.getenv("FTF_API_BASE_URL", "https://stage.fieldtofinish.jobs/ftf-ai-api/v1")
 FTF_API_KEY:      str | None = os.getenv("FTF_API_KEY")
 FTF_ORDER_URL:    str = os.getenv("FTF_ORDER_URL", "https://stage.fieldtofinish.jobs/order")
+# OneDrive approval spreadsheet (Graph API — Files.ReadWrite.All application permission)
+ONEDRIVE_FILE_USER:  str = os.getenv("ONEDRIVE_FILE_USER",  "nesa@nexgenlogix.com")
+ONEDRIVE_FILE_PATH:  str = os.getenv("ONEDRIVE_FILE_PATH",  "Documents/FTF-Invoicing Agent.xlsx")
+ONEDRIVE_SHEET_NAME: str = os.getenv("ONEDRIVE_SHEET_NAME", "Approvals")
+ONEDRIVE_TABLE_NAME: str = os.getenv("ONEDRIVE_TABLE_NAME", "ApprovalTable")
+
 # Pay Now link generation — uses same Fernet key as the FTF portal (data_vars['hash_key'])
 FTF_PAY_HASH_KEY:  str = os.getenv("FTF_PAY_HASH_KEY", "")
 FTF_SITE_BASE_URL: str = os.getenv("FTF_SITE_BASE_URL", "https://stage.fieldtofinish.jobs")

@@ -1,9 +1,22 @@
 name: Approval Poller (Sprint 11)
 
 on:
-  workflow_dispatch:    # manual only — cron paused 2026-06-04 pending logic change
-  # schedule:
-  #   - cron: "*/5 * * * *"    # every 5 minutes — re-enable when ready
+  workflow_dispatch:
+    inputs:
+      order_id:
+        description: 'Order ID to approve/reject/hold'
+        required: true
+        type: string
+      action:
+        description: 'Action: approve / reject / hold'
+        required: true
+        type: choice
+        options: [approve, reject, hold]
+      notes:
+        description: 'Optional notes (e.g. reject reason)'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -47,7 +60,13 @@ jobs:
       NOTIFICATION_TO_EMAILS:     ${{ secrets.NOTIFICATION_TO_EMAILS }}
       APPROVED_SENDERS:           ${{ secrets.APPROVED_SENDERS }}
       EMAIL_OVERRIDE_ALL:         ${{ secrets.EMAIL_OVERRIDE_ALL }}
+      FTF_PAY_HASH_KEY:           ${{ secrets.FTF_PAY_HASH_KEY }}
+      FTF_SITE_BASE_URL:          ${{ secrets.FTF_SITE_BASE_URL }}
       SKIP_SEND_DELAY:            "1"
+      # workflow_dispatch inputs — read by A4 to process the approval
+      INPUT_ORDER_ID:             ${{ inputs.order_id }}
+      INPUT_ACTION:               ${{ inputs.action }}
+      INPUT_NOTES:                ${{ inputs.notes }}
 
     steps:
       - uses: actions/checkout@v4

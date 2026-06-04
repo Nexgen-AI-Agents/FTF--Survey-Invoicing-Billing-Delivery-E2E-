@@ -57,7 +57,7 @@ from core.exceptions import AgentError
 from core.ftf_client import get_historical_pricing_orders
 from core.ftf_mysql import get_order_details, get_company_info, find_duplicate_orders
 from core.logger import get_logger
-from core.teams_graph_client import post_chat_message
+from core.onedrive_excel_client import append_approval_row
 
 AGENT_NAME = "agent_a3_invoice_compiler"
 log = get_logger(AGENT_NAME)
@@ -519,21 +519,15 @@ def compile_for_order(order_id: str) -> dict:
             "escalate_reason": condo_reason,
             "flags": ["condo_rejected"],
         }
-        teams_html = _build_teams_post(
-            order_id, packet, stop_result, link, company_info, tier,
-            duplicates, condo_reason,
-        )
-        post_result = post_chat_message(teams_html, subject=f"Invoice — Order {order_id} | Stage-FTF")
         save_order_state(
             order_id,
-            status="invoice_draft_posted",
+            status="condo_rejected",
             invoice_draft=json.dumps(stop_result, default=str),
-            approval_message_id=post_result.get("id", ""),
             modification_count=0,
             estimate_amount=0.0,
             draft_posted_at=datetime.now(timezone.utc).isoformat(),
         )
-        log.info("order=%s hard-stop: %s", order_id, condo_reason)
+        log.info("order=%s hard-stop condo_rejected: %s", order_id, condo_reason)
         return stop_result
 
     # ── 3. Pricing history context ────────────────────────────────────────────
@@ -568,54 +562,47 @@ def compile_for_order(order_id: str) -> dict:
     total = ai_result.get("total_amount", 0)
     no_services = not ai_result.get("services")
     if total == 0 or no_services:
-        client      = packet.get("client_name", {}).get("value") or "Unknown"
-        address     = packet.get("property_address", {}).get("value") or "Unknown"
-        county_disp = packet.get("property_county", {}).get("value") or county_val or "Unknown"
-        reason_text = (ai_result.get("escalate_reason") or "Pricing could not be determined automatically.").strip()
-        ask_html = (
-            f"<p>❓ <strong>Pricing needed — Order <a href='{link}'>{order_id}</a></strong></p>"
-            f"<p><strong>Client:</strong> {client}<br>"
-            f"<strong>Address:</strong> {address} ({county_disp})<br>"
-            f"<strong>Service:</strong> {service_type or 'Unknown'}<br>"
-            f"<strong>Reason AI couldn't price:</strong> {reason_text}</p>"
-            f"<p>Please reply in this chat:<br>"
-            f"&nbsp;&nbsp;<code>Hey @Nesa price {order_id} $[amount]</code> — set price and auto-approve<br>"
-            f"&nbsp;&nbsp;<code>Hey @Nesa price {order_id} [service name] $[amount]</code> — name the line item<br>"
-            f"&nbsp;&nbsp;<code>Hey @Nesa skip {order_id}</code> — skip this order<br>"
-            f"I'll learn your pricing rule for future similar orders.</p>"
-        )
-        post_result = post_chat_message(ask_html, subject=f"Pricing needed — Order {order_id}")
-        message_id  = post_result.get("id", "")
         save_order_state(
             order_id,
             status="pricing_needed",
             invoice_draft=json.dumps(ai_result, default=str),
-            approval_message_id=message_id,
             modification_count=0,
             estimate_amount=0.0,
             draft_posted_at=datetime.now(timezone.utc).isoformat(),
         )
-        log.info("order=%s pricing_needed: posted ask-human message id=%s", order_id, message_id)
+        log.info("order=%s pricing_needed: held for manual pricing via spreadsheet", order_id)
         return ai_result
 
-    # ── 5. Post to Teams ──────────────────────────────────────────────────────
-    teams_html  = _build_teams_post(
-        order_id, packet, ai_result, link, company_info, tier,
-        duplicates,
-    )
-    status_label = (order_details.get("ng_status_desc") or "Invoice").strip()
-    post_result = post_chat_message(teams_html, subject=f"{status_label} — Order #{order_id} | Stage-FTF")
-    message_id  = post_result.get("id", "")
+    # ── 5. Write row to OneDrive approval spreadsheet ─────────────────────────
+    client_name = packet.get("client_name", {}).get("value") or company_info.get("company_name") or "Unknown"
+    address     = packet.get("property_address", {}).get("value") or "Unknown"
+    svc_names   = ", ".join(s.get("name", "") for s in ai_result.get("services", []))
+    posted_at   = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+    try:
+        append_approval_row(
+            order_id    = order_id,
+            client_name = client_name,
+            address     = address,
+            service     = svc_names or service_type or "Unknown",
+            amount      = ai_result.get("total_amount", 0),
+            confidence  = ai_result.get("confidence", "MEDIUM"),
+            escalate    = bool(ai_result.get("escalate_flag")),
+            ftf_link    = link,
+            posted_at   = posted_at,
+        )
+    except Exception as exc:
+        log.error("failed to write Excel row order=%s: %s — continuing anyway", order_id, exc)
 
     # ── 6. Save state ─────────────────────────────────────────────────────────
     save_order_state(
         order_id,
         status="invoice_draft_posted",
         invoice_draft=json.dumps(ai_result, default=str),
-        approval_message_id=message_id,
+        approval_message_id=order_id,   # no Teams message ID; use order_id as ref
         modification_count=0,
         estimate_amount=ai_result.get("total_amount"),
-        draft_posted_at=datetime.now(timezone.utc).isoformat(),
+        draft_posted_at=posted_at,
     )
 
     log_decision(

@@ -1186,8 +1186,58 @@ def run() -> dict:
     return summary
 
 
+def process_dispatch_input() -> dict:
+    """Handle a single order from GitHub Actions workflow_dispatch inputs.
+
+    Power Automate watches the OneDrive approval spreadsheet and calls
+    workflow_dispatch with {order_id, action, notes} when the user changes
+    the Status column from Pending → Approve / Reject / Hold.
+    """
+    order_id = os.getenv("INPUT_ORDER_ID", "").strip()
+    action   = os.getenv("INPUT_ACTION",   "").strip().lower()
+    notes    = os.getenv("INPUT_NOTES",    "").strip()
+
+    if not order_id or not action:
+        log.warning("workflow_dispatch: INPUT_ORDER_ID or INPUT_ACTION not set")
+        return {"ok": False, "reason": "missing inputs"}
+
+    db_row = get_order_by_id(order_id)
+    if not db_row:
+        log.error("workflow_dispatch: order %s not found in pipeline state", order_id)
+        return {"ok": False, "reason": "order not found"}
+
+    if action == "approve":
+        save_order_state(order_id, status="invoice_approved", approved_by="prateek")
+        log.info("dispatch: approved order=%s", order_id)
+    elif action == "reject":
+        save_order_state(order_id, status="invoice_rejected")
+        log.info("dispatch: rejected order=%s notes=%s", order_id, notes)
+    elif action == "hold":
+        save_order_state(order_id, status="on_hold")
+        log.info("dispatch: held order=%s", order_id)
+    else:
+        log.warning("dispatch: unknown action=%s for order=%s", action, order_id)
+        return {"ok": False, "reason": f"unknown action: {action}"}
+
+    # Mark the row as processed in the OneDrive spreadsheet
+    try:
+        from core.onedrive_excel_client import mark_row_processed
+        mark_row_processed(order_id)
+    except Exception as exc:
+        log.warning("mark_row_processed failed order=%s: %s", order_id, exc)
+
+    return {"ok": True, "order_id": order_id, "action": action}
+
+
 def main(argv=None) -> None:
     import argparse
+
+    # workflow_dispatch from Power Automate → GitHub Actions takes priority
+    if os.getenv("GITHUB_EVENT_NAME") == "workflow_dispatch" and os.getenv("INPUT_ORDER_ID"):
+        result = process_dispatch_input()
+        print(result)
+        return
+
     parser = argparse.ArgumentParser(description="A4 Human Gate v2 — Invoice Pipeline")
     parser.add_argument("--run-now", action="store_true")
     parser.add_argument("--order-id", help="Check a specific order")
