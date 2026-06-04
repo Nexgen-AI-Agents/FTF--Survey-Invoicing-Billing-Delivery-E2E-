@@ -101,29 +101,17 @@ MYSQL_USER:     str = os.getenv("MYSQL_USER") or os.getenv("FTF_PROD_MYSQL_USER"
 MYSQL_PASSWORD: str = os.getenv("MYSQL_PASSWORD") or os.getenv("FTF_PROD_MYSQL_PASS") or os.getenv("FTF_PROD_MYSQL_PASSWORD", "")
 MYSQL_DB:       str = os.getenv("MYSQL_DB") or os.getenv("FTF_PROD_MYSQL_DB", "")
 
-# MS Teams — Graph API (Azure AD app, application permissions)
-TEAMS_TENANT_ID:     str | None = os.getenv("TEAMS_TENANT_ID")
-TEAMS_APP_ID:        str | None = os.getenv("TEAMS_APP_ID")
-TEAMS_CLIENT_SECRET: str | None = os.getenv("TEAMS_CLIENT_SECRET")
-TEAMS_TEAM_ID:       str | None = os.getenv("TEAMS_TEAM_ID")
-TEAMS_CHANNEL_ID:    str | None = os.getenv("TEAMS_CHANNEL_ID")
-# Teams group chat (thread.v2) — primary notification/approval channel
-TEAMS_CHAT_ID:            str | None = os.getenv("TEAMS_CHAT_ID")
-# Logic App webhook for posting TO the group chat (Graph API app permissions can't post to chats)
-TEAMS_CHAT_WEBHOOK_URL:   str | None = os.getenv("TEAMS_CHAT_WEBHOOK_URL")
-# Incoming webhook URL (Logic App) — for posting TO Teams CHANNEL (legacy — channel retired)
-TEAMS_INCOMING_WEBHOOK_URL: str | None = os.getenv("TEAMS_INCOMING_WEBHOOK_URL")
-# Alias used by Sprint 9 reporter — falls back to TEAMS_INCOMING_WEBHOOK_URL
-TEAMS_WEBHOOK_URL: str | None = os.getenv("TEAMS_WEBHOOK_URL") or os.getenv("TEAMS_INCOMING_WEBHOOK_URL")
+# Azure AD App (Graph API — Files.ReadWrite.All, Mail.Send)
+# App: FTF Estimate Bot | Registered 2026-05-28 | Secret valid 24 months
+AZURE_TENANT_ID:     str | None = os.getenv("AZURE_TENANT_ID")
+AZURE_APP_ID:        str | None = os.getenv("AZURE_APP_ID")
+AZURE_CLIENT_SECRET: str | None = os.getenv("AZURE_CLIENT_SECRET")
 # Graph API email notifications (Mail.Send application permission)
 # FROM must be a valid licensed mailbox in the same Azure AD tenant.
 NOTIFICATION_FROM_EMAIL:  str | None = os.getenv("NOTIFICATION_FROM_EMAIL")
 NOTIFICATION_TO_EMAILS:   str        = os.getenv("NOTIFICATION_TO_EMAILS", "")  # comma-sep
-# Approved senders for Teams APPROVE/REJECT commands.
-# Format A (name + email, double verification):  "robert:robert@nexgensurveying.com,ryan:ryan@nexgensurveying.com"
-# Format B (name only, legacy):                  "robert,ryan,prateek"
-# Mixed formats are supported per entry.
-# When any entry includes an email, email verification is enforced for ALL email-paired senders.
+# Approved senders for invoice APPROVE/REJECT/HOLD actions.
+# Format: "name:email,name:email" — email verification enforced when present.
 _APPROVED_RAW = os.getenv("APPROVED_SENDERS", "robert,ryan,prateek")
 APPROVED_SENDERS: list[str] = []        # first names (lowercase)
 APPROVED_SENDER_EMAILS: set[str] = set()  # emails (lowercase) — empty = name-only check

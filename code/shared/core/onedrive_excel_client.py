@@ -2,7 +2,7 @@
 onedrive_excel_client.py — Microsoft Graph Workbook API client.
 
 Reads/writes rows in FTF-Invoicing Agent.xlsx on nesa@nexgenlogix.com's OneDrive.
-Reuses the same Azure AD app credentials already in use for Teams (client_credentials).
+Uses Azure AD app credentials via client_credentials grant (AZURE_TENANT_ID / AZURE_APP_ID / AZURE_CLIENT_SECRET).
 
 Required Graph permissions (application):
   Files.ReadWrite.All  — read/write files in any user's OneDrive
@@ -16,7 +16,7 @@ from typing import Optional
 import httpx
 
 from config.settings import (
-    TEAMS_APP_ID, TEAMS_CLIENT_SECRET, TEAMS_TENANT_ID,
+    AZURE_APP_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID,
     ONEDRIVE_FILE_USER, ONEDRIVE_FILE_PATH,
     ONEDRIVE_SHEET_NAME, ONEDRIVE_TABLE_NAME,
 )
@@ -48,15 +48,15 @@ def _get_token() -> str:
     if _cache.get("od_token") and _cache.get("od_exp", 0) > now + 60:
         return _cache["od_token"]
 
-    if not all([TEAMS_TENANT_ID, TEAMS_APP_ID, TEAMS_CLIENT_SECRET]):
-        raise AgentError("Graph API credentials not configured (TEAMS_TENANT_ID / TEAMS_APP_ID / TEAMS_CLIENT_SECRET)")
+    if not all([AZURE_TENANT_ID, AZURE_APP_ID, AZURE_CLIENT_SECRET]):
+        raise AgentError("Graph API credentials not configured (AZURE_TENANT_ID / AZURE_APP_ID / AZURE_CLIENT_SECRET)")
 
     r = httpx.post(
-        _TOKEN_URL.format(tenant=TEAMS_TENANT_ID),
+        _TOKEN_URL.format(tenant=AZURE_TENANT_ID),
         data={
             "grant_type":    "client_credentials",
-            "client_id":     TEAMS_APP_ID,
-            "client_secret": TEAMS_CLIENT_SECRET,
+            "client_id":     AZURE_APP_ID,
+            "client_secret": AZURE_CLIENT_SECRET,
             "scope":         _SCOPE,
         },
         timeout=15.0,
