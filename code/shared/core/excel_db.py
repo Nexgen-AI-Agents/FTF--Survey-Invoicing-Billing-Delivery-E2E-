@@ -24,7 +24,7 @@ _STATE_COLS = [
     "property_address", "invoice_draft", "data_sources", "approval_message_id",
     "modification_count", "invoice_id", "data_collected_at", "draft_posted_at",
     "invoice_created_at", "processed_reply_ids", "approved_by", "sent_at",
-    "estimate_amount", "deferred_until", "created_at", "updated_at",
+    "pay_link", "estimate_amount", "deferred_until", "created_at", "updated_at",
 ]
 
 _LEARNINGS_COLS = [
@@ -46,9 +46,24 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _ensure_columns(ws, cols: list[str]) -> bool:
+    """Add any missing column headers to the sheet. Returns True if any were added."""
+    existing = _get_headers(ws)
+    added = False
+    for col in cols:
+        if col not in existing:
+            ws.cell(row=1, column=len(existing) + 1).value = col
+            existing.append(col)
+            added = True
+    return added
+
+
 def _load_workbook() -> Workbook:
     if os.path.exists(EXCEL_PATH):
-        return openpyxl.load_workbook(EXCEL_PATH)
+        wb = openpyxl.load_workbook(EXCEL_PATH)
+        _init_sheets(wb)
+        _ensure_columns(wb["pipeline_state"], _STATE_COLS)
+        return wb
     wb = Workbook()
     _init_sheets(wb)
     return wb

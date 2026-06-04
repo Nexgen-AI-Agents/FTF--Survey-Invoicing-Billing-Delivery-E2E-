@@ -69,6 +69,9 @@ SERVICE_STATE:        str = "FL"
 FTF_API_BASE_URL: str = os.getenv("FTF_API_BASE_URL", "https://stage.fieldtofinish.jobs/ftf-ai-api/v1")
 FTF_API_KEY:      str | None = os.getenv("FTF_API_KEY")
 FTF_ORDER_URL:    str = os.getenv("FTF_ORDER_URL", "https://stage.fieldtofinish.jobs/order")
+# Pay Now link generation — uses same Fernet key as the FTF portal (data_vars['hash_key'])
+FTF_PAY_HASH_KEY:  str = os.getenv("FTF_PAY_HASH_KEY", "")
+FTF_SITE_BASE_URL: str = os.getenv("FTF_SITE_BASE_URL", "https://stage.fieldtofinish.jobs")
 
 # FTF Books (AR Excel download — session-cookie auth)
 FTF_BOOKS_BASE_URL: str      = os.getenv("FTF_BOOKS_BASE_URL", "https://stage.fieldtofinish.jobs")

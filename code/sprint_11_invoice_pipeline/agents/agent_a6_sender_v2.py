@@ -69,12 +69,12 @@ def _load_logo() -> bytes | None:
         return None
 
 
-def _build_email_html(client_name: str, order_id: str, draft: dict) -> str:
+def _build_email_html(client_name: str, order_id: str, draft: dict, pay_link: str = "") -> str:
     services   = draft.get("services", [])
     total      = draft.get("total_amount", 0)
     first_name = client_name.split()[0] if client_name else "there"
 
-    # Service rows — name on left, amount on right, description as small grey note
+    # Service rows — name on left, amount on right
     svc_rows = ""
     for svc in services:
         name   = svc.get("name", "Service")
@@ -85,10 +85,84 @@ def _build_email_html(client_name: str, order_id: str, draft: dict) -> str:
   <td style="padding:12px 12px;text-align:right;font-size:14px;color:#333;font-weight:600;">${amount:,.2f}</td>
 </tr>"""
 
-    # mailto action links — pre-fill subject so the client just hits Send
-    accept_href  = f"mailto:{_CONTACT_EMAIL}?subject=ACCEPT%20Order%20%23{order_id}&body=Hi%2C%20I%20accept%20the%20estimate%20for%20order%20%23{order_id}.%20Please%20proceed."
-    question_href = f"mailto:{_CONTACT_EMAIL}?subject=Question%20about%20Order%20%23{order_id}&body=Hi%2C%20I%20have%20a%20question%20about%20my%20estimate%20for%20order%20%23{order_id}."
-    decline_href  = f"mailto:{_CONTACT_EMAIL}?subject=DECLINE%20Order%20%23{order_id}&body=Hi%2C%20I%20would%20like%20to%20decline%20the%20estimate%20for%20order%20%23{order_id}.%20Reason%3A%20"
+    # Pay Now block — shown when a real portal link is available
+    if pay_link:
+        pay_now_block = f"""
+    <!-- Pay Now -->
+    <tr><td style="padding:20px 32px 0;text-align:center;">
+      <a href="{pay_link}"
+         style="display:inline-block;width:100%;box-sizing:border-box;padding:18px 0;background:#1e7e34;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;border-radius:8px;text-align:center;">
+        Pay Now &#8594; Secure Online Payment
+      </a>
+      <p style="margin:8px 0 0;color:#aaa;font-size:11px;">
+        Clicking Pay Now opens your personal invoice in the secure client portal.
+      </p>
+    </td></tr>"""
+        payment_info = """
+    <!-- Payment info -->
+    <tr><td style="padding:12px 32px 0;">
+      <p style="margin:0;color:#666;font-size:13px;line-height:1.7;">
+        <strong>Payment due upon survey completion.</strong>
+        We accept: Credit / Debit Card, ACH / Bank Transfer, and Check.
+      </p>
+    </td></tr>"""
+        # Action buttons — no "Accept & Pay" when real pay link exists
+        question_href = f"mailto:{_CONTACT_EMAIL}?subject=Question%20about%20Order%20%23{order_id}&body=Hi%2C%20I%20have%20a%20question%20about%20my%20invoice%20for%20order%20%23{order_id}."
+        decline_href  = f"mailto:{_CONTACT_EMAIL}?subject=DECLINE%20Order%20%23{order_id}&body=Hi%2C%20I%20would%20like%20to%20decline%20the%20estimate%20for%20order%20%23{order_id}.%20Reason%3A%20"
+        action_buttons = f"""
+    <!-- Secondary actions -->
+    <tr><td style="padding:16px 32px 0;">
+      <table cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="border-radius:6px;background:#1a3a5c;">
+            <a href="{question_href}" style="display:inline-block;padding:10px 20px;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;">? Ask a Question</a>
+          </td>
+          <td style="width:10px;"></td>
+          <td style="border-radius:6px;border:1px solid #cccccc;">
+            <a href="{decline_href}" style="display:inline-block;padding:10px 20px;color:#777777;text-decoration:none;font-size:13px;font-weight:600;">Decline</a>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:10px 0 0;color:#aaa;font-size:12px;">
+        You can also reply directly to this email — we usually respond within one business day.
+      </p>
+    </td></tr>"""
+    else:
+        pay_now_block = ""
+        payment_info = """
+    <!-- Payment info -->
+    <tr><td style="padding:16px 32px 0;">
+      <p style="margin:0;color:#666;font-size:13px;line-height:1.7;">
+        <strong>Payment due upon survey completion.</strong><br>
+        We accept: &nbsp; &#10003; Credit / Debit Card &nbsp; &#10003; ACH / Bank Transfer &nbsp; &#10003; Check
+      </p>
+    </td></tr>"""
+        accept_href   = f"mailto:{_CONTACT_EMAIL}?subject=ACCEPT%20Order%20%23{order_id}&body=Hi%2C%20I%20accept%20the%20estimate%20for%20order%20%23{order_id}.%20Please%20proceed."
+        question_href = f"mailto:{_CONTACT_EMAIL}?subject=Question%20about%20Order%20%23{order_id}&body=Hi%2C%20I%20have%20a%20question%20about%20my%20estimate%20for%20order%20%23{order_id}."
+        decline_href  = f"mailto:{_CONTACT_EMAIL}?subject=DECLINE%20Order%20%23{order_id}&body=Hi%2C%20I%20would%20like%20to%20decline%20the%20estimate%20for%20order%20%23{order_id}.%20Reason%3A%20"
+        action_buttons = f"""
+    <!-- Action buttons -->
+    <tr><td style="padding:24px 32px 0;">
+      <p style="margin:0 0 14px;color:#333;font-size:14px;font-weight:600;">What would you like to do?</p>
+      <table cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="border-radius:6px;background:#1e7e34;">
+            <a href="{accept_href}" style="display:inline-block;padding:12px 22px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">&#10003;&nbsp; Accept &amp; Pay</a>
+          </td>
+          <td style="width:10px;"></td>
+          <td style="border-radius:6px;background:#1a3a5c;">
+            <a href="{question_href}" style="display:inline-block;padding:12px 22px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;">&#63;&nbsp; Ask a Question</a>
+          </td>
+          <td style="width:10px;"></td>
+          <td style="border-radius:6px;border:1px solid #cccccc;">
+            <a href="{decline_href}" style="display:inline-block;padding:12px 22px;color:#777777;text-decoration:none;font-size:14px;font-weight:600;">Decline</a>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:12px 0 0;color:#aaa;font-size:12px;">
+        You can also reply directly to this email — we usually respond within one business day.
+      </p>
+    </td></tr>"""
 
     review_block = (
         f'<p style="margin:12px 0 0;font-size:12px;color:#999;">'
@@ -99,7 +173,7 @@ def _build_email_html(client_name: str, order_id: str, draft: dict) -> str:
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Survey Estimate — Order #{order_id}</title></head>
+<title>Survey Invoice — Order #{order_id}</title></head>
 <body style="margin:0;padding:0;background:#f2f4f7;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f2f4f7;">
 <tr><td align="center" style="padding:32px 16px;">
@@ -117,7 +191,7 @@ def _build_email_html(client_name: str, order_id: str, draft: dict) -> str:
       <p style="margin:0 0 6px;color:#222;font-size:17px;font-weight:600;">Hi {first_name},</p>
       <p style="margin:0;color:#555;font-size:14px;line-height:1.7;">
         Thank you for choosing Nexgen Land Solutions.<br>
-        Here is your survey estimate for order <strong>#{order_id}</strong>. Please review it and let us know how you'd like to proceed.
+        Here is your survey invoice for order <strong>#{order_id}</strong>. Please review and proceed with payment at your convenience.
       </p>
     </td></tr>
 
@@ -141,37 +215,9 @@ def _build_email_html(client_name: str, order_id: str, draft: dict) -> str:
         </tr>
       </table>
     </td></tr>
-
-    <!-- Payment info -->
-    <tr><td style="padding:16px 32px 0;">
-      <p style="margin:0;color:#666;font-size:13px;line-height:1.7;">
-        <strong>Payment due upon survey completion.</strong><br>
-        We accept: &nbsp; ✔ Credit / Debit Card &nbsp; ✔ ACH / Bank Transfer &nbsp; ✔ Check
-      </p>
-    </td></tr>
-
-    <!-- Action buttons -->
-    <tr><td style="padding:24px 32px 0;">
-      <p style="margin:0 0 14px;color:#333;font-size:14px;font-weight:600;">What would you like to do?</p>
-      <table cellpadding="0" cellspacing="0">
-        <tr>
-          <td style="border-radius:6px;background:#1e7e34;">
-            <a href="{accept_href}" style="display:inline-block;padding:12px 22px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">&#10003;&nbsp; Accept &amp; Pay</a>
-          </td>
-          <td style="width:10px;"></td>
-          <td style="border-radius:6px;background:#1a3a5c;">
-            <a href="{question_href}" style="display:inline-block;padding:12px 22px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;">&#63;&nbsp; Ask a Question</a>
-          </td>
-          <td style="width:10px;"></td>
-          <td style="border-radius:6px;border:1px solid #cccccc;">
-            <a href="{decline_href}" style="display:inline-block;padding:12px 22px;color:#777777;text-decoration:none;font-size:14px;font-weight:600;">Decline</a>
-          </td>
-        </tr>
-      </table>
-      <p style="margin:12px 0 0;color:#aaa;font-size:12px;">
-        You can also reply directly to this email — we usually respond within one business day.
-      </p>
-    </td></tr>
+    {pay_now_block}
+    {payment_info}
+    {action_buttons}
 
     <!-- Footer -->
     <tr><td style="padding:28px 32px;margin-top:20px;border-top:1px solid #eeeeee;">
@@ -266,9 +312,10 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
                     order_id, fresh.get("status"))
         return {"sent": False, "skipped": True, "reason": "already_sent"}
 
-    logo    = _load_logo()
-    html    = _build_email_html(client_name, order_id, draft)
-    total   = draft.get("total_amount", 0)
+    pay_link = db_row.get("pay_link") or ""
+    logo     = _load_logo()
+    html     = _build_email_html(client_name, order_id, draft, pay_link=pay_link)
+    total    = draft.get("total_amount", 0)
     subject = f"Your Survey Invoice — Order #{order_id} — Nexgen Land Solutions"
 
     _send_smtp(to_email, subject, html, logo_bytes=logo)
