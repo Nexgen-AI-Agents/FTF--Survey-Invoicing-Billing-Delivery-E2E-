@@ -23,6 +23,7 @@ import smtplib
 import sys
 import time
 from datetime import datetime, timezone
+from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -55,6 +56,18 @@ _CONTACT_PHONE     = "(561) 508-6272"
 _CONTACT_EMAIL     = "info@nexgensurveying.com"
 _CONTACT_WEB       = "nexgensurveying.com"
 
+# Logo — resolved relative to the repo root (4 levels up from this file)
+_REPO_ROOT  = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+_LOGO_PATH  = os.path.join(_REPO_ROOT, "Resources", "Nexgen Land Solutions.png")
+_LOGO_CID   = "nexgen_logo"
+
+def _load_logo() -> bytes | None:
+    try:
+        with open(_LOGO_PATH, "rb") as f:
+            return f.read()
+    except OSError:
+        return None
+
 
 def _build_email_html(client_name: str, order_id: str, draft: dict) -> str:
     services   = draft.get("services", [])
@@ -65,17 +78,12 @@ def _build_email_html(client_name: str, order_id: str, draft: dict) -> str:
     svc_rows = ""
     for svc in services:
         name   = svc.get("name", "Service")
-        desc   = svc.get("description", "")
         amount = svc.get("amount", 0)
-        desc_row = (
-            f'<tr><td colspan="2" style="padding:0 12px 10px;color:#888;font-size:12px;">{desc}</td></tr>'
-            if desc else ""
-        )
         svc_rows += f"""
 <tr style="border-top:1px solid #e8e8e8;">
-  <td style="padding:12px 12px 4px;font-size:14px;color:#333;">{name}</td>
-  <td style="padding:12px 12px 4px;text-align:right;font-size:14px;color:#333;font-weight:600;">${amount:,.2f}</td>
-</tr>{desc_row}"""
+  <td style="padding:12px 12px;font-size:14px;color:#333;">{name}</td>
+  <td style="padding:12px 12px;text-align:right;font-size:14px;color:#333;font-weight:600;">${amount:,.2f}</td>
+</tr>"""
 
     # mailto action links — pre-fill subject so the client just hits Send
     accept_href  = f"mailto:{_CONTACT_EMAIL}?subject=ACCEPT%20Order%20%23{order_id}&body=Hi%2C%20I%20accept%20the%20estimate%20for%20order%20%23{order_id}.%20Please%20proceed."
@@ -99,9 +107,9 @@ def _build_email_html(client_name: str, order_id: str, draft: dict) -> str:
   <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
 
     <!-- Header -->
-    <tr><td style="background:#1a3a5c;padding:28px 32px;">
-      <p style="margin:0;color:#ffffff;font-size:22px;font-weight:bold;letter-spacing:-0.3px;">Nexgen Land Solutions</p>
-      <p style="margin:6px 0 0;color:#8eb8d8;font-size:13px;">Licensed Professional Surveyors &amp; Mappers — Florida</p>
+    <tr><td style="background:#1a3a5c;padding:20px 32px;text-align:center;">
+      <img src="cid:{_LOGO_CID}" alt="Nexgen Land Solutions" width="200" style="max-width:200px;height:auto;display:block;margin:0 auto;">
+      <p style="margin:10px 0 0;color:#8eb8d8;font-size:13px;">Licensed Professional Surveyors &amp; Mappers — Florida</p>
     </td></tr>
 
     <!-- Greeting -->
@@ -181,16 +189,26 @@ def _build_email_html(client_name: str, order_id: str, draft: dict) -> str:
 </body></html>""".strip()
 
 
-def _send_smtp(to_email: str, subject: str, html_body: str) -> bool:
+def _send_smtp(to_email: str, subject: str, html_body: str, logo_bytes: bytes | None = None) -> bool:
     if not all([SMTP_HOST, SMTP_USER, SMTP_PASSWORD]):
         raise AgentError("SMTP not configured — set SMTP_HOST, SMTP_USER, SMTP_PASSWORD in .env")
 
-    msg = MIMEMultipart("alternative")
+    # Use multipart/related so the HTML and inline logo are bundled together
+    msg = MIMEMultipart("related")
     msg["Subject"]  = subject
     msg["From"]     = _SMTP_FROM_DISPLAY
     msg["To"]       = to_email
     msg["Reply-To"] = _CONTACT_EMAIL
-    msg.attach(MIMEText(html_body, "html"))
+
+    alt = MIMEMultipart("alternative")
+    alt.attach(MIMEText(html_body, "html"))
+    msg.attach(alt)
+
+    if logo_bytes:
+        img = MIMEImage(logo_bytes, "png")
+        img.add_header("Content-ID", f"<{_LOGO_CID}>")
+        img.add_header("Content-Disposition", "inline", filename="logo.png")
+        msg.attach(img)
 
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
         server.ehlo()
@@ -248,11 +266,12 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
                     order_id, fresh.get("status"))
         return {"sent": False, "skipped": True, "reason": "already_sent"}
 
+    logo    = _load_logo()
     html    = _build_email_html(client_name, order_id, draft)
     total   = draft.get("total_amount", 0)
     subject = f"Your Survey Invoice — Order #{order_id} — Nexgen Land Solutions"
 
-    _send_smtp(to_email, subject, html)
+    _send_smtp(to_email, subject, html, logo_bytes=logo)
 
     save_order_state(
         order_id,
