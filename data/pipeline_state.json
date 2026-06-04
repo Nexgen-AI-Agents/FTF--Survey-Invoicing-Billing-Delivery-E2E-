@@ -1428,26 +1428,26 @@
     },
     {
       "order_id": "1000283532",
-      "status": "invoice_draft_posted",
+      "status": "invoice_sent",
       "service_type": "Quote",
       "customer_email": "Office@bcminc.net",
       "client_name": "BCM Inc.",
       "property_address": "10529 HAPPY HOLLOW AVE",
-      "invoice_draft": "{\"total_amount\": 0.0, \"services\": [], \"pricing_reasoning\": \"This order arrived as an inbound quote request from BCM Inc. with no specific survey service identified (boundary survey, EC, topo, or other). The order notes explicitly state that significant human follow-up is required to determine what services are needed before any pricing can be proposed. Additionally, a likely duplicate order (1000282533) exists at the same address and folio for a Land Survey Only service, which further requires human review to determine whether this is a redundant request or a separate scope.\", \"confidence\": \"LOW\", \"escalate_flag\": true, \"escalate_reason\": \"Cannot price: no survey service type has been identified in this order. The order notes confirm the incoming request from BCM Inc. (Office@bcminc.net) lacked a property address, county, and specific services \\u2014 all of which require human follow-up before quoting. Once the service type is confirmed, pricing can proceed using the client's negotiated base rate of $300.00 with applicable complexity upcharges (0.54 acres = +$137.00 lot size upcharge; metes-and-bounds legal description = +$100.00 pending field verification; EC if flood zone certification is requested at $275.00). A possible duplicate order (1000282533) at the same address/folio also requires resolution to avoid double-billing or redundant fieldwork.\", \"flags\": [\"NO_SERVICE_TYPE: Order submitted without identifying any specific survey service. Human follow-up required with BCM Inc. (Office@bcminc.net) before a quote can be issued.\", \"POSSIBLE_DUPLICATE: Order 1000282533 exists for the same property (10529 Happy Hollow Ave, Hillsborough County, Folio U-21-27-17-ZZZ-000000-13820.0) with service type 'Land Survey Only'. Confirm with client whether this is a separate scope or duplicate submission.\", \"METES_AND_BOUNDS: Legal description is metes-and-bounds with non-cardinal bearings and an incomplete description as provided. If boundary survey is confirmed, a +$100.00 complexity upcharge would apply pending full legal description review.\", \"LOT_SIZE_0.54AC: Once service is confirmed, a +$137.00 lot size upcharge (0.51\\u20131.00 ac tier) would apply to the base survey rate.\", \"FEMA_DUAL_ZONE: Property falls in both Zone AE (panel 12057C0038H, elevation 42.5 ft) and Zone X. EC pricing would be $275.00 (no VE coastal surcharge applicable).\", \"CLIENT_RATE: Negotiated base survey rate of $300.00 applies per management agreement with Bartlett Construction Management, Inc.\"]}",
+      "invoice_draft": "{\"total_amount\": 750.0, \"services\": [{\"name\": \"Land Survey (Boundary)\", \"description\": \"Manually priced by prateek via E2E test.\", \"amount\": 750.0}], \"pricing_reasoning\": \"Manual price $750 set by prateek (E2E test)\", \"confidence\": \"HIGH\", \"escalate_flag\": false, \"escalate_reason\": null, \"flags\": [\"MANUAL_PRICE: Set by prateek (E2E test).\"]}",
       "data_sources": "{\"ftf_order\": {\"order_id\": \"1000283532\", \"customer_email\": \"Office@bcminc.net\", \"service_type\": \"Quote\", \"county\": \"\"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"BCM Inc.\", \"confidence\": \"MEDIUM\"}, \"client_email\": {\"value\": \"Office@bcminc.net\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_county\": {\"value\": null, \"confidence\": \"LOW\"}, \"services_requested\": {\"value\": [\"Quote\"], \"confidence\": \"LOW\", \"notes\": \"Service type is listed as 'Quote' only \\u2014 no specific survey service has been identified yet\"}, \"special_requirements\": {\"value\": null, \"confidence\": \"LOW\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property data available to identify features\"}, \"client_tier\": {\"value\": \"b2b\", \"confidence\": \"MEDIUM\"}, \"urgency\": {\"value\": \"unknown\", \"confidence\": \"LOW\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Property address is missing\", \"County is missing \\u2014 appraiser lookup unavailable\", \"Specific survey service(s) requested not identified\", \"Lot size unknown\", \"Legal description unknown\", \"Structure square footage unknown\", \"Property features unknown\", \"No matching emails found for additional context\", \"No customer profile data available\", \"Urgency/timeline not specified\", \"Client contact name not provided\"], \"summary\": \"An incoming quote request from BCM Inc. (Office@bcminc.net) with no property address, county, or specific survey services identified \\u2014 significant human follow-up required to complete the order.\"}}",
       "approval_message_id": "1780412488221",
       "modification_count": 0,
-      "invoice_id": null,
+      "invoice_id": "349396",
       "data_collected_at": "2026-06-02T14:39:22.472601+00:00",
       "draft_posted_at": "2026-06-02T15:01:48.601277+00:00",
-      "invoice_created_at": null,
+      "invoice_created_at": "2026-06-04T12:13:10.859112+00:00",
       "processed_reply_ids": null,
-      "approved_by": null,
-      "sent_at": null,
-      "estimate_amount": 0,
+      "approved_by": "prateek",
+      "sent_at": "2026-06-04T12:13:20.376625+00:00",
+      "estimate_amount": 750,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.855403+00:00",
-      "updated_at": "2026-06-02T15:01:48.616992+00:00"
+      "updated_at": "2026-06-04T12:13:20.651284+00:00"
     },
     {
       "order_id": "1000283524",
@@ -1543,7 +1543,7 @@
     },
     {
       "order_id": "1000283094",
-      "status": "invoice_draft_posted",
+      "status": "invoice_sent",
       "service_type": "Land Survey Only",
       "customer_email": "aldotolentino@gmail.com",
       "client_name": "Aldo Tolentino",
@@ -1552,21 +1552,21 @@
       "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 202605011943534931, \"created_at\": \"2026-05-01T19:43:53\", \"customer_email\": \"aldotolentino@gmail.com\", \"customer_id\": 202605011943535029, \"customer_name\": \"Aldo Tolentino\", \"customer_type\": \"individual\", \"delivered_at\": null, \"due_amount\": 0.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": \"12011C0510J\\nZONE:X500\\nEFF: 07/31/2024\", \"invoiced\": false, \"order_id\": 1000283094, \"paid\": false, \"property_address\": \"2767 PINEHURST DR\", \"property_city\": \"WESTON\", \"property_county\": \"BROWARD COUNTY\", \"property_lat\": \"26.0850322\", \"property_lng\": \"-80.3920833\", \"property_state\": \"FLORIDA\", \"property_zip\": \"33332\", \"service_type\": \"Land Survey Only\", \"special_pricing\": false, \"status\": \"Quote\", \"status_code\": 12, \"updated_at\": \"2026-05-01T19:46:11\"}, \"success\": true, \"order_id\": \"1000283094\", \"customer_email\": \"aldotolentino@gmail.com\", \"service_type\": \"Land Survey Only\", \"county\": \"\", \"property_address\": \"2767 PINEHURST DR\", \"customer_name\": \"Aldo Tolentino\"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"Aldo Tolentino\", \"confidence\": \"HIGH\"}, \"client_email\": {\"value\": \"aldotolentino@gmail.com\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"2767 Pinehurst Dr, Weston, FL 33332\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Broward County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"Land Survey Only\"], \"confidence\": \"HIGH\", \"notes\": \"Service type explicitly stated as 'Land Survey Only'; no additional services indicated\"}, \"special_requirements\": {\"value\": null, \"confidence\": \"LOW\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property features available; county appraiser data unavailable and no emails or attachments provided\"}, \"client_tier\": {\"value\": \"residential\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Lot size unknown \\u2014 county appraiser unavailable\", \"Legal description not provided\", \"Structure square footage unknown\", \"Property features (pool, shed, driveway, etc.) unknown \\u2014 no aerial or appraiser data\", \"Special requirements or client notes not provided\", \"No pricing or estimate details yet (invoiced: false, estimate_sent: false)\", \"Fieldwork date not scheduled\"], \"summary\": \"Individual residential client Aldo Tolentino is requesting a Land Survey Only at 2767 Pinehurst Dr, Weston, FL 33332 (Broward County); order is in Quote status with no scheduling, pricing, or property detail data available yet.\"}}",
       "approval_message_id": "1780412845599",
       "modification_count": 0,
-      "invoice_id": null,
+      "invoice_id": "349395",
       "data_collected_at": "2026-06-02T15:00:27.841093+00:00",
       "draft_posted_at": "2026-06-02T15:07:25.968695+00:00",
-      "invoice_created_at": null,
+      "invoice_created_at": "2026-06-04T12:12:44.971698+00:00",
       "processed_reply_ids": null,
-      "approved_by": null,
-      "sent_at": null,
+      "approved_by": "prateek",
+      "sent_at": "2026-06-04T12:12:56.209272+00:00",
       "estimate_amount": 475,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:48.030487+00:00",
-      "updated_at": "2026-06-02T15:07:25.983892+00:00"
+      "updated_at": "2026-06-04T12:12:56.437921+00:00"
     },
     {
       "order_id": "1000283046",
-      "status": "invoice_draft_posted",
+      "status": "invoice_rejected",
       "service_type": "Land Survey Only",
       "customer_email": "mmtiernan01@gmail.com",
       "client_name": "Marlene M. Tiernan",
@@ -1585,7 +1585,7 @@
       "estimate_amount": 475,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:48.064966+00:00",
-      "updated_at": "2026-06-02T15:07:41.867081+00:00"
+      "updated_at": "2026-06-04T12:12:59.739565+00:00"
     },
     {
       "order_id": "1000282975",
@@ -9272,10 +9272,11 @@
   ],
   "status_counts": {
     "details_missing": 82,
-    "invoice_draft_posted": 317,
-    "invoice_sent": 2,
+    "invoice_draft_posted": 314,
+    "invoice_sent": 4,
+    "invoice_rejected": 1,
     "unknown": 2
   },
   "total": 403,
-  "generated_at": "2026-06-04T11:46:58.071343+00:00"
+  "generated_at": "2026-06-04T12:13:53.516174+00:00"
 }
