@@ -14,9 +14,6 @@ httpx>=0.27.0
 # MySQL driver — FTF stage DB direct connection (Sprint 11)
 pymysql>=1.1.0
 
-# PostgreSQL driver — core/db.py (Sprint 9 agents)
-psycopg2-binary>=2.9.0
-
 # Environment variable loading
 python-dotenv>=1.0.1
 

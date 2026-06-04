@@ -73,7 +73,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Check Teams replies and send approved invoices
+      - name: Process approval decision and send invoice
         run: |
           cd code/sprint_11_invoice_pipeline
           python run_approval_poller.py

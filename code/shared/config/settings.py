@@ -87,13 +87,6 @@ FTF_BOOKS_PASSWORD: str | None = os.getenv("FTF_BOOKS_PASSWORD")
 # Anthropic
 ANTHROPIC_API_KEY: str | None = os.getenv("ANTHROPIC_API_KEY")
 
-# PostgreSQL (legacy — other sprints; Sprint 11 uses excel_db + ftf_mysql instead)
-DB_HOST:     str       = os.getenv("DB_HOST", "localhost")
-DB_PORT:     int       = int(os.getenv("DB_PORT", "5432"))
-DB_NAME:     str       = os.getenv("DB_NAME", "ftf_agentic_ai")
-DB_USER:     str | None = os.getenv("DB_USER")
-DB_PASSWORD: str | None = os.getenv("DB_PASSWORD")
-
 # MySQL — FTF stage DB (direct connection for Sprint 11 invoice pipeline)
 MYSQL_HOST:     str = os.getenv("MYSQL_HOST") or os.getenv("FTF_PROD_MYSQL_HOST", "")
 MYSQL_PORT:     int = int(os.getenv("MYSQL_PORT") or os.getenv("FTF_PROD_MYSQL_PORT") or "3306")
@@ -150,14 +143,6 @@ OPENAI_CHAT_MODEL:  str        = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
 OPENAI_TTS_MODEL:   str        = os.getenv("OPENAI_TTS_MODEL", "tts-1-hd")
 OPENAI_TTS_VOICE:   str        = os.getenv("OPENAI_TTS_VOICE", "nova")        # warm female
 OPENAI_EMBED_MODEL: str        = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small")
-
-# Hermes (local via Ollama)
-HERMES_MODEL:    str = os.getenv("HERMES_MODEL", "hermes3")
-HERMES_BASE_URL: str = os.getenv("HERMES_BASE_URL", "http://localhost:11434")
-
-# Obsidian (Local REST API plugin — port 27123 is default)
-OBSIDIAN_API_KEY:  str | None = os.getenv("OBSIDIAN_API_KEY") or os.getenv("Obsidian")
-OBSIDIAN_BASE_URL: str        = os.getenv("OBSIDIAN_BASE_URL", "http://localhost:27123")
 
 LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 

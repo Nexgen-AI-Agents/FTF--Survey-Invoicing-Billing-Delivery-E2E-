@@ -32,13 +32,6 @@ _LEARNINGS_COLS = [
     "service_type", "county", "entered_by", "created_at",
 ]
 
-_PENDING_CONF_COLS = [
-    "id", "order_ids", "pending_action", "reason", "sender",
-    "original_status", "parent_message_id", "confirmation_posted_at", "expires_at",
-]
-
-_POLL_STATE_COLS = ["key", "value"]
-
 _VALID_STATE_FIELDS = set(_STATE_COLS) - {"order_id", "created_at"}
 
 
@@ -76,12 +69,6 @@ def _init_sheets(wb: Workbook) -> None:
     if "learnings" not in wb.sheetnames:
         ws2 = wb.create_sheet("learnings")
         ws2.append(_LEARNINGS_COLS)
-    if "pending_confirmations" not in wb.sheetnames:
-        ws3 = wb.create_sheet("pending_confirmations")
-        ws3.append(_PENDING_CONF_COLS)
-    if "poll_state" not in wb.sheetnames:
-        ws4 = wb.create_sheet("poll_state")
-        ws4.append(_POLL_STATE_COLS)
     for default in ["Sheet", "Sheet1"]:
         if default in wb.sheetnames and len(wb.sheetnames) > 1:
             del wb[default]
@@ -310,64 +297,3 @@ def log_decision(
     )
 
 
-# ── Pending confirmations (Teams decision-reversal state machine) ─────────────
-
-def get_pending_confirmations() -> list[dict]:
-    wb = _load_workbook()
-    _init_sheets(wb)
-    rows = _sheet_to_dicts(wb["pending_confirmations"])
-    result = []
-    for row in rows:
-        if not row.get("id"):
-            continue
-        entry = dict(row)
-        raw = entry.get("order_ids", "[]")
-        try:
-            entry["order_ids"] = json.loads(raw) if isinstance(raw, str) else (raw or [])
-        except Exception:
-            entry["order_ids"] = []
-        result.append(entry)
-    return result
-
-
-def save_pending_confirmations(confs: list[dict]) -> None:
-    wb = _load_workbook()
-    _init_sheets(wb)
-    ws = wb["pending_confirmations"]
-    # Clear all data rows (keep header)
-    if ws.max_row > 1:
-        ws.delete_rows(2, ws.max_row - 1)
-    for conf in confs:
-        entry = dict(conf)
-        raw_ids = entry.get("order_ids", [])
-        entry["order_ids"] = json.dumps(raw_ids) if isinstance(raw_ids, list) else raw_ids
-        ws.append([entry.get(col) for col in _PENDING_CONF_COLS])
-    _save(wb)
-
-
-# ── Poll state (last Teams poll timestamp) ────────────────────────────────────
-
-def get_last_polled() -> Optional[datetime]:
-    wb = _load_workbook()
-    _init_sheets(wb)
-    rows = _sheet_to_dicts(wb["poll_state"])
-    for row in rows:
-        if row.get("key") == "last_processed_at" and row.get("value"):
-            try:
-                return datetime.fromisoformat(str(row["value"]))
-            except Exception:
-                return None
-    return None
-
-
-def save_last_polled(dt: datetime) -> None:
-    wb = _load_workbook()
-    _init_sheets(wb)
-    ws = wb["poll_state"]
-    row_num = _find_row(ws, "key", "last_processed_at")
-    if row_num:
-        headers = _get_headers(ws)
-        ws.cell(row=row_num, column=headers.index("value") + 1).value = dt.isoformat()
-    else:
-        ws.append(["last_processed_at", dt.isoformat()])
-    _save(wb)

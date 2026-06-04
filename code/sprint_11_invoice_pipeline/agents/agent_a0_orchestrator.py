@@ -1,15 +1,18 @@
 """Agent A0 — Invoice Pipeline Orchestrator
 
 Runs the full invoice pipeline in sequence.
-Called by GitHub Actions every 30 minutes.
+Called by GitHub Actions (manual or scheduled).
 
 Pipeline:
-  A1 → A2 → A3 → A4 (loop) → A5 → A6 → A7
+  A1 → A2 → A3 → A4 → A5 → A6 → A7
 
-Each agent processes all orders in its target status.
-A4 runs every cycle to check for new replies on any pending invoice.
-A7 runs last — scans Teams threads for non-approval feedback and saves
-learned pricing/detection rules to data/learned_rules.json.
+  A1: MySQL flag scan — queues invoice_needed orders
+  A2: Data collection — FTF API, email, property appraiser, aerial image
+  A3: AI pricing — writes draft row to OneDrive Excel (FTF-Invoicing Agent.xlsx)
+  A4: No-op in this run — approval comes from Power Automate workflow_dispatch
+  A5: FTF invoice creation — runs after A4 approves (via approval_poller.yml)
+  A6: Email send — sends invoice to client (via approval_poller.yml)
+  A7: Feedback learner — no-op stub (Teams retired; Excel learning TBD)
 """
 
 import os
@@ -74,7 +77,7 @@ def run() -> dict:
         results["a6_sender"] = {"error": str(exc)}
 
     try:
-        results["a7_feedback_learner"] = run_a7()  # Always runs last — learns from Teams replies
+        results["a7_feedback_learner"] = run_a7()  # Always runs last — no-op stub until Excel learning is implemented
     except Exception as exc:
         log.error("A7 failed: %s", exc)
         results["a7_feedback_learner"] = {"error": str(exc)}

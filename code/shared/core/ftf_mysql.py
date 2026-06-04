@@ -136,9 +136,10 @@ def find_duplicate_orders(
     """Duplicate detection using Latitude, Longitude, and Folio/MLS number.
 
     Checks within a 6-month window. Either signal alone flags a duplicate —
-    human decides in Teams; never auto-rejects.
+    flagged in the approval spreadsheet; human decides.
 
     Lat/lng match uses 0.0001° tolerance (~11 m) and skips zero coordinates.
+    Human approver decides via Excel spreadsheet — never auto-rejects.
     """
     conn = _connect()
     try:

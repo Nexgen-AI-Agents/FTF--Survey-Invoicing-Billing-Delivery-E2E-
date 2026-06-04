@@ -37,7 +37,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared")
 
 from config.models import HUMAN_GATE_MODEL
 from config.settings import (
-    APPROVED_SENDERS,
     FTF_ORDER_URL,
     INVOICE_BATCH_SIZE,
     PRICE_SURVEY_FALLBACK_INDIVIDUAL,
@@ -385,102 +384,6 @@ def _ai_compile_price(context: str) -> dict:
     }
 
 
-# ── Teams card ────────────────────────────────────────────────────────────────
-
-def _build_teams_post(
-    order_id: str,
-    packet: dict,
-    ai_result: dict,
-    link: str,
-    company_info: dict,
-    tier: str,
-    duplicates: list[dict],
-    condo_reason: Optional[str] = None,
-) -> str:
-    """Build the Teams approval card HTML — compact single-line style."""
-    client       = packet.get("client_name", {}).get("value") or company_info.get("company_name") or "Unknown"
-    client_email = packet.get("client_email", {}).get("value") or "—"
-    address      = packet.get("property_address", {}).get("value") or "Unknown"
-    county       = packet.get("property_county", {}).get("value") or "Unknown"
-    total        = ai_result.get("total_amount", 0)
-
-    # Banner: one compact line
-    if condo_reason:
-        banner = "🚫 <strong>CONDO — rejected (no land parcel to survey)</strong>"
-    elif ai_result.get("escalate_flag"):
-        reason = (ai_result.get("escalate_reason") or "manual review needed")[:70]
-        banner = f"📤 <strong>ESCALATED</strong> — {reason} · @Robert @Ryan"
-    else:
-        confidence = ai_result.get("confidence", "MEDIUM")
-        conf_icon  = {"HIGH": "✅", "MEDIUM": "⚠️", "LOW": "❌"}.get(confidence, "⚠️")
-        banner     = f"{conf_icon} AI Confidence: <strong>{confidence}</strong>"
-
-    # Rate: short
-    ng_rate = company_info.get("ng_rate", 0)
-    if ng_rate and ng_rate > 100:
-        rate_str = f"${ng_rate:,.0f} (negotiated)"
-    else:
-        rate_str = f"${_get_fallback_survey_rate(tier):,.0f} (default)"
-    tier_short = {"individual": "Individual", "new_title": "New Title", "old_title": "Est. Title"}.get(tier, tier)
-
-    # Services: name + amount only (no inline description block)
-    svc_lines = "".join(
-        f"&nbsp;&nbsp;• {item.get('name', 'Service')} — <strong>${item.get('amount', 0):,.2f}</strong><br>"
-        for item in ai_result.get("services", [])
-    ) or "&nbsp;&nbsp;• (none)<br>"
-
-    # Reasoning: first sentence, max 120 chars
-    reasoning_full = ai_result.get("pricing_reasoning", "")
-    reasoning_short = reasoning_full.split(".")[0].strip()
-    if len(reasoning_short) > 120:
-        reasoning_short = reasoning_short[:117] + "..."
-
-    # Flags: one short bullet per flag (first 90 chars of each)
-    flags = ai_result.get("flags", [])
-    flags_block = ""
-    if flags:
-        flag_lines = "".join(
-            f"&nbsp;&nbsp;🔸 {str(f)[:90]}<br>"
-            for f in flags
-        )
-        flags_block = f"<br><strong>Flags:</strong><br>{flag_lines}"
-
-    # Duplicates: compact
-    dup_block = ""
-    if duplicates:
-        dup_lines = "".join(
-            f"&nbsp;&nbsp;⚠️ Order {d['order_id']} · {str(d.get('address',''))[:35]}, {d.get('county','')} ({', '.join(d.get('match_reasons',[]))})<br>"
-            for d in duplicates[:3]
-        )
-        dup_block = f"<br><strong>⚠️ Possible Duplicates:</strong><br>{dup_lines}"
-
-    html = (
-        f"<strong>📋 Order #{order_id}</strong> | {banner}<br>"
-        f"<br>"
-        f"👤 <strong>{client}</strong> · {client_email}<br>"
-        f"&nbsp;&nbsp;{tier_short} · Rate: {rate_str}<br>"
-        f"📍 {address[:55]}, {county}<br>"
-        f"<br>"
-        f"🧾 <strong>Services</strong><br>"
-        f"{svc_lines}"
-        f"💰 <strong>Total: ${total:,.2f}</strong><br>"
-        f"<br>"
-        f"🧠 <em>{reasoning_short}</em>"
-        f"{flags_block}"
-        f"{dup_block}"
-        f"<br><br>"
-        f"<a href=\"{link}\">🔗 View in FTF</a><br><br>"
-        f"<strong>Reply options:</strong><br>"
-        f"&nbsp;&nbsp;<code>Hey @Nesa approve {order_id}</code><br>"
-        f"&nbsp;&nbsp;<code>Hey @Nesa reject {order_id} [reason]</code><br>"
-        f"&nbsp;&nbsp;<code>Hey @Nesa hold {order_id}</code><br>"
-        f"&nbsp;&nbsp;<code>Hey @Nesa change price to $[amount] for {order_id}</code><br>"
-        f"<small>Approvers: {', '.join(s.capitalize() for s in APPROVED_SENDERS)}</small>"
-    )
-
-    return html
-
-
 # ── Main entry point ──────────────────────────────────────────────────────────
 
 def compile_for_order(order_id: str) -> dict:
@@ -617,13 +520,13 @@ def compile_for_order(order_id: str) -> dict:
             f"duplicates={len(duplicates)}"
         ),
         input_summary=f"service={service_type} county={county_val} tier={tier}",
-        output_summary=f"Teams message_id={message_id}",
+        output_summary=f"Excel row appended order={order_id}",
         model_used=HUMAN_GATE_MODEL,
     )
     log.info(
-        "invoice draft posted order=%s total=%.2f tier=%s confidence=%s message_id=%s",
+        "invoice draft posted order=%s total=%.2f tier=%s confidence=%s",
         order_id, ai_result.get("total_amount", 0), tier,
-        ai_result.get("confidence"), message_id,
+        ai_result.get("confidence"),
     )
     return ai_result
 

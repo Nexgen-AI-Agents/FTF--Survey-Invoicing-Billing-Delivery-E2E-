@@ -3,7 +3,7 @@ name: Daily Approval Reminder
 on:
   schedule:
     - cron: "0 14 * * 1-5"   # 9:00 AM ET (14:00 UTC) — Monday to Friday only
-  workflow_dispatch:           # manual trigger from GitHub Actions UI
+  workflow_dispatch:           # manual trigger
 
 jobs:
   send-reminder:
@@ -20,31 +20,13 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Send daily leftover order reminder
+      - name: Send daily pending-orders reminder email
         env:
-          TEAMS_INCOMING_WEBHOOK_URL:  ${{ secrets.TEAMS_INCOMING_WEBHOOK_URL }}
-          TEAMS_TENANT_ID:             ${{ secrets.TEAMS_TENANT_ID }}
-          TEAMS_APP_ID:                ${{ secrets.TEAMS_APP_ID }}
-          TEAMS_CLIENT_SECRET:         ${{ secrets.TEAMS_CLIENT_SECRET }}
-          TEAMS_TEAM_ID:               ${{ secrets.TEAMS_TEAM_ID }}
-          TEAMS_CHANNEL_ID:            ${{ secrets.TEAMS_CHANNEL_ID }}
-          NOTIFICATION_FROM_EMAIL:     ${{ secrets.NOTIFICATION_FROM_EMAIL }}
-          NOTIFICATION_TO_EMAILS:      ${{ secrets.NOTIFICATION_TO_EMAILS }}
-          FTF_ORDER_URL:               ${{ secrets.FTF_ORDER_URL }}
-        run: python scripts/send_daily_approval_reminder.py
-
-      - name: Notify Teams on failure
-        if: failure()
-        env:
-          TEAMS_INCOMING_WEBHOOK_URL:  ${{ secrets.TEAMS_INCOMING_WEBHOOK_URL }}
-          TEAMS_TENANT_ID:             ${{ secrets.TEAMS_TENANT_ID }}
-          TEAMS_APP_ID:                ${{ secrets.TEAMS_APP_ID }}
-          TEAMS_CLIENT_SECRET:         ${{ secrets.TEAMS_CLIENT_SECRET }}
-          TEAMS_TEAM_ID:               ${{ secrets.TEAMS_TEAM_ID }}
-          TEAMS_CHANNEL_ID:            ${{ secrets.TEAMS_CHANNEL_ID }}
-          NOTIFICATION_FROM_EMAIL:     ${{ secrets.NOTIFICATION_FROM_EMAIL }}
-          NOTIFICATION_TO_EMAILS:      ${{ secrets.NOTIFICATION_TO_EMAILS }}
-        run: >
-          python scripts/notify_workflow_failure.py
-          --workflow "Daily Approval Reminder"
-          --run-url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          SMTP_HOST:               ${{ secrets.SMTP_HOST }}
+          SMTP_PORT:               ${{ secrets.SMTP_PORT }}
+          SMTP_USER:               ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD:           ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM:               ${{ secrets.SMTP_FROM }}
+          NOTIFICATION_TO_EMAILS:  ${{ secrets.NOTIFICATION_TO_EMAILS }}
+          FTF_ORDER_URL:           ${{ secrets.FTF_ORDER_URL }}
+        run: python scripts/send_daily_reminder.py
