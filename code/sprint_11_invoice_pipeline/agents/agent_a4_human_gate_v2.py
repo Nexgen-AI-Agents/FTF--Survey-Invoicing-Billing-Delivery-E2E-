@@ -615,22 +615,13 @@ def _handle_orphan_replies(all_pending_orders: list[dict], all_msgs: Optional[li
                     f"<code>APPROVE {target_id}</code> or <code>REJECT {target_id} [reason]</code>"
                 )
         else:
-            # Show the 5 most recently posted orders — most likely what the user just saw in Teams
-            recent = sorted(
-                all_pending_orders,
-                key=lambda r: r.get("draft_posted_at") or "",
-                reverse=True,
-            )[:5]
-            recent_ids  = [str(r["order_id"]) for r in recent]
-            order_lines = "<br>".join(
-                f"&nbsp;&nbsp;• <code>{r['order_id']}</code> — {r.get('client_name','?')} · {r.get('property_address','?')[:40]}"
-                for r in recent
-            )
-            post_chat_message(
-                f"❓ <strong>Which order?</strong> You said <em>\"{text[:60]}\"</em> but didn't include an order number.<br>"
-                f"Most recent orders waiting for approval:<br>{order_lines}<br><br>"
-                f"Reply with: <code>APPROVE {recent_ids[0]}</code> or <code>REJECT {recent_ids[0]} [reason]</code>",
-                subject="",
+            # Multiple orders pending and no order_id in text — skip silently.
+            # Posting a "Which order?" wall every poll cycle floods the chat and
+            # confuses the team. Prateek is handling approvals directly via order_id commands.
+            log.info(
+                "orphan reply skipped — multiple orders pending, no order_id in text: "
+                "sender=%s text=%r pending=%d",
+                sender, text[:80], len(all_pending_orders),
             )
 
 
