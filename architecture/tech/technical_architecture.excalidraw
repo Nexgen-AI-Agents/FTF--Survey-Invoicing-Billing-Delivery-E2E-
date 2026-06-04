@@ -1,0 +1,61 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw.com",
+  "elements": [
+    {"type":"text","id":"t_title","x":330,"y":16,"text":"NexGen AI Invoice Pipeline — Technical Architecture","fontSize":28,"strokeColor":"#1e1e1e"},
+    {"type":"text","id":"t_sub","x":490,"y":56,"text":"Sprint 11 — Last updated: 2026-06-03","fontSize":16,"strokeColor":"#777777"},
+
+    {"type":"rectangle","id":"z_ext","x":50,"y":78,"width":1340,"height":155,"backgroundColor":"#ffd8a8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":1,"opacity":30},
+    {"type":"text","id":"lbl_ext","x":62,"y":88,"text":"External Systems","fontSize":16,"strokeColor":"#b45309"},
+
+    {"type":"rectangle","id":"ext1","x":55,"y":106,"width":290,"height":90,"backgroundColor":"#ffd8a8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":2,"label":{"text":"FTF Platform\n(REST API + MySQL)","fontSize":18}},
+    {"type":"rectangle","id":"ext2","x":375,"y":106,"width":290,"height":90,"backgroundColor":"#ffd8a8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":2,"label":{"text":"Email\n(IMAP read / SMTP send)","fontSize":18}},
+    {"type":"rectangle","id":"ext3","x":695,"y":106,"width":290,"height":90,"backgroundColor":"#ffd8a8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":2,"label":{"text":"MS Teams\n(Graph API + Logic App)","fontSize":18}},
+    {"type":"rectangle","id":"ext4","x":1015,"y":106,"width":290,"height":90,"backgroundColor":"#ffd8a8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":2,"label":{"text":"Anthropic Claude API\n(Sonnet 4.6 + Haiku 4.5)","fontSize":18}},
+
+    {"type":"rectangle","id":"z_ag","x":50,"y":248,"width":1340,"height":295,"backgroundColor":"#e5dbff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":1,"opacity":30},
+    {"type":"text","id":"lbl_ag","x":62,"y":258,"text":"Agent Pipeline","fontSize":16,"strokeColor":"#6d28d9"},
+    {"type":"text","id":"wf1","x":62,"y":278,"text":"invoice_pipeline.yml — every 30 min — A0 orchestrates A1 through A7","fontSize":14,"strokeColor":"#2563eb"},
+    {"type":"text","id":"wf2","x":692,"y":278,"text":"approval_poller.yml — every 2 min — A4 → A5 → A6","fontSize":14,"strokeColor":"#dc2626"},
+
+    {"type":"rectangle","id":"ag0","x":55,"y":302,"width":135,"height":90,"backgroundColor":"#d0bfff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":2,"label":{"text":"A0\nOrchestrator","fontSize":16}},
+    {"type":"arrow","id":"aa01","x":190,"y":347,"width":15,"height":0,"points":[[0,0],[15,0]],"endArrowhead":"arrow","strokeColor":"#8b5cf6","strokeWidth":2},
+    {"type":"rectangle","id":"ag1","x":205,"y":302,"width":135,"height":90,"backgroundColor":"#d0bfff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":2,"label":{"text":"A1\nFlag Hunter","fontSize":16}},
+    {"type":"arrow","id":"aa12","x":340,"y":347,"width":15,"height":0,"points":[[0,0],[15,0]],"endArrowhead":"arrow","strokeColor":"#8b5cf6","strokeWidth":2},
+    {"type":"rectangle","id":"ag2","x":355,"y":302,"width":135,"height":90,"backgroundColor":"#d0bfff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":2,"label":{"text":"A2\nData Collector","fontSize":16}},
+    {"type":"arrow","id":"aa23","x":490,"y":347,"width":15,"height":0,"points":[[0,0],[15,0]],"endArrowhead":"arrow","strokeColor":"#8b5cf6","strokeWidth":2},
+    {"type":"rectangle","id":"ag3","x":505,"y":302,"width":135,"height":90,"backgroundColor":"#d0bfff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":2,"label":{"text":"A3\nInvoice Compiler","fontSize":16}},
+    {"type":"arrow","id":"aa34","x":640,"y":347,"width":15,"height":0,"points":[[0,0],[15,0]],"endArrowhead":"arrow","strokeColor":"#8b5cf6","strokeWidth":2},
+    {"type":"rectangle","id":"ag4","x":655,"y":302,"width":135,"height":90,"backgroundColor":"#ffd8a8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":2,"label":{"text":"A4\nHuman Gate","fontSize":16}},
+    {"type":"arrow","id":"aa45","x":790,"y":347,"width":15,"height":0,"points":[[0,0],[15,0]],"endArrowhead":"arrow","strokeColor":"#8b5cf6","strokeWidth":2},
+    {"type":"rectangle","id":"ag5","x":805,"y":302,"width":135,"height":90,"backgroundColor":"#d0bfff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":2,"label":{"text":"A5\nInvoice Finalizer","fontSize":16}},
+    {"type":"arrow","id":"aa56","x":940,"y":347,"width":15,"height":0,"points":[[0,0],[15,0]],"endArrowhead":"arrow","strokeColor":"#8b5cf6","strokeWidth":2},
+    {"type":"rectangle","id":"ag6","x":955,"y":302,"width":135,"height":90,"backgroundColor":"#d0bfff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":2,"label":{"text":"A6\nSender v2","fontSize":16}},
+    {"type":"arrow","id":"aa67","x":1090,"y":347,"width":15,"height":0,"points":[[0,0],[15,0]],"endArrowhead":"arrow","strokeColor":"#8b5cf6","strokeWidth":2},
+    {"type":"rectangle","id":"ag7","x":1105,"y":302,"width":135,"height":90,"backgroundColor":"#c3fae8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#22c55e","strokeWidth":2,"label":{"text":"A7\nFeedback Learner","fontSize":16}},
+
+    {"type":"text","id":"ag_note","x":55,"y":408,"text":"A4 (orange) = team decision point — only Robert, Ryan, Prateek can approve/reject","fontSize":14,"strokeColor":"#b45309"},
+    {"type":"text","id":"ag_note2","x":55,"y":428,"text":"A3 uses Claude Sonnet 4.6 (pricing + NL reasoning)  |  A2, A7 use Claude Haiku 4.5 (data assembly + rule extraction)","fontSize":14,"strokeColor":"#555555"},
+    {"type":"text","id":"ag_note3","x":55,"y":448,"text":"Concurrency group: invoice-state-write — both workflows share it to prevent simultaneous Excel writes","fontSize":14,"strokeColor":"#555555"},
+    {"type":"text","id":"ag_note4","x":55,"y":468,"text":"EMAIL_OVERRIDE_ALL secret: when set, all A6 emails redirect to that address — client never notified (TEST MODE)","fontSize":14,"strokeColor":"#dc2626"},
+
+    {"type":"arrow","id":"cx_ftf_a1","x":200,"y":196,"width":72,"height":106,"points":[[0,0],[72,106]],"endArrowhead":"arrow","strokeColor":"#f59e0b","strokeWidth":1,"strokeStyle":"dashed","label":{"text":"orders","fontSize":13}},
+    {"type":"arrow","id":"cx_teams_a4","x":840,"y":196,"width":-113,"height":106,"points":[[0,0],[-113,106]],"endArrowhead":"arrow","strokeColor":"#f59e0b","strokeWidth":1,"strokeStyle":"dashed","label":{"text":"replies","fontSize":13}},
+
+    {"type":"rectangle","id":"z_st","x":50,"y":558,"width":1340,"height":160,"backgroundColor":"#c3fae8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#22c55e","strokeWidth":1,"opacity":30},
+    {"type":"text","id":"lbl_st","x":62,"y":568,"text":"State Store (committed to git by GitHub Actions bot after every run)","fontSize":16,"strokeColor":"#166534"},
+
+    {"type":"rectangle","id":"st1","x":80,"y":590,"width":320,"height":90,"backgroundColor":"#c3fae8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#22c55e","strokeWidth":2,"label":{"text":"data/invoice_pipeline_state.xlsx\nOne row per order — full lifecycle","fontSize":16}},
+    {"type":"rectangle","id":"st2","x":460,"y":590,"width":280,"height":90,"backgroundColor":"#c3fae8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#22c55e","strokeWidth":2,"label":{"text":"data/learned_rules.json\nA7 writes — A3 reads","fontSize":16}},
+    {"type":"rectangle","id":"st3","x":800,"y":590,"width":290,"height":90,"backgroundColor":"#c3fae8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#22c55e","strokeWidth":2,"label":{"text":"data/pipeline_state.json\nPublic dashboard export","fontSize":16}},
+
+    {"type":"arrow","id":"ag_st1","x":122,"y":392,"width":0,"height":198,"points":[[0,0],[0,198]],"endArrowhead":"arrow","strokeColor":"#22c55e","strokeWidth":1,"strokeStyle":"dashed"},
+    {"type":"arrow","id":"ag_st2","x":1172,"y":392,"width":-572,"height":198,"points":[[0,0],[-572,198]],"endArrowhead":"arrow","strokeColor":"#22c55e","strokeWidth":1,"strokeStyle":"dashed","label":{"text":"learned rules","fontSize":12}}
+  ],
+  "appState": {
+    "gridSize": null,
+    "viewBackgroundColor": "#ffffff"
+  },
+  "files": {}
+}

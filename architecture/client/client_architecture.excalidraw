@@ -1,0 +1,39 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw.com",
+  "elements": [
+    {"type":"text","id":"t_title","x":380,"y":18,"text":"NexGen AI Invoice Pipeline — Client Overview","fontSize":28,"strokeColor":"#1e1e1e"},
+    {"type":"text","id":"t_sub","x":440,"y":58,"text":"Survey order to invoice email — automated 24/7","fontSize":18,"strokeColor":"#777777"},
+
+    {"type":"text","id":"t_leg","x":60,"y":115,"text":"Actor:","fontSize":16,"strokeColor":"#555555"},
+    {"type":"rectangle","id":"l1","x":112,"y":107,"width":150,"height":34,"backgroundColor":"#a5d8ff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#4a9eed","strokeWidth":1,"label":{"text":"FTF / System","fontSize":14}},
+    {"type":"rectangle","id":"l2","x":274,"y":107,"width":120,"height":34,"backgroundColor":"#d0bfff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":1,"label":{"text":"AI Agent","fontSize":14}},
+    {"type":"rectangle","id":"l3","x":406,"y":107,"width":128,"height":34,"backgroundColor":"#ffd8a8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":1,"label":{"text":"Your Team","fontSize":14}},
+    {"type":"rectangle","id":"l4","x":546,"y":107,"width":105,"height":34,"backgroundColor":"#b2f2bb","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#22c55e","strokeWidth":1,"label":{"text":"Client","fontSize":14}},
+
+    {"type":"rectangle","id":"s1","x":60,"y":196,"width":175,"height":100,"backgroundColor":"#a5d8ff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#4a9eed","strokeWidth":2,"label":{"text":"1. Survey Order\nFlagged in FTF","fontSize":18}},
+    {"type":"arrow","id":"a12","x":235,"y":246,"width":30,"height":0,"points":[[0,0],[30,0]],"endArrowhead":"arrow","strokeColor":"#555555","strokeWidth":2},
+    {"type":"rectangle","id":"s2","x":265,"y":196,"width":175,"height":100,"backgroundColor":"#d0bfff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":2,"label":{"text":"2. A2: Research\nOrder Details","fontSize":18}},
+    {"type":"arrow","id":"a23","x":440,"y":246,"width":30,"height":0,"points":[[0,0],[30,0]],"endArrowhead":"arrow","strokeColor":"#555555","strokeWidth":2},
+    {"type":"rectangle","id":"s3","x":470,"y":196,"width":175,"height":100,"backgroundColor":"#d0bfff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":2,"label":{"text":"3. A3: Price &\nDraft Invoice","fontSize":18}},
+    {"type":"arrow","id":"a34","x":645,"y":246,"width":30,"height":0,"points":[[0,0],[30,0]],"endArrowhead":"arrow","strokeColor":"#555555","strokeWidth":2},
+    {"type":"rectangle","id":"s4","x":675,"y":196,"width":185,"height":100,"backgroundColor":"#ffd8a8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":2,"label":{"text":"4. Teams: Approve\nor Reject","fontSize":18}},
+    {"type":"arrow","id":"a45","x":860,"y":246,"width":30,"height":0,"points":[[0,0],[30,0]],"endArrowhead":"arrow","strokeColor":"#555555","strokeWidth":2},
+    {"type":"rectangle","id":"s5","x":890,"y":196,"width":175,"height":100,"backgroundColor":"#a5d8ff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#4a9eed","strokeWidth":2,"label":{"text":"5. A5: Create\nFTF Invoice","fontSize":18}},
+    {"type":"arrow","id":"a56","x":1065,"y":246,"width":30,"height":0,"points":[[0,0],[30,0]],"endArrowhead":"arrow","strokeColor":"#555555","strokeWidth":2},
+    {"type":"rectangle","id":"s6","x":1095,"y":196,"width":175,"height":100,"backgroundColor":"#d0bfff","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#8b5cf6","strokeWidth":2,"label":{"text":"6. A6: Compose\n& Send Email","fontSize":18}},
+    {"type":"arrow","id":"a67","x":1270,"y":246,"width":30,"height":0,"points":[[0,0],[30,0]],"endArrowhead":"arrow","strokeColor":"#555555","strokeWidth":2},
+    {"type":"rectangle","id":"s7","x":1300,"y":196,"width":175,"height":100,"backgroundColor":"#b2f2bb","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#22c55e","strokeWidth":2,"label":{"text":"7. Client Receives\nInvoice Email","fontSize":18}},
+
+    {"type":"rectangle","id":"sp1","x":60,"y":356,"width":1415,"height":50,"backgroundColor":"#fff3bf","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#f59e0b","strokeWidth":1,"label":{"text":"Full Pipeline (A0 → A7): every 30 min — discovers orders, researches, prices, checks replies, sends, learns","fontSize":16}},
+    {"type":"rectangle","id":"sp2","x":675,"y":416,"width":800,"height":50,"backgroundColor":"#ffc9c9","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#ef4444","strokeWidth":1,"label":{"text":"Approval Poller (A4 → A5 → A6): every 2 min — reply check, invoice creation, email send","fontSize":16}},
+
+    {"type":"rectangle","id":"a7note","x":60,"y":484,"width":1415,"height":56,"backgroundColor":"#c3fae8","fillStyle":"solid","roundness":{"type":3},"strokeColor":"#22c55e","strokeWidth":1,"label":{"text":"A7 Feedback Learner: every team correction in Teams is automatically extracted as a pricing rule and applied to future orders","fontSize":16}}
+  ],
+  "appState": {
+    "gridSize": null,
+    "viewBackgroundColor": "#ffffff"
+  },
+  "files": {}
+}

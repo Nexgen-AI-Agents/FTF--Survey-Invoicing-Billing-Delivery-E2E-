@@ -7,7 +7,7 @@ FTF API calls:
   POST /invoices  →  create invoice with approved services + amount
   GET  /invoices/{id}  →  verify creation succeeded
 
-If the API call fails: retries up to 3 times, then posts an error to Teams.
+If the API call fails: retries up to 3 times, then logs the error.
 
 Status flow: invoice_approved → invoice_finalized
 """
@@ -24,7 +24,6 @@ from core.excel_db import get_orders_by_status, get_order_by_id, save_order_stat
 from core.exceptions import AgentError
 from core.ftf_client import create_invoice, get_invoice
 from core.logger import get_logger
-from core.teams_graph_client import post_chat_reply
 
 AGENT_NAME = "agent_a5_invoice_finalizer"
 log       = get_logger(AGENT_NAME)
@@ -96,12 +95,6 @@ def finalize_order(order_id: str) -> dict:
             last_exc = exc
             log.warning("create_invoice attempt=%d failed order=%s: %s", attempt, order_id, exc)
     else:
-        # All retries exhausted
-        post_chat_reply(
-            message_id,
-            f"❌ <strong>Failed to create invoice in FTF for order {order_id} after {MAX_RETRY} attempts.</strong><br>"
-            f"Error: {last_exc}<br>Please create the invoice manually and reply APPROVE to continue."
-        )
         raise AgentError(f"finalize_order: all retries exhausted for order {order_id}: {last_exc}")
 
     # Optional: verify invoice exists
@@ -133,12 +126,6 @@ def finalize_order(order_id: str) -> dict:
         input_summary=f"services={len(ftf_services)} total={total}",
         output_summary=f"invoice_id={invoice_id}",
         model_used=None,
-    )
-
-    # Confirm in Teams
-    post_chat_reply(
-        message_id,
-        f"📄 Invoice created in FTF (ID: {invoice_id}). Sending to client now..."
     )
 
     return {"invoice_id": invoice_id, "pay_link": pay_link, "ok": True}

@@ -37,7 +37,6 @@ from config.settings import (
 from core.excel_db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
 from core.exceptions import AgentError
 from core.logger import get_logger
-from core.teams_graph_client import post_chat_reply
 
 AGENT_NAME = "agent_a6_sender_v2"
 log = get_logger(AGENT_NAME)
@@ -336,26 +335,6 @@ def send_for_order(order_id: str, skip_delay: bool = False) -> dict:
         model_used=None,
     )
 
-    # Confirm in Teams
-    if test_mode:
-        post_chat_reply(
-            message_id,
-            f"🧪 <strong>TEST MODE — Email redirected to {EMAIL_OVERRIDE_ALL} (client NOT notified).</strong><br>"
-            f"Order: {order_id} | Client would have received: {client_email} | Approved by: {approved_by} | Total: ${total:,.2f}"
-        )
-    elif override_email:
-        post_chat_reply(
-            message_id,
-            f"📧 <strong>Email sent to approver ({override_email}) — client copy withheld.</strong><br>"
-            f"Order: {order_id} | Approved by: {approved_by} | Total: ${total:,.2f}"
-        )
-    else:
-        post_chat_reply(
-            message_id,
-            f"✅ <strong>Email sent to {client_name} ({client_email}), approved by {approved_by}.</strong><br>"
-            f"Order: {order_id} | Total: ${total:,.2f}"
-        )
-
     log.info("invoice sent order=%s to=%s override=%r total=%.2f", order_id, to_email, bool(override_email), total)
     return {"sent": True, "to": to_email, "total": total}
 
@@ -376,17 +355,6 @@ def run() -> dict:
         except Exception as exc:
             log.error("send failed order=%s: %s", order_id, exc)
             summary["errors"] += 1
-            # Alert in Teams so the team knows the email failed — not just a log line
-            try:
-                msg_id = db_row.get("approval_message_id") or ""
-                post_chat_reply(
-                    msg_id,
-                    f"❌ <strong>Email send FAILED for order {order_id}.</strong><br>"
-                    f"Error: <code>{str(exc)[:200]}</code><br>"
-                    f"Check SMTP secrets (SMTP_HOST, SMTP_USER, SMTP_PASSWORD) in GitHub."
-                )
-            except Exception:
-                pass
         summary["processed"] += 1
 
     log.info("sender_v2 complete: %s", summary)
