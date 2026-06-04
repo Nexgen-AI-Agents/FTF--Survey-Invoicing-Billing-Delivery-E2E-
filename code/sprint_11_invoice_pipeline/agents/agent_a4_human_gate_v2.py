@@ -547,6 +547,15 @@ def _handle_orphan_replies(all_pending_orders: list[dict], all_msgs: Optional[li
         if msg.get("is_app", False) or msg["id"] in already:
             continue
 
+        sender       = msg["sender"]
+        sender_email = msg.get("sender_email", "")
+
+        # Belt-and-suspenders: never process Nesa's own messages as human replies
+        # (is_app should catch these, but Logic App UPN is null so email check fails)
+        if sender.strip().lower() == "nesa":
+            mark_reply_processed("__orphan__", msg["id"])
+            continue
+
         text = msg["text"]
 
         # Skip messages already handled by process_order_replies (mention a known order)
@@ -558,8 +567,6 @@ def _handle_orphan_replies(all_pending_orders: list[dict], all_msgs: Optional[li
         if not _ACTION_KEYWORDS.search(text):
             continue
 
-        sender       = msg["sender"]
-        sender_email = msg.get("sender_email", "")
         if not _is_approved_sender(sender, sender_email):
             continue
 
@@ -707,6 +714,13 @@ def _handle_nesa_mentions(all_msgs: list[dict], all_orders: list[dict],
 
         sender       = msg["sender"]
         sender_email = msg.get("sender_email", "")
+
+        # Belt-and-suspenders: Nesa's tip messages contain "Hey @Nesa approve..." which
+        # would self-trigger this handler; block by display name.
+        if sender.strip().lower() == "nesa":
+            mark_reply_processed("__nesa__", msg["id"])
+            continue
+
         if not _is_approved_sender(sender, sender_email):
             mark_reply_processed("__nesa__", msg["id"])
             continue

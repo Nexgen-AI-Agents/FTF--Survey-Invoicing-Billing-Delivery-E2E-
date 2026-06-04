@@ -35,7 +35,7 @@ def run() -> None:
         f"&nbsp;&nbsp;⏳ Waiting for your approval: <strong>{len(pending)}</strong><br>"
         f"&nbsp;&nbsp;❓ Need pricing input from you: <strong>{len(pricing)}</strong><br>"
         f"<br>"
-        f"I'm checking Teams every 2 minutes, 24/7. "
+        f"I'm checking Teams every 5 minutes, 24/7. "
         f"{'Reply <code>Hey @Nesa approve [order_id]</code> for any of the ' + str(len(pending)) + ' pending orders whenever you are ready.' if pending else 'No orders are waiting — all caught up!'}<br>"
         f"{'<br>⚠️ <strong>' + str(len(pricing)) + ' order(s) need your pricing input.</strong> Reply <code>Hey @Nesa price [order_id] $[amount]</code> for each.' if pricing else ''}"
     )

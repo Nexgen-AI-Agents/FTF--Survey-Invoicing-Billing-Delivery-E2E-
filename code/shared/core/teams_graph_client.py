@@ -829,10 +829,16 @@ def get_chat_messages(limit: int = 50) -> list[dict]:
             sender_email = (user_ref.get("userPrincipalName") or "").lower()
             # Treat our own bot account as is_app=True — Logic App webhook posts
             # on behalf of nesa@nexgenlogix.com which has a real user ID in Graph,
-            # so the normal `not bool(user_ref.get("id"))` check misses it.
-            # Without this, Nesa reads her own messages as human replies and loops.
+            # but Graph API returns userPrincipalName=null for Logic App delegated posts,
+            # so email check alone fails. Check display name "Nesa" as belt-and-suspenders.
             _bot_emails = {SMTP_FROM.lower(), "nesa@nexgenlogix.com"}
-            is_app       = bool(app_ref) or not bool(user_ref.get("id")) or sender_email in _bot_emails
+            _bot_names  = {"nesa"}
+            is_app       = (
+                bool(app_ref)
+                or not bool(user_ref.get("id"))
+                or sender_email in _bot_emails
+                or sender_name.lower() in _bot_names
+            )
             raw_body     = (msg.get("body") or {}).get("content", "")
             plain        = _clean_message_body(raw_body)
 
@@ -877,6 +883,9 @@ def get_chat_thread_replies(message_id: str) -> list[dict]:
         log.warning("could not fetch chat replies for message=%s: %s", message_id, exc)
         return []
 
+    _bot_emails = {SMTP_FROM.lower(), "nesa@nexgenlogix.com"}
+    _bot_names  = {"nesa"}
+
     results: list[dict] = []
     for reply in r.json().get("value", []):
         if reply.get("messageType") != "message":
@@ -890,6 +899,11 @@ def get_chat_thread_replies(message_id: str) -> list[dict]:
 
         sender_name  = user_ref.get("displayName") or "Unknown"
         sender_email = (user_ref.get("userPrincipalName") or "").lower()
+
+        # Skip bot's own reply messages (same check as get_chat_messages)
+        if sender_email in _bot_emails or sender_name.lower() in _bot_names:
+            continue
+
         raw_body     = (reply.get("body") or {}).get("content", "")
         plain        = _clean_message_body(raw_body)
 
