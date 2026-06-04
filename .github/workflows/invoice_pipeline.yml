@@ -1,8 +1,9 @@
 name: Invoice Pipeline (Sprint 11)
 
 on:
-  schedule:
-    - cron: "0,30 * * * *"   # every 30 minutes — only trigger; no manual dispatch
+  workflow_dispatch:    # manual only — cron paused 2026-06-04 pending logic change
+  # schedule:
+  #   - cron: "0,30 * * * *"   # every 30 minutes — re-enable when ready
 
 permissions:
   contents: write
