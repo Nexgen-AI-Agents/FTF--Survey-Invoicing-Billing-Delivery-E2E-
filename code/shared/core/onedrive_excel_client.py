@@ -276,6 +276,26 @@ def get_pending_order_ids() -> set:
         return set()
 
 
+def _close_session() -> None:
+    """Close the current workbook session on the Graph API server, releasing the file lock."""
+    session_id = _cache.pop("od_session", None)
+    if not session_id:
+        return
+    try:
+        base = _wb_base()
+        httpx.post(
+            f"{base}/closeSession",
+            headers={
+                "Authorization": f"Bearer {_get_token()}",
+                "workbook-session-id": session_id,
+            },
+            timeout=10.0,
+        )
+        log.debug("workbook session closed")
+    except Exception as exc:
+        log.debug("session close error (ignored): %s", exc)
+
+
 def _download_workbook_bytes() -> bytes:
     """Download the workbook file content as raw bytes."""
     drive_id = _cache.get("od_drive_id")
@@ -291,7 +311,8 @@ def _download_workbook_bytes() -> bytes:
 
 
 def _upload_workbook_bytes(data: bytes) -> None:
-    """Replace the workbook file with new content (PUT upload)."""
+    """Replace the workbook file with new content (PUT upload). Retries once on 423."""
+    import time
     drive_id = _cache.get("od_drive_id")
     item_id  = _get_item_id()
     url = (
@@ -299,16 +320,21 @@ def _upload_workbook_bytes(data: bytes) -> None:
         if drive_id else
         f"{_GRAPH}/users/{ONEDRIVE_FILE_USER}/drive/items/{item_id}/content"
     )
-    r = httpx.put(
-        url,
-        headers={"Authorization": f"Bearer {_get_token()}", "Content-Type": "application/octet-stream"},
-        content=data,
-        timeout=60.0,
-    )
-    r.raise_for_status()
-    # Invalidate session — file changed on disk
-    _cache.pop("od_session", None)
-    log.info("workbook re-uploaded (%d bytes)", len(data))
+    put_headers = {"Authorization": f"Bearer {_get_token()}", "Content-Type": "application/octet-stream"}
+    for attempt in range(3):
+        r = httpx.put(url, headers=put_headers, content=data, timeout=60.0)
+        if r.status_code == 423:
+            wait = (attempt + 1) * 4
+            log.warning("upload 423 Locked — retrying in %ds (attempt %d/3)", wait, attempt + 1)
+            time.sleep(wait)
+            put_headers["Authorization"] = f"Bearer {_get_token()}"  # refresh token
+            continue
+        r.raise_for_status()
+        # Invalidate session — file changed on disk
+        _cache.pop("od_session", None)
+        log.info("workbook re-uploaded (%d bytes)", len(data))
+        return
+    raise AgentError("workbook upload failed: file locked after 3 retries (423)")
 
 
 def _setup_table_formatting() -> None:
@@ -324,8 +350,8 @@ def _setup_table_formatting() -> None:
     from openpyxl.formatting.rule import FormulaRule
     from openpyxl.styles import PatternFill
 
-    # Close any open workbook session before touching the raw file
-    _cache.pop("od_session", None)
+    # Close the server-side workbook session before touching the raw file (avoids 423 Locked)
+    _close_session()
 
     try:
         raw = _download_workbook_bytes()
