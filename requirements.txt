@@ -35,6 +35,9 @@ PyYAML>=6.0.1
 # HTML parsing — county property appraiser page scraping (A2 Data Collector)
 beautifulsoup4>=4.12.0
 
+# Fernet encryption — pay link generation in A5 (generate_pay_link)
+cryptography>=42.0.0
+
 # Testing
 pytest>=8.2.0
 pytest-mock>=3.14.0
