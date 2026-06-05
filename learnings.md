@@ -146,5 +146,15 @@
 - Always run `python skills/verify-a2-output/run.py` after any A2 fix.
 - Use `python skills/check-dollar-sign-orders/run.py` whenever Prateek asks about orders with `$` but no amount.
 - Use `python skills/requeue-orders/run.py` to reset stuck orders for reprocessing.
-- Full list: `skills/pipeline-status`, `check-dollar-sign-orders`, `requeue-orders`, `verify-a2-output`, `full-pipeline-retest`.
+- `full-pipeline-retest` was retired — it required MySQL which is only accessible from GitHub Actions, so it always failed locally. Replaced with `session-wrap`.
+- Full active list: `skills/pipeline-status`, `check-dollar-sign-orders`, `requeue-orders`, `verify-a2-output`, `session-wrap`.
 - See each `skills/*/SKILL.md` for usage.
+
+---
+
+## [2026-06-05] — session-wrap skill replaces full-pipeline-retest
+
+- **Why full-pipeline-retest was broken:** It tried to import A2/A3 agents and run them locally. Those agents connect to AWS RDS (MySQL) which only allows connections from GitHub Actions runners. Every local run timed out on the first A2 call.
+- **Lesson:** Don't build local skills that depend on production infrastructure. Skills should work with what's reachable locally (Excel state, local files, git). Pipeline execution stays in GitHub Actions.
+- **session-wrap replaces it:** Shows recent learnings, prints the fill-in template, shows git status, and prints an end-of-session checklist. Run it before ending every session — it's the knowledge capture gate.
+- **Rule:** `python skills/session-wrap/run.py` is the last command of every session.

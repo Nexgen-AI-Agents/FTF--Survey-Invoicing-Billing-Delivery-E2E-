@@ -44,4 +44,4 @@ Five scripts in `skills/` folder that every dev should know:
 | `python skills/verify-a2-output/run.py` | After any A2 fix — confirm no sentinels |
 | `python skills/check-dollar-sign-orders/run.py` | Find orders with `$` but no amount |
 | `python skills/requeue-orders/run.py --orders X --target-status invoice_needed --clear invoice_draft,data_sources` | Re-queue orders for reprocessing |
-| `python skills/full-pipeline-retest/run.py --orders X` | End-to-end retest after a fix |
+| `python skills/session-wrap/run.py` | End of every session — log learnings, check git status |

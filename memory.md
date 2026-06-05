@@ -317,7 +317,7 @@ Runnable Python scripts in `skills/`. Run via Bash. Use these BEFORE manually de
 | `python skills/verify-a2-output/run.py` | After any A2 fix — confirm no sentinel values in client_name/property_address |
 | `python skills/check-dollar-sign-orders/run.py` | "Orders with dollar sign / no invoice amount" check |
 | `python skills/requeue-orders/run.py --orders X,Y --target-status invoice_needed --clear invoice_draft,data_sources` | Reset stuck orders for reprocessing |
-| `python skills/full-pipeline-retest/run.py --orders X,Y` | End-to-end retest: A2→A3→verify for specific orders |
+| `python skills/session-wrap/run.py` | End of every session — log learnings, check git status, print checklist |
 
 See `skills/*/SKILL.md` for full usage docs.
 
