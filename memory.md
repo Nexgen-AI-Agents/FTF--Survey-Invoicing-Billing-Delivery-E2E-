@@ -307,6 +307,22 @@ Full rules, commands, edge cases, and state machine documented in:
 
 ---
 
+## Pipeline Diagnostic Skills
+
+Runnable Python scripts in `skills/`. Run via Bash. Use these BEFORE manually debugging the pipeline.
+
+| Script | When to invoke |
+|--------|---------------|
+| `python skills/pipeline-status/run.py` | Before/after any fix — snapshot all status counts |
+| `python skills/verify-a2-output/run.py` | After any A2 fix — confirm no sentinel values in client_name/property_address |
+| `python skills/check-dollar-sign-orders/run.py` | "Orders with dollar sign / no invoice amount" check |
+| `python skills/requeue-orders/run.py --orders X,Y --target-status invoice_needed --clear invoice_draft,data_sources` | Reset stuck orders for reprocessing |
+| `python skills/full-pipeline-retest/run.py --orders X,Y` | End-to-end retest: A2→A3→verify for specific orders |
+
+See `skills/*/SKILL.md` for full usage docs.
+
+---
+
 ## Rules for AI Working on This Project
 
 1. **Read order every session** â€” `CLAUDE.md` first â†’ `memory.md` second â†’ `learnings.md` third â†’ `sprints/index.md` â†’ active sprint file â†’ `issues/issue.md` â†’ then act. All must be read before starting any task.

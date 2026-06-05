@@ -117,3 +117,34 @@
 - An agent reading those files would know Prateek's title, not his brain.
 - Rule: after every significant session, update `prateek_thinking_patterns.md` with new patterns.
 - Rule: every transcript extraction → check if any new patterns need to flow into agent files.
+
+---
+
+## [2026-06-05] — Python `or` doesn't guard against literal "Unknown" strings from Claude
+
+- **Bug:** A2 (`agent_a2_data_collector.py`) used `str(packet.get("field", {}).get("value") or fallback)` to save client_name and property_address. Python's `or` only falls back when the left side is falsy. The string `"Unknown"` is truthy — so when Claude AI returned `"Unknown"`, the correct DB value in `fallback` was silently discarded.
+- **Symptom:** Orders showed `client_name = "Unknown"` and `property_address = "Unknown"` in pipeline state even though MySQL had valid data (e.g., Garrett Bender / 610 SE 3RD AVE).
+- **Fix:** Added `_resolve_field(extracted_val, fallback)` helper in A2. If `extracted_val` is in `_UNKNOWN_SENTINELS = {"unknown", "n/a", "none", "not available", "not found", ""}`, fall back to the DB value instead.
+- **Pattern to watch:** Any `save_order_state()` call that uses `or` with an AI-extracted value. "Unknown" is truthy in Python. Always use sentinel-aware fallback for AI-sourced fields.
+- **Affected file:** `code/sprint_11_invoice_pipeline/agents/agent_a2_data_collector.py` lines ~606-607
+
+---
+
+## [2026-06-05] — Excel state has no county column — A2 silently got empty county
+
+- **Bug:** `db_row.get("county", "")` in A2 always returned `""` because the Excel state schema has no `county` column (A1 doesn't save county).
+- **Symptom:** County property appraiser lookup failed with "No county provided" for orders that had a valid county in MySQL (`ng_property_county`).
+- **Fix:** Added fallback in A2 `collect_for_order()`: if `_db_county` is empty, call `mysql_get_order_details(order_id)` and read `ng_property_county` from MySQL directly.
+- **Lesson:** When a fallback variable silently returns `""` because of a schema gap, it propagates without error through the entire pipeline. Log or warn when county is empty before calling the appraiser.
+
+---
+
+## [2026-06-05] — Skills library created for pipeline diagnostics
+
+- Five reusable Python scripts created in `skills/` folder for common pipeline ops.
+- Always run `python skills/pipeline-status/run.py` before and after any fix.
+- Always run `python skills/verify-a2-output/run.py` after any A2 fix.
+- Use `python skills/check-dollar-sign-orders/run.py` whenever Prateek asks about orders with `$` but no amount.
+- Use `python skills/requeue-orders/run.py` to reset stuck orders for reprocessing.
+- Full list: `skills/pipeline-status`, `check-dollar-sign-orders`, `requeue-orders`, `verify-a2-output`, `full-pipeline-retest`.
+- See each `skills/*/SKILL.md` for usage.

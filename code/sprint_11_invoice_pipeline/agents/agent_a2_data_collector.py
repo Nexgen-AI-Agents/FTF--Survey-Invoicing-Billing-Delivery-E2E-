@@ -40,7 +40,7 @@ from core.claude_client import call as llm_call, call_with_image
 from core.excel_db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
 from core.exceptions import AgentError
 from core.ftf_client import get_order, get_customer
-from core.ftf_mysql import get_county_urls
+from core.ftf_mysql import get_county_urls, get_order_details as mysql_get_order_details
 from core.logger import get_logger
 
 AGENT_NAME = "agent_a2_data_collector"
@@ -457,6 +457,16 @@ Return ONLY valid JSON, no markdown:
         }
 
 
+_UNKNOWN_SENTINELS = frozenset({"unknown", "n/a", "none", "not available", "not found", ""})
+
+
+def _resolve_field(extracted_val, fallback: str) -> str:
+    """Return extracted_val unless it's a sentinel like 'Unknown'; fall back to DB value."""
+    if extracted_val and str(extracted_val).strip().lower() not in _UNKNOWN_SENTINELS:
+        return str(extracted_val)
+    return fallback
+
+
 def _has_minimum_viable_data(packet: dict) -> bool:
     """Return True if we have enough data to build an invoice draft.
 
@@ -487,6 +497,13 @@ def collect_for_order(order_id: str) -> dict:
     _db_email   = db_row.get("customer_email", "")
     _db_service = db_row.get("service_type", "")
     _db_county  = db_row.get("county", "")
+    # Excel state has no county column — fall back to MySQL when empty
+    if not _db_county:
+        try:
+            _mysql_row = mysql_get_order_details(order_id)
+            _db_county = str(_mysql_row.get("ng_property_county") or "")
+        except Exception:
+            pass
 
     # 1 — FTF API
     try:
@@ -586,8 +603,8 @@ def collect_for_order(order_id: str) -> dict:
         status="data_collected",
         invoice_draft=None,
         data_sources=json.dumps(data_sources, default=str),
-        client_name=str(packet.get("client_name", {}).get("value") or client_name),
-        property_address=str(packet.get("property_address", {}).get("value") or property_address),
+        client_name=_resolve_field(packet.get("client_name", {}).get("value"), client_name),
+        property_address=_resolve_field(packet.get("property_address", {}).get("value"), property_address),
         data_collected_at=datetime.now(timezone.utc).isoformat(),
     )
 
