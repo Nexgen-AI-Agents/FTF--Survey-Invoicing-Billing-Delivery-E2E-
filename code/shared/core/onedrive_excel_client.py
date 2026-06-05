@@ -426,6 +426,55 @@ def append_approval_row(
     log.info("excel row appended order_id=%s amount=%.2f status=%s", order_id, amount, order_status)
 
 
+_ACTION_NORMALIZE = {
+    "approve": "approve",
+    "reject":  "reject",
+    "on-hold": "hold",
+    "on hold": "hold",
+    "hold":    "hold",
+}
+
+
+def get_pending_approvals() -> list[dict]:
+    """Return rows where Action is set (Approve/Reject/On-hold) and Processed At is empty.
+
+    Used by the Excel Approval Watcher to pick up decisions made in the spreadsheet
+    without needing Power Automate or any external trigger.
+
+    Returns list of dicts: {order_id, action (normalized), notes}
+    """
+    ensure_approval_sheet()
+    r = httpx.get(
+        f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows",
+        headers=_session_headers(),
+        timeout=15.0,
+    )
+    r.raise_for_status()
+
+    results = []
+    for row in r.json().get("value", []):
+        vals = row.get("values", [[]])[0]
+        if len(vals) < _COL_COUNT:
+            vals = list(vals) + [""] * (_COL_COUNT - len(vals))
+
+        order_id     = str(vals[0]).strip()
+        action_raw   = str(vals[_COL_ACTION]).strip()
+        processed_at = str(vals[_COL_PROCESSED_AT]).strip()
+        notes        = str(vals[10]).strip()   # col K
+
+        if not order_id or not action_raw or processed_at:
+            continue   # blank action or already processed
+
+        action_norm = _ACTION_NORMALIZE.get(action_raw.lower())
+        if not action_norm:
+            continue   # unrecognised value in Action column
+
+        results.append({"order_id": order_id, "action": action_norm, "notes": notes})
+
+    log.info("get_pending_approvals: %d pending decisions found", len(results))
+    return results
+
+
 def mark_row_processed(order_id: str) -> None:
     """Set Processed At timestamp on the most recent blank-Action row matching order_id."""
     base = _wb_base()
