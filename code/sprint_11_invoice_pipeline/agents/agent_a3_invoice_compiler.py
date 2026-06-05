@@ -546,7 +546,7 @@ def run() -> dict:
 
     for db_row in orders:
         order_id = db_row["order_id"]
-        if str(order_id) in pending_ids:
+        if str(order_id) in pending_ids and db_row.get("invoice_draft"):
             log.info("skipping order=%s — already Pending in OneDrive Excel", order_id)
             summary["skipped_duplicate"] += 1
             summary["processed"] += 1
