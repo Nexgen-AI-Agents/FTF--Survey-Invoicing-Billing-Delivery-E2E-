@@ -44,20 +44,11 @@ jobs:
       AZURE_APP_ID:               ${{ secrets.AZURE_APP_ID }}
       AZURE_CLIENT_SECRET:        ${{ secrets.AZURE_CLIENT_SECRET }}
       ONEDRIVE_SHARE_URL:         ${{ secrets.ONEDRIVE_SHARE_URL }}
-      SMTP_HOST:                  ${{ secrets.SMTP_HOST }}
-      SMTP_PORT:                  ${{ secrets.SMTP_PORT }}
-      SMTP_USER:                  ${{ secrets.SMTP_USER }}
-      SMTP_PASSWORD:              ${{ secrets.SMTP_PASSWORD }}
-      SMTP_FROM:                  ${{ secrets.SMTP_FROM }}
       FTF_ORDER_URL:              ${{ secrets.FTF_ORDER_URL }}
-      GOOGLE_REVIEW_URL:          ${{ secrets.GOOGLE_REVIEW_URL }}
       NOTIFICATION_FROM_EMAIL:    ${{ secrets.NOTIFICATION_FROM_EMAIL }}
       NOTIFICATION_TO_EMAILS:     ${{ secrets.NOTIFICATION_TO_EMAILS }}
       APPROVED_SENDERS:           ${{ secrets.APPROVED_SENDERS }}
       EMAIL_OVERRIDE_ALL:         ${{ secrets.EMAIL_OVERRIDE_ALL }}
-      FTF_PAY_HASH_KEY:           ${{ secrets.FTF_PAY_HASH_KEY }}
-      FTF_SITE_BASE_URL:          ${{ secrets.FTF_SITE_BASE_URL }}
-      SKIP_SEND_DELAY:            "1"
       # workflow_dispatch inputs — read by A4 to process the approval
       INPUT_ORDER_ID:             ${{ inputs.order_id }}
       INPUT_ACTION:               ${{ inputs.action }}

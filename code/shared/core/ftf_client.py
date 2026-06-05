@@ -191,11 +191,29 @@ def create_invoice(order_id: str, amount: float, services: list[dict]) -> dict:
         raise AgentError("create_invoice failed") from exc
 
 
-def send_invoice(invoice_id: str) -> bool:
+def send_invoice(
+    invoice_id: str,
+    recipient_email: Optional[str] = None,
+    subject: Optional[str] = None,
+    message: Optional[str] = None,
+) -> bool:
+    """Trigger FTF's native invoice delivery email.
+
+    recipient_email: override the client address on file (used for EMAIL_OVERRIDE_ALL staging).
+    subject/message: optional custom subject and body text.
+    """
+    payload: dict = {}
+    if recipient_email:
+        payload["recipient_email"] = recipient_email
+    if subject:
+        payload["subject"] = subject
+    if message:
+        payload["message"] = message
     try:
         r = httpx.post(
             f"{FTF_API_BASE_URL}/invoices/{invoice_id}/send",
             headers=_headers(),
+            json=payload or None,
             timeout=_TIMEOUT,
         )
         r.raise_for_status()

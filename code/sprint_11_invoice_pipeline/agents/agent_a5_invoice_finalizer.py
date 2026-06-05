@@ -19,7 +19,6 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
-from config.settings import FTF_PAY_HASH_KEY, FTF_SITE_BASE_URL
 from core.excel_db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
 from core.exceptions import AgentError
 from core.ftf_client import create_invoice, get_invoice
@@ -28,26 +27,6 @@ from core.logger import get_logger
 AGENT_NAME = "agent_a5_invoice_finalizer"
 log       = get_logger(AGENT_NAME)
 MAX_RETRY = 3
-
-
-def generate_pay_link(order_id: str) -> str:
-    """Generate the FTF Pay Now link using the same Fernet encryption as the portal.
-
-    Matches data_vars['hash_key'] / newGen_base_url logic in the FTF Flask app:
-        token = Fernet(key).encrypt(str(order_id).encode()).decode()
-        url   = f'{base}/link/paynow?token={token}'
-    """
-    if not FTF_PAY_HASH_KEY:
-        log.warning("FTF_PAY_HASH_KEY not set — Pay Now link will be omitted from email")
-        return ""
-    try:
-        from cryptography.fernet import Fernet
-        token = Fernet(FTF_PAY_HASH_KEY.encode()).encrypt(str(order_id).encode()).decode()
-        base  = FTF_SITE_BASE_URL.rstrip("/")
-        return f"{base}/link/paynow?token={token}"
-    except Exception as exc:
-        log.warning("generate_pay_link failed order=%s: %s", order_id, exc)
-        return ""
 
 
 def finalize_order(order_id: str) -> dict:
@@ -104,18 +83,11 @@ def finalize_order(order_id: str) -> dict:
         except Exception as exc:
             log.warning("invoice verification failed invoice_id=%s: %s", invoice_id, exc)
 
-    # Generate Pay Now link (Fernet-encrypted order_id, same logic as FTF portal)
-    pay_link = generate_pay_link(order_id)
-    if pay_link:
-        log.info("pay_link generated order=%s", order_id)
-
-    # Save
     save_order_state(
         order_id,
         status="invoice_finalized",
         invoice_id=invoice_id,
         invoice_created_at=datetime.now(timezone.utc).isoformat(),
-        pay_link=pay_link,
     )
 
     log_decision(
@@ -128,7 +100,7 @@ def finalize_order(order_id: str) -> dict:
         model_used=None,
     )
 
-    return {"invoice_id": invoice_id, "pay_link": pay_link, "ok": True}
+    return {"invoice_id": invoice_id, "ok": True}
 
 
 def run() -> dict:
