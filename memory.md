@@ -335,6 +335,9 @@ See `skills/*/SKILL.md` for full usage docs.
 8. **No raw calls** â€” all API, DB, and LLM calls go through `core/`. Never inside agent files.
 9. **No hardcoding** â€” model names in `config/models.py`, prices via API, prompts in `config/prompts/`, business rules in `config/flag_triggers.py`.
 10. **Learnings update** â€” append to `learnings.md` any time a mistake is caught, a pattern is confirmed, or a non-obvious decision is made. Update `user_learnings.md` on every git push if new learnings exist.
+11. **Skills â€” invoke autonomously** â€” before any diagnostic, investigative, or operational task, check `skills/` for a matching skill and run it without asking. Do not explain first. Just run it. Show the result, then continue.
+12. **Skills â€” create autonomously** â€” if a task would be done more than once, or if it is a clear category of pipeline operation (status check, data quality, requeue, verification, reporting), create a skill in `skills/<name>/run.py` + `skills/<name>/SKILL.md` without asking. Add it to the skills table in memory.md and developer_review.md. Commit immediately.
+13. **session-wrap is mandatory** â€” run `python skills/session-wrap/run.py` at the end of every session. Not optional. Captures learnings, surfaces uncommitted files, prints checklist. Session is not complete until this has run.
 
 ---
 
