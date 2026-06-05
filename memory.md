@@ -307,22 +307,6 @@ Full rules, commands, edge cases, and state machine documented in:
 
 ---
 
-## Pipeline Diagnostic Skills
-
-Runnable Python scripts in `skills/`. Run via Bash. Use these BEFORE manually debugging the pipeline.
-
-| Script | When to invoke |
-|--------|---------------|
-| `python skills/pipeline-status/run.py` | Before/after any fix — snapshot all status counts |
-| `python skills/verify-a2-output/run.py` | After any A2 fix — confirm no sentinel values in client_name/property_address |
-| `python skills/check-dollar-sign-orders/run.py` | "Orders with dollar sign / no invoice amount" check |
-| `python skills/requeue-orders/run.py --orders X,Y --target-status invoice_needed --clear invoice_draft,data_sources` | Reset stuck orders for reprocessing |
-| `python skills/session-wrap/run.py` | End of every session — log learnings, check git status, print checklist |
-
-See `skills/*/SKILL.md` for full usage docs.
-
----
-
 ## Rules for AI Working on This Project
 
 1. **Read order every session** â€” `CLAUDE.md` first â†’ `memory.md` second â†’ `learnings.md` third â†’ `sprints/index.md` â†’ active sprint file â†’ `issues/issue.md` â†’ then act. All must be read before starting any task.
@@ -335,9 +319,7 @@ See `skills/*/SKILL.md` for full usage docs.
 8. **No raw calls** â€” all API, DB, and LLM calls go through `core/`. Never inside agent files.
 9. **No hardcoding** â€” model names in `config/models.py`, prices via API, prompts in `config/prompts/`, business rules in `config/flag_triggers.py`.
 10. **Learnings update** â€” append to `learnings.md` any time a mistake is caught, a pattern is confirmed, or a non-obvious decision is made. Update `user_learnings.md` on every git push if new learnings exist.
-11. **Skills â€” invoke autonomously** â€” before any diagnostic, investigative, or operational task, check `skills/` for a matching skill and run it without asking. Do not explain first. Just run it. Show the result, then continue.
-12. **Skills â€” create autonomously** â€” if a task would be done more than once, or if it is a clear category of pipeline operation (status check, data quality, requeue, verification, reporting), create a skill in `skills/<name>/run.py` + `skills/<name>/SKILL.md` without asking. Add it to the skills table in memory.md and developer_review.md. Commit immediately.
-13. **session-wrap is mandatory** â€” run `python skills/session-wrap/run.py` at the end of every session. Not optional. Captures learnings, surfaces uncommitted files, prints checklist. Session is not complete until this has run.
+11. **Skills** â€” invoke and create autonomously. See `skills/INDEX.md` for the full registry, operating rules, and how to add new skills.
 
 ---
 
