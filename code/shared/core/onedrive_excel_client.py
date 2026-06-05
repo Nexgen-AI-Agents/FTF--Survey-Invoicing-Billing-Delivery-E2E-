@@ -34,12 +34,21 @@ _cache: dict = {}
 
 # Column order must stay in sync with append_approval_row() values list
 APPROVAL_HEADERS = [
-    "Order ID", "Client Name", "Property Address", "Service",
+    "Order ID", "Order Status", "Client Name", "Property Address", "Service",
     "Amount", "Confidence", "Escalate", "FTF Link",
-    "Status", "Notes", "Posted At", "Processed At",
+    "Action", "Notes", "Posted At", "Processed At",
 ]
-_COL_COUNT = len(APPROVAL_HEADERS)
-_END_COL   = chr(ord("A") + _COL_COUNT - 1)   # "L"
+_COL_COUNT        = len(APPROVAL_HEADERS)   # 13
+_END_COL          = chr(ord("A") + _COL_COUNT - 1)   # "M"
+_COL_ACTION       = 9    # J  — dropdown: Approve / Reject / On-hold
+_COL_PROCESSED_AT = 12   # M
+
+# Row fill colors for Action dropdown choices (light palette, Excel-compatible hex)
+_ACTION_COLORS = {
+    "Approve": "#C6EFCE",
+    "Reject":  "#FFC7CE",
+    "On-hold": "#FFEB9C",
+}
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
@@ -159,12 +168,46 @@ def _session_headers() -> dict:
 
 # ── Sheet + table setup ───────────────────────────────────────────────────────
 
+def _create_table(base: str, h: dict) -> None:
+    """Create ApprovalTable with headers, then set up dropdown + conditional formatting."""
+    range_addr = f"A1:{_END_COL}1"
+    httpx.patch(
+        f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{range_addr}')",
+        headers=h,
+        json={"values": [APPROVAL_HEADERS]},
+        timeout=15.0,
+    ).raise_for_status()
+
+    r5 = httpx.post(
+        f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/add",
+        headers=h,
+        json={"address": f"{ONEDRIVE_SHEET_NAME}!{range_addr}", "hasHeaders": True},
+        timeout=15.0,
+    )
+    r5.raise_for_status()
+    table_id = r5.json()["id"]
+
+    httpx.patch(
+        f"{base}/tables/{table_id}",
+        headers=h,
+        json={"name": ONEDRIVE_TABLE_NAME},
+        timeout=15.0,
+    ).raise_for_status()
+    log.info("created table: %s", ONEDRIVE_TABLE_NAME)
+
+    _cache.pop("od_formatting_done", None)
+    _setup_table_formatting()
+
+
 def ensure_approval_sheet() -> None:
-    """Create the Approvals sheet and ApprovalTable if they don't already exist."""
+    """Create the Approvals sheet and ApprovalTable if they don't already exist.
+
+    Also detects schema mismatch (wrong column count) and recreates the table cleanly.
+    """
     base = _wb_base()
     h    = _session_headers()
 
-    # Check sheets
+    # ── Check sheet ───────────────────────────────────────────────────────────
     r = httpx.get(f"{base}/worksheets", headers=h, timeout=15.0)
     r.raise_for_status()
     existing_sheets = [s["name"] for s in r.json().get("value", [])]
@@ -175,45 +218,43 @@ def ensure_approval_sheet() -> None:
         r2.raise_for_status()
         log.info("created worksheet: %s", ONEDRIVE_SHEET_NAME)
 
-    # Check tables
+    # ── Check table ───────────────────────────────────────────────────────────
     r3 = httpx.get(f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables", headers=h, timeout=15.0)
     r3.raise_for_status()
-    existing_tables = [t["name"] for t in r3.json().get("value", [])]
+    tables = {t["name"]: t for t in r3.json().get("value", [])}
 
-    if ONEDRIVE_TABLE_NAME not in existing_tables:
-        # Write headers to A1:L1
-        range_addr = f"A1:{_END_COL}1"
-        httpx.patch(
-            f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{range_addr}')",
-            headers=h,
-            json={"values": [APPROVAL_HEADERS]},
-            timeout=15.0,
-        ).raise_for_status()
-
-        # Convert range to table
-        r5 = httpx.post(
-            f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/add",
-            headers=h,
-            json={"address": f"{ONEDRIVE_SHEET_NAME}!{range_addr}", "hasHeaders": True},
-            timeout=15.0,
+    if ONEDRIVE_TABLE_NAME in tables:
+        # Verify column count — if wrong schema, delete and recreate
+        r_cols = httpx.get(
+            f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/columns",
+            headers=h, timeout=15.0,
         )
-        r5.raise_for_status()
-        table_id = r5.json()["id"]
+        if r_cols.is_success:
+            actual_cols = len(r_cols.json().get("value", []))
+            if actual_cols != _COL_COUNT:
+                log.info(
+                    "schema mismatch: table has %d cols, expected %d — deleting and recreating",
+                    actual_cols, _COL_COUNT,
+                )
+                httpx.delete(
+                    f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}",
+                    headers=h, timeout=15.0,
+                ).raise_for_status()
+                _create_table(base, h)
+            elif not _cache.get("od_formatting_done"):
+                # Table exists with correct schema — apply formatting if not done this session
+                _setup_table_formatting()
+                _cache["od_formatting_done"] = True
+        return
 
-        # Rename to known name
-        httpx.patch(
-            f"{base}/tables/{table_id}",
-            headers=h,
-            json={"name": ONEDRIVE_TABLE_NAME},
-            timeout=15.0,
-        ).raise_for_status()
-        log.info("created table: %s", ONEDRIVE_TABLE_NAME)
+    _create_table(base, h)
+    _cache["od_formatting_done"] = True
 
 
 # ── Public write API ──────────────────────────────────────────────────────────
 
 def get_pending_order_ids() -> set:
-    """Return the set of order IDs already in the approval table with Status=Pending."""
+    """Return order IDs that already have a row in the approval table with blank Action (awaiting decision)."""
     try:
         ensure_approval_sheet()
         r = httpx.get(
@@ -225,28 +266,121 @@ def get_pending_order_ids() -> set:
         pending = set()
         for row in r.json().get("value", []):
             vals = row.get("values", [[]])[0]
-            if len(vals) >= 9 and str(vals[8]).strip().lower() == "pending":
+            # Action column (index _COL_ACTION) is blank → awaiting decision
+            if len(vals) > _COL_ACTION and not str(vals[_COL_ACTION]).strip():
                 pending.add(str(vals[0]).strip())
-        log.info("get_pending_order_ids: %d pending rows in Excel", len(pending))
+        log.info("get_pending_order_ids: %d awaiting-action rows in Excel", len(pending))
         return pending
     except Exception as exc:
         log.warning("get_pending_order_ids failed (dedup disabled): %s", exc)
         return set()
 
 
+def _setup_table_formatting() -> None:
+    """Set up dropdown validation and row conditional formatting on the Approvals sheet.
+
+    Called once after table creation. Safe to re-call — data validation is idempotent;
+    conditional formats are only added if none exist yet.
+    """
+    base  = _wb_base()
+    h     = _session_headers()
+    sheet = ONEDRIVE_SHEET_NAME
+    # Action column letter (A=0 → J=9)
+    action_col   = chr(ord("A") + _COL_ACTION)          # "J"
+    action_range = f"{action_col}2:{action_col}10000"
+    full_range   = f"A2:{_END_COL}10000"
+
+    # ── 1. Dropdown validation on Action column ───────────────────────────────
+    try:
+        rv = httpx.patch(
+            f"{base}/worksheets/{sheet}/range(address='{action_range}')/dataValidation",
+            headers=h,
+            json={
+                "rule": {
+                    "list": {
+                        "source": "Approve,Reject,On-hold",
+                        "showDropDown": False,   # False = SHOW dropdown (Excel API inverted)
+                    }
+                },
+                "showErrorAlert": False,
+                "showInputMessage": False,
+            },
+            timeout=15.0,
+        )
+        if rv.is_success:
+            log.info("dropdown validation set: %s → Approve/Reject/On-hold", action_range)
+        else:
+            log.warning("dropdown validation failed %s: %s", rv.status_code, rv.text[:200])
+    except Exception as exc:
+        log.warning("dropdown validation setup error: %s", exc)
+
+    # ── 2. Conditional formatting — row color per action ─────────────────────
+    # Check how many custom conditional formats already exist
+    try:
+        rc = httpx.get(
+            f"{base}/worksheets/{sheet}/range(address='{full_range}')/conditionalFormats",
+            headers=h, timeout=15.0,
+        )
+        existing_cf = rc.json().get("value", []) if rc.is_success else []
+    except Exception:
+        existing_cf = []
+
+    if len(existing_cf) >= len(_ACTION_COLORS):
+        log.info("conditional formats already set (%d rules) — skipping", len(existing_cf))
+        return
+
+    for action_val, fill_hex in _ACTION_COLORS.items():
+        try:
+            # Add a Custom formula-based conditional format on the full row range
+            r_add = httpx.post(
+                f"{base}/worksheets/{sheet}/range(address='{full_range}')/conditionalFormats/add",
+                headers=h,
+                json={"type": "Custom"},
+                timeout=15.0,
+            )
+            if not r_add.is_success:
+                log.warning("CF add failed for %s: %s %s", action_val, r_add.status_code, r_add.text[:150])
+                continue
+            cf_id = r_add.json().get("id", "")
+
+            # Set the formula rule
+            formula = f'=${action_col}2="{action_val}"'
+            r_rule = httpx.patch(
+                f"{base}/worksheets/{sheet}/conditionalFormats/{cf_id}/customOrNullObject",
+                headers=h,
+                json={"rule": {"formula": formula}},
+                timeout=15.0,
+            )
+            # Set the fill color
+            r_fill = httpx.patch(
+                f"{base}/worksheets/{sheet}/conditionalFormats/{cf_id}/format/fill",
+                headers=h,
+                json={"color": fill_hex},
+                timeout=15.0,
+            )
+            if r_rule.is_success and r_fill.is_success:
+                log.info("conditional format: %s → %s", action_val, fill_hex)
+            else:
+                log.warning("CF rule/fill failed for %s: rule=%s fill=%s",
+                            action_val, r_rule.status_code, r_fill.status_code)
+        except Exception as exc:
+            log.warning("conditional format setup error for %s: %s", action_val, exc)
+
+
 def append_approval_row(
-    order_id:    str,
-    client_name: str,
-    address:     str,
-    service:     str,
-    amount:      float,
-    confidence:  str,
-    escalate:    bool,
-    ftf_link:    str,
-    posted_at:   Optional[str] = None,
-    notes:       str = "",
+    order_id:     str,
+    client_name:  str,
+    address:      str,
+    service:      str,
+    amount:       float,
+    confidence:   str,
+    escalate:     bool,
+    ftf_link:     str,
+    order_status: str = "",
+    posted_at:    Optional[str] = None,
+    notes:        str = "",
 ) -> None:
-    """Append a new Pending row to the approval table."""
+    """Append a new row to the approval table. Action column is blank — user picks from dropdown."""
     ensure_approval_sheet()
 
     if not posted_at:
@@ -254,6 +388,7 @@ def append_approval_row(
 
     values = [[
         str(order_id),
+        str(order_status),          # Order Status — FTF stage status (ng_status_desc)
         str(client_name),
         str(address)[:120],
         str(service),
@@ -261,10 +396,10 @@ def append_approval_row(
         str(confidence),
         "Yes" if escalate else "No",
         str(ftf_link),
-        "Pending",      # Status — user changes this to Approve/Reject/Hold
-        str(notes),     # Notes — pre-filled for escalations; user fills in for rejections
+        "",                         # Action — blank; user selects Approve/Reject/On-hold
+        str(notes),                 # Notes — pre-filled for escalations
         posted_at,
-        "",             # Processed At — filled after pipeline runs
+        "",                         # Processed At — filled after pipeline processes decision
     ]]
 
     r = httpx.post(
@@ -274,11 +409,11 @@ def append_approval_row(
         timeout=15.0,
     )
     r.raise_for_status()
-    log.info("excel row appended order_id=%s amount=%.2f", order_id, amount)
+    log.info("excel row appended order_id=%s amount=%.2f status=%s", order_id, amount, order_status)
 
 
 def mark_row_processed(order_id: str) -> None:
-    """Set Processed At timestamp on the row matching order_id."""
+    """Set Processed At timestamp on the most recent blank-Action row matching order_id."""
     base = _wb_base()
     h    = _session_headers()
 
@@ -289,13 +424,12 @@ def mark_row_processed(order_id: str) -> None:
     r.raise_for_status()
     processed_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
-    for row in r.json().get("value", []):
+    for row in reversed(r.json().get("value", [])):
         vals = row.get("values", [[]])[0]
         if len(vals) >= 1 and str(vals[0]) == str(order_id):
             idx = row["index"]
-            # Patch only Processed At (column 12, index 11)
             new_vals = list(vals) + [""] * (_COL_COUNT - len(vals))
-            new_vals[11] = processed_at
+            new_vals[_COL_PROCESSED_AT] = processed_at
             httpx.patch(
                 f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows/itemAt(index={idx})",
                 headers=h,

@@ -482,21 +482,23 @@ def compile_for_order(order_id: str) -> dict:
     svc_names   = ", ".join(s.get("name", "") for s in ai_result.get("services", []))
     posted_at   = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
-    escalate_flag = bool(ai_result.get("escalate_flag"))
+    escalate_flag   = bool(ai_result.get("escalate_flag"))
     escalation_note = "⚠️ Escalate — needs Robert or Ryan review" if escalate_flag else ""
+    ftf_order_status = str(order_details.get("ng_status_desc") or "")
 
     try:
         append_approval_row(
-            order_id    = order_id,
-            client_name = client_name,
-            address     = address,
-            service     = svc_names or service_type or "Unknown",
-            amount      = ai_result.get("total_amount", 0),
-            confidence  = ai_result.get("confidence", "MEDIUM"),
-            escalate    = escalate_flag,
-            ftf_link    = link,
-            posted_at   = posted_at,
-            notes       = escalation_note,
+            order_id     = order_id,
+            client_name  = client_name,
+            address      = address,
+            service      = svc_names or service_type or "Unknown",
+            amount       = ai_result.get("total_amount", 0),
+            confidence   = ai_result.get("confidence", "MEDIUM"),
+            escalate     = escalate_flag,
+            ftf_link     = link,
+            order_status = ftf_order_status,
+            posted_at    = posted_at,
+            notes        = escalation_note,
         )
     except Exception as exc:
         log.error("failed to write Excel row order=%s: %s — continuing anyway", order_id, exc)
