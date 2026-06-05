@@ -68,17 +68,17 @@ def main():
     print(_read_recent_entries(LEARNINGS_PATH))
     print()
 
-    print("─" * 66)
+    print("-" * 66)
     print("TEMPLATE — copy and fill in:\n")
     print(TEMPLATE.format(today=TODAY))
     print()
 
-    print("─" * 66)
+    print("-" * 66)
     print("GIT STATUS (uncommitted changes):\n")
     print(_git_status())
     print()
 
-    print("─" * 66)
+    print("-" * 66)
     print("END-OF-SESSION CHECKLIST:\n")
     for item in [
         "[ ] New bug/fix logged in learnings.md",
@@ -93,7 +93,7 @@ def main():
     if args.title or args.body:
         if not (args.title and args.body):
             sys.exit("Error: --title and --body must both be provided.")
-        print("─" * 66)
+        print("-" * 66)
         print("APPENDING NEW ENTRY TO learnings.md ...\n")
         _append_entry(args.title, args.body.replace("\\n", "\n"))
         print("  Done. Commit learnings.md to save.\n")
