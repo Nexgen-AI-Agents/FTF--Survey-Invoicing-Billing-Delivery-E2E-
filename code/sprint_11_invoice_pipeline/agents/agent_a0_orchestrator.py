@@ -21,6 +21,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
 from core.logger import get_logger
+from core.onedrive_excel_client import _close_session
 
 log = get_logger("agent_a0_orchestrator")
 
@@ -83,6 +84,10 @@ def run() -> dict:
         results["a7_feedback_learner"] = {"error": str(exc)}
 
     log.info("=== Invoice Pipeline Run Complete: %s ===", results)
+
+    # Release the OneDrive workbook session so the file is not locked for raw uploads
+    _close_session()
+
     return results
 
 
