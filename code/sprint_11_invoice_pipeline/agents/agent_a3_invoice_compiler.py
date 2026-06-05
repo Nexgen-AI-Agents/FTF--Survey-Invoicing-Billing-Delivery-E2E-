@@ -56,7 +56,7 @@ from core.exceptions import AgentError
 from core.ftf_client import get_historical_pricing_orders
 from core.ftf_mysql import get_order_details, get_company_info, find_duplicate_orders
 from core.logger import get_logger
-from core.onedrive_excel_client import append_approval_row
+from core.onedrive_excel_client import append_approval_row, get_pending_order_ids
 
 AGENT_NAME = "agent_a3_invoice_compiler"
 log = get_logger(AGENT_NAME)
@@ -482,6 +482,9 @@ def compile_for_order(order_id: str) -> dict:
     svc_names   = ", ".join(s.get("name", "") for s in ai_result.get("services", []))
     posted_at   = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
+    escalate_flag = bool(ai_result.get("escalate_flag"))
+    escalation_note = "⚠️ Escalate — needs Robert or Ryan review" if escalate_flag else ""
+
     try:
         append_approval_row(
             order_id    = order_id,
@@ -490,9 +493,10 @@ def compile_for_order(order_id: str) -> dict:
             service     = svc_names or service_type or "Unknown",
             amount      = ai_result.get("total_amount", 0),
             confidence  = ai_result.get("confidence", "MEDIUM"),
-            escalate    = bool(ai_result.get("escalate_flag")),
+            escalate    = escalate_flag,
             ftf_link    = link,
             posted_at   = posted_at,
+            notes       = escalation_note,
         )
     except Exception as exc:
         log.error("failed to write Excel row order=%s: %s — continuing anyway", order_id, exc)
@@ -534,10 +538,17 @@ def compile_for_order(order_id: str) -> dict:
 def run() -> dict:
     """Process up to INVOICE_BATCH_SIZE orders with status=data_collected."""
     orders  = get_orders_by_status("data_collected")[:INVOICE_BATCH_SIZE]
-    summary = {"processed": 0, "posted": 0, "errors": 0}
+    summary = {"processed": 0, "posted": 0, "skipped_duplicate": 0, "errors": 0}
+
+    pending_ids = get_pending_order_ids()
 
     for db_row in orders:
         order_id = db_row["order_id"]
+        if str(order_id) in pending_ids:
+            log.info("skipping order=%s — already Pending in OneDrive Excel", order_id)
+            summary["skipped_duplicate"] += 1
+            summary["processed"] += 1
+            continue
         try:
             compile_for_order(order_id)
             summary["posted"] += 1

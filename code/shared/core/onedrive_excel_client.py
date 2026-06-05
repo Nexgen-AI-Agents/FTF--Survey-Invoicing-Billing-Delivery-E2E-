@@ -212,6 +212,28 @@ def ensure_approval_sheet() -> None:
 
 # ── Public write API ──────────────────────────────────────────────────────────
 
+def get_pending_order_ids() -> set:
+    """Return the set of order IDs already in the approval table with Status=Pending."""
+    try:
+        ensure_approval_sheet()
+        r = httpx.get(
+            f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows",
+            headers=_session_headers(),
+            timeout=15.0,
+        )
+        r.raise_for_status()
+        pending = set()
+        for row in r.json().get("value", []):
+            vals = row.get("values", [[]])[0]
+            if len(vals) >= 9 and str(vals[8]).strip().lower() == "pending":
+                pending.add(str(vals[0]).strip())
+        log.info("get_pending_order_ids: %d pending rows in Excel", len(pending))
+        return pending
+    except Exception as exc:
+        log.warning("get_pending_order_ids failed (dedup disabled): %s", exc)
+        return set()
+
+
 def append_approval_row(
     order_id:    str,
     client_name: str,
@@ -222,6 +244,7 @@ def append_approval_row(
     escalate:    bool,
     ftf_link:    str,
     posted_at:   Optional[str] = None,
+    notes:       str = "",
 ) -> None:
     """Append a new Pending row to the approval table."""
     ensure_approval_sheet()
@@ -239,7 +262,7 @@ def append_approval_row(
         "Yes" if escalate else "No",
         str(ftf_link),
         "Pending",      # Status — user changes this to Approve/Reject/Hold
-        "",             # Notes — user fills in if rejecting
+        str(notes),     # Notes — pre-filled for escalations; user fills in for rejections
         posted_at,
         "",             # Processed At — filled after pipeline runs
     ]]
