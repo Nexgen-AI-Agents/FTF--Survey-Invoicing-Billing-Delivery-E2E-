@@ -41,7 +41,7 @@ def _login() -> httpx.Client:
     client = httpx.Client(follow_redirects=True, timeout=30.0)
     r = client.post(
         f"{FTF_PORTAL_BASE_URL}/admin/login",
-        data={"username": FTF_PORTAL_USER, "password": FTF_PORTAL_PASS},
+        data={"user": FTF_PORTAL_USER, "password": FTF_PORTAL_PASS},
     )
     r.raise_for_status()
 
