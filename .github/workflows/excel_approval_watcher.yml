@@ -36,6 +36,9 @@ jobs:
       NOTIFICATION_TO_EMAILS:  ${{ secrets.NOTIFICATION_TO_EMAILS }}
       APPROVED_SENDERS:        ${{ secrets.APPROVED_SENDERS }}
       EMAIL_OVERRIDE_ALL:      ${{ secrets.EMAIL_OVERRIDE_ALL }}
+      FTF_PORTAL_BASE_URL:     ${{ secrets.FTF_PORTAL_BASE_URL }}
+      FTF_PORTAL_USER:         ${{ secrets.FTF_PORTAL_USER }}
+      FTF_PORTAL_PASS:         ${{ secrets.FTF_PORTAL_PASS }}
 
     steps:
       - uses: actions/checkout@v4

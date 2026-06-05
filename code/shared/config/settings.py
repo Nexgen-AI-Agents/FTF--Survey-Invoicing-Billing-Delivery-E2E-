@@ -80,6 +80,11 @@ ONEDRIVE_TABLE_NAME: str = os.getenv("ONEDRIVE_TABLE_NAME", "ApprovalTable")
 FTF_PAY_HASH_KEY:  str = os.getenv("FTF_PAY_HASH_KEY", "")
 FTF_SITE_BASE_URL: str = os.getenv("FTF_SITE_BASE_URL", "https://stage.fieldtofinish.jobs")
 
+# FTF Portal — nesa HR user auth (invoice generation + delivery)
+FTF_PORTAL_BASE_URL: str      = os.getenv("FTF_PORTAL_BASE_URL", "https://stage.fieldtofinish.jobs")
+FTF_PORTAL_USER:     str      = os.getenv("FTF_PORTAL_USER", "")
+FTF_PORTAL_PASS:     str      = os.getenv("FTF_PORTAL_PASS", "")
+
 # FTF Books (AR Excel download — session-cookie auth)
 FTF_BOOKS_BASE_URL: str      = os.getenv("FTF_BOOKS_BASE_URL", "https://stage.fieldtofinish.jobs")
 FTF_BOOKS_USER:     str | None = os.getenv("FTF_BOOKS_USER")

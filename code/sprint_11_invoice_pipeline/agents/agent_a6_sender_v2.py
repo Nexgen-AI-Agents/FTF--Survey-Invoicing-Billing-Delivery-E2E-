@@ -1,10 +1,14 @@
 """Agent A6 — Sender v2 (Invoice Pipeline)
 
-Delivers the FTF invoice to the client using FTF's native send endpoint.
-POST /ftf-ai-api/v1/invoices/{invoice_id}/send — FTF handles email composition and delivery.
+Delivers the FTF invoice using the portal authenticated as nesa (HR user).
+This attributes invoice generation and delivery to nesa in the FTF audit trail.
 
-EMAIL_OVERRIDE_ALL: when set, redirects delivery to the override address instead of the
-client email on file (staging safety — set this secret to test without hitting real clients).
+Steps (via ftf_portal_client):
+  1. POST /admin/login         → nesa session cookie
+  2. POST /order/invoice       → generates invoice PDF in FTF order repo
+  3. POST /order/deliver_invoice → FTF sends email via SendGrid, logs nesa as sender
+
+EMAIL_OVERRIDE_ALL: when set, overrides recipient to override address (staging safety).
 
 Status flow: invoice_finalized → invoice_sent
 """
@@ -18,7 +22,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared")
 from config.settings import EMAIL_OVERRIDE_ALL
 from core.excel_db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
 from core.exceptions import AgentError
-from core.ftf_client import send_invoice as ftf_send_invoice
+from core.ftf_portal_client import deliver_invoice_as_nesa
 from core.logger import get_logger
 
 AGENT_NAME = "agent_a6_sender_v2"
@@ -26,7 +30,7 @@ log = get_logger(AGENT_NAME)
 
 
 def send_for_order(order_id: str) -> dict:
-    """Deliver FTF invoice for one finalized order."""
+    """Generate and deliver FTF invoice as nesa for one finalized order."""
     db_row = get_order_by_id(order_id)
     if not db_row:
         raise AgentError(f"send_for_order: order {order_id} not in DB")
@@ -38,14 +42,14 @@ def send_for_order(order_id: str) -> dict:
             "run A5 first to create the invoice in FTF"
         )
 
-    client_email = db_row.get("customer_email", "")
-    recipient = EMAIL_OVERRIDE_ALL or None  # None = FTF resolves from client record
+    client_email    = db_row.get("customer_email", "")
+    property_address = db_row.get("property_address", "")
 
-    if recipient:
-        log.warning("TEST MODE — invoice for order=%s redirected from %s to %s",
-                    order_id, client_email, recipient)
-
-    ftf_send_invoice(invoice_id, recipient_email=recipient)
+    result = deliver_invoice_as_nesa(
+        order_id=order_id,
+        client_email=client_email,
+        property_address=property_address,
+    )
 
     save_order_state(
         order_id,
@@ -57,15 +61,15 @@ def send_for_order(order_id: str) -> dict:
         AGENT_NAME,
         decision="invoice_sent",
         order_id=order_id,
-        reason=f"Invoice {invoice_id} delivered via FTF to {recipient or client_email}",
+        reason=f"Invoice delivered via FTF portal as nesa to {result['to']} pdf={result['pdf']}",
         input_summary=f"invoice_id={invoice_id}",
-        output_summary=f"sent_to={recipient or client_email}",
+        output_summary=f"sent_to={result['to']}",
         model_used=None,
     )
 
-    log.info("invoice delivered order=%s invoice_id=%s to=%s",
-             order_id, invoice_id, recipient or client_email)
-    return {"sent": True, "to": recipient or client_email, "invoice_id": invoice_id}
+    log.info("invoice sent order=%s invoice_id=%s to=%s pdf=%s",
+             order_id, invoice_id, result["to"], result["pdf"])
+    return {"sent": True, "to": result["to"], "invoice_id": invoice_id}
 
 
 def run() -> dict:
