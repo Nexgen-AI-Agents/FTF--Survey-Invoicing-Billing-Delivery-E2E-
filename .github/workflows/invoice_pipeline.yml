@@ -43,6 +43,7 @@ jobs:
       NOTIFICATION_TO_EMAILS:     ${{ secrets.NOTIFICATION_TO_EMAILS }}
       APPROVED_SENDERS:           ${{ secrets.APPROVED_SENDERS }}
       EMAIL_OVERRIDE_ALL:         ${{ secrets.EMAIL_OVERRIDE_ALL }}
+      INVOICE_BATCH_SIZE:         "10"
 
     steps:
       - uses: actions/checkout@v4
