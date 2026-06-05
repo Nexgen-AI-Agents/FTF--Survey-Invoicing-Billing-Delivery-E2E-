@@ -169,7 +169,7 @@ def _build_ai_context(
     """Assemble the full context block fed to Claude Sonnet for price reasoning."""
 
     ng_rate = company_info.get("ng_rate", 0.0)
-    company_name = company_info.get("company_name", "Unknown")
+    company_name = company_info.get("company_name") or ""
 
     if ng_rate and ng_rate > 100:
         rate_guidance = (
@@ -210,9 +210,9 @@ def _build_ai_context(
         dup_block = f"\n⚠️ POSSIBLE DUPLICATE ORDERS (flagged for human review):\n{dup_lines}\n"
 
     # Key order fields
-    service_type = order_details.get("ng_service_requested") or packet.get("services_requested", {}).get("value", "Unknown")
-    lot_size     = order_details.get("ng_size") or packet.get("lot_size", {}).get("value", "unknown")
-    fema_zone    = order_details.get("ng_flood") or packet.get("fema_zone", {}).get("value", "unknown")
+    service_type = order_details.get("ng_service_requested") or packet.get("services_requested", {}).get("value") or ""
+    lot_size     = order_details.get("ng_size") or packet.get("lot_size", {}).get("value") or ""
+    fema_zone    = order_details.get("ng_flood") or packet.get("fema_zone", {}).get("value") or ""
     county       = order_details.get("ng_property_county") or packet.get("property_county", {}).get("value", "")
     address      = order_details.get("ng_property_address") or packet.get("property_address", {}).get("value", "")
     legal_desc   = order_details.get("ng_legal_description") or packet.get("legal_description", {}).get("value", "")
@@ -228,16 +228,16 @@ def _build_ai_context(
     if aerial_analysis:
         aerial_summary = f"""
 AERIAL IMAGE ANALYSIS (Google satellite, zoom 19):
-  Lot shape: {aerial_analysis.get('lot_shape', 'unknown')}
-  Estimated lot size: {aerial_analysis.get('estimated_lot_size', 'unknown')}
-  Main structure footprint: {aerial_analysis.get('main_structure_footprint_sqft', 'unknown')} sqft
-  Visible structures: {aerial_analysis.get('visible_structures', 'unknown')}
+  Lot shape: {aerial_analysis.get('lot_shape') or 'not analyzed'}
+  Estimated lot size: {aerial_analysis.get('estimated_lot_size') or 'not analyzed'}
+  Main structure footprint: {aerial_analysis.get('main_structure_footprint_sqft') or 'not analyzed'} sqft
+  Visible structures: {aerial_analysis.get('visible_structures') or 'not analyzed'}
   Pool visible: {aerial_analysis.get('pool_visible', False)}
-  Driveway count: {aerial_analysis.get('driveway_count', 'unknown')}
-  Apparent encroachments: {aerial_analysis.get('apparent_encroachments', 'none noted')}
-  Access type: {aerial_analysis.get('access_type', 'unknown')}
+  Driveway count: {aerial_analysis.get('driveway_count') or 'not analyzed'}
+  Apparent encroachments: {aerial_analysis.get('apparent_encroachments') or 'none noted'}
+  Access type: {aerial_analysis.get('access_type') or 'not analyzed'}
   Site notes: {aerial_analysis.get('site_notes', '')}
-  Confidence: {aerial_analysis.get('confidence', 'unknown')}
+  Confidence: {aerial_analysis.get('confidence') or 'not analyzed'}
 """
 
     appraiser_summary = ""
@@ -477,8 +477,8 @@ def compile_for_order(order_id: str) -> dict:
         return ai_result
 
     # ── 5. Write row to OneDrive approval spreadsheet ─────────────────────────
-    client_name = packet.get("client_name", {}).get("value") or company_info.get("company_name") or "Unknown"
-    address     = packet.get("property_address", {}).get("value") or "Unknown"
+    client_name = packet.get("client_name", {}).get("value") or company_info.get("company_name") or ""
+    address     = packet.get("property_address", {}).get("value") or order_details.get("ng_property_address") or ""
     svc_names   = ", ".join(s.get("name", "") for s in ai_result.get("services", []))
     posted_at   = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
@@ -491,7 +491,7 @@ def compile_for_order(order_id: str) -> dict:
             order_id     = order_id,
             client_name  = client_name,
             address      = address,
-            service      = svc_names or service_type or "Unknown",
+            service      = svc_names or service_type or "",
             amount       = ai_result.get("total_amount", 0),
             confidence   = ai_result.get("confidence", "MEDIUM"),
             escalate     = escalate_flag,
