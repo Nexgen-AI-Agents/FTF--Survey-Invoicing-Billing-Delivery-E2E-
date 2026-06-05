@@ -45,6 +45,8 @@ jobs:
       AZURE_CLIENT_SECRET:        ${{ secrets.AZURE_CLIENT_SECRET }}
       ONEDRIVE_SHARE_URL:         ${{ secrets.ONEDRIVE_SHARE_URL }}
       FTF_ORDER_URL:              ${{ secrets.FTF_ORDER_URL }}
+      GOOGLE_REVIEW_URL:          ${{ secrets.GOOGLE_REVIEW_URL }}
+      FTF_SITE_BASE_URL:          ${{ secrets.FTF_SITE_BASE_URL }}
       NOTIFICATION_FROM_EMAIL:    ${{ secrets.NOTIFICATION_FROM_EMAIL }}
       NOTIFICATION_TO_EMAILS:     ${{ secrets.NOTIFICATION_TO_EMAILS }}
       APPROVED_SENDERS:           ${{ secrets.APPROVED_SENDERS }}
