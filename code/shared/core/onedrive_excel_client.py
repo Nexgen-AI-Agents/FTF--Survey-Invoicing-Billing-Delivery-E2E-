@@ -8,6 +8,7 @@ Required Graph permissions (application):
   Files.ReadWrite.All  — read/write files in any user's OneDrive
 """
 
+import base64
 import time
 import urllib.parse
 from datetime import datetime, timezone
@@ -17,7 +18,7 @@ import httpx
 
 from config.settings import (
     AZURE_APP_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID,
-    ONEDRIVE_FILE_USER, ONEDRIVE_FILE_PATH,
+    ONEDRIVE_FILE_USER, ONEDRIVE_FILE_PATH, ONEDRIVE_SHARE_URL,
     ONEDRIVE_SHEET_NAME, ONEDRIVE_TABLE_NAME,
 )
 from core.exceptions import AgentError
@@ -75,27 +76,64 @@ def _headers() -> dict:
 
 # ── File + session resolution ─────────────────────────────────────────────────
 
+def _share_id(share_url: str) -> str:
+    """Encode a sharing URL into a Graph API share ID (u! prefix + base64url, no padding)."""
+    encoded = base64.urlsafe_b64encode(share_url.encode("utf-8")).decode("utf-8").rstrip("=")
+    return f"u!{encoded}"
+
+
 def _get_item_id() -> str:
+    """Return the OneDrive driveItem ID, caching drive_id alongside it.
+
+    Tries ONEDRIVE_SHARE_URL first (resolves directly by sharing link — no path guessing).
+    Falls back to ONEDRIVE_FILE_PATH lookup if the share URL is not set.
+    """
     if _cache.get("od_item_id"):
         return _cache["od_item_id"]
 
+    if ONEDRIVE_SHARE_URL:
+        r = httpx.get(
+            f"{_GRAPH}/shares/{_share_id(ONEDRIVE_SHARE_URL)}/driveItem",
+            headers=_headers(),
+            timeout=15.0,
+        )
+        if r.status_code == 403:
+            raise AgentError(
+                "Graph API cannot access this file via sharing link. "
+                "Ensure the Azure app has Files.ReadWrite.All permission."
+            )
+        r.raise_for_status()
+        item = r.json()
+        _cache["od_item_id"] = item["id"]
+        _cache["od_drive_id"] = item["parentReference"]["driveId"]
+        log.info("onedrive item resolved via share URL: item=%s drive=%s",
+                 item["id"], item["parentReference"]["driveId"])
+        return _cache["od_item_id"]
+
+    # Fallback: path-based lookup
     encoded = urllib.parse.quote(ONEDRIVE_FILE_PATH, safe="/")
-    url = f"{_GRAPH}/users/{ONEDRIVE_FILE_USER}/drive/root:/{encoded}"
-    r = httpx.get(url, headers=_headers(), timeout=15.0)
+    r = httpx.get(
+        f"{_GRAPH}/users/{ONEDRIVE_FILE_USER}/drive/root:/{encoded}",
+        headers=_headers(),
+        timeout=15.0,
+    )
     if r.status_code == 404:
         raise AgentError(
             f"OneDrive file not found: '{ONEDRIVE_FILE_PATH}' for user '{ONEDRIVE_FILE_USER}'. "
-            "Create the file first or check ONEDRIVE_FILE_PATH setting."
+            "Set ONEDRIVE_SHARE_URL with the file's sharing link or fix ONEDRIVE_FILE_PATH."
         )
     r.raise_for_status()
-    item_id = r.json()["id"]
-    _cache["od_item_id"] = item_id
-    log.info("onedrive item resolved: %s", item_id)
-    return item_id
+    _cache["od_item_id"] = r.json()["id"]
+    log.info("onedrive item resolved via path: %s", _cache["od_item_id"])
+    return _cache["od_item_id"]
 
 
 def _wb_base() -> str:
-    return f"{_GRAPH}/users/{ONEDRIVE_FILE_USER}/drive/items/{_get_item_id()}/workbook"
+    item_id  = _get_item_id()
+    drive_id = _cache.get("od_drive_id")
+    if drive_id:
+        return f"{_GRAPH}/drives/{drive_id}/items/{item_id}/workbook"
+    return f"{_GRAPH}/users/{ONEDRIVE_FILE_USER}/drive/items/{item_id}/workbook"
 
 
 def _session_headers() -> dict:

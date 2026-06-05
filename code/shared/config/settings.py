@@ -72,6 +72,7 @@ FTF_ORDER_URL:    str = os.getenv("FTF_ORDER_URL", "https://stage.fieldtofinish.
 # OneDrive approval spreadsheet (Graph API — Files.ReadWrite.All application permission)
 ONEDRIVE_FILE_USER:  str = os.getenv("ONEDRIVE_FILE_USER",  "nesa@nexgenlogix.com")
 ONEDRIVE_FILE_PATH:  str = os.getenv("ONEDRIVE_FILE_PATH",  "Documents/FTF-Invoicing Agent.xlsx")
+ONEDRIVE_SHARE_URL:  str = os.getenv("ONEDRIVE_SHARE_URL",  "")   # sharing link — preferred over path lookup
 ONEDRIVE_SHEET_NAME: str = os.getenv("ONEDRIVE_SHEET_NAME", "Approvals")
 ONEDRIVE_TABLE_NAME: str = os.getenv("ONEDRIVE_TABLE_NAME", "ApprovalTable")
 
