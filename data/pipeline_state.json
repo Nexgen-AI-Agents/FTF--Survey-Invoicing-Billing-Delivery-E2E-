@@ -1706,7 +1706,7 @@
     },
     {
       "order_id": "1000282513",
-      "status": "data_collected",
+      "status": "invoice_finalized",
       "service_type": "CAD",
       "customer_email": "jackie@jackiealbarran.com",
       "client_name": "SKA Architect",
@@ -1715,17 +1715,17 @@
       "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 202604221615056728, \"created_at\": \"2026-04-22T16:26:31\", \"customer_email\": \"jackie@jackiealbarran.com\", \"customer_id\": 202604221615369976, \"customer_name\": \"Jackie Albarran\", \"customer_type\": \"b2b\", \"delivered_at\": null, \"due_amount\": 250.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": \"12099C0583G\\nZONE: AE\\nELEV: 07 FT\\nEFF: 12/20/2024\", \"invoiced\": false, \"order_id\": 1000282513, \"paid\": false, \"property_address\": \"350 ISLAND RD\", \"property_city\": \"PALM BEACH\", \"property_county\": \"Palm Beach County\", \"property_lat\": \"26.6949056\", \"property_lng\": \"-80.0411004\", \"property_state\": \"FL\", \"property_zip\": \"33480\", \"service_type\": \"CAD\", \"special_pricing\": true, \"status\": \"On Hold\", \"status_code\": 11, \"updated_at\": \"2026-04-22T21:00:49\"}, \"success\": true, \"order_id\": \"1000282513\", \"customer_email\": \"jackie@jackiealbarran.com\", \"service_type\": \"CAD\", \"county\": \"\", \"property_address\": \"350 ISLAND RD\", \"customer_name\": \"SKA Architect\"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"SKA Architect\", \"confidence\": \"MEDIUM\"}, \"client_email\": {\"value\": \"jackie@jackiealbarran.com\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"350 Island Rd, Palm Beach, FL 33480\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Palm Beach County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"CAD\"], \"confidence\": \"HIGH\", \"notes\": \"Service type is CAD; no additional services specified. Elevation certificate not requested.\"}, \"special_requirements\": {\"value\": \"Special pricing applied. Order is On Hold (status code 11). Flood zone AE, FIRM panel 12099C0583G, base flood elevation 7 ft, effective 12/20/2024.\", \"confidence\": \"HIGH\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property features available; county appraiser data unavailable and no matching emails found.\"}, \"client_tier\": {\"value\": \"b2b\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Client name conflict: order footer lists 'SKA Architect' but customer record shows 'Jackie Albarran' \\u2014 confirm correct billing entity\", \"Lot size unknown \\u2014 county appraiser data unavailable\", \"Legal description unknown \\u2014 county appraiser data unavailable\", \"Structure square footage unknown\", \"Property features unknown (pool, outbuildings, driveways, etc.)\", \"Reason for On Hold status not documented\", \"Fieldwork date not scheduled\", \"No estimate sent \\u2014 confirm scope and pricing before proceeding\"], \"summary\": \"B2B CAD order for 350 Island Rd, Palm Beach FL (Flood Zone AE) placed by SKA Architect / Jackie Albarran, currently On Hold with special pricing at $250 and missing lot size, legal description, and property feature details.\"}}",
       "approval_message_id": null,
       "modification_count": 0,
-      "invoice_id": null,
+      "invoice_id": "349402",
       "data_collected_at": "2026-06-02T15:06:49.595917+00:00",
       "draft_posted_at": null,
-      "invoice_created_at": null,
+      "invoice_created_at": "2026-06-05T17:12:36.864654+00:00",
       "processed_reply_ids": null,
-      "approved_by": null,
+      "approved_by": "prateek",
       "sent_at": null,
       "estimate_amount": 587,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:48.210018+00:00",
-      "updated_at": "2026-06-05T09:06:17.263838+00:00",
+      "updated_at": "2026-06-05T17:12:36.940021+00:00",
       "pay_link": null
     },
     {
@@ -9605,10 +9605,11 @@
     "details_missing": 82,
     "invoice_draft_posted": 275,
     "invoice_sent": 6,
-    "data_collected": 26,
+    "data_collected": 25,
     "invoice_rejected": 1,
-    "condo_rejected": 10
+    "condo_rejected": 10,
+    "invoice_finalized": 1
   },
   "total": 400,
-  "generated_at": "2026-06-05T16:05:14.778810+00:00"
+  "generated_at": "2026-06-05T17:12:37.716063+00:00"
 }
