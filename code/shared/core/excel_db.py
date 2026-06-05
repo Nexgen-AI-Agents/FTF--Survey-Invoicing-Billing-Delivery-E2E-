@@ -134,6 +134,11 @@ def order_exists(order_id: str) -> bool:
 
 
 def save_order_state(order_id: str, **fields) -> None:
+    import re as _re
+    if not _re.match(r'^\d{7,12}$', str(order_id).strip()):
+        logger.warning("save_order_state: rejected non-numeric order_id=%r — phantom row prevented", order_id)
+        return
+
     invalid = set(fields.keys()) - _VALID_STATE_FIELDS
     if invalid:
         logger.warning("save_order_state: ignoring unknown fields %s", invalid)

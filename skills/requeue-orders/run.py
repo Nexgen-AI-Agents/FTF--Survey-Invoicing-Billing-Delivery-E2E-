@@ -101,7 +101,7 @@ def main():
     if clear_cols:
         print(f"\n  Cleared columns: {', '.join(clear_cols)}")
     if not args.dry_run:
-        print(f"\nSaved → {EXCEL_PATH}")
+        print(f"\nSaved: {EXCEL_PATH}")
     else:
         print("\n(Dry run — no changes written)")
 

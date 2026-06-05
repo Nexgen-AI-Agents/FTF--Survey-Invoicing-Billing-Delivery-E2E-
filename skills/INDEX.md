@@ -13,6 +13,7 @@
 | `python skills/verify-a2-output/run.py` | After any A2 change — confirm no sentinel values in client_name/property_address |
 | `python skills/check-dollar-sign-orders/run.py` | "Orders with $ but no invoice amount" — find pricing gaps |
 | `python skills/requeue-orders/run.py --orders X,Y --target-status invoice_needed --clear invoice_draft,data_sources` | Reset stuck/broken orders for reprocessing |
+| `python skills/data-quality-check/run.py` | At the start of any investigation — full data quality scan (phantoms, sentinels, missing fields, duplicates) |
 | `python skills/session-wrap/run.py` | **Last command of every session — mandatory, no exceptions** |
 
 ---
