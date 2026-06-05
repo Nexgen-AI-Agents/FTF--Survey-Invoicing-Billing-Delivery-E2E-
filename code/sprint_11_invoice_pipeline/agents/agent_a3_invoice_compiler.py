@@ -548,6 +548,9 @@ def run() -> dict:
         order_id = db_row["order_id"]
         if str(order_id) in pending_ids and db_row.get("invoice_draft"):
             log.info("skipping order=%s — already Pending in OneDrive Excel", order_id)
+            if db_row.get("status") == "data_collected":
+                save_order_state(order_id, status="invoice_draft_posted")
+                log.info("synced state order=%s data_collected → invoice_draft_posted", order_id)
             summary["skipped_duplicate"] += 1
             summary["processed"] += 1
             continue
