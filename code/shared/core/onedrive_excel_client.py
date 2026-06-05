@@ -276,95 +276,105 @@ def get_pending_order_ids() -> set:
         return set()
 
 
+def _download_workbook_bytes() -> bytes:
+    """Download the workbook file content as raw bytes."""
+    drive_id = _cache.get("od_drive_id")
+    item_id  = _get_item_id()
+    url = (
+        f"{_GRAPH}/drives/{drive_id}/items/{item_id}/content"
+        if drive_id else
+        f"{_GRAPH}/users/{ONEDRIVE_FILE_USER}/drive/items/{item_id}/content"
+    )
+    r = httpx.get(url, headers={"Authorization": f"Bearer {_get_token()}"}, follow_redirects=True, timeout=30.0)
+    r.raise_for_status()
+    return r.content
+
+
+def _upload_workbook_bytes(data: bytes) -> None:
+    """Replace the workbook file with new content (PUT upload)."""
+    drive_id = _cache.get("od_drive_id")
+    item_id  = _get_item_id()
+    url = (
+        f"{_GRAPH}/drives/{drive_id}/items/{item_id}/content"
+        if drive_id else
+        f"{_GRAPH}/users/{ONEDRIVE_FILE_USER}/drive/items/{item_id}/content"
+    )
+    r = httpx.put(
+        url,
+        headers={"Authorization": f"Bearer {_get_token()}", "Content-Type": "application/octet-stream"},
+        content=data,
+        timeout=60.0,
+    )
+    r.raise_for_status()
+    # Invalidate session — file changed on disk
+    _cache.pop("od_session", None)
+    log.info("workbook re-uploaded (%d bytes)", len(data))
+
+
 def _setup_table_formatting() -> None:
-    """Set up dropdown validation and row conditional formatting on the Approvals sheet.
+    """Apply dropdown validation and row conditional formatting via openpyxl download/upload.
 
-    Called once after table creation. Safe to re-call — data validation is idempotent;
-    conditional formats are only added if none exist yet.
+    Graph API does not expose dataValidation or conditionalFormats endpoints for Excel workbooks.
+    Instead: download file → modify with openpyxl → re-upload. Excel Online reads OOXML
+    data validation and conditional formatting correctly after re-upload.
     """
-    base  = _wb_base()
-    h     = _session_headers()
-    sheet = ONEDRIVE_SHEET_NAME
-    # Action column letter (A=0 → J=9)
-    action_col   = chr(ord("A") + _COL_ACTION)          # "J"
-    action_range = f"{action_col}2:{action_col}10000"
-    full_range   = f"A2:{_END_COL}10000"
+    import io
+    import openpyxl
+    from openpyxl.worksheet.datavalidation import DataValidation
+    from openpyxl.formatting.rule import FormulaRule
+    from openpyxl.styles import PatternFill
 
-    # ── 1. Dropdown validation on Action column ───────────────────────────────
+    # Close any open workbook session before touching the raw file
+    _cache.pop("od_session", None)
+
     try:
-        rv = httpx.patch(
-            f"{base}/worksheets/{sheet}/range(address='{action_range}')/dataValidation",
-            headers=h,
-            json={
-                "rule": {
-                    "list": {
-                        "source": "Approve,Reject,On-hold",
-                        "showDropDown": False,   # False = SHOW dropdown (Excel API inverted)
-                    }
-                },
-                "showErrorAlert": False,
-                "showInputMessage": False,
-            },
-            timeout=15.0,
-        )
-        if rv.is_success:
-            log.info("dropdown validation set: %s → Approve/Reject/On-hold", action_range)
-        else:
-            log.warning("dropdown validation failed %s: %s", rv.status_code, rv.text[:200])
+        raw = _download_workbook_bytes()
     except Exception as exc:
-        log.warning("dropdown validation setup error: %s", exc)
-
-    # ── 2. Conditional formatting — row color per action ─────────────────────
-    # Check how many custom conditional formats already exist
-    try:
-        rc = httpx.get(
-            f"{base}/worksheets/{sheet}/range(address='{full_range}')/conditionalFormats",
-            headers=h, timeout=15.0,
-        )
-        existing_cf = rc.json().get("value", []) if rc.is_success else []
-    except Exception:
-        existing_cf = []
-
-    if len(existing_cf) >= len(_ACTION_COLORS):
-        log.info("conditional formats already set (%d rules) — skipping", len(existing_cf))
+        log.warning("_setup_table_formatting: download failed — formatting skipped: %s", exc)
         return
 
-    for action_val, fill_hex in _ACTION_COLORS.items():
-        try:
-            # Add a Custom formula-based conditional format on the full row range
-            r_add = httpx.post(
-                f"{base}/worksheets/{sheet}/range(address='{full_range}')/conditionalFormats/add",
-                headers=h,
-                json={"type": "Custom"},
-                timeout=15.0,
-            )
-            if not r_add.is_success:
-                log.warning("CF add failed for %s: %s %s", action_val, r_add.status_code, r_add.text[:150])
-                continue
-            cf_id = r_add.json().get("id", "")
+    wb = openpyxl.load_workbook(io.BytesIO(raw))
 
-            # Set the formula rule
-            formula = f'=${action_col}2="{action_val}"'
-            r_rule = httpx.patch(
-                f"{base}/worksheets/{sheet}/conditionalFormats/{cf_id}/customOrNullObject",
-                headers=h,
-                json={"rule": {"formula": formula}},
-                timeout=15.0,
-            )
-            # Set the fill color
-            r_fill = httpx.patch(
-                f"{base}/worksheets/{sheet}/conditionalFormats/{cf_id}/format/fill",
-                headers=h,
-                json={"color": fill_hex},
-                timeout=15.0,
-            )
-            if r_rule.is_success and r_fill.is_success:
-                log.info("conditional format: %s → %s", action_val, fill_hex)
-            else:
-                log.warning("CF rule/fill failed for %s: rule=%s fill=%s",
-                            action_val, r_rule.status_code, r_fill.status_code)
-        except Exception as exc:
-            log.warning("conditional format setup error for %s: %s", action_val, exc)
+    if ONEDRIVE_SHEET_NAME not in wb.sheetnames:
+        log.warning("_setup_table_formatting: sheet '%s' not in workbook", ONEDRIVE_SHEET_NAME)
+        return
+
+    ws = wb[ONEDRIVE_SHEET_NAME]
+    action_letter = chr(ord("A") + _COL_ACTION)   # "J"
+
+    # ── 1. Dropdown on Action column ──────────────────────────────────────────
+    dv = DataValidation(
+        type="list",
+        formula1='"Approve,Reject,On-hold"',
+        allow_blank=True,
+        showDropDown=False,   # False = show the dropdown arrow
+    )
+    dv.error      = "Select Approve, Reject, or On-hold"
+    dv.errorTitle = "Invalid action"
+    dv.sqref      = f"{action_letter}2:{action_letter}10000"
+    ws.add_data_validation(dv)
+
+    # ── 2. Conditional formatting — entire row colors ─────────────────────────
+    full_range = f"A2:{_END_COL}10000"
+    color_map = [
+        ("Approve", "C6EFCE"),   # light green
+        ("Reject",  "FFC7CE"),   # light red / pink
+        ("On-hold", "FFEB9C"),   # light yellow
+    ]
+    for action_val, hex_color in color_map:
+        fill    = PatternFill(start_color=hex_color, end_color=hex_color, fill_type="solid")
+        formula = f'${action_letter}2="{action_val}"'
+        ws.conditional_formatting.add(full_range, FormulaRule(formula=[formula], fill=fill))
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    try:
+        _upload_workbook_bytes(buf.read())
+        log.info("_setup_table_formatting: dropdown + row colors applied (openpyxl upload)")
+    except Exception as exc:
+        log.warning("_setup_table_formatting: upload failed: %s", exc)
 
 
 def append_approval_row(
