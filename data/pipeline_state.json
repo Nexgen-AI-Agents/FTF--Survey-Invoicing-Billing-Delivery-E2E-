@@ -2498,7 +2498,7 @@
     },
     {
       "order_id": "1000278523",
-      "status": "invoice_draft_posted",
+      "status": "invoice_sent",
       "service_type": "CAD Release",
       "customer_email": "jon@Smithmoorearchitects.com",
       "client_name": "Jon Moore",
@@ -2507,17 +2507,17 @@
       "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 202411212009461034, \"created_at\": \"2026-02-11T15:25:01\", \"customer_email\": \"jon@Smithmoorearchitects.com\", \"customer_id\": 202411212010394766, \"customer_name\": \"Jon Moore\", \"customer_type\": \"b2b\", \"delivered_at\": \"2026-02-13T14:09:47\", \"due_amount\": 0.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": \"12099C0591G\\nZONE: AE\\nELEV: 08 FT\\nEFF: 12/20/2024\", \"invoiced\": false, \"order_id\": 1000278523, \"paid\": true, \"property_address\": \"4417 S FLAGLER DR\", \"property_city\": \"WEST PALM BEACH\", \"property_county\": \"PALM BEACH COUNTY\", \"property_lat\": \"26.6724036\", \"property_lng\": \"-80.0486901\", \"property_state\": \"FL\", \"property_zip\": \"33405\", \"service_type\": \"CAD Release\", \"special_pricing\": true, \"status\": \"Delivered\", \"status_code\": 8, \"updated_at\": \"2026-02-13T14:09:47\"}, \"success\": true, \"order_id\": \"1000278523\", \"customer_email\": \"jon@Smithmoorearchitects.com\", \"service_type\": \"CAD Release\", \"county\": \"\", \"property_address\": \"4417 S FLAGLER DR\", \"customer_name\": \"MAria Mcardle\"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"Jon Moore\", \"confidence\": \"MEDIUM\"}, \"client_email\": {\"value\": \"jon@Smithmoorearchitects.com\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"4417 S Flagler Dr, West Palm Beach, FL 33405\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Palm Beach County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"CAD Release\"], \"confidence\": \"HIGH\", \"notes\": \"Service type explicitly listed as CAD Release; no additional services indicated\"}, \"special_requirements\": {\"value\": \"Special pricing applied; flood zone AE (panel 12099C0591G, base elevation 8 ft, effective 12/20/2024)\", \"confidence\": \"HIGH\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property features available; county appraiser unavailable and no aerial or email data provided\"}, \"client_tier\": {\"value\": \"b2b\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Client name conflict: FTF order data shows 'Jon Moore' but outer envelope shows 'MAria Mcardle' \\u2014 needs human verification\", \"Lot size not provided\", \"Legal description not provided\", \"Structure square footage not provided\", \"Property features (pool, shed, structures, etc.) unknown \\u2014 no appraiser or aerial data available\", \"No matching emails found to cross-reference order details\", \"County appraiser data unavailable \\u2014 no parcel or ownership data to verify\"], \"summary\": \"B2B CAD Release order for Jon Moore (Smith Moore Architects) at 4417 S Flagler Dr, West Palm Beach, FL 33405 in a Flood Zone AE area, delivered on 2026-02-13 with special pricing applied and a client name discrepancy requiring human review.\"}}",
       "approval_message_id": "1000278523",
       "modification_count": 0,
-      "invoice_id": null,
+      "invoice_id": "349437",
       "data_collected_at": "2026-06-02T16:42:19.918729+00:00",
       "draft_posted_at": "2026-06-06 04:48 EDT",
-      "invoice_created_at": null,
+      "invoice_created_at": "2026-06-06T08:55:32.815855+00:00",
       "processed_reply_ids": null,
-      "approved_by": null,
-      "sent_at": null,
+      "approved_by": "prateek",
+      "sent_at": "2026-06-06T08:55:47.043374+00:00",
       "estimate_amount": 450,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:14.456769+00:00",
-      "updated_at": "2026-06-06T08:48:33.467457+00:00",
+      "updated_at": "2026-06-06T08:55:47.124223+00:00",
       "pay_link": null
     },
     {
@@ -9627,14 +9627,14 @@
   ],
   "status_counts": {
     "details_missing": 82,
-    "invoice_sent": 12,
+    "invoice_sent": 13,
     "on_hold": 2,
     "invoice_rejected": 4,
     "condo_rejected": 10,
-    "invoice_draft_posted": 26,
+    "invoice_draft_posted": 25,
     "pricing_needed": 3,
     "data_collected": 262
   },
   "total": 401,
-  "generated_at": "2026-06-06T08:50:27.103701+00:00"
+  "generated_at": "2026-06-06T08:55:47.557997+00:00"
 }
