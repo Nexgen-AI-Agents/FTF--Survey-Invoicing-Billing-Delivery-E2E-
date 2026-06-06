@@ -1,9 +1,7 @@
 name: Daily Approval Reminder
 
 on:
-  schedule:
-    - cron: "0 14 * * 1-5"   # 9:00 AM ET (14:00 UTC) — Monday to Friday only
-  workflow_dispatch:           # manual trigger
+  workflow_dispatch:           # manual trigger only — daily cron disabled per user request
 
 jobs:
   send-reminder:
