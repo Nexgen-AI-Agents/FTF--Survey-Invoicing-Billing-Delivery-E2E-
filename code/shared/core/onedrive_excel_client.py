@@ -381,6 +381,39 @@ def _upload_workbook_bytes(data: bytes) -> None:
     raise AgentError("workbook upload failed: file locked after 3 retries (423)")
 
 
+def _format_new_row(table_row_index: int, ftf_link: str = "") -> None:
+    """Apply thin borders, currency format, and clickable FTF hyperlink to a newly added row."""
+    excel_row = table_row_index + 2  # 0-based table index + header row + 1
+    row_range = f"A{excel_row}:{_END_COL}{excel_row}"
+    wb = _wb_base()
+    h  = _session_headers()
+
+    for side in ["EdgeTop", "EdgeBottom", "EdgeLeft", "EdgeRight", "InsideVertical"]:
+        httpx.patch(
+            f"{wb}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{row_range}')/format/borders/{side}",
+            headers=h,
+            json={"style": "Continuous", "weight": "Thin", "color": "#000000"},
+            timeout=10.0,
+        ).raise_for_status()
+
+    httpx.patch(
+        f"{wb}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='F{excel_row}')/format",
+        headers=h,
+        json={"numberFormat": [["$#,##0.00"]]},
+        timeout=10.0,
+    ).raise_for_status()
+
+    if ftf_link and ftf_link.startswith("http"):
+        httpx.patch(
+            f"{wb}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='I{excel_row}')",
+            headers=h,
+            json={"formulas": [[f'=HYPERLINK("{ftf_link}","View Order")']]},
+            timeout=10.0,
+        ).raise_for_status()
+
+    log.debug("row %d formatted (borders + currency + hyperlink)", excel_row)
+
+
 def append_approval_row(
     order_id:     str,
     client_name:  str,
@@ -424,6 +457,14 @@ def append_approval_row(
     )
     r.raise_for_status()
     log.info("excel row appended order_id=%s amount=%.2f status=%s", order_id, amount, order_status)
+
+    # Apply borders, currency format, and hyperlink to the new row
+    try:
+        new_index = r.json().get("index")   # 0-based table row index
+        if new_index is not None:
+            _format_new_row(new_index, ftf_link=ftf_link)
+    except Exception as exc:
+        log.warning("row formatting failed (non-fatal) order_id=%s: %s", order_id, exc)
 
 
 _ACTION_NORMALIZE = {
