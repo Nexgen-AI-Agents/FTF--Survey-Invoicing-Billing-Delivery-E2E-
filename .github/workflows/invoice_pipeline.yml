@@ -6,11 +6,11 @@ on:
 permissions:
   contents: write
 
-# Separate group from approval-poller so the 2-min poller doesn't starve this 30-min pipeline.
-# cancel-in-progress: true drops any queued duplicate pipeline runs (e.g. manual burst triggers).
+# Pipeline runs ~5-10 min. cancel-in-progress: false lets a running job finish
+# even when Power Automate dispatches again. Pending jobs queue behind the active one.
 concurrency:
   group: invoice-pipeline-main
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   run-invoice-pipeline:
