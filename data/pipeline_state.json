@@ -9602,26 +9602,26 @@
     },
     {
       "order_id": "1000283524",
-      "status": "data_collected",
+      "status": "invoice_draft_posted",
       "service_type": "Land Survey Only",
       "customer_email": "sknsv10@gmail.com",
       "client_name": "Steve Livingston",
       "property_address": "12507 Cortez Rd W Unit 60, Bradenton, FL 34210",
-      "invoice_draft": null,
+      "invoice_draft": "{\"total_amount\": 475.0, \"services\": [{\"name\": \"Land Survey Only\", \"description\": \"Boundary/land survey for Unit 60 in a densely packed mobile home park community, 0.04-acre lot (aerial estimate ~0.03 ac), rectangular lot shape, Manatee County, FEMA Zone AE. Base rate for individual client with no negotiated pricing on file.\", \"amount\": 475.0}], \"pricing_reasoning\": \"Service is a residential land survey only \\u2014 no EC, no topo requested. Base rate of $475.00 applies per the individual client default. Lot size is well under 0.31 acres (database: 0.04 ac, aerial: ~0.03 ac), so no acreage upcharge is warranted. FEMA Zone AE does not itself trigger an upcharge on a survey-only order (EC upcharges apply only if an EC is scoped). No pool, no Monroe County, no metes-and-bounds legal, and no heavy vegetation are present. While the aerial shows dense unit spacing, potential carport/awning overlap with lot lines, and proximity to water, these complexities are consistent with a standard mobile home park survey and do not independently justify a formal complexity upcharge under the pricing guidelines without a confirmed encroachment scope addition. No complexity upcharges are applied at this time.\", \"confidence\": \"MEDIUM\", \"escalate_flag\": false, \"escalate_reason\": null, \"flags\": [\"AERIAL CONFIDENCE LOW: Unit 60 not definitively identified from satellite altitude; field crew should confirm unit/lot boundaries within the park before commencing survey.\", \"BOUNDARY COMPLEXITY NOTE: Dense packing of units and potential carport/awning overhang across lot lines may increase field time; if crew confirms significant encroachment resolution is required, a complexity upcharge of up to $87 should be considered and invoice revised.\", \"EC CONSIDERATION: Property is in FEMA Zone AE and is waterfront-adjacent; client or lender may subsequently request an Elevation Certificate ($275.00 flat). Advise client of this possibility at order confirmation.\", \"NEW CLIENT: Zero prior orders with NexGen Surveying. No negotiated rate history available.\"]}",
       "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 202605111353348097, \"created_at\": \"2026-05-11T13:53:34\", \"customer_email\": \"sknsv10@gmail.com\", \"customer_id\": 202605111353348199, \"customer_name\": \"Steve Livingston\", \"customer_type\": \"individual\", \"delivered_at\": null, \"due_amount\": 0.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": \"12081C0279F\\nZONE:AE\\nEFF: 08/10/2021\", \"invoiced\": false, \"order_id\": 1000283524, \"paid\": false, \"property_address\": \"12507 CORTEZ RD W UNIT 60\", \"property_city\": \"BRADENTON\", \"property_county\": \"MANATEE COUNTY\", \"property_lat\": \"27.4679975\", \"property_lng\": \"-82.6882175\", \"property_state\": \"FLORIDA\", \"property_zip\": \"34210\", \"service_type\": \"Land Survey Only\", \"special_pricing\": false, \"status\": \"Quote\", \"status_code\": 12, \"updated_at\": \"2026-05-11T14:02:14\"}, \"success\": true, \"order_id\": \"1000283524\", \"customer_email\": \"sknsv10@gmail.com\", \"service_type\": \"Land Survey Only\", \"county\": \"MANATEE COUNTY\", \"property_address\": \"12507 CORTEZ RD W UNIT 60\", \"customer_name\": \"Steve Livingston\"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": \"No property data was returned from the Manatee County Property Appraiser search page. The page only shows a search interface with no results loaded in the provided text. A direct lookup at https://www.manateepao.com may be required to retrieve details for 12507 CORTEZ RD W UNIT 60, Manatee County, FL.\", \"source_url\": \"https://www.manateepao.com/search?address=12507%20CORTEZ%20RD%20W%20UNIT%2060\", \"error\": null, \"confidence\": \"LOW\"}, \"aerial_analysis\": {\"lot_shape\": \"rectangular\", \"estimated_lot_size\": \"~0.03 acres (approximately 1,200-1,500 sq ft)\", \"main_structure_footprint_sqft\": 600, \"visible_structures\": [\"mobile home/manufactured home\", \"carport or awning structure\", \"small shed or utility structure\"], \"driveway_count\": 1, \"pool_visible\": false, \"apparent_encroachments\": \"Dense packing of units makes boundary determination difficult; carport/awning structures may overlap lot lines between adjacent units\", \"access_type\": \"shared\", \"site_notes\": \"Property appears to be located within a densely packed mobile home park/RV community along a waterfront (appears to be on a bay or inlet in the Florida Gulf Coast area). Lots are very small and tightly spaced with shared internal roadways. Proximity to water on the western edge suggests potential flood zone considerations and elevation certificate may be required. Individual lot boundaries are difficult to distinguish due to density of development. Unit 60 identification within the park is not definitively confirmed from this altitude.\", \"confidence\": \"LOW\"}, \"packet\": {\"client_name\": {\"value\": \"Steve Livingston\", \"confidence\": \"HIGH\"}, \"client_email\": {\"value\": \"sknsv10@gmail.com\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"12507 Cortez Rd W Unit 60, Bradenton, FL 34210\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Manatee County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"Land Survey Only\"], \"confidence\": \"HIGH\", \"notes\": \"Service type explicitly stated as 'Land Survey Only'; no elevation certificate requested (elevation_cert: false)\"}, \"special_requirements\": {\"value\": \"Property is in Flood Zone AE per FIRM panel 12081C0279F, effective 08/10/2021 \\u2014 may be relevant for lender or insurance purposes but no elevation cert ordered\", \"confidence\": \"MEDIUM\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property features provided; unit-based address suggests a condo or mobile home community \\u2014 physical features unknown\"}, \"client_tier\": {\"value\": \"residential\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Lot size unknown\", \"Legal description not provided\", \"Structure square footage unknown\", \"Property features (pool, shed, fencing, etc.) not documented\", \"No estimate has been sent and order is still in Quote status \\u2014 pricing not confirmed\", \"Unit 60 suggests possible condo or mobile home park \\u2014 property type and survey scope may need clarification\", \"No supporting emails or additional customer data available to cross-reference\", \"Purpose of survey not stated (refinance, sale, personal, etc.)\"], \"summary\": \"Residential land survey only order for Steve Livingston at a unit address in Bradenton, FL within Flood Zone AE, currently in Quote status with no estimate sent and no additional documentation on file.\"}}",
-      "approval_message_id": null,
-      "modification_count": null,
+      "approval_message_id": "1000283524",
+      "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-05T21:58:11.184690+00:00",
-      "draft_posted_at": null,
+      "draft_posted_at": "2026-06-06 01:29 UTC",
       "invoice_created_at": null,
       "processed_reply_ids": null,
       "approved_by": null,
       "sent_at": null,
-      "estimate_amount": null,
+      "estimate_amount": 475,
       "deferred_until": null,
       "created_at": null,
-      "updated_at": "2026-06-05T21:58:11.262083+00:00",
+      "updated_at": "2026-06-06T01:29:46.563745+00:00",
       "pay_link": "2026-06-05T21:57:20.156340+00:00"
     }
   ],
@@ -9631,10 +9631,9 @@
     "on_hold": 2,
     "invoice_rejected": 4,
     "condo_rejected": 10,
-    "invoice_draft_posted": 290,
-    "pricing_needed": 2,
-    "data_collected": 1
+    "invoice_draft_posted": 291,
+    "pricing_needed": 2
   },
   "total": 401,
-  "generated_at": "2026-06-05T23:59:29.800904+00:00"
+  "generated_at": "2026-06-06T01:29:47.666776+00:00"
 }
