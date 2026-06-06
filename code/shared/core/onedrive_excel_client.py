@@ -13,6 +13,9 @@ import time
 import urllib.parse
 from datetime import datetime, timezone
 from typing import Optional
+from zoneinfo import ZoneInfo
+
+_EASTERN = ZoneInfo("America/New_York")
 
 import httpx
 
@@ -431,7 +434,7 @@ def append_approval_row(
     ensure_approval_sheet()
 
     if not posted_at:
-        posted_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        posted_at = datetime.now(_EASTERN).strftime("%Y-%m-%d %H:%M %Z")
 
     values = [[
         str(order_id),
@@ -526,7 +529,7 @@ def mark_row_processed(order_id: str) -> None:
         headers=h, timeout=15.0,
     )
     r.raise_for_status()
-    processed_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    processed_at = datetime.now(_EASTERN).strftime("%Y-%m-%d %H:%M %Z")
 
     for row in reversed(r.json().get("value", [])):
         vals = row.get("values", [[]])[0]

@@ -31,6 +31,9 @@ import os
 import re
 import sys
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
+_EASTERN = ZoneInfo("America/New_York")
 from typing import Optional
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
@@ -480,7 +483,7 @@ def compile_for_order(order_id: str) -> dict:
     client_name = packet.get("client_name", {}).get("value") or company_info.get("company_name") or ""
     address     = packet.get("property_address", {}).get("value") or order_details.get("ng_property_address") or ""
     svc_names   = ", ".join(s.get("name", "") for s in ai_result.get("services", []))
-    posted_at   = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    posted_at   = datetime.now(_EASTERN).strftime("%Y-%m-%d %H:%M %Z")
 
     escalate_flag   = bool(ai_result.get("escalate_flag"))
     escalation_note = "⚠️ Escalate — needs Robert or Ryan review" if escalate_flag else ""
