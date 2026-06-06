@@ -44,7 +44,7 @@ jobs:
       FTF_PORTAL_BASE_URL:        ${{ secrets.FTF_PORTAL_BASE_URL }}
       FTF_PORTAL_USER:            ${{ secrets.FTF_PORTAL_USER }}
       FTF_PORTAL_PASS:            ${{ secrets.FTF_PORTAL_PASS }}
-      INVOICE_BATCH_SIZE:         "10"
+      INVOICE_BATCH_SIZE:         "50"
 
     steps:
       - uses: actions/checkout@v4
