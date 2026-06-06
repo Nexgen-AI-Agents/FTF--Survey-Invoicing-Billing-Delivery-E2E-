@@ -2066,7 +2066,7 @@
     },
     {
       "order_id": "1000280515",
-      "status": "invoice_draft_posted",
+      "status": "invoice_sent",
       "service_type": "CAD file",
       "customer_email": "info@breezypermits.com",
       "client_name": "Breezy Permits LLC",
@@ -2075,17 +2075,17 @@
       "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 202507151523115361, \"created_at\": \"2026-03-18T14:48:28\", \"customer_email\": \"info@breezypermits.com\", \"customer_id\": 202507151523115459, \"customer_name\": \"Naia Gonzalez\", \"customer_type\": \"b2b\", \"delivered_at\": null, \"due_amount\": 0.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": \"12086C0469L\\nZONE: AE\\nELEV: 11 FT\\nEFF: 09/11/2009\", \"invoiced\": false, \"order_id\": 1000280515, \"paid\": true, \"property_address\": \"1051 SAN PEDRO AVE\", \"property_city\": \"CORAL GABLES AVE\", \"property_county\": \"Miami-Dade County\", \"property_lat\": \"25.6517407\", \"property_lng\": \"-80.2741068\", \"property_state\": \"FL\", \"property_zip\": \"33156\", \"service_type\": \"CAD file\", \"special_pricing\": true, \"status\": \"On Hold\", \"status_code\": 11, \"updated_at\": \"2026-03-19T21:14:25\"}, \"success\": true, \"order_id\": \"1000280515\", \"customer_email\": \"info@breezypermits.com\", \"service_type\": \"CAD file\", \"county\": \"\", \"property_address\": \"1051 SAN PEDRO AVE\", \"customer_name\": \"BREEZY PERMITS LLC\"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"Breezy Permits LLC\", \"confidence\": \"HIGH\"}, \"client_email\": {\"value\": \"info@breezypermits.com\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"1051 San Pedro Ave, Coral Gables, FL 33156\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Miami-Dade County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"CAD File\"], \"confidence\": \"HIGH\", \"notes\": \"Service type explicitly listed as 'CAD file' in FTF order data; no additional services indicated.\"}, \"special_requirements\": {\"value\": \"Special pricing applied; order is currently On Hold (status code 11). Flood zone data available: FIRM Panel 12086C0469L, Zone AE, Base Flood Elevation 11 ft, effective 09/11/2009.\", \"confidence\": \"HIGH\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property features available; no aerial imagery, appraiser data, or email attachments provided.\"}, \"client_tier\": {\"value\": \"b2b\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Lot size not provided\", \"Legal description not provided\", \"Structure square footage not provided\", \"Property features unknown (pool, shed, fences, driveways, additional structures)\", \"No fieldwork date scheduled\", \"County Appraiser data unavailable\", \"No matching emails found for additional context\", \"Reason for On Hold status not documented\", \"Scope of CAD file not clarified (boundary, topo, as-built, etc.)\"], \"summary\": \"B2B order from Breezy Permits LLC for a CAD file at 1051 San Pedro Ave, Coral Gables, FL 33156 (Miami-Dade County), currently On Hold with special pricing applied and flood zone AE designation noted.\"}}",
       "approval_message_id": "1000280515",
       "modification_count": 0,
-      "invoice_id": null,
+      "invoice_id": "349434",
       "data_collected_at": "2026-06-02T16:14:08.874414+00:00",
       "draft_posted_at": "2026-06-05 21:59 UTC",
-      "invoice_created_at": null,
+      "invoice_created_at": "2026-06-06T07:13:27.807839+00:00",
       "processed_reply_ids": null,
-      "approved_by": null,
-      "sent_at": null,
+      "approved_by": "prateek",
+      "sent_at": "2026-06-06T07:13:39.190653+00:00",
       "estimate_amount": 250,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:13.554051+00:00",
-      "updated_at": "2026-06-05T21:59:31.928607+00:00",
+      "updated_at": "2026-06-06T07:13:39.266117+00:00",
       "pay_link": null
     },
     {
@@ -9627,13 +9627,13 @@
   ],
   "status_counts": {
     "details_missing": 82,
-    "invoice_sent": 10,
+    "invoice_sent": 11,
     "on_hold": 2,
     "invoice_rejected": 4,
     "condo_rejected": 10,
-    "invoice_draft_posted": 291,
+    "invoice_draft_posted": 290,
     "pricing_needed": 2
   },
   "total": 401,
-  "generated_at": "2026-06-06T05:35:13.125045+00:00"
+  "generated_at": "2026-06-06T07:13:39.718193+00:00"
 }
