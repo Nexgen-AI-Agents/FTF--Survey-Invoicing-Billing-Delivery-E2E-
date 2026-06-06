@@ -255,6 +255,19 @@ def process_dispatch_input() -> dict:
         log.error("workflow_dispatch: order %s not found in pipeline state", order_id)
         return {"ok": False, "reason": "order not found"}
 
+    # Guard: skip if order already past approval stage (prevents duplicate invoices from stale Excel rows)
+    current_status = db_row.get("status", "")
+    _TERMINAL = {"invoice_finalized", "invoice_sent", "invoice_approved"}
+    if action == "approve" and current_status in _TERMINAL:
+        log.warning("dispatch: order %s already in %s — skipping re-approval (stale Excel row)",
+                    order_id, current_status)
+        try:
+            from core.onedrive_excel_client import mark_row_processed
+            mark_row_processed(order_id)
+        except Exception:
+            pass
+        return {"ok": True, "order_id": order_id, "action": "skipped", "reason": f"already {current_status}"}
+
     if action == "approve":
         save_order_state(order_id, status="invoice_approved", approved_by="prateek")
         log_decision(AGENT_NAME, "invoice_approved", order_id=order_id,
