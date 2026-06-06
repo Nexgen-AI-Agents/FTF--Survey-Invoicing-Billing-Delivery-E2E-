@@ -489,6 +489,7 @@ def compile_for_order(order_id: str) -> dict:
     escalation_note = "⚠️ Escalate — needs Robert or Ryan review" if escalate_flag else ""
     ftf_order_status = str(order_details.get("ng_status_desc") or "")
 
+    excel_write_ok = False
     try:
         append_approval_row(
             order_id     = order_id,
@@ -503,10 +504,14 @@ def compile_for_order(order_id: str) -> dict:
             posted_at    = posted_at,
             notes        = escalation_note,
         )
+        excel_write_ok = True
     except Exception as exc:
-        log.error("failed to write Excel row order=%s: %s — continuing anyway", order_id, exc)
+        log.error("failed to write Excel row order=%s: %s — order stays data_collected for retry", order_id, exc)
 
-    # ── 6. Save state ─────────────────────────────────────────────────────────
+    if not excel_write_ok:
+        return ai_result  # do NOT mark invoice_draft_posted — let next run retry
+
+    # ── 6. Save state (only reached if Excel write succeeded) ─────────────────
     save_order_state(
         order_id,
         status="invoice_draft_posted",
@@ -541,20 +546,24 @@ def compile_for_order(order_id: str) -> dict:
 
 
 def run() -> dict:
-    """Process up to INVOICE_BATCH_SIZE orders with status=data_collected."""
-    orders  = get_orders_by_status("data_collected")[:INVOICE_BATCH_SIZE]
-    summary = {"processed": 0, "posted": 0, "skipped_duplicate": 0, "errors": 0}
+    """Process up to INVOICE_BATCH_SIZE orders with status=data_collected.
 
-    pending_ids = get_pending_order_ids()
+    Dedup source: OneDrive Excel (Excel = truth).
+    An order is skipped only if its ID is already in the approval sheet,
+    regardless of what the pipeline state says.
+    """
+    orders  = get_orders_by_status("data_collected")[:INVOICE_BATCH_SIZE]
+    summary = {"processed": 0, "posted": 0, "skipped_excel": 0, "errors": 0}
+
+    pending_ids = get_pending_order_ids()   # IDs currently in the OneDrive approval sheet
 
     for db_row in orders:
         order_id = db_row["order_id"]
-        if str(order_id) in pending_ids and db_row.get("invoice_draft"):
-            log.info("skipping order=%s — already Pending in OneDrive Excel", order_id)
-            if db_row.get("status") == "data_collected":
-                save_order_state(order_id, status="invoice_draft_posted")
-                log.info("synced state order=%s data_collected → invoice_draft_posted", order_id)
-            summary["skipped_duplicate"] += 1
+        # Excel is the authoritative dedup source — if already in sheet, sync state and skip
+        if str(order_id) in pending_ids:
+            log.info("skipping order=%s — already in OneDrive Excel", order_id)
+            save_order_state(order_id, status="invoice_draft_posted")
+            summary["skipped_excel"] += 1
             summary["processed"] += 1
             continue
         try:
