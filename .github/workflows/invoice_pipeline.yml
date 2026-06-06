@@ -83,7 +83,15 @@ jobs:
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git pull --rebase --autostash origin main
+          # Save runner's data files before syncing with origin
+          cp data/invoice_pipeline_state.xlsx /tmp/runner_state.xlsx
+          cp data/pipeline_state.json /tmp/runner_state.json
+          # Sync with any concurrent commits (e.g. approval watcher)
+          git fetch origin main
+          git reset --hard origin/main
+          # Restore runner's version of data files (runner wins — it just processed orders)
+          cp /tmp/runner_state.xlsx data/invoice_pipeline_state.xlsx
+          cp /tmp/runner_state.json data/pipeline_state.json
           git add data/invoice_pipeline_state.xlsx data/pipeline_state.json data/learned_rules.json
           git diff --cached --quiet || git commit -m "chore: update pipeline state [skip ci]"
           git push
