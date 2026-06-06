@@ -98,7 +98,7 @@
     },
     {
       "order_id": "1000284524",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "CAD file",
       "customer_email": "lbelectric88@gmail.com",
       "client_name": "Donahue Francis",
@@ -117,12 +117,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.554603+00:00",
-      "updated_at": "2026-06-02T13:28:07.416800+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284508",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "whyde@designrarchitects.com",
       "client_name": "Walter  Hyde III",
@@ -141,12 +141,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.570449+00:00",
-      "updated_at": "2026-06-02T13:28:14.661941+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284507",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "amullins@jdgrossolaw.com",
       "client_name": "Joseph D. Grosso Jr., P.A.",
@@ -165,12 +165,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.587268+00:00",
-      "updated_at": "2026-06-02T13:28:21.520906+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284503",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "vmazina@yahoo.com",
       "client_name": "Valentina Mazina",
@@ -189,12 +189,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.637354+00:00",
-      "updated_at": "2026-06-02T13:28:29.128600+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284488",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "robertsmoot@hotmail.com",
       "client_name": "Robert Smoot",
@@ -213,12 +213,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.655228+00:00",
-      "updated_at": "2026-06-02T13:28:37.650951+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284479",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "sdr.isabel@gmail.com",
       "client_name": "Isabel Gordon",
@@ -237,12 +237,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.672567+00:00",
-      "updated_at": "2026-06-02T13:28:45.361810+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284474",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey and Elevation",
       "customer_email": "puntagorda@suncoastone.net",
       "client_name": "Punta Gorda - Suncoast One Title & Closings, Inc.",
@@ -261,12 +261,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.690772+00:00",
-      "updated_at": "2026-06-02T13:28:52.981623+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284470",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "NikkiLeigh@heightstitle.com",
       "client_name": "Heights Title Services, LLC",
@@ -285,12 +285,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.708738+00:00",
-      "updated_at": "2026-06-02T13:29:00.024092+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284466",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "CAD",
       "customer_email": "alison@stevecuryconstruction.com",
       "client_name": "Steve Cury Construction",
@@ -309,12 +309,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.727250+00:00",
-      "updated_at": "2026-06-02T13:29:08.388765+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284462",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "CAD",
       "customer_email": "alison@stevecuryconstruction.com",
       "client_name": "Steve Cury Construction",
@@ -333,12 +333,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.746530+00:00",
-      "updated_at": "2026-06-02T13:29:15.199764+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284440",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "ahenick@rdmanagement.com",
       "client_name": "RD Management",
@@ -357,12 +357,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.767153+00:00",
-      "updated_at": "2026-06-02T13:29:23.300244+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284429",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "debbiemyers@exitcompassrealty.com",
       "client_name": "Deborah Myers",
@@ -381,12 +381,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.786644+00:00",
-      "updated_at": "2026-06-02T13:29:30.297547+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284400",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "bart@whiteeaglehomesfl.com",
       "client_name": "Bart Magerczyk",
@@ -405,12 +405,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.806090+00:00",
-      "updated_at": "2026-06-02T13:29:37.293201+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284390",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "Brian@allstatecomputers.com",
       "client_name": "Brian",
@@ -429,12 +429,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.827301+00:00",
-      "updated_at": "2026-06-02T13:29:44.501909+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284388",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "marie@firstprioritytitleco.com",
       "client_name": "First Priority Title Company",
@@ -453,12 +453,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.847786+00:00",
-      "updated_at": "2026-06-02T13:29:51.491202+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284366",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "leslie.fishermanstitle@gmail.com",
       "client_name": "Fishermans Title and All Clear Title Services",
@@ -477,12 +477,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.870173+00:00",
-      "updated_at": "2026-06-02T13:29:58.663239+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284324",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "lr@cohennorris.com",
       "client_name": "Cohen, Norris, Wolmer, Ray, Telepman and Cohen",
@@ -501,7 +501,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.893495+00:00",
-      "updated_at": "2026-06-02T13:30:07.296367+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
@@ -578,7 +578,7 @@
     },
     {
       "order_id": "1000284303",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "robin.rankin@foxfirerealty.com",
       "client_name": "Robin Rankin",
@@ -597,12 +597,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.983638+00:00",
-      "updated_at": "2026-06-02T13:30:38.406355+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284284",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "kagosto@lighthousetitleservices.com",
       "client_name": "Lighthouse Title Services LLC",
@@ -621,12 +621,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.007235+00:00",
-      "updated_at": "2026-06-02T13:30:45.441557+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284265",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "office3@oceanview-b.com",
       "client_name": "Sandra Lalaian",
@@ -645,12 +645,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.029667+00:00",
-      "updated_at": "2026-06-02T13:30:52.874227+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284231",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "CAD",
       "customer_email": "cy@greendoorconstructioninc.com",
       "client_name": "Green Door Construction, Inc.",
@@ -669,12 +669,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.052634+00:00",
-      "updated_at": "2026-06-02T13:31:00.058696+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284224",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "Jean@CascioLawOffice.com",
       "client_name": "Law Offices of Jean Cascio, PLLC",
@@ -693,12 +693,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.077388+00:00",
-      "updated_at": "2026-06-02T13:31:07.187272+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284223",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "cpsmbuilders@gmail.com",
       "client_name": "Robert Calarko",
@@ -717,12 +717,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.101962+00:00",
-      "updated_at": "2026-06-02T13:31:14.461934+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284170",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "CAD",
       "customer_email": "jr@reddittarchitecture.com",
       "client_name": "Jonathan Reddit",
@@ -741,12 +741,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.133615+00:00",
-      "updated_at": "2026-06-02T13:31:22.305378+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284168",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "ivy@closingtemafl.com",
       "client_name": "The Closing Team Title & Escrow Services",
@@ -765,12 +765,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.157589+00:00",
-      "updated_at": "2026-06-02T13:31:29.179023+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284163",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "w.u.g.o.c.ava771@gmail.com",
       "client_name": "DzVTnmfrWfbGndZjh",
@@ -789,12 +789,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.182212+00:00",
-      "updated_at": "2026-06-02T13:31:36.341891+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284162",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "w.u.g.o.c.ava771@gmail.com",
       "client_name": "DzVTnmfrWfbGndZjh",
@@ -813,12 +813,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.208715+00:00",
-      "updated_at": "2026-06-02T13:31:43.727161+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284150",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey and Elevation, ",
       "customer_email": "jeremyrivera@FTGAgency.com",
       "client_name": "Jeremy Rivera",
@@ -837,12 +837,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.234909+00:00",
-      "updated_at": "2026-06-02T13:31:51.583312+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284123",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "dchuslo@aol.com",
       "client_name": "BETX Engineering inc.",
@@ -861,12 +861,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.264390+00:00",
-      "updated_at": "2026-06-02T13:31:58.468978+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284112",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "nrodriguez@TUFFSHED.com",
       "client_name": "Naya Rodriguez",
@@ -885,12 +885,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.291222+00:00",
-      "updated_at": "2026-06-02T13:32:05.555498+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284111",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "flgirlintx@gmail.com",
       "client_name": "TIMOTHY MATZ ",
@@ -909,12 +909,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.318131+00:00",
-      "updated_at": "2026-06-02T13:32:12.950298+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284101",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "soldbysandy@gmail.com",
       "client_name": "Sandy Jackson",
@@ -933,12 +933,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.345084+00:00",
-      "updated_at": "2026-06-02T13:32:19.275857+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284093",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "gabriellechinre@gmail.com",
       "client_name": "5530 Thoroughbred, SW Ranches, 33330",
@@ -957,12 +957,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.381615+00:00",
-      "updated_at": "2026-06-02T13:32:26.170782+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284076",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "sam@flyingpointre.com",
       "client_name": "Sam Genet",
@@ -981,12 +981,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.409130+00:00",
-      "updated_at": "2026-06-02T13:32:33.162456+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284075",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "sam@flyingpointre.com",
       "client_name": "Sam Genet",
@@ -1005,12 +1005,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.435963+00:00",
-      "updated_at": "2026-06-02T13:32:40.196594+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284074",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "sam@flyingpointre.com",
       "client_name": "Sam Genet",
@@ -1029,12 +1029,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.464260+00:00",
-      "updated_at": "2026-06-02T13:32:48.073395+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284061",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey and Elevation",
       "customer_email": "bsantiago@williamsparker.com",
       "client_name": "WILLIAMS PARKER",
@@ -1053,12 +1053,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.492520+00:00",
-      "updated_at": "2026-06-02T13:32:56.937374+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284057",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "processing@floridasecuredtitle.com",
       "client_name": "Florida Secured Title LLC",
@@ -1077,12 +1077,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.522369+00:00",
-      "updated_at": "2026-06-02T13:33:03.952707+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284017",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "crosario@clfarchitects.com",
       "client_name": "Choeff Levy Fischman Architecture and Design",
@@ -1101,12 +1101,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.553319+00:00",
-      "updated_at": "2026-06-02T13:33:11.226777+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284011",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Quote",
       "customer_email": "kristie@meridianpartnerslaw.com",
       "client_name": "Meridian Partners",
@@ -1125,12 +1125,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.584413+00:00",
-      "updated_at": "2026-06-02T13:33:18.815289+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284009",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Boundary Survey",
       "customer_email": "Jean@CascioLawOffice.com",
       "client_name": "Law Offices of Jean Cascio, PLLC",
@@ -1149,12 +1149,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.613575+00:00",
-      "updated_at": "2026-06-02T13:33:25.831776+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000283998",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "jason.htconstruction@gmail.com",
       "client_name": "Rupli Residence",
@@ -1173,12 +1173,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.690139+00:00",
-      "updated_at": "2026-06-02T13:33:34.332256+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000283997",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "mmasser@pdconcepts.com",
       "client_name": "Mark Masser",
@@ -1197,12 +1197,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.720211+00:00",
-      "updated_at": "2026-06-02T13:33:42.223669+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000283986",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "jmm@mosskelley.com",
       "client_name": " John Mushinsky",
@@ -1221,12 +1221,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.427587+00:00",
-      "updated_at": "2026-06-02T14:27:55.815299+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000283969",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "Caroline@legacyfortitle.com",
       "client_name": " Legacy Settlement Services, LLC",
@@ -1245,12 +1245,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.461962+00:00",
-      "updated_at": "2026-06-02T14:28:03.760059+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000283915",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "CAD",
       "customer_email": "riveracyn@gmail.com",
       "client_name": "CYNTHIA RIVERA",
@@ -1269,12 +1269,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.493365+00:00",
-      "updated_at": "2026-06-02T14:28:13.895329+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000283902",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "creativeconstructionusa@gmail.com",
       "client_name": "Creative Construction USA",
@@ -1293,12 +1293,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.524385+00:00",
-      "updated_at": "2026-06-02T14:28:21.057713+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000283884",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "tori4513@icloud.com",
       "client_name": "V\u00edctor L\u00f3pez ",
@@ -1317,12 +1317,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.556440+00:00",
-      "updated_at": "2026-06-02T14:28:27.945147+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000283805",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "CAD",
       "customer_email": "chaz@cedarsteelfl.com",
       "client_name": "Cedar and Steel Construction",
@@ -1341,12 +1341,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.587990+00:00",
-      "updated_at": "2026-06-02T14:33:05.081791+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000283792",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "CAD",
       "customer_email": "Tatiana@nieverawilliams.com",
       "client_name": "Nievera Williams Design",
@@ -1365,12 +1365,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.620737+00:00",
-      "updated_at": "2026-06-02T14:33:13.076008+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000283790",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "CAD",
       "customer_email": "beachbumcapemay@yahoo.com",
       "client_name": "Kenn Mann",
@@ -1389,12 +1389,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.653540+00:00",
-      "updated_at": "2026-06-02T14:33:21.522986+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000283771",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "fernando@thearchitectgroup.com",
       "client_name": "Sandra Puerta",
@@ -1413,12 +1413,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.685716+00:00",
-      "updated_at": "2026-06-02T14:33:28.336035+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000283753",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": "Land Survey Only",
       "customer_email": "ddicarloanderson@gmail.com",
       "client_name": "Dominique Anderson",
@@ -1437,7 +1437,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:47.719638+00:00",
-      "updated_at": "2026-06-02T14:33:35.557855+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
@@ -1778,7 +1778,7 @@
     },
     {
       "order_id": "1000282290",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "roberto@salermo.net",
       "client_name": "Roberto Salermo",
@@ -1797,7 +1797,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:48.322563+00:00",
-      "updated_at": "2026-06-02T15:12:31.245541+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
@@ -9074,7 +9074,7 @@
     },
     {
       "order_id": "1000284583",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9093,12 +9093,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:47.864633+00:00",
-      "updated_at": "2026-06-03T14:19:36.116546+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284582",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9117,12 +9117,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.106401+00:00",
-      "updated_at": "2026-06-03T14:19:47.832895+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284581",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9141,12 +9141,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.405220+00:00",
-      "updated_at": "2026-06-03T14:20:00.026584+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284580",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9165,12 +9165,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.643405+00:00",
-      "updated_at": "2026-06-03T14:20:16.815076+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284579",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9189,12 +9189,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.878872+00:00",
-      "updated_at": "2026-06-03T14:20:29.139731+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284578",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9213,12 +9213,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:49.173263+00:00",
-      "updated_at": "2026-06-03T14:26:53.525816+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284577",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9237,12 +9237,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:49.411948+00:00",
-      "updated_at": "2026-06-03T14:27:04.434411+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284576",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9261,12 +9261,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:49.702736+00:00",
-      "updated_at": "2026-06-03T14:27:15.115090+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284575",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9285,12 +9285,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:49.942082+00:00",
-      "updated_at": "2026-06-03T14:27:26.326333+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284574",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9309,12 +9309,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:50.232302+00:00",
-      "updated_at": "2026-06-03T14:27:37.935713+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284573",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9333,12 +9333,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:50.473990+00:00",
-      "updated_at": "2026-06-03T14:32:48.422653+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284572",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9357,12 +9357,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:50.714657+00:00",
-      "updated_at": "2026-06-03T14:32:59.906161+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284571",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9381,12 +9381,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:51.014904+00:00",
-      "updated_at": "2026-06-03T14:33:11.706986+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284570",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9405,12 +9405,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:51.257951+00:00",
-      "updated_at": "2026-06-03T14:33:22.728295+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284569",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9429,12 +9429,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:51.560599+00:00",
-      "updated_at": "2026-06-03T14:33:32.800808+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284568",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9453,12 +9453,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:51.802264+00:00",
-      "updated_at": "2026-06-03T14:38:57.912573+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284567",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9477,12 +9477,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.095496+00:00",
-      "updated_at": "2026-06-03T14:39:08.466808+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284566",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9501,12 +9501,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.340723+00:00",
-      "updated_at": "2026-06-03T14:39:19.423133+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284565",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9525,12 +9525,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.581724+00:00",
-      "updated_at": "2026-06-03T14:39:31.067687+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284564",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9549,12 +9549,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.895782+00:00",
-      "updated_at": "2026-06-03T14:39:42.457300+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284563",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9573,7 +9573,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:53.138350+00:00",
-      "updated_at": "2026-06-03T14:44:59.920518+00:00",
+      "updated_at": "2026-06-06T17:47:17.377156+00:00",
       "pay_link": null
     },
     {
@@ -9626,7 +9626,8 @@
     }
   ],
   "status_counts": {
-    "details_missing": 82,
+    "details_missing": 7,
+    "invoice_needed": 75,
     "invoice_sent": 13,
     "on_hold": 2,
     "invoice_rejected": 4,
@@ -9635,5 +9636,5 @@
     "pricing_needed": 47
   },
   "total": 401,
-  "generated_at": "2026-06-06T17:46:06.445030+00:00"
+  "generated_at": "2026-06-06T17:50:25.956356+00:00"
 }
