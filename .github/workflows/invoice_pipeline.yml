@@ -1,9 +1,7 @@
 name: Invoice Pipeline (Sprint 11)
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: "0,30 * * * *"   # every 30 minutes, batch size 10
+  workflow_dispatch:  # triggered by Power Automate every 30 min
 
 permissions:
   contents: write
