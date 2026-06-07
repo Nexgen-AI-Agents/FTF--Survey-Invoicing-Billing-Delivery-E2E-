@@ -59,7 +59,7 @@ from core.exceptions import AgentError
 from core.ftf_client import get_historical_pricing_orders
 from core.ftf_mysql import get_order_details, get_company_info, find_duplicate_orders
 from core.logger import get_logger
-from core.onedrive_excel_client import append_approval_row, get_pending_order_ids
+from core.onedrive_excel_client import append_approval_row, auto_reject_condo_row, get_pending_order_ids
 
 AGENT_NAME = "agent_a3_invoice_compiler"
 log = get_logger(AGENT_NAME)
@@ -435,14 +435,15 @@ def compile_for_order(order_id: str) -> dict:
         )
         # Write to Excel so the team sees it and can action it — without this, condos
         # are invisible and the client is left waiting with no response.
-        _condo_client = packet.get("client_name", {}).get("value") or db_row.get("client_name", "")
-        _condo_addr   = (
+        _condo_client    = packet.get("client_name", {}).get("value") or db_row.get("client_name", "")
+        _condo_addr      = (
             packet.get("property_address", {}).get("value")
             or order_details.get("ng_property_address", "")
         )
+        _condo_ftf_status = str(order_details.get("ng_status_desc") or "")
         _condo_notes = (
             f"CONDO ORDER — Cannot survey. {condo_reason}. "
-            "DO NOT APPROVE. ACTION REQUIRED: Contact client to explain that a boundary "
+            "AUTO-REJECTED. ACTION REQUIRED: Contact client to explain that a boundary "
             "survey is not possible on a condo/airspace unit. Arrange refund or redirect "
             "to an appropriate service (e.g. interior unit measurement)."
         )
@@ -456,10 +457,11 @@ def compile_for_order(order_id: str) -> dict:
                 confidence   = "N/A",
                 escalate     = True,
                 ftf_link     = link,
-                order_status = "Condo Rejected",
+                order_status = _condo_ftf_status,   # real FTF status, not "Condo Rejected"
                 notes        = _condo_notes,
             )
-            log.info("order=%s condo written to Excel for manual review", order_id)
+            log.info("order=%s condo written to Excel, auto-rejecting", order_id)
+            auto_reject_condo_row(order_id)         # immediately set Action=Reject + Processed At
         except Exception as exc:
             log.warning("condo Excel write failed order=%s: %s (non-fatal)", order_id, exc)
         log.info("order=%s hard-stop condo_rejected: %s", order_id, condo_reason)
