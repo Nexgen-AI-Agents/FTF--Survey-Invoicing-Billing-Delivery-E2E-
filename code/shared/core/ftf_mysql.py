@@ -47,7 +47,7 @@ def get_invoice_needed_orders() -> list[dict]:
             cur.execute(
                 """SELECT ng_id, ng_order, ng_client_name, ng_email,
                           ng_property_address, ng_service_requested,
-                          ng_status, ng_property_county
+                          ng_status, ng_property_county, ng_notes
                    FROM ng_orders
                    WHERE ng_invoice_needed = 1
                      AND ng_status != 0
@@ -69,6 +69,7 @@ def get_invoice_needed_orders() -> list[dict]:
             "customer_name":   row.get("ng_client_name") or "",
             "property_address": row.get("ng_property_address") or "",
             "county":          row.get("ng_property_county") or "",
+            "notes":           (row.get("ng_notes") or "").strip(),
         })
 
     logger.info("get_invoice_needed_orders: %d orders from MySQL", len(results))

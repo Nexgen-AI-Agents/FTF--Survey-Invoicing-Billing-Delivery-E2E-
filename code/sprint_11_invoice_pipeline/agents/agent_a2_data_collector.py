@@ -438,12 +438,20 @@ Return ONLY valid JSON, no markdown:
 
     except Exception as exc:
         log.warning("AI packet extraction failed: %s", exc)
+        # When service_type is blank but notes describe the work, use notes as a non-empty
+        # sentinel so MVD check passes and the order reaches A3/pricing_needed instead of
+        # being permanently stuck at details_missing.
+        _fallback_svc = ftf_order.get("service_type") or ""
+        if not _fallback_svc:
+            _svc_notes = ftf_order.get("service_notes") or ftf_order.get("notes") or ""
+            if _svc_notes:
+                _fallback_svc = f"see notes: {_svc_notes[:80]}"
         return {
             "client_name":        {"value": ftf_customer.get("name") or ftf_order.get("customer_name", ""), "confidence": "MEDIUM"},
             "client_email":       {"value": ftf_order.get("customer_email", ""), "confidence": "MEDIUM"},
             "property_address":   {"value": ftf_order.get("property_address") or ftf_order.get("address", ""), "confidence": "MEDIUM"},
             "property_county":    {"value": ftf_order.get("county") or ftf_order.get("property_county", ""), "confidence": "MEDIUM"},
-            "services_requested": {"value": [ftf_order.get("service_type") or ""], "confidence": "LOW", "notes": "AI extraction failed"},
+            "services_requested": {"value": [_fallback_svc] if _fallback_svc else [""], "confidence": "LOW", "notes": "AI extraction failed"},
             "special_requirements": {"value": "", "confidence": "LOW"},
             "lot_size":           {"value": None, "confidence": "LOW"},
             "legal_description":  {"value": None, "confidence": "LOW"},
@@ -497,6 +505,7 @@ def collect_for_order(order_id: str) -> dict:
     _db_email   = db_row.get("customer_email", "")
     _db_service = db_row.get("service_type", "")
     _db_county  = db_row.get("county", "")
+    _db_notes   = db_row.get("notes", "") or ""
     # Excel state has no county column — fall back to MySQL when empty
     if not _db_county:
         try:
@@ -525,6 +534,9 @@ def collect_for_order(order_id: str) -> dict:
         ftf_order["property_address"] = property_address
     if not ftf_order.get("customer_name") and not ftf_order.get("client_name"):
         ftf_order["customer_name"] = client_name
+    # When service_type is blank, surface ng_notes so Claude can infer service from order instructions
+    if not ftf_order.get("service_type") and _db_notes:
+        ftf_order["service_notes"] = _db_notes
 
     if not property_address:
         property_address = str(
