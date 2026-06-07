@@ -265,23 +265,18 @@ def _setup_full_sheet_via_openpyxl() -> None:
 
 
 def ensure_pricing_rules_sheet() -> None:
-    """Create the 'Pricing Rules' tab if it doesn't exist.
+    """Create the 'Pricing Rules' tab using Graph API (no file upload — works even when Excel is open).
 
-    This tab is user-editable. The pipeline reads it each run to apply explicit
-    price overrides before the AI pricing step. Users add rows directly in Excel:
-
+    This tab is user-editable. Add rows directly in Excel:
       Service Pattern | County | Client Pattern | Price ($) | Priority | Notes
       Boundary Survey | Hillsborough | Hillsborough Title | 550.00 | 1 | Standard rate
-      *               | *            | CDS-Commercial     | 450.00 | 5 | All CDS orders
-
-    * = wildcard (matches anything). Lower Priority number = higher priority.
-    Set Status = Inactive to disable a rule without deleting it.
+      * = wildcard (matches anything). Lower Priority = higher priority.
     """
     if _cache.get("od_pricing_rules_done"):
         return
 
+    h    = _session_headers()
     base = _wb_base()
-    h    = _headers()
 
     r_sheets = httpx.get(f"{base}/worksheets", headers=h, timeout=15.0)
     r_sheets.raise_for_status()
@@ -291,65 +286,53 @@ def ensure_pricing_rules_sheet() -> None:
         _cache["od_pricing_rules_done"] = True
         return
 
-    # Create via openpyxl upload — only way to add a table with proper headers
-    log.info("Pricing Rules tab missing — creating it")
-    import io
-    import openpyxl
-    from openpyxl.styles import Font, PatternFill, Alignment
-    from openpyxl.worksheet.table import Table, TableStyleInfo
-
+    log.info("Pricing Rules tab missing — creating via Graph API")
     try:
-        _close_session()
-        raw = _download_workbook_bytes()
+        # 1. Create worksheet
+        httpx.post(
+            f"{base}/worksheets/add",
+            headers=h, json={"name": PRICING_RULES_SHEET_NAME}, timeout=15.0,
+        ).raise_for_status()
+
+        # 2. Write header + seed row in one call
+        end_col = chr(ord("A") + _PR_COL_COUNT - 1)
+        seed_row = ["1", "Active", "*", "*", "*", 0.0, 999,
+                    "EXAMPLE — delete this. Set Price=0 to keep AI pricing. * = match anything."]
+        httpx.patch(
+            f"{base}/worksheets/{PRICING_RULES_SHEET_NAME}/range(address='A1:{end_col}2')",
+            headers=h, json={"values": [PRICING_RULES_HEADERS, seed_row]}, timeout=15.0,
+        ).raise_for_status()
+
+        # 3. Create structured table so /tables/rows reads work
+        httpx.post(
+            f"{base}/worksheets/{PRICING_RULES_SHEET_NAME}/tables/add",
+            headers=h, json={"address": f"A1:{end_col}2", "hasHeaders": True}, timeout=15.0,
+        ).raise_for_status()
+
+        # 4. Rename the table to our known name
+        r_tabs = httpx.get(
+            f"{base}/worksheets/{PRICING_RULES_SHEET_NAME}/tables",
+            headers=h, timeout=10.0,
+        )
+        if r_tabs.is_success:
+            tables = r_tabs.json().get("value", [])
+            if tables:
+                httpx.patch(
+                    f"{base}/tables/{tables[-1]['id']}",
+                    headers=h, json={"name": PRICING_RULES_TABLE_NAME}, timeout=10.0,
+                )
+
+        # 5. Bold header row
+        httpx.patch(
+            f"{base}/worksheets/{PRICING_RULES_SHEET_NAME}/range(address='A1:{end_col}1')/format/font",
+            headers=h, json={"bold": True}, timeout=10.0,
+        )
+
+        log.info("Pricing Rules tab created via Graph API")
+        _cache["od_pricing_rules_done"] = True
+
     except Exception as exc:
-        log.warning("ensure_pricing_rules_sheet: download failed — skipping: %s", exc)
-        return
-
-    wb = openpyxl.load_workbook(io.BytesIO(raw))
-    ws = wb.create_sheet(PRICING_RULES_SHEET_NAME)
-
-    # ── Column widths ─────────────────────────────────────────────────────────
-    col_widths = [8, 10, 28, 20, 30, 14, 10, 50]
-    for i, w in enumerate(col_widths, 1):
-        ws.column_dimensions[ws.cell(1, i).column_letter].width = w
-
-    # ── Headers ────────────────────────────────────────────────────────────────
-    HDR_FILL = PatternFill(start_color="1F4E79", end_color="1F4E79", fill_type="solid")
-    for col_idx, hdr in enumerate(PRICING_RULES_HEADERS, 1):
-        c = ws.cell(row=1, column=col_idx, value=hdr)
-        c.font = Font(bold=True, color="FFFFFF", size=11)
-        c.fill = HDR_FILL
-        c.alignment = Alignment(horizontal="center", vertical="center")
-
-    # ── Seed row — example rule so users understand the format ────────────────
-    EXAMPLE_FILL = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
-    seed = ["1", "Active", "*", "*", "*", 0.0, 999,
-            "EXAMPLE — delete this row. Set Price=0 to keep AI pricing. * = match anything."]
-    for col_idx, val in enumerate(seed, 1):
-        c = ws.cell(row=2, column=col_idx, value=val)
-        c.fill = EXAMPLE_FILL
-        c.alignment = Alignment(vertical="center", wrap_text=(col_idx == _PR_COL_COUNT))
-
-    # ── Excel Table ───────────────────────────────────────────────────────────
-    end_col = chr(ord("A") + _PR_COL_COUNT - 1)
-    tab = Table(displayName=PRICING_RULES_TABLE_NAME, ref=f"A1:{end_col}2")
-    tab.tableStyleInfo = TableStyleInfo(
-        name="TableStyleMedium7", showRowStripes=True,
-        showFirstColumn=False, showLastColumn=False, showColumnStripes=False,
-    )
-    ws.add_table(tab)
-
-    buf = io.BytesIO()
-    wb.save(buf)
-    buf.seek(0)
-    try:
-        _upload_workbook_bytes(buf.read())
-        log.info("Pricing Rules tab created")
-    except Exception as exc:
-        log.warning("Pricing Rules tab upload failed (non-fatal): %s", exc)
-        return
-
-    _cache["od_pricing_rules_done"] = True
+        log.warning("ensure_pricing_rules_sheet failed (non-fatal): %s", exc)
 
 
 # ── In-memory cache for pricing rules (refreshed once per pipeline run) ───────
@@ -503,25 +486,18 @@ def ensure_approval_sheet() -> None:
 
 
 def ensure_guide_sheet() -> None:
-    """Create or update the 'Pipeline Guide' tab in the OneDrive workbook.
+    """Create or update the 'Pipeline Guide' tab using Graph API.
 
-    Version-gated: skips the download+upload cycle if the tab already has the
-    current _GUIDE_VERSION stamped in cell A2.  Bump _GUIDE_VERSION whenever
-    guide content changes to force a re-write on the next run.
+    No file download/upload — works even when Excel is open in browser or desktop.
+    Version-gated: skips the write if the tab already has the current _GUIDE_VERSION.
     """
-    import io
-    import openpyxl
-    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-    from openpyxl.utils import get_column_letter
-
-    # ── Check whether an update is actually needed ────────────────────────────
+    # ── Version check — skip if already current ───────────────────────────────
     try:
+        h    = _session_headers()
         base = _wb_base()
-        h    = _headers()
         r = httpx.get(
-            f"{base}/worksheets/{GUIDE_SHEET_NAME}/range(address='B2')/values",
-            headers=h,
-            timeout=10.0,
+            f"{base}/worksheets/{GUIDE_SHEET_NAME}/range(address='B2')",
+            headers=h, timeout=10.0,
         )
         if r.is_success:
             existing_version = (r.json().get("values") or [[""]])[0][0]
@@ -529,312 +505,125 @@ def ensure_guide_sheet() -> None:
                 log.debug("guide sheet already at %s — skipping update", _GUIDE_VERSION)
                 return
     except Exception:
-        pass  # sheet doesn't exist yet — fall through to create it
+        pass
 
-    log.info("guide sheet missing or outdated — writing %s", _GUIDE_VERSION)
+    log.info("guide sheet missing or outdated — writing %s via Graph API", _GUIDE_VERSION)
 
-    # ── Download workbook, write guide tab, upload ────────────────────────────
     try:
-        _close_session()
-        raw = _download_workbook_bytes()
+        h    = _session_headers()
+        base = _wb_base()
+
+        # Ensure worksheet exists
+        r_sheets = httpx.get(f"{base}/worksheets", headers=h, timeout=15.0)
+        r_sheets.raise_for_status()
+        existing = [s["name"] for s in r_sheets.json().get("value", [])]
+
+        if GUIDE_SHEET_NAME not in existing:
+            httpx.post(
+                f"{base}/worksheets/add",
+                headers=h, json={"name": GUIDE_SHEET_NAME}, timeout=15.0,
+            ).raise_for_status()
+            log.info("guide sheet tab created")
+        else:
+            httpx.post(
+                f"{base}/worksheets/{GUIDE_SHEET_NAME}/range(address='A1:B100')/clear",
+                headers=h, json={"applyTo": "Contents"}, timeout=15.0,
+            )
+
+        stamp = f"{_GUIDE_VERSION} — {datetime.now(_EASTERN).strftime('%Y-%m-%d %H:%M %Z')}"
+        rows = [
+            ["FTF Invoice Pipeline — Field Guide", ""],
+            ["Version", stamp],
+            ["", ""],
+            ["── COLUMN REFERENCE (Approvals tab) ──", ""],
+            ["Order ID",          "Unique FTF order number. Click FTF Link to open in FieldToFinish."],
+            ["Order Status",      "Current FTF status (In Progress, Complete, Field, etc.)"],
+            ["Client Name",       "Client or title company who placed the order."],
+            ["Property Address",  "Survey site address — the property to be surveyed."],
+            ["Service",           "Survey service type. 'CONDO — Cannot Survey' = order cannot be processed."],
+            ["Amount",            "Invoice amount in USD. For MANUAL PRICING rows: type correct amount here before setting Action = Approve."],
+            ["Confidence",        "HIGH = very likely correct. MEDIUM = reasonable estimate. LOW = AI had limited data. N/A = condo or manual pricing."],
+            ["Escalate",          "Yes = AI flagged unusual order. Robert or Ryan should review before approving."],
+            ["FTF Link",          "Click 'View Order' to open in FieldToFinish."],
+            ["Action",            "YOUR DECISION — Approve / Reject / On-hold. Leave blank to defer. Pipeline checks every 30 min."],
+            ["Notes",             "Pre-filled by pipeline with reason for escalation or required action. Read before acting."],
+            ["Posted At",         "Date/time pipeline posted this row (Eastern Time)."],
+            ["Processed At",      "Auto-filled when pipeline processes your decision. Once filled = complete."],
+            ["", ""],
+            ["── ACTION GUIDE ──", ""],
+            ["Approve",           "Pipeline creates a real FTF invoice and emails client. CANNOT be undone from pipeline."],
+            ["Reject",            "No invoice created. No email sent. Manually clear ng_invoice_needed=1 flag in FTF if order should not re-appear."],
+            ["On-hold",           "Pipeline pauses this order. Change to Approve or Reject when ready."],
+            ["(leave blank)",     "Pipeline ignores this row every 30-min cycle until you select an action."],
+            ["", ""],
+            ["── NOTES FIELD GUIDE ──", ""],
+            ["CONDO ORDER —",             "Cannot survey. Row is AUTO-REJECTED. Contact client — arrange refund or redirect to interior measurement."],
+            ["MANUAL PRICING REQUIRED —", "AI could not price. Enter correct amount in Amount cell, then set Action = Approve."],
+            ["ESCALATE —",               "Unusual order (large lot, commercial, FEMA zone, duplicate). Get Robert or Ryan to review."],
+            ["(empty notes)",             "Standard order. AI is confident. Review amount and service, then approve if correct."],
+            ["", ""],
+            ["── HOW TO TEACH THE AI — Pricing Rules tab ──", ""],
+            ["What it is",     "The 'Pricing Rules' tab sets fixed prices for specific clients, counties, or service types. No coding required."],
+            ["When to use it", "Use when: AI keeps getting a price wrong, you have a negotiated flat rate for a client, or you know the correct price."],
+            ["How to add a rule", "Go to 'Pricing Rules' tab → add a row → Status=Active → fill in patterns → save. * = wildcard (matches anything)."],
+            ["Example",        "Boundary Survey | Hillsborough | Hillsborough Title | $550 | priority 1"],
+            ["Priority",       "Lower number = higher priority. Client-specific: 1-10. County/service: 50+. Global: 999."],
+            ["Price = 0",      "If Price is 0, rule matches but AI still sets the price. Set non-zero to override AI."],
+            ["", ""],
+            ["── PIPELINE STATUS DEFINITIONS ──", ""],
+            ["invoice_needed",        "Order picked up from FTF — queued for A2 data collection."],
+            ["data_collected",        "A2 collected all data — ready for A3 pricing and Excel posting."],
+            ["invoice_draft_posted",  "AI priced and posted to this sheet — awaiting your action."],
+            ["pricing_needed",        "AI could not price. Row posted — enter amount manually."],
+            ["condo_rejected",        "Condo detected — cannot survey. Posted as auto-rejected. Contact client."],
+            ["invoice_approved",      "You approved — pipeline creating FTF invoice (A5 running)."],
+            ["invoice_sent",          "Invoice created in FTF and emailed to client (A6 complete)."],
+            ["invoice_rejected",      "Rejected (or auto-rejected: condo). No invoice created or sent."],
+            ["on_hold",               "You selected On-hold. Pipeline paused for this order."],
+            ["details_missing",       "FTF has insufficient data. Update in FTF or handle manually."],
+            ["permanently_excluded",  "Order will never be processed — canceled in FTF, internal email, etc."],
+            ["", ""],
+            ["── PIPELINE FLOW (every 30 min via GitHub Actions) ──", ""],
+            ["A1 — Flag Hunter",      "Scans FTF DB for orders with ng_invoice_needed=1. Queues new orders."],
+            ["A2 — Data Collector",   "Collects FTF API, emails, county appraiser, aerial image. AI builds order packet."],
+            ["A3 — Invoice Compiler", "Detects condos. Checks Pricing Rules tab first. Then AI pricing. Posts to this sheet."],
+            ["A4 — Human Gate",       "Reads your Action decision every 30 min. Routes to A5 (approve) or rejected/on-hold."],
+            ["A5 — Invoice Finalizer","Creates real FTF invoice. Retrieves pay link."],
+            ["A6 — Email Sender",     "Emails invoice and pay link. Redirects to ai@nexgen.enterprises during staging."],
+            ["A7 — Feedback Learner", "Learns from decisions to improve future pricing."],
+        ]
+
+        end_row = len(rows)
+        httpx.patch(
+            f"{base}/worksheets/{GUIDE_SHEET_NAME}/range(address='A1:B{end_row}')",
+            headers=h, json={"values": rows}, timeout=30.0,
+        ).raise_for_status()
+
+        # Bold the section header rows (lines starting with "──")
+        section_rows = [i + 1 for i, row in enumerate(rows) if str(row[0]).startswith("──")]
+        for sr in section_rows:
+            try:
+                httpx.patch(
+                    f"{base}/worksheets/{GUIDE_SHEET_NAME}/range(address='A{sr}:B{sr}')/format/font",
+                    headers=h, json={"bold": True}, timeout=10.0,
+                )
+            except Exception:
+                pass
+
+        # Title row bold + larger font
+        try:
+            httpx.patch(
+                f"{base}/worksheets/{GUIDE_SHEET_NAME}/range(address='A1:B1')/format/font",
+                headers=h, json={"bold": True, "size": 14}, timeout=10.0,
+            )
+        except Exception:
+            pass
+
+        log.info("guide sheet '%s' written via Graph API (%s)", GUIDE_SHEET_NAME, _GUIDE_VERSION)
+
     except Exception as exc:
-        log.warning("ensure_guide_sheet: download failed — skipping: %s", exc)
-        return
+        log.warning("guide sheet write failed (non-fatal): %s", exc)
 
-    wb = openpyxl.load_workbook(io.BytesIO(raw))
-
-    if GUIDE_SHEET_NAME in wb.sheetnames:
-        del wb[GUIDE_SHEET_NAME]
-
-    ws = wb.create_sheet(GUIDE_SHEET_NAME)
-
-    # ── Styling helpers ───────────────────────────────────────────────────────
-    def _hdr_fill(hex_color: str) -> PatternFill:
-        return PatternFill(start_color=hex_color, end_color=hex_color, fill_type="solid")
-
-    def _thin_border() -> Border:
-        s = Side(style="thin", color="CCCCCC")
-        return Border(left=s, right=s, top=s, bottom=s)
-
-    COLOR_SECTION  = "1F4E79"   # dark navy  — section header text
-    FILL_SECTION   = "BDD7EE"   # light blue — section header row
-    FILL_ALT       = "F2F2F2"   # light grey — alternating content rows
-    FILL_WARN      = "FFF2CC"   # yellow     — warning rows
-    FILL_GOOD      = "E2EFDA"   # green      — good/approved rows
-    FILL_BAD       = "FCE4D6"   # salmon     — blocked/rejected rows
-
-    def _write(row: int, col: int, value, bold=False, fill=None, wrap=False,
-               color=None, size=11, align="left"):
-        c = ws.cell(row=row, column=col, value=value)
-        c.font = Font(bold=bold, color=color or "000000", size=size)
-        if fill:
-            c.fill = _hdr_fill(fill)
-        c.border = _thin_border()
-        c.alignment = Alignment(
-            wrap_text=wrap,
-            vertical="center",
-            horizontal=align,
-        )
-        return c
-
-    def _section(row: int, title: str) -> int:
-        ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=2)
-        c = ws.cell(row=row, column=1, value=title)
-        c.font      = Font(bold=True, color=COLOR_SECTION, size=12)
-        c.fill      = _hdr_fill(FILL_SECTION)
-        c.border    = _thin_border()
-        c.alignment = Alignment(vertical="center", horizontal="left")
-        ws.row_dimensions[row].height = 22
-        return row + 1
-
-    # ── Column widths ─────────────────────────────────────────────────────────
-    ws.column_dimensions["A"].width = 28
-    ws.column_dimensions["B"].width = 90
-
-    # ── Row 1 — title ─────────────────────────────────────────────────────────
-    ws.merge_cells("A1:B1")
-    c = ws.cell(row=1, column=1, value="FTF Invoice Pipeline — Field Guide")
-    c.font      = Font(bold=True, size=14, color="FFFFFF")
-    c.fill      = _hdr_fill("1F4E79")
-    c.alignment = Alignment(horizontal="center", vertical="center")
-    ws.row_dimensions[1].height = 30
-
-    # ── Row 2 — version stamp ─────────────────────────────────────────────────
-    _write(2, 1, "Last Updated", bold=True, fill="DEEAF1")
-    _write(2, 2, f"{_GUIDE_VERSION} — {datetime.now(_EASTERN).strftime('%Y-%m-%d %H:%M %Z')}",
-           fill="DEEAF1")
-    ws.row_dimensions[2].height = 18
-
-    r = 3  # current row cursor
-
-    # ═════════════════════════════════════════════════════════════════════════
-    # SECTION 1 — COLUMN REFERENCE
-    # ═════════════════════════════════════════════════════════════════════════
-    r = _section(r, "COLUMN REFERENCE  (Invoices – Pending Approval tab)")
-    cols_guide = [
-        ("Order ID",        "Unique FTF order number. Click the FTF Link to open it in FieldToFinish."),
-        ("Order Status",    "Current status of the order inside the FTF system (e.g. In Progress, Complete, Field)."),
-        ("Client Name",     "Name of the client or title company who placed the order."),
-        ("Property Address","Survey site address — the property to be surveyed."),
-        ("Service",         "Survey service type the AI identified (e.g. Boundary Survey, Corner Staking, ALTA/NSPS, "
-                            "Elevation Certificate). 'CONDO — Cannot Survey' means the order cannot be processed."),
-        ("Amount",          "Invoice amount in USD set by the AI. For MANUAL PRICING rows: type the correct amount "
-                            "directly in this cell before setting Action = Approve."),
-        ("Confidence",      "How certain the AI is about the price. See the CONFIDENCE LEVELS section below."),
-        ("Escalate",        "Yes = the AI flagged this order as unusual. Robert or Ryan should review "
-                            "before you approve."),
-        ("FTF Link",        "Hyperlink — click 'View Order' to open the order directly in FieldToFinish."),
-        ("Action",          "YOUR DECISION. Select from the dropdown: Approve / Reject / On-hold. "
-                            "Leave blank to defer. The pipeline checks this every 30 minutes."),
-        ("Notes",           "Pre-filled by the pipeline with the reason for escalation, issue description, "
-                            "or the manual action step required. Read this before acting."),
-        ("Posted At",       "Date and time the pipeline posted this row for your review (Eastern Time)."),
-        ("Processed At",    "Auto-filled by the pipeline when it processes your Action decision. "
-                            "Once filled, the row is complete."),
-    ]
-    for i, (col, desc) in enumerate(cols_guide):
-        fill = FILL_ALT if i % 2 == 0 else None
-        _write(r, 1, col,  bold=True, fill=fill)
-        _write(r, 2, desc, fill=fill, wrap=True)
-        ws.row_dimensions[r].height = 30
-        r += 1
-
-    r += 1  # blank gap
-
-    # ═════════════════════════════════════════════════════════════════════════
-    # SECTION 2 — CONFIDENCE LEVELS
-    # ═════════════════════════════════════════════════════════════════════════
-    r = _section(r, "CONFIDENCE LEVELS")
-    conf_guide = [
-        ("HIGH",   FILL_GOOD,
-         "Price is very likely correct. AI matched the exact service type, found historical pricing "
-         "data for this county, and the client has a negotiated rate on file. Safe to approve quickly."),
-        ("MEDIUM", FILL_ALT,
-         "Reasonable estimate but some data gaps. The AI may have inferred the service type from order "
-         "notes rather than the FTF service field, or there was no county-specific pricing history. "
-         "Do a quick sanity check — does the amount look right for this service?"),
-        ("LOW",    FILL_WARN,
-         "AI had limited data and had to guess. Thin pricing history, unclear service type, or missing "
-         "property details. Review carefully before approving. Consider adjusting the amount."),
-        ("N/A",    FILL_BAD,
-         "Not applicable. Order is either a CONDO (cannot survey — no land parcel exists) or requires "
-         "manual pricing (enter amount in the Amount column)."),
-    ]
-    for level, fill, desc in conf_guide:
-        _write(r, 1, level, bold=True, fill=fill)
-        _write(r, 2, desc,  fill=fill, wrap=True)
-        ws.row_dimensions[r].height = 45
-        r += 1
-
-    r += 1
-
-    # ═════════════════════════════════════════════════════════════════════════
-    # SECTION 3 — NOTES FIELD GUIDE
-    # ═════════════════════════════════════════════════════════════════════════
-    r = _section(r, "NOTES FIELD GUIDE  —  what to do based on the Notes content")
-    notes_guide = [
-        ("CONDO ORDER —",
-         FILL_BAD,
-         "Land survey is NOT possible on this property (condo / airspace unit — no land parcel to survey). "
-         "Row is AUTO-REJECTED by the pipeline. Your action: contact the client to explain, arrange a refund "
-         "or redirect to an appropriate service (e.g. interior unit measurement). Do NOT approve."),
-        ("MANUAL PRICING REQUIRED —",
-         FILL_WARN,
-         "The AI could not determine the correct price (complex job, unusual service, or missing data). "
-         "Enter the correct amount in the Amount cell for that row, then set Action = Approve."),
-        ("ESCALATE —",
-         FILL_WARN,
-         "The AI flagged unusual characteristics (large lot, commercial property, FEMA zone, high value, "
-         "duplicate address, etc.). Details follow the dash. Get Robert or Ryan to review before approving."),
-        ("(empty)",
-         FILL_GOOD,
-         "Standard order. The AI is confident in the price. Review the amount and service, "
-         "then approve if everything looks correct."),
-    ]
-    for prefix, fill, desc in notes_guide:
-        _write(r, 1, prefix, bold=True, fill=fill)
-        _write(r, 2, desc,   fill=fill, wrap=True)
-        ws.row_dimensions[r].height = 55
-        r += 1
-
-    r += 1
-
-    # ═════════════════════════════════════════════════════════════════════════
-    # SECTION 4 — ACTION GUIDE
-    # ═════════════════════════════════════════════════════════════════════════
-    r = _section(r, "ACTION GUIDE  —  what each dropdown choice does")
-    action_guide = [
-        ("Approve",    FILL_GOOD,
-         "Pipeline creates a real invoice in FTF and emails it to the client. "
-         "This CANNOT be undone from the pipeline — if you approve by mistake, "
-         "cancel the invoice manually in FTF."),
-        ("Reject",     FILL_BAD,
-         "Order is marked rejected. No invoice is created. No email is sent to the client. "
-         "The order remains in FTF with ng_invoice_needed=1 — manually clear that flag in FTF "
-         "if the order should not be re-picked-up."),
-        ("On-hold",    FILL_WARN,
-         "Pipeline pauses the order and does not process it. The row stays in the sheet. "
-         "Come back to it later — change Action to Approve or Reject when ready."),
-        ("(leave blank)", FILL_ALT,
-         "Pipeline ignores this row on every 30-minute cycle until you select an action."),
-    ]
-    for action, fill, desc in action_guide:
-        _write(r, 1, action, bold=True, fill=fill)
-        _write(r, 2, desc,   fill=fill, wrap=True)
-        ws.row_dimensions[r].height = 50
-        r += 1
-
-    r += 1
-
-    # ═════════════════════════════════════════════════════════════════════════
-    # SECTION 5 — PIPELINE FLOW
-    # ═════════════════════════════════════════════════════════════════════════
-    r = _section(r, "ORDER PIPELINE FLOW  (runs automatically every 30 minutes via GitHub Actions)")
-    flow_steps = [
-        ("A1 — Flag Hunter",
-         "Scans FTF database for orders with ng_invoice_needed = 1. Adds new orders to the pipeline queue."),
-        ("A2 — Data Collector",
-         "Collects data from FTF API, client emails, county property appraiser, and aerial imagery. "
-         "Uses Claude AI to build a structured order packet."),
-        ("A3 — Invoice Compiler",
-         "Detects condos (hard stop). Prices the order using FTF pricing history and negotiated rates. "
-         "Posts the row to this Excel sheet for your review. If AI cannot price → marks MANUAL PRICING REQUIRED."),
-        ("A4 — Human Gate",
-         "Reads your Action decision from this sheet every 30 minutes. Routes to A5 (approve) or "
-         "marks rejected/on-hold."),
-        ("A5 — Invoice Finalizer",
-         "Creates the actual invoice in FTF (real record in the system). Retrieves the pay link."),
-        ("A6 — Email Sender",
-         "Emails the invoice and pay link to the client. All emails currently redirect to "
-         "ai@nexgen.enterprises during staging (EMAIL_OVERRIDE_ALL active)."),
-        ("A7 — Feedback Learner",
-         "Learns from approved/rejected decisions to improve future pricing accuracy."),
-    ]
-    for i, (step, desc) in enumerate(flow_steps):
-        fill = FILL_ALT if i % 2 == 0 else None
-        _write(r, 1, step, bold=True, fill=fill)
-        _write(r, 2, desc, fill=fill, wrap=True)
-        ws.row_dimensions[r].height = 35
-        r += 1
-
-    r += 1
-
-    # ═════════════════════════════════════════════════════════════════════════
-    # SECTION 6 — PIPELINE STATUS DEFINITIONS
-    # ═════════════════════════════════════════════════════════════════════════
-    r = _section(r, "PIPELINE STATUS DEFINITIONS  (internal — for reference)")
-    statuses = [
-        ("invoice_needed",      "Order picked up from FTF — queued for A2 data collection."),
-        ("data_collected",      "A2 collected all data — ready for A3 pricing and Excel posting."),
-        ("invoice_draft_posted","AI priced and posted to this Excel sheet — awaiting your action."),
-        ("pricing_needed",      "AI could not price this order. Row posted to Excel — enter amount manually."),
-        ("condo_rejected",      "Condo detected — cannot survey. Posted to Excel as auto-rejected. Contact client."),
-        ("invoice_approved",    "You approved — pipeline is creating the FTF invoice (A5 running)."),
-        ("invoice_sent",        "Invoice created in FTF and emailed to client (A6 complete)."),
-        ("invoice_rejected",    "You rejected (or auto-rejected: condo). No invoice created or sent."),
-        ("on_hold",             "You selected On-hold. Pipeline is paused for this order."),
-        ("details_missing",     "FTF has insufficient data (blank service field + no notes). Pipeline cannot process. "
-                                "Update the order in FTF or handle manually."),
-        ("permanently_excluded", "Order will never be processed — e.g., canceled in FTF, internal routing email. Skipped forever."),
-    ]
-    for i, (status, desc) in enumerate(statuses):
-        fill = FILL_ALT if i % 2 == 0 else None
-        _write(r, 1, status, bold=True, fill=fill)
-        _write(r, 2, desc,   fill=fill, wrap=True)
-        ws.row_dimensions[r].height = 30
-        r += 1
-
-    r += 1
-
-    # ═════════════════════════════════════════════════════════════════════════
-    # SECTION 7 — HOW TO TEACH THE AI (PRICING RULES)
-    # ═════════════════════════════════════════════════════════════════════════
-    r = _section(r, "HOW TO TEACH THE AI  —  'Pricing Rules' tab")
-    teaching_rows = [
-        ("What it is",
-         FILL_GOOD,
-         "The 'Pricing Rules' tab is your direct line to teach the AI how to price orders. "
-         "Any rule you add there is applied on the NEXT pipeline run — no coding needed."),
-        ("When to use it",
-         FILL_ALT,
-         "Use it when: (1) You know the correct price for a specific client or service. "
-         "(2) The AI keeps getting a price wrong. (3) You have a negotiated flat rate for a client. "
-         "(4) You want to override AI pricing for a specific county."),
-        ("How to add a rule",
-         FILL_ALT,
-         "Go to the 'Pricing Rules' tab → add a new row → set Status = Active → fill in patterns → save. "
-         "Use * as a wildcard (matches anything). Examples:\n"
-         "  Boundary Survey | Hillsborough | Hillsborough Title | $550 | priority 1\n"
-         "  * | * | CDS-Commercial | $450 | priority 5  (all CDS orders)"),
-        ("Priority",
-         FILL_WARN,
-         "Lower number = higher priority. If two rules match, the one with the lower Priority wins. "
-         "Keep client-specific rules at priority 1-10. County/service rules at 50+. Global fallbacks at 999."),
-        ("Service & Client patterns",
-         FILL_ALT,
-         "Patterns are substring matches (not exact). 'Boundary' matches 'Boundary Survey'. "
-         "'Title' matches 'Hillsborough Title', 'Southern Title', etc. "
-         "Set to * to match any value."),
-        ("Price = 0 means no override",
-         FILL_WARN,
-         "If Price is 0, the rule matches but the AI still sets the price (useful for testing pattern logic). "
-         "Set a non-zero price to actually override the AI."),
-    ]
-    for label, fill, desc in teaching_rows:
-        _write(r, 1, label, bold=True, fill=fill)
-        _write(r, 2, desc,  fill=fill, wrap=True)
-        ws.row_dimensions[r].height = 55
-        r += 1
-
-    # ── Upload ────────────────────────────────────────────────────────────────
-    buf = io.BytesIO()
-    wb.save(buf)
-    buf.seek(0)
-    try:
-        _upload_workbook_bytes(buf.read())
-        log.info("guide sheet '%s' written (%s)", GUIDE_SHEET_NAME, _GUIDE_VERSION)
-    except Exception as exc:
-        log.warning("guide sheet upload failed (non-fatal): %s", exc)
 
 
 def auto_reject_condo_row(order_id: str) -> None:
