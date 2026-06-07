@@ -9629,12 +9629,12 @@
     "details_missing": 9,
     "invoice_draft_posted": 277,
     "pricing_needed": 62,
-    "condo_rejected": 13,
+    "data_collected": 13,
     "invoice_sent": 13,
     "on_hold": 2,
     "invoice_rejected": 4,
     "invoice_needed": 21
   },
   "total": 401,
-  "generated_at": "2026-06-07T07:40:31.480981+00:00"
+  "generated_at": "2026-06-07T07:45:29.879236+00:00"
 }
