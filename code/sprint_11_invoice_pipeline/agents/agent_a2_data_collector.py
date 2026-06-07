@@ -506,13 +506,21 @@ def collect_for_order(order_id: str) -> dict:
     _db_service = db_row.get("service_type", "")
     _db_county  = db_row.get("county", "")
     _db_notes   = db_row.get("notes", "") or ""
-    # Excel state has no county column — fall back to MySQL when empty
-    if not _db_county:
+    # Refresh from MySQL when pipeline state has no service/county — covers the case where
+    # A1 captured the order with a blank ng_service_requested that was later filled in FTF.
+    if not _db_service or not _db_county:
         try:
             _mysql_row = mysql_get_order_details(order_id)
-            _db_county = str(_mysql_row.get("ng_property_county") or "")
-        except Exception:
-            pass
+            if not _db_service:
+                _db_service = str(_mysql_row.get("ng_service_requested") or "")
+            if not _db_county:
+                _db_county = str(_mysql_row.get("ng_property_county") or "")
+            if not _db_notes:
+                _db_notes = str(_mysql_row.get("ng_notes") or "")
+            if _db_service:
+                log.info("refreshed service_type from MySQL order=%s service=%s", order_id, _db_service)
+        except Exception as exc:
+            log.warning("MySQL refresh failed order=%s: %s", order_id, exc)
 
     # 1 — FTF API
     try:

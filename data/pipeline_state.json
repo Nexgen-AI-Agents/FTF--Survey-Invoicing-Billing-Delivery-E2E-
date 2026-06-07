@@ -2,7 +2,7 @@
   "orders": [
     {
       "order_id": "1000284561",
-      "status": "details_missing",
+      "status": "permanently_excluded",
       "service_type": "Quote",
       "customer_email": "quotes@nexgensurveying.com",
       "client_name": "Nexgen Land Solutions, LLC",
@@ -21,12 +21,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.489948+00:00",
-      "updated_at": "2026-06-02T13:25:25.553075+00:00",
+      "updated_at": "2026-06-07T10:37:52.326862+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284560",
-      "status": "details_missing",
+      "status": "permanently_excluded",
       "service_type": "Quote",
       "customer_email": "quotes@nexgensurveying.com",
       "client_name": "Nexgen Land Solutions, LLC",
@@ -45,12 +45,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.506677+00:00",
-      "updated_at": "2026-06-02T13:25:46.225176+00:00",
+      "updated_at": "2026-06-07T10:37:52.609325+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284559",
-      "status": "details_missing",
+      "status": "permanently_excluded",
       "service_type": "Quote",
       "customer_email": "quotes@nexgensurveying.com",
       "client_name": "Nexgen Land Solutions, LLC",
@@ -69,12 +69,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.522197+00:00",
-      "updated_at": "2026-06-02T13:26:06.511725+00:00",
+      "updated_at": "2026-06-07T10:37:52.872485+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284558",
-      "status": "details_missing",
+      "status": "permanently_excluded",
       "service_type": "Quote",
       "customer_email": "quotes@nexgensurveying.com",
       "client_name": "Nexgen Land Solutions, LLC",
@@ -93,7 +93,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.539134+00:00",
-      "updated_at": "2026-06-02T13:27:59.189093+00:00",
+      "updated_at": "2026-06-07T10:37:53.132923+00:00",
       "pay_link": null
     },
     {
@@ -458,7 +458,7 @@
     },
     {
       "order_id": "1000284366",
-      "status": "details_missing",
+      "status": "permanently_excluded",
       "service_type": null,
       "customer_email": "leslie.fishermanstitle@gmail.com",
       "client_name": "Fishermans Title and All Clear Title Services",
@@ -477,7 +477,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.870173+00:00",
-      "updated_at": "2026-06-06T19:46:20.130847+00:00",
+      "updated_at": "2026-06-07T10:37:54.152139+00:00",
       "pay_link": null
     },
     {
@@ -506,7 +506,7 @@
     },
     {
       "order_id": "1000284317",
-      "status": "details_missing",
+      "status": "permanently_excluded",
       "service_type": "Quote",
       "customer_email": "quotes@nexgensurveying.com",
       "client_name": "Nexgen Land Solutions, LLC",
@@ -525,12 +525,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.915731+00:00",
-      "updated_at": "2026-06-02T13:30:15.002287+00:00",
+      "updated_at": "2026-06-07T10:37:53.377214+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284316",
-      "status": "details_missing",
+      "status": "permanently_excluded",
       "service_type": "Quote",
       "customer_email": "quotes@nexgensurveying.com",
       "client_name": "Nexgen Land Solutions, LLC",
@@ -549,12 +549,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.938970+00:00",
-      "updated_at": "2026-06-02T13:30:22.219874+00:00",
+      "updated_at": "2026-06-07T10:37:53.641404+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284310",
-      "status": "details_missing",
+      "status": "permanently_excluded",
       "service_type": "Quote",
       "customer_email": "quotes@nexgensurveying.com",
       "client_name": "Nexgen Land Solutions, LLC",
@@ -573,7 +573,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.961313+00:00",
-      "updated_at": "2026-06-02T13:30:30.873608+00:00",
+      "updated_at": "2026-06-07T10:37:53.885357+00:00",
       "pay_link": null
     },
     {
@@ -9074,7 +9074,7 @@
     },
     {
       "order_id": "1000284583",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9093,12 +9093,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:47.864633+00:00",
-      "updated_at": "2026-06-07T07:46:18.108860+00:00",
+      "updated_at": "2026-06-07T10:37:51.988466+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284582",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9117,12 +9117,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.106401+00:00",
-      "updated_at": "2026-06-07T07:46:40.187439+00:00",
+      "updated_at": "2026-06-07T10:37:51.672702+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284581",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9141,12 +9141,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.405220+00:00",
-      "updated_at": "2026-06-07T07:47:08.247809+00:00",
+      "updated_at": "2026-06-07T10:37:51.399015+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284580",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9165,12 +9165,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.643405+00:00",
-      "updated_at": "2026-06-07T07:47:29.578131+00:00",
+      "updated_at": "2026-06-07T10:37:51.106320+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284579",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9189,12 +9189,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.878872+00:00",
-      "updated_at": "2026-06-07T07:47:54.696769+00:00",
+      "updated_at": "2026-06-07T10:37:50.840702+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284578",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9213,12 +9213,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:49.173263+00:00",
-      "updated_at": "2026-06-07T08:16:25.674614+00:00",
+      "updated_at": "2026-06-07T10:37:50.539392+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284577",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9237,12 +9237,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:49.411948+00:00",
-      "updated_at": "2026-06-07T08:16:51.125114+00:00",
+      "updated_at": "2026-06-07T10:37:50.214273+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284576",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9261,12 +9261,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:49.702736+00:00",
-      "updated_at": "2026-06-07T08:17:18.531707+00:00",
+      "updated_at": "2026-06-07T10:37:49.911182+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284575",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9285,12 +9285,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:49.942082+00:00",
-      "updated_at": "2026-06-07T08:17:36.047718+00:00",
+      "updated_at": "2026-06-07T10:37:49.628006+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284574",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9309,12 +9309,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:50.232302+00:00",
-      "updated_at": "2026-06-07T08:17:54.085869+00:00",
+      "updated_at": "2026-06-07T10:37:49.359473+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284573",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9333,12 +9333,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:50.473990+00:00",
-      "updated_at": "2026-06-07T08:46:19.765173+00:00",
+      "updated_at": "2026-06-07T10:37:49.116444+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284572",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9357,12 +9357,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:50.714657+00:00",
-      "updated_at": "2026-06-07T08:47:53.040615+00:00",
+      "updated_at": "2026-06-07T10:37:48.889876+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284571",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9381,12 +9381,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:51.014904+00:00",
-      "updated_at": "2026-06-07T08:48:09.700546+00:00",
+      "updated_at": "2026-06-07T10:37:48.661829+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284570",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9405,12 +9405,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:51.257951+00:00",
-      "updated_at": "2026-06-07T08:48:36.967299+00:00",
+      "updated_at": "2026-06-07T10:37:48.422374+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284569",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9429,12 +9429,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:51.560599+00:00",
-      "updated_at": "2026-06-07T08:48:55.472678+00:00",
+      "updated_at": "2026-06-07T10:37:48.192291+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284568",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9453,12 +9453,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:51.802264+00:00",
-      "updated_at": "2026-06-07T09:16:22.671632+00:00",
+      "updated_at": "2026-06-07T10:37:47.957380+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284567",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9477,12 +9477,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.095496+00:00",
-      "updated_at": "2026-06-07T09:16:41.874018+00:00",
+      "updated_at": "2026-06-07T10:37:47.724410+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284566",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9501,12 +9501,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.340723+00:00",
-      "updated_at": "2026-06-07T09:17:06.681977+00:00",
+      "updated_at": "2026-06-07T10:37:47.500908+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284565",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9525,12 +9525,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.581724+00:00",
-      "updated_at": "2026-06-07T09:17:24.661635+00:00",
+      "updated_at": "2026-06-07T10:37:47.270909+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284564",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9549,12 +9549,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.895782+00:00",
-      "updated_at": "2026-06-07T09:17:45.479918+00:00",
+      "updated_at": "2026-06-07T10:37:47.056292+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284563",
-      "status": "details_missing",
+      "status": "invoice_needed",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9573,7 +9573,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:53.138350+00:00",
-      "updated_at": "2026-06-07T09:46:20.386296+00:00",
+      "updated_at": "2026-06-07T10:37:46.817672+00:00",
       "pay_link": null
     },
     {
@@ -10058,16 +10058,17 @@
     }
   ],
   "status_counts": {
-    "details_missing": 30,
+    "permanently_excluded": 8,
     "invoice_draft_posted": 278,
     "pricing_needed": 63,
     "condo_rejected": 11,
     "invoice_sent": 13,
     "on_hold": 2,
     "invoice_rejected": 4,
-    "data_collected": 5,
-    "invoice_needed": 13
+    "details_missing": 1,
+    "invoice_needed": 34,
+    "data_collected": 5
   },
   "total": 419,
-  "generated_at": "2026-06-07T10:30:55.786480+00:00"
+  "generated_at": "2026-06-07T10:37:55.241724+00:00"
 }
