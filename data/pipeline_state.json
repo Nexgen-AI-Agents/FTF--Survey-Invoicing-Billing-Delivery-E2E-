@@ -146,7 +146,7 @@
     },
     {
       "order_id": "1000284507",
-      "status": "condo_rejected",
+      "status": "data_collected",
       "service_type": "Quote",
       "customer_email": "amullins@jdgrossolaw.com",
       "client_name": "Joseph D. Grosso Jr., P.A.",
@@ -410,7 +410,7 @@
     },
     {
       "order_id": "1000284390",
-      "status": "condo_rejected",
+      "status": "data_collected",
       "service_type": "Land Survey Only",
       "customer_email": "Brian@allstatecomputers.com",
       "client_name": "Brian",
@@ -1058,7 +1058,7 @@
     },
     {
       "order_id": "1000284057",
-      "status": "condo_rejected",
+      "status": "data_collected",
       "service_type": "Quote",
       "customer_email": "processing@floridasecuredtitle.com",
       "client_name": "Florida Secured Title LLC",
@@ -1682,7 +1682,7 @@
     },
     {
       "order_id": "1000282649",
-      "status": "condo_rejected",
+      "status": "data_collected",
       "service_type": "Quote",
       "customer_email": "rachelweisz701@gmail.com",
       "client_name": "Rachel Weisz",
@@ -1850,7 +1850,7 @@
     },
     {
       "order_id": "1000282193",
-      "status": "condo_rejected",
+      "status": "data_collected",
       "service_type": "Land Survey Only",
       "customer_email": "tradan4@comcast.net",
       "client_name": "Jupiter Key HOA",
@@ -1898,7 +1898,7 @@
     },
     {
       "order_id": "1000282132",
-      "status": "condo_rejected",
+      "status": "data_collected",
       "service_type": "Boundary Survey",
       "customer_email": "info@browardcountyfence.com",
       "client_name": "Broward County Fence",
@@ -2954,7 +2954,7 @@
     },
     {
       "order_id": "1000276767",
-      "status": "condo_rejected",
+      "status": "data_collected",
       "service_type": "Land Survey Only",
       "customer_email": "cpv2757@aol.com",
       "client_name": "Claudia Vitulich",
@@ -3986,7 +3986,7 @@
     },
     {
       "order_id": "1000273827",
-      "status": "condo_rejected",
+      "status": "data_collected",
       "service_type": "Land Survey Only",
       "customer_email": "josephplatten9@gmail.com",
       "client_name": "Joseph Platten",
@@ -4082,7 +4082,7 @@
     },
     {
       "order_id": "1000273465",
-      "status": "condo_rejected",
+      "status": "data_collected",
       "service_type": "Land Survey Only",
       "customer_email": "reggiemanning1@gmail.com",
       "client_name": "Reggie Manning",
@@ -5258,7 +5258,7 @@
     },
     {
       "order_id": "1000268375",
-      "status": "condo_rejected",
+      "status": "data_collected",
       "service_type": "Land Survey Only",
       "customer_email": "susan@rossfelty.com",
       "client_name": "Law Office of Kyle Felty, P.A.",
@@ -6290,7 +6290,7 @@
     },
     {
       "order_id": "1000263795",
-      "status": "condo_rejected",
+      "status": "data_collected",
       "service_type": "Land Survey Only",
       "customer_email": "sboscarelli@firstam.com",
       "client_name": "CDS-Commercial Due Diligence Services",
@@ -7082,7 +7082,7 @@
     },
     {
       "order_id": "1000259935",
-      "status": "condo_rejected",
+      "status": "data_collected",
       "service_type": "Quote",
       "customer_email": "josecpa@jttcpa.com",
       "client_name": "Jose Thomas",
@@ -8858,7 +8858,7 @@
     },
     {
       "order_id": "1000252520",
-      "status": "condo_rejected",
+      "status": "data_collected",
       "service_type": "Specific Purpose Survey",
       "customer_email": "wendy.burns@dkpalaw.com",
       "client_name": "Equity Title And Escrow",

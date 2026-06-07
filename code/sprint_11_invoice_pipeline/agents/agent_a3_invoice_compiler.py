@@ -433,6 +433,35 @@ def compile_for_order(order_id: str) -> dict:
             estimate_amount=0.0,
             draft_posted_at=datetime.now(timezone.utc).isoformat(),
         )
+        # Write to Excel so the team sees it and can action it — without this, condos
+        # are invisible and the client is left waiting with no response.
+        _condo_client = packet.get("client_name", {}).get("value") or db_row.get("client_name", "")
+        _condo_addr   = (
+            packet.get("property_address", {}).get("value")
+            or order_details.get("ng_property_address", "")
+        )
+        _condo_notes = (
+            f"CONDO ORDER — Cannot survey. {condo_reason}. "
+            "DO NOT APPROVE. ACTION REQUIRED: Contact client to explain that a boundary "
+            "survey is not possible on a condo/airspace unit. Arrange refund or redirect "
+            "to an appropriate service (e.g. interior unit measurement)."
+        )
+        try:
+            append_approval_row(
+                order_id     = order_id,
+                client_name  = _condo_client,
+                address      = _condo_addr,
+                service      = "CONDO — Cannot Survey",
+                amount       = 0.0,
+                confidence   = "N/A",
+                escalate     = True,
+                ftf_link     = link,
+                order_status = "Condo Rejected",
+                notes        = _condo_notes,
+            )
+            log.info("order=%s condo written to Excel for manual review", order_id)
+        except Exception as exc:
+            log.warning("condo Excel write failed order=%s: %s (non-fatal)", order_id, exc)
         log.info("order=%s hard-stop condo_rejected: %s", order_id, condo_reason)
         return stop_result
 
@@ -464,7 +493,7 @@ def compile_for_order(order_id: str) -> dict:
     )
     ai_result = _ai_compile_price(context)
 
-    # ── 4b. Pricing failed — ask human in Teams ───────────────────────────────
+    # ── 4b. Pricing failed — write to Excel for manual pricing ───────────────
     total = ai_result.get("total_amount", 0)
     no_services = not ai_result.get("services")
     if total == 0 or no_services:
@@ -476,6 +505,37 @@ def compile_for_order(order_id: str) -> dict:
             estimate_amount=0.0,
             draft_posted_at=datetime.now(timezone.utc).isoformat(),
         )
+        # Write to Excel so human can see and manually set the price.
+        # Without this, pricing_needed orders are invisible to the team.
+        _pn_client  = packet.get("client_name", {}).get("value") or db_row.get("client_name", "")
+        _pn_addr    = (
+            packet.get("property_address", {}).get("value")
+            or order_details.get("ng_property_address", "")
+        )
+        _pn_svc     = service_type or ", ".join(
+            str(s) for s in packet.get("services_requested", {}).get("value", []) if s
+        )
+        _pn_reason  = ai_result.get("escalate_reason") or ai_result.get("pricing_reasoning") or "AI could not determine price"
+        _pn_notes   = (
+            f"MANUAL PRICING REQUIRED — {_pn_reason}. "
+            "Enter the correct amount in the Amount column, then set Action = Approve."
+        )
+        try:
+            append_approval_row(
+                order_id     = order_id,
+                client_name  = _pn_client,
+                address      = _pn_addr,
+                service      = _pn_svc or "Unknown — see notes",
+                amount       = 0.0,
+                confidence   = "LOW",
+                escalate     = True,
+                ftf_link     = link,
+                order_status = str(order_details.get("ng_status_desc") or ""),
+                notes        = _pn_notes,
+            )
+            log.info("order=%s pricing_needed written to Excel for manual pricing", order_id)
+        except Exception as exc:
+            log.warning("pricing_needed Excel write failed order=%s: %s (non-fatal)", order_id, exc)
         log.info("order=%s pricing_needed: held for manual pricing via spreadsheet", order_id)
         return ai_result
 
@@ -486,7 +546,14 @@ def compile_for_order(order_id: str) -> dict:
     posted_at   = datetime.now(_EASTERN).strftime("%Y-%m-%d %H:%M %Z")
 
     escalate_flag   = bool(ai_result.get("escalate_flag"))
-    escalation_note = "⚠️ Escalate — needs Robert or Ryan review" if escalate_flag else ""
+    if escalate_flag:
+        _esc_reason = ai_result.get("escalate_reason") or "unusual order characteristics detected"
+        escalation_note = (
+            f"ESCALATE — {_esc_reason}. "
+            "Needs Robert or Ryan review before approving."
+        )
+    else:
+        escalation_note = ""
     ftf_order_status = str(order_details.get("ng_status_desc") or "")
 
     excel_write_ok = False

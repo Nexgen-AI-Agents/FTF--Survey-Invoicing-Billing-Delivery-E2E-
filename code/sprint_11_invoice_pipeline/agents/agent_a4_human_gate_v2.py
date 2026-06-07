@@ -268,6 +268,23 @@ def process_dispatch_input() -> dict:
             pass
         return {"ok": True, "order_id": order_id, "action": "skipped", "reason": f"already {current_status}"}
 
+    # Guard: block approval of orders that require manual intervention — cannot be auto-processed
+    _BLOCKED = {"condo_rejected"}
+    if action == "approve" and current_status in _BLOCKED:
+        log.warning(
+            "dispatch: order %s is %s — approval blocked; manual intervention required",
+            order_id, current_status,
+        )
+        return {
+            "ok": False,
+            "order_id": order_id,
+            "action": "blocked",
+            "reason": (
+                f"Order is '{current_status}' and cannot be approved through the pipeline. "
+                "Manual intervention required — contact client and handle outside the system."
+            ),
+        }
+
     if action == "approve":
         save_order_state(order_id, status="invoice_approved", approved_by="prateek")
         log_decision(AGENT_NAME, "invoice_approved", order_id=order_id,
