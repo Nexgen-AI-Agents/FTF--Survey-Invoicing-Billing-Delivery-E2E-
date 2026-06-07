@@ -9626,14 +9626,15 @@
     }
   ],
   "status_counts": {
-    "details_missing": 30,
+    "details_missing": 9,
     "invoice_draft_posted": 277,
     "pricing_needed": 62,
     "condo_rejected": 13,
     "invoice_sent": 13,
     "on_hold": 2,
-    "invoice_rejected": 4
+    "invoice_rejected": 4,
+    "invoice_needed": 21
   },
   "total": 401,
-  "generated_at": "2026-06-07T07:20:33.282376+00:00"
+  "generated_at": "2026-06-07T07:25:25.336749+00:00"
 }
