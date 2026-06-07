@@ -74,6 +74,12 @@ jobs:
           cd code/sprint_11_invoice_pipeline
           python -m agents.agent_a0_orchestrator
 
+      - name: Backfill any pricing_needed/condo_rejected rows missing from Excel
+        if: always()
+        run: |
+          cd code/sprint_11_invoice_pipeline
+          python backfill_excel_rows.py
+
       - name: Export pipeline state to JSON
         if: always()
         run: python scripts/export_pipeline_json.py
