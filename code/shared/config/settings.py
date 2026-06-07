@@ -21,6 +21,13 @@ AR_EXCLUSION_LIST: list[str] = [
     for e in os.getenv("AR_EXCLUSION_LIST", "").split(",")
     if e.strip()
 ]
+
+# Internal NexGen emails that should never enter the invoice pipeline.
+# Orders with these as customer_email are internal quote/routing addresses,
+# not real client emails — they have no billable invoice target.
+INTERNAL_SKIP_EMAILS: set[str] = {
+    "quotes@nexgensurveying.com",
+}
 APPROVAL_TIMEOUT_HOURS:    int = int(os.getenv("APPROVAL_TIMEOUT_HOURS", "24"))
 # ── Pricing reference constants (fed to Claude as context — not applied by code) ──
 # Survey base rate fallbacks — used ONLY when ng_company.ng_rate is 0 / unset.

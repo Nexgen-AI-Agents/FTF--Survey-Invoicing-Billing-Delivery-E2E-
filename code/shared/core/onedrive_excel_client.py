@@ -672,6 +672,32 @@ def get_pending_order_ids() -> set:
         return set()
 
 
+def get_all_approval_order_ids() -> set:
+    """Return ALL order IDs already in the approval table regardless of action status.
+
+    Used by backfill scripts to avoid writing duplicate rows for orders that were
+    already posted (e.g. condo_rejected rows with Action=Reject already filled).
+    """
+    try:
+        ensure_approval_sheet()
+        r = httpx.get(
+            f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows",
+            headers=_session_headers(),
+            timeout=15.0,
+        )
+        r.raise_for_status()
+        ids = set()
+        for row in r.json().get("value", []):
+            vals = row.get("values", [[]])[0]
+            if vals:
+                ids.add(str(vals[0]).strip())
+        log.info("get_all_approval_order_ids: %d total rows in Excel", len(ids))
+        return ids
+    except Exception as exc:
+        log.warning("get_all_approval_order_ids failed: %s", exc)
+        return set()
+
+
 def _close_session() -> None:
     """Close the current workbook session on the Graph API server, releasing the file lock."""
     session_id = _cache.pop("od_session", None)

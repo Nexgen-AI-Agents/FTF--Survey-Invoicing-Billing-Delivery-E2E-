@@ -17,6 +17,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
+from config.settings import INTERNAL_SKIP_EMAILS
 from core.ftf_mysql import get_invoice_needed_orders
 from core.excel_db import order_exists, save_order_state, log_decision
 from core.logger import get_logger
@@ -56,6 +57,12 @@ def run() -> list[str]:
 
         if order_exists(order_id):
             log.debug("skip already-tracked order=%s", order_id)
+            continue
+
+        # Skip internal NexGen routing emails — no real client invoice target
+        email = str(order.get("customer_email") or order.get("email") or "").strip().lower()
+        if email in INTERNAL_SKIP_EMAILS:
+            log.info("skip internal-email order=%s email=%s", order_id, email)
             continue
 
         save_order_state(
