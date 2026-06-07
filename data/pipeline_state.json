@@ -146,7 +146,7 @@
     },
     {
       "order_id": "1000284507",
-      "status": "data_collected",
+      "status": "condo_rejected",
       "service_type": "Quote",
       "customer_email": "amullins@jdgrossolaw.com",
       "client_name": "Joseph D. Grosso Jr., P.A.",
@@ -157,7 +157,7 @@
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-06T18:16:50.277596+00:00",
-      "draft_posted_at": "2026-06-06T18:19:20.135815+00:00",
+      "draft_posted_at": "2026-06-07T07:48:01.413914+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": null,
       "approved_by": null,
@@ -165,7 +165,7 @@
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.587268+00:00",
-      "updated_at": "2026-06-06T18:19:20.210367+00:00",
+      "updated_at": "2026-06-07T07:48:01.492242+00:00",
       "pay_link": null
     },
     {
@@ -410,7 +410,7 @@
     },
     {
       "order_id": "1000284390",
-      "status": "data_collected",
+      "status": "condo_rejected",
       "service_type": "Land Survey Only",
       "customer_email": "Brian@allstatecomputers.com",
       "client_name": "Brian",
@@ -421,7 +421,7 @@
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-06T19:17:15.125760+00:00",
-      "draft_posted_at": "2026-06-06T19:18:24.158603+00:00",
+      "draft_posted_at": "2026-06-07T07:48:05.679718+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": null,
       "approved_by": null,
@@ -429,7 +429,7 @@
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.827301+00:00",
-      "updated_at": "2026-06-06T19:18:24.233304+00:00",
+      "updated_at": "2026-06-07T07:48:05.825271+00:00",
       "pay_link": null
     },
     {
@@ -1058,7 +1058,7 @@
     },
     {
       "order_id": "1000284057",
-      "status": "data_collected",
+      "status": "condo_rejected",
       "service_type": "Quote",
       "customer_email": "processing@floridasecuredtitle.com",
       "client_name": "Florida Secured Title LLC",
@@ -1069,7 +1069,7 @@
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-06T21:47:21.428519+00:00",
-      "draft_posted_at": "2026-06-06T21:48:56.498244+00:00",
+      "draft_posted_at": "2026-06-07T07:48:09.503785+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": null,
       "approved_by": null,
@@ -1077,7 +1077,7 @@
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:08.522369+00:00",
-      "updated_at": "2026-06-06T21:48:56.581107+00:00",
+      "updated_at": "2026-06-07T07:48:09.582849+00:00",
       "pay_link": null
     },
     {
@@ -1682,18 +1682,18 @@
     },
     {
       "order_id": "1000282649",
-      "status": "data_collected",
+      "status": "pricing_needed",
       "service_type": "Quote",
       "customer_email": "rachelweisz701@gmail.com",
       "client_name": "Rachel Weisz",
       "property_address": "9001 Tudor Dr H210, Tampa, FL 33615",
-      "invoice_draft": "{\"total_amount\": 0.0, \"services\": [], \"pricing_reasoning\": \"This order is a quote request with no specific survey service identified. The property is a condominium unit (Unit H210) at 9001 Tudor Dr, Tampa, FL \\u2014 a very small 0.01-acre interest typical of a condo unit, which often requires clarification on what survey product is even applicable (boundary surveys of individual condo units are generally not standard; the client may need an EC, an as-built, or something else entirely). No service type has been scoped, and follow-up with Rachel Weisz is required before any pricing can be proposed.\", \"confidence\": \"LOW\", \"escalate_flag\": true, \"escalate_reason\": \"No specific survey service has been identified for this order. The property is a condominium unit (0.01 acres), which raises additional scoping questions: a standard boundary survey is typically not applicable to an individual condo unit. The client must clarify what product they need (e.g., Elevation Certificate, as-built, condo association boundary, etc.) before a price can be calculated. Additionally, the FEMA flood zone is unknown \\u2014 if an EC is ultimately requested, flood zone determination will be needed. Recommend client outreach to scope the service before pricing.\", \"flags\": [\"No survey service type specified \\u2014 quote request requires follow-up with client Rachel Weisz.\", \"Property is a condominium unit (Unit H210, 0.01 acres) \\u2014 standard boundary survey may not be applicable; service scope must be confirmed.\", \"FEMA flood zone is unknown \\u2014 if an Elevation Certificate is requested, flood zone lookup is required to determine correct EC pricing.\", \"First-time client (0 prior orders) \\u2014 no pricing history available for reference.\", \"Legal description is blank \\u2014 will be needed once service is scoped.\"]}",
+      "invoice_draft": "{\"total_amount\": 0.0, \"services\": [], \"pricing_reasoning\": \"No specific survey service has been identified for this order. The order notes explicitly state that additional follow-up is needed to scope the work before any service can be priced. The property appears to be a condominium unit (Unit H210 with a 0.01-acre lot size), which further complicates automatic service identification \\u2014 common condo survey needs include boundary/as-built, structural/unit boundary, or EC, but none has been requested or confirmed. This order must be escalated for client follow-up and management review before pricing can be assigned.\", \"confidence\": \"LOW\", \"escalate_flag\": true, \"escalate_reason\": \"No survey service type has been specified by the client. Order notes confirm follow-up is required to scope the order. Additionally, the property is a condominium unit (9001 Tudor Dr, Unit H210) with a 0.01-acre lot size, which may involve unique scoping considerations such as unit boundary surveys, as-built drawings, or other condo-specific deliverables not covered by standard residential survey defaults. A NexGen representative should contact Rachel Weisz to determine the required service before a quote is issued.\", \"flags\": [\"NO_SERVICE_TYPE: Client submitted a quote request without specifying a survey service \\u2014 order cannot be priced until scope is confirmed.\", \"CONDO_UNIT: Property is a condominium unit (Unit H210). Standard lot-based pricing and complexity upcharges may not apply. Verify applicable service type with client.\", \"NO_FEMA_ZONE: FEMA flood zone not provided. If an Elevation Certificate is ultimately requested, flood zone must be confirmed before pricing.\", \"NO_LEGAL_DESCRIPTION: Legal description is missing. Required for boundary survey scoping if that service is ultimately selected.\", \"NEW_CLIENT: Rachel Weisz has 0 prior orders with NexGen. Confirm contact details and service expectations during follow-up.\"]}",
       "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 202604241449058960, \"created_at\": \"2026-04-24T14:49:05\", \"customer_email\": \"rachelweisz701@gmail.com\", \"customer_id\": 202604241449059066, \"customer_name\": \"Rachel Weisz\", \"customer_type\": \"individual\", \"delivered_at\": null, \"due_amount\": 0.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": null, \"invoiced\": false, \"order_id\": 1000282649, \"paid\": false, \"property_address\": \"9001 TUDOR DR H210\", \"property_city\": \"TAMPA\", \"property_county\": \"Hillsborough County\", \"property_lat\": \"27.99762\", \"property_lng\": \"-82.58692099999999\", \"property_state\": \"FLORIDA\", \"property_zip\": \"33615\", \"service_type\": \"Quote\", \"special_pricing\": false, \"status\": \"Quote\", \"status_code\": 12, \"updated_at\": \"2026-04-24T15:22:29\"}, \"success\": true, \"order_id\": \"1000282649\", \"customer_email\": \"rachelweisz701@gmail.com\", \"service_type\": \"Quote\", \"county\": \"\", \"property_address\": \"9001 TUDOR DR H210\", \"customer_name\": \"Rachel Weisz\"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"Rachel Weisz\", \"confidence\": \"HIGH\"}, \"client_email\": {\"value\": \"rachelweisz701@gmail.com\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"9001 Tudor Dr H210, Tampa, FL 33615\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Hillsborough County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"Quote\"], \"confidence\": \"LOW\", \"notes\": \"Service type is listed only as 'Quote' \\u2014 no specific survey service has been identified yet. Needs human follow-up to determine actual service needed.\"}, \"special_requirements\": {\"value\": null, \"confidence\": \"LOW\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property appraiser data available; unit H210 suggests a condominium \\u2014 pool, common areas, and shared structures may be relevant but unconfirmed.\"}, \"client_tier\": {\"value\": \"residential\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Specific survey service(s) requested not identified \\u2014 order is still in Quote stage\", \"No legal description available\", \"No lot size available\", \"No structure square footage available\", \"Property appraiser data unavailable \\u2014 could not verify parcel details\", \"No matching emails found \\u2014 no additional context from client communications\", \"Special requirements unknown\", \"Unit H210 indicates a condo \\u2014 surveying scope may be limited or require HOA/condo docs\"], \"summary\": \"Individual client Rachel Weisz has submitted a quote request for a property at 9001 Tudor Dr, Unit H210, Tampa, FL (Hillsborough County), but no specific survey service has been identified yet and additional follow-up is needed to scope the order.\"}}",
       "approval_message_id": "1780412565497",
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-02T15:06:39.583345+00:00",
-      "draft_posted_at": "2026-06-02T15:08:34.935507+00:00",
+      "draft_posted_at": "2026-06-07T07:48:25.032612+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": "[\"1780412903005\"]",
       "approved_by": null,
@@ -1701,7 +1701,7 @@
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T14:27:48.172564+00:00",
-      "updated_at": "2026-06-04T14:52:05.898391+00:00",
+      "updated_at": "2026-06-07T07:48:25.111926+00:00",
       "pay_link": null
     },
     {
@@ -1850,7 +1850,7 @@
     },
     {
       "order_id": "1000282193",
-      "status": "data_collected",
+      "status": "condo_rejected",
       "service_type": "Land Survey Only",
       "customer_email": "tradan4@comcast.net",
       "client_name": "Jupiter Key HOA",
@@ -1861,7 +1861,7 @@
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-02T16:08:30.643745+00:00",
-      "draft_posted_at": "2026-06-02T16:09:18.539928+00:00",
+      "draft_posted_at": "2026-06-07T07:48:28.684231+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": "[\"1780413017000\"]",
       "approved_by": null,
@@ -1869,7 +1869,7 @@
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:13.112765+00:00",
-      "updated_at": "2026-06-04T14:52:06.777700+00:00",
+      "updated_at": "2026-06-07T07:48:28.763521+00:00",
       "pay_link": null
     },
     {
@@ -1898,7 +1898,7 @@
     },
     {
       "order_id": "1000282132",
-      "status": "data_collected",
+      "status": "condo_rejected",
       "service_type": "Boundary Survey",
       "customer_email": "info@browardcountyfence.com",
       "client_name": "Broward County Fence",
@@ -1909,7 +1909,7 @@
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-02T16:08:49.951825+00:00",
-      "draft_posted_at": "2026-06-02T16:09:38.680097+00:00",
+      "draft_posted_at": "2026-06-07T07:48:32.209538+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": "[\"1780416762308\"]",
       "approved_by": null,
@@ -1917,7 +1917,7 @@
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:13.202213+00:00",
-      "updated_at": "2026-06-04T14:52:07.417457+00:00",
+      "updated_at": "2026-06-07T07:48:32.288040+00:00",
       "pay_link": null
     },
     {
@@ -2954,7 +2954,7 @@
     },
     {
       "order_id": "1000276767",
-      "status": "data_collected",
+      "status": "condo_rejected",
       "service_type": "Land Survey Only",
       "customer_email": "cpv2757@aol.com",
       "client_name": "Claudia Vitulich",
@@ -2965,7 +2965,7 @@
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-02T17:09:14.636313+00:00",
-      "draft_posted_at": "2026-06-02T17:39:54.783368+00:00",
+      "draft_posted_at": "2026-06-07T07:48:35.836279+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": null,
       "approved_by": null,
@@ -2973,7 +2973,7 @@
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:15.552119+00:00",
-      "updated_at": "2026-06-04T14:52:08.025263+00:00",
+      "updated_at": "2026-06-07T07:48:35.913913+00:00",
       "pay_link": null
     },
     {
@@ -3986,18 +3986,18 @@
     },
     {
       "order_id": "1000273827",
-      "status": "data_collected",
+      "status": "invoice_draft_posted",
       "service_type": "Land Survey Only",
       "customer_email": "josephplatten9@gmail.com",
       "client_name": "Joseph Platten",
       "property_address": "1607 Lake Downey Dr #25, Orlando, FL 32825",
-      "invoice_draft": "{\"total_amount\": 612.0, \"services\": [{\"name\": \"Land Survey Only\", \"description\": \"Base boundary survey for individual residential client \\u2014 default individual rate applied.\", \"amount\": 475.0}, {\"name\": \"Lot Size Complexity Upcharge (0.51\\u20131.00 ac)\", \"description\": \"Lot size recorded at 0.98 acres per database, falling within the 0.51\\u20131.00 ac bracket. Upcharge applied per complexity schedule.\", \"amount\": 137.0}], \"pricing_reasoning\": \"This is a straightforward Land Survey Only order for an individual residential client (Joseph Platten, no negotiated rate, first-time client) in Orange County. The base rate of $475.00 applies. The lot size of 0.98 acres falls within the 0.51\\u20131.00 ac complexity bracket, warranting the $137.00 upcharge. No Elevation Certificate was requested, the property is in FEMA Zone X (no flood risk premium), no waterfront canal, pool, metes-and-bounds, Monroe County, or heavy vegetation indicators are present in the data, so no additional upcharges are warranted.\", \"confidence\": \"HIGH\", \"escalate_flag\": false, \"escalate_reason\": null, \"flags\": [\"Order notes indicate pricing, lot data, and legal description were 'not yet established' at time of order creation \\u2014 however, the order now carries a valid legal description (Lot 25, Block A, Flowers Manor, Plat Book R, Page 131) and a 0.98-acre lot size from the database. Pricing can proceed on the current data. Confirm lot size against plat if any discrepancy arises in the field.\", \"Property address includes a unit designator (#25), which corresponds to the platted lot number rather than a condominium or stacked unit \\u2014 legal description confirms a platted single-family lot. No condo-complexity flag applied.\"]}",
+      "invoice_draft": "{\"total_amount\": 612.0, \"services\": [{\"name\": \"Land Survey Only\", \"description\": \"Boundary survey for Lot 25, Block A, Flowers Manor, Orange County. Base rate for individual client.\", \"amount\": 475.0}, {\"name\": \"Lot Size Complexity Upcharge (0.51\\u20131.00 ac)\", \"description\": \"Property is 0.98 acres, falling within the 0.51\\u20131.00 ac tier. Increased field time and boundary work expected for a near-1-acre residential lot.\", \"amount\": 137.0}], \"pricing_reasoning\": \"This is a standard Land Survey Only order for an individual homeowner in Orange County with no negotiated rate, so the $475.00 individual base rate applies. The lot is 0.98 acres, which falls squarely in the 0.51\\u20131.00 ac complexity tier, warranting the $137.00 upcharge for additional field time. FEMA Zone X carries no flood zone complexity, no EC was requested, no Monroe County mobilization applies, and the plat-based legal description (Flowers Manor, Plat Book R, Page 131) is straightforward with no metes-and-bounds upcharge warranted.\", \"confidence\": \"HIGH\", \"escalate_flag\": false, \"escalate_reason\": null, \"flags\": [\"Order notes reference 'no pricing, lot data, or legal description yet established' \\u2014 however, the order details now include lot size (0.98 ac) and a valid legal description from Plat Book R, Page 131. Pricing can proceed as normal.\", \"Address includes '#25' unit designator consistent with a lot number in a platted subdivision, not a condo or multi-unit building. Legal description confirms Lot 25, Block A, Flowers Manor \\u2014 a standard single-family platted lot. No ambiguity in survey scope.\"]}",
       "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 202510301444567148, \"created_at\": \"2025-10-30T11:30:01\", \"customer_email\": \"josephplatten9@gmail.com\", \"customer_id\": 202510301444567473, \"customer_name\": \"Joseph Platten\", \"customer_type\": \"individual\", \"delivered_at\": null, \"due_amount\": 0.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": \"12095C0280F\\nZONE: X\\nEFF: 09/25/2009\", \"invoiced\": false, \"order_id\": 1000273827, \"paid\": false, \"property_address\": \"1607 LAKE DOWNEY DR #25\", \"property_city\": \"ORLANDO\", \"property_county\": \"ORANGE COUNTY\", \"property_lat\": \"28.566124\", \"property_lng\": \"-81.238905\", \"property_state\": \"FLORIDA\", \"property_zip\": \"32825\", \"service_type\": \"Land Survey Only\", \"special_pricing\": false, \"status\": \"On Hold\", \"status_code\": 11, \"updated_at\": \"2026-01-16T06:04:08\"}, \"success\": true, \"order_id\": \"1000273827\", \"customer_email\": \"josephplatten9@gmail.com\", \"service_type\": \"Land Survey Only\", \"county\": \"\", \"property_address\": \"1607 LAKE DOWNEY DR #25\", \"customer_name\": \"Joseph Platten\"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"Joseph Platten\", \"confidence\": \"HIGH\"}, \"client_email\": {\"value\": \"josephplatten9@gmail.com\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"1607 Lake Downey Dr #25, Orlando, FL 32825\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Orange County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"Land Survey Only\"], \"confidence\": \"HIGH\", \"notes\": \"Service type explicitly stated as 'Land Survey Only' in order data. No elevation certificate requested.\"}, \"special_requirements\": {\"value\": null, \"confidence\": \"LOW\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property features available; county appraiser data unavailable and no emails or attachments provided.\"}, \"client_tier\": {\"value\": \"residential\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"unknown\", \"confidence\": \"LOW\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Order is currently On Hold \\u2014 reason for hold not specified\", \"Lot size unknown \\u2014 county appraiser data unavailable\", \"Legal description unknown \\u2014 no appraiser or document data available\", \"Structure square footage unknown\", \"Property features unknown (pool, shed, fences, etc.)\", \"Special requirements or client notes not provided\", \"Urgency/timeline not specified\", \"Unit #25 suggests condominium or multi-unit complex \\u2014 lot/parcel boundaries may differ from standard residential; needs clarification\", \"No pricing or invoice details established (due amount is $0, not yet invoiced)\"], \"summary\": \"Individual residential client Joseph Platten has a Land Survey Only order on hold for a unit property at 1607 Lake Downey Dr #25, Orlando, FL (Orange County), with no pricing, lot data, or legal description yet established.\"}}",
-      "approval_message_id": "1780427283944",
+      "approval_message_id": "1000273827",
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-02T17:57:53.262292+00:00",
-      "draft_posted_at": "2026-06-02T19:08:06.305324+00:00",
+      "draft_posted_at": "2026-06-07 03:48 EDT",
       "invoice_created_at": null,
       "processed_reply_ids": null,
       "approved_by": null,
@@ -4005,7 +4005,7 @@
       "estimate_amount": 612,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:18.391842+00:00",
-      "updated_at": "2026-06-04T14:52:08.615954+00:00",
+      "updated_at": "2026-06-07T07:48:52.530124+00:00",
       "pay_link": null
     },
     {
@@ -4082,7 +4082,7 @@
     },
     {
       "order_id": "1000273465",
-      "status": "data_collected",
+      "status": "condo_rejected",
       "service_type": "Land Survey Only",
       "customer_email": "reggiemanning1@gmail.com",
       "client_name": "Reggie Manning",
@@ -4093,7 +4093,7 @@
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-02T18:00:52.626325+00:00",
-      "draft_posted_at": "2026-06-03T19:04:42.880361+00:00",
+      "draft_posted_at": "2026-06-07T07:48:54.592769+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": "[\"1780532191218\", \"1780550282040\", \"1780524574234\", \"1780513514296\", \"1780517901194\", \"1780549602157\", \"1780563494358\", \"1780526250338\", \"1780513482622\", \"1780510326616\", \"1780564117191\", \"1780531900882\"]",
       "approved_by": null,
@@ -4101,7 +4101,7 @@
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:18.705053+00:00",
-      "updated_at": "2026-06-04T14:52:09.234063+00:00",
+      "updated_at": "2026-06-07T07:48:54.670912+00:00",
       "pay_link": null
     },
     {
@@ -5258,7 +5258,7 @@
     },
     {
       "order_id": "1000268375",
-      "status": "data_collected",
+      "status": "condo_rejected",
       "service_type": "Land Survey Only",
       "customer_email": "susan@rossfelty.com",
       "client_name": "Law Office of Kyle Felty, P.A.",
@@ -5269,7 +5269,7 @@
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-02T19:00:55.107755+00:00",
-      "draft_posted_at": "2026-06-03T14:20:35.832526+00:00",
+      "draft_posted_at": "2026-06-07T07:48:57.963883+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": "[\"1780564117191\", \"1780513514296\", \"1780550282040\", \"1780524574234\", \"1780549602157\", \"1780563494358\", \"1780531900882\", \"1780526250338\", \"1780496691667\", \"1780532191218\", \"1780517901194\"]",
       "approved_by": null,
@@ -5277,7 +5277,7 @@
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:12:16.551865+00:00",
-      "updated_at": "2026-06-04T14:52:09.893014+00:00",
+      "updated_at": "2026-06-07T07:48:58.042654+00:00",
       "pay_link": null
     },
     {
@@ -6290,7 +6290,7 @@
     },
     {
       "order_id": "1000263795",
-      "status": "data_collected",
+      "status": "condo_rejected",
       "service_type": "Land Survey Only",
       "customer_email": "sboscarelli@firstam.com",
       "client_name": "CDS-Commercial Due Diligence Services",
@@ -6301,7 +6301,7 @@
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-02T19:57:39.537025+00:00",
-      "draft_posted_at": "2026-06-03T19:04:49.486299+00:00",
+      "draft_posted_at": "2026-06-07T07:49:01.457246+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": "[\"1780524574234\", \"1780549602157\", \"1780517901194\", \"1780563494358\", \"1780513514296\", \"1780550282040\", \"1780531900882\", \"1780513489174\", \"1780499314008\", \"1780526250338\", \"1780510326616\", \"1780564117191\", \"1780532191218\"]",
       "approved_by": null,
@@ -6309,7 +6309,7 @@
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:12:20.742292+00:00",
-      "updated_at": "2026-06-04T14:52:10.514264+00:00",
+      "updated_at": "2026-06-07T07:49:01.535791+00:00",
       "pay_link": null
     },
     {
@@ -7082,7 +7082,7 @@
     },
     {
       "order_id": "1000259935",
-      "status": "data_collected",
+      "status": "condo_rejected",
       "service_type": "Quote",
       "customer_email": "josecpa@jttcpa.com",
       "client_name": "Jose Thomas",
@@ -7093,7 +7093,7 @@
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-02T20:40:26.502580+00:00",
-      "draft_posted_at": "2026-06-03T14:20:43.171939+00:00",
+      "draft_posted_at": "2026-06-07T07:49:05.182196+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": "[\"1780564117191\", \"1780513514296\", \"1780510326616\", \"1780550282040\", \"1780524574234\", \"1780549602157\", \"1780563494358\", \"1780531900882\", \"1780526250338\", \"1780532191218\", \"1780517901194\"]",
       "approved_by": null,
@@ -7101,7 +7101,7 @@
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:20:22.783553+00:00",
-      "updated_at": "2026-06-04T14:52:11.137676+00:00",
+      "updated_at": "2026-06-07T07:49:05.261307+00:00",
       "pay_link": null
     },
     {
@@ -8858,7 +8858,7 @@
     },
     {
       "order_id": "1000252520",
-      "status": "data_collected",
+      "status": "condo_rejected",
       "service_type": "Specific Purpose Survey",
       "customer_email": "wendy.burns@dkpalaw.com",
       "client_name": "Equity Title And Escrow",
@@ -8869,7 +8869,7 @@
       "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-02T22:16:23.323081+00:00",
-      "draft_posted_at": "2026-06-03T14:20:46.514396+00:00",
+      "draft_posted_at": "2026-06-07T07:49:08.707532+00:00",
       "invoice_created_at": null,
       "processed_reply_ids": "[\"1780564117191\", \"1780513514296\", \"1780496706204\", \"1780550282040\", \"1780524574234\", \"1780549602157\", \"1780563494358\", \"1780531900882\", \"1780526250338\", \"1780532191218\", \"1780517901194\"]",
       "approved_by": null,
@@ -8877,7 +8877,7 @@
       "estimate_amount": 0,
       "deferred_until": null,
       "created_at": "2026-06-02T16:20:32.662907+00:00",
-      "updated_at": "2026-06-04T14:52:11.717685+00:00",
+      "updated_at": "2026-06-07T07:49:08.786707+00:00",
       "pay_link": null
     },
     {
@@ -9074,7 +9074,7 @@
     },
     {
       "order_id": "1000284583",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9084,7 +9084,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": "2026-06-06T23:17:46.652895+00:00",
+      "data_collected_at": "2026-06-07T07:46:18.029855+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -9093,12 +9093,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:47.864633+00:00",
-      "updated_at": "2026-06-06T23:17:46.738342+00:00",
+      "updated_at": "2026-06-07T07:46:18.108860+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284582",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9108,7 +9108,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": "2026-06-06T23:46:19.797328+00:00",
+      "data_collected_at": "2026-06-07T07:46:40.106783+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -9117,12 +9117,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.106401+00:00",
-      "updated_at": "2026-06-06T23:46:19.878315+00:00",
+      "updated_at": "2026-06-07T07:46:40.187439+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284581",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9132,7 +9132,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": "2026-06-06T23:46:41.310819+00:00",
+      "data_collected_at": "2026-06-07T07:47:08.168936+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -9141,12 +9141,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.405220+00:00",
-      "updated_at": "2026-06-06T23:46:41.444466+00:00",
+      "updated_at": "2026-06-07T07:47:08.247809+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284580",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9156,7 +9156,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": "2026-06-06T23:47:02.872965+00:00",
+      "data_collected_at": "2026-06-07T07:47:29.497369+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -9165,12 +9165,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.643405+00:00",
-      "updated_at": "2026-06-06T23:47:02.952202+00:00",
+      "updated_at": "2026-06-07T07:47:29.578131+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284579",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9180,7 +9180,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": "2026-06-06T23:47:23.730635+00:00",
+      "data_collected_at": "2026-06-07T07:47:54.617580+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -9189,7 +9189,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.878872+00:00",
-      "updated_at": "2026-06-06T23:47:23.868319+00:00",
+      "updated_at": "2026-06-07T07:47:54.696769+00:00",
       "pay_link": null
     },
     {
@@ -9626,15 +9626,15 @@
     }
   ],
   "status_counts": {
-    "details_missing": 9,
-    "invoice_draft_posted": 277,
-    "pricing_needed": 62,
-    "data_collected": 13,
+    "details_missing": 14,
+    "invoice_draft_posted": 278,
+    "pricing_needed": 63,
+    "condo_rejected": 11,
     "invoice_sent": 13,
     "on_hold": 2,
     "invoice_rejected": 4,
-    "invoice_needed": 21
+    "invoice_needed": 16
   },
   "total": 401,
-  "generated_at": "2026-06-07T07:45:29.879236+00:00"
+  "generated_at": "2026-06-07T07:49:11.100093+00:00"
 }
