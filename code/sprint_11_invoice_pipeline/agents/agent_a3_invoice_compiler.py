@@ -59,7 +59,9 @@ from core.exceptions import AgentError
 from core.ftf_client import get_historical_pricing_orders
 from core.ftf_mysql import get_order_details, get_company_info, find_duplicate_orders
 from core.logger import get_logger
-from core.onedrive_excel_client import append_approval_row, auto_reject_condo_row, get_pending_order_ids
+from core.onedrive_excel_client import (
+    append_approval_row, auto_reject_condo_row, get_pending_order_ids, match_pricing_rule,
+)
 
 AGENT_NAME = "agent_a3_invoice_compiler"
 log = get_logger(AGENT_NAME)
@@ -405,6 +407,13 @@ def compile_for_order(order_id: str) -> dict:
 
     # ── 1. Fetch live order + company data from MySQL ─────────────────────────
     order_details = get_order_details(order_id)
+
+    # Guard: order may have been canceled in FTF after A1 queued it — never post to Excel.
+    if int(order_details.get("ng_status") or 1) == 0:
+        log.info("order=%s Canceled in FTF — marking permanently_excluded, skipping Excel post", order_id)
+        save_order_state(order_id, status="permanently_excluded")
+        return {}
+
     company_id    = int(order_details.get("ng_company_id") or 0)
     company_info  = get_company_info(company_id) if company_id else {}
     tier          = _classify_client_tier(company_info)
@@ -488,14 +497,37 @@ def compile_for_order(order_id: str) -> dict:
         if examples:
             pricing_ctx += f"{svc} — internal examples: {[e['final_price'] for e in examples]}\n"
 
-    # ── 4. AI pricing pass ────────────────────────────────────────────────────
-    context   = _build_ai_context(
-        order_id, packet, data_sources, order_details, company_info, tier,
-        duplicates, link, pricing_ctx,
+    # ── 4. Check Pricing Rules tab first (user-defined overrides beat AI) ────
+    company_name_for_rule = company_info.get("company_name") or packet.get("client_name", {}).get("value", "")
+    pricing_rule = match_pricing_rule(
+        service=service_type or ", ".join(str(s) for s in (packet.get("services_requested", {}).get("value") or [])),
+        county=county_val,
+        client=company_name_for_rule,
     )
-    ai_result = _ai_compile_price(context)
+    if pricing_rule and pricing_rule["price"] > 0:
+        log.info(
+            "order=%s matched pricing rule id=%s price=%.2f (service=%r county=%r client=%r)",
+            order_id, pricing_rule["rule_id"], pricing_rule["price"],
+            pricing_rule["service"], pricing_rule["county"], pricing_rule["client"],
+        )
+        ai_result = {
+            "total_amount":      pricing_rule["price"],
+            "services":          [{"name": service_type or "Survey", "amount": pricing_rule["price"]}],
+            "pricing_reasoning": f"Pricing rule #{pricing_rule['rule_id']} applied: {pricing_rule['notes'] or 'manual override'}",
+            "confidence":        "HIGH",
+            "escalate_flag":     False,
+            "escalate_reason":   "",
+            "flags":             ["pricing_rule"],
+        }
+    else:
+        # ── 4b. AI pricing pass ───────────────────────────────────────────────
+        context   = _build_ai_context(
+            order_id, packet, data_sources, order_details, company_info, tier,
+            duplicates, link, pricing_ctx,
+        )
+        ai_result = _ai_compile_price(context)
 
-    # ── 4b. Pricing failed — write to Excel for manual pricing ───────────────
+    # ── 4c. Pricing failed — write to Excel for manual pricing ──────────────
     total = ai_result.get("total_amount", 0)
     no_services = not ai_result.get("services")
     if total == 0 or no_services:

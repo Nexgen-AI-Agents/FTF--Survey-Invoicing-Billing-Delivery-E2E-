@@ -67,10 +67,14 @@ def main():
             skipped += 1
             continue
 
-        # Fetch real FTF status for display
+        # Fetch real FTF status — also used to skip Canceled orders
         try:
             details = get_order_details(order_id)
             order_status = str(details.get("ng_status_desc") or "")
+            if int(details.get("ng_status") or 1) == 0:
+                log.info("skip %s — Canceled in FTF, not posting to Excel", order_id)
+                skipped += 1
+                continue
         except Exception:
             order_status = ""
 

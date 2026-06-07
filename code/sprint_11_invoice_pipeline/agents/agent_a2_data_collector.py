@@ -499,6 +499,17 @@ def collect_for_order(order_id: str) -> dict:
     if not db_row:
         raise AgentError(f"collect_for_order: order {order_id} not in processed_orders")
 
+    # Guard: order may have been canceled in FTF after A1 queued it.
+    # Check before any expensive operations (email, aerial image, AI).
+    try:
+        _status_check = mysql_get_order_details(order_id)
+        if int(_status_check.get("ng_status") or 1) == 0:
+            log.info("order=%s Canceled in FTF — marking permanently_excluded, skipping", order_id)
+            save_order_state(order_id, status="permanently_excluded")
+            return {}
+    except Exception as exc:
+        log.warning("MySQL status pre-check failed order=%s: %s", order_id, exc)
+
     property_address = db_row.get("property_address", "")
     client_name      = db_row.get("client_name", "") or db_row.get("customer_name", "")
     # MySQL fields already fetched by A1 from ng_orders — ground truth even when FTF API is down

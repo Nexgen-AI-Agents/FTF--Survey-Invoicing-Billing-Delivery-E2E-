@@ -37,7 +37,16 @@ _cache: dict = {}
 
 # Guide tab — bump version string whenever guide content changes to force a re-write
 GUIDE_SHEET_NAME = "Pipeline Guide"
-_GUIDE_VERSION   = "v4"   # increment when guide content changes
+_GUIDE_VERSION   = "v5"   # increment when guide content changes
+
+# Pricing Rules tab — user-editable table of override prices
+PRICING_RULES_SHEET_NAME  = "Pricing Rules"
+PRICING_RULES_TABLE_NAME  = "PricingRulesTable"
+PRICING_RULES_HEADERS = [
+    "Rule ID", "Status", "Service Pattern", "County", "Client Pattern",
+    "Price ($)", "Priority", "Notes",
+]
+_PR_COL_COUNT = len(PRICING_RULES_HEADERS)   # 8
 
 # Column order must stay in sync with append_approval_row() values list
 APPROVAL_HEADERS = [
@@ -255,6 +264,193 @@ def _setup_full_sheet_via_openpyxl() -> None:
         log.warning("_setup_full_sheet_via_openpyxl: upload failed: %s", exc)
 
 
+def ensure_pricing_rules_sheet() -> None:
+    """Create the 'Pricing Rules' tab if it doesn't exist.
+
+    This tab is user-editable. The pipeline reads it each run to apply explicit
+    price overrides before the AI pricing step. Users add rows directly in Excel:
+
+      Service Pattern | County | Client Pattern | Price ($) | Priority | Notes
+      Boundary Survey | Hillsborough | Hillsborough Title | 550.00 | 1 | Standard rate
+      *               | *            | CDS-Commercial     | 450.00 | 5 | All CDS orders
+
+    * = wildcard (matches anything). Lower Priority number = higher priority.
+    Set Status = Inactive to disable a rule without deleting it.
+    """
+    if _cache.get("od_pricing_rules_done"):
+        return
+
+    base = _wb_base()
+    h    = _headers()
+
+    r_sheets = httpx.get(f"{base}/worksheets", headers=h, timeout=15.0)
+    r_sheets.raise_for_status()
+    existing_sheets = [s["name"] for s in r_sheets.json().get("value", [])]
+
+    if PRICING_RULES_SHEET_NAME in existing_sheets:
+        _cache["od_pricing_rules_done"] = True
+        return
+
+    # Create via openpyxl upload — only way to add a table with proper headers
+    log.info("Pricing Rules tab missing — creating it")
+    import io
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.worksheet.table import Table, TableStyleInfo
+
+    try:
+        _close_session()
+        raw = _download_workbook_bytes()
+    except Exception as exc:
+        log.warning("ensure_pricing_rules_sheet: download failed — skipping: %s", exc)
+        return
+
+    wb = openpyxl.load_workbook(io.BytesIO(raw))
+    ws = wb.create_sheet(PRICING_RULES_SHEET_NAME)
+
+    # ── Column widths ─────────────────────────────────────────────────────────
+    col_widths = [8, 10, 28, 20, 30, 14, 10, 50]
+    for i, w in enumerate(col_widths, 1):
+        ws.column_dimensions[ws.cell(1, i).column_letter].width = w
+
+    # ── Headers ────────────────────────────────────────────────────────────────
+    HDR_FILL = PatternFill(start_color="1F4E79", end_color="1F4E79", fill_type="solid")
+    for col_idx, hdr in enumerate(PRICING_RULES_HEADERS, 1):
+        c = ws.cell(row=1, column=col_idx, value=hdr)
+        c.font = Font(bold=True, color="FFFFFF", size=11)
+        c.fill = HDR_FILL
+        c.alignment = Alignment(horizontal="center", vertical="center")
+
+    # ── Seed row — example rule so users understand the format ────────────────
+    EXAMPLE_FILL = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
+    seed = ["1", "Active", "*", "*", "*", 0.0, 999,
+            "EXAMPLE — delete this row. Set Price=0 to keep AI pricing. * = match anything."]
+    for col_idx, val in enumerate(seed, 1):
+        c = ws.cell(row=2, column=col_idx, value=val)
+        c.fill = EXAMPLE_FILL
+        c.alignment = Alignment(vertical="center", wrap_text=(col_idx == _PR_COL_COUNT))
+
+    # ── Excel Table ───────────────────────────────────────────────────────────
+    end_col = chr(ord("A") + _PR_COL_COUNT - 1)
+    tab = Table(displayName=PRICING_RULES_TABLE_NAME, ref=f"A1:{end_col}2")
+    tab.tableStyleInfo = TableStyleInfo(
+        name="TableStyleMedium7", showRowStripes=True,
+        showFirstColumn=False, showLastColumn=False, showColumnStripes=False,
+    )
+    ws.add_table(tab)
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    try:
+        _upload_workbook_bytes(buf.read())
+        log.info("Pricing Rules tab created")
+    except Exception as exc:
+        log.warning("Pricing Rules tab upload failed (non-fatal): %s", exc)
+        return
+
+    _cache["od_pricing_rules_done"] = True
+
+
+# ── In-memory cache for pricing rules (refreshed once per pipeline run) ───────
+_pricing_rules_cache: list | None = None
+
+
+def get_pricing_rules() -> list[dict]:
+    """Return active pricing rules from the 'Pricing Rules' tab.
+
+    Rules are sorted by Priority (ascending — lower number = higher priority).
+    Cached for the duration of the pipeline run — call invalidate if needed.
+
+    Each rule dict: {service, county, client, price, priority, notes}
+    Pattern values: '*' matches anything; otherwise case-insensitive substring match.
+    """
+    global _pricing_rules_cache
+    if _pricing_rules_cache is not None:
+        return _pricing_rules_cache
+
+    try:
+        ensure_pricing_rules_sheet()
+        r = httpx.get(
+            f"{_wb_base()}/worksheets/{PRICING_RULES_SHEET_NAME}/tables/{PRICING_RULES_TABLE_NAME}/rows",
+            headers=_session_headers(),
+            timeout=15.0,
+        )
+        if not r.is_success:
+            log.warning("get_pricing_rules: table read failed (%d) — no rules applied", r.status_code)
+            _pricing_rules_cache = []
+            return []
+
+        rules = []
+        for row in r.json().get("value", []):
+            vals = (row.get("values") or [[]])[0]
+            if len(vals) < _PR_COL_COUNT:
+                vals = list(vals) + [""] * (_PR_COL_COUNT - len(vals))
+
+            status  = str(vals[1]).strip()
+            if status.lower() != "active":
+                continue
+
+            price = 0.0
+            try:
+                price = float(vals[5])
+            except (ValueError, TypeError):
+                pass
+
+            priority = 999
+            try:
+                priority = int(float(vals[6]))
+            except (ValueError, TypeError):
+                pass
+
+            rules.append({
+                "rule_id":  str(vals[0]).strip(),
+                "service":  str(vals[2]).strip() or "*",
+                "county":   str(vals[3]).strip() or "*",
+                "client":   str(vals[4]).strip() or "*",
+                "price":    price,
+                "priority": priority,
+                "notes":    str(vals[7]).strip() if len(vals) > 7 else "",
+            })
+
+        rules.sort(key=lambda r: r["priority"])
+        _pricing_rules_cache = rules
+        log.info("get_pricing_rules: %d active rules loaded", len(rules))
+        return rules
+
+    except Exception as exc:
+        log.warning("get_pricing_rules failed — no rules applied: %s", exc)
+        _pricing_rules_cache = []
+        return []
+
+
+def match_pricing_rule(service: str, county: str, client: str) -> dict | None:
+    """Return the highest-priority matching rule, or None if no match.
+
+    Matching logic (all three must match):
+      * = wildcard (matches any non-empty string)
+      Otherwise: case-insensitive substring match
+      Rule with price=0 means "keep AI pricing" (no override).
+    """
+    s_lower = service.lower()
+    c_lower = county.lower()
+    cl_lower = client.lower()
+
+    for rule in get_pricing_rules():
+        svc_pat = rule["service"]
+        cty_pat = rule["county"]
+        cli_pat = rule["client"]
+
+        svc_match = (svc_pat == "*") or (svc_pat.lower() in s_lower)
+        cty_match = (cty_pat == "*") or (cty_pat.lower() in c_lower)
+        cli_match = (cli_pat == "*") or (cli_pat.lower() in cl_lower)
+
+        if svc_match and cty_match and cli_match:
+            return rule
+
+    return None
+
+
 def ensure_approval_sheet() -> None:
     """Ensure the Approvals sheet and ApprovalTable exist with the correct schema.
 
@@ -302,6 +498,8 @@ def ensure_approval_sheet() -> None:
     _cache["od_formatting_done"] = True
     # Always ensure the guide tab is current (version-gated — skips if already up to date)
     ensure_guide_sheet()
+    # Ensure the user-editable Pricing Rules tab exists
+    ensure_pricing_rules_sheet()
 
 
 def ensure_guide_sheet() -> None:
@@ -577,12 +775,55 @@ def ensure_guide_sheet() -> None:
         ("on_hold",             "You selected On-hold. Pipeline is paused for this order."),
         ("details_missing",     "FTF has insufficient data (blank service field + no notes). Pipeline cannot process. "
                                 "Update the order in FTF or handle manually."),
+        ("permanently_excluded", "Order will never be processed — e.g., canceled in FTF, internal routing email. Skipped forever."),
     ]
     for i, (status, desc) in enumerate(statuses):
         fill = FILL_ALT if i % 2 == 0 else None
         _write(r, 1, status, bold=True, fill=fill)
         _write(r, 2, desc,   fill=fill, wrap=True)
         ws.row_dimensions[r].height = 30
+        r += 1
+
+    r += 1
+
+    # ═════════════════════════════════════════════════════════════════════════
+    # SECTION 7 — HOW TO TEACH THE AI (PRICING RULES)
+    # ═════════════════════════════════════════════════════════════════════════
+    r = _section(r, "HOW TO TEACH THE AI  —  'Pricing Rules' tab")
+    teaching_rows = [
+        ("What it is",
+         FILL_GOOD,
+         "The 'Pricing Rules' tab is your direct line to teach the AI how to price orders. "
+         "Any rule you add there is applied on the NEXT pipeline run — no coding needed."),
+        ("When to use it",
+         FILL_ALT,
+         "Use it when: (1) You know the correct price for a specific client or service. "
+         "(2) The AI keeps getting a price wrong. (3) You have a negotiated flat rate for a client. "
+         "(4) You want to override AI pricing for a specific county."),
+        ("How to add a rule",
+         FILL_ALT,
+         "Go to the 'Pricing Rules' tab → add a new row → set Status = Active → fill in patterns → save. "
+         "Use * as a wildcard (matches anything). Examples:\n"
+         "  Boundary Survey | Hillsborough | Hillsborough Title | $550 | priority 1\n"
+         "  * | * | CDS-Commercial | $450 | priority 5  (all CDS orders)"),
+        ("Priority",
+         FILL_WARN,
+         "Lower number = higher priority. If two rules match, the one with the lower Priority wins. "
+         "Keep client-specific rules at priority 1-10. County/service rules at 50+. Global fallbacks at 999."),
+        ("Service & Client patterns",
+         FILL_ALT,
+         "Patterns are substring matches (not exact). 'Boundary' matches 'Boundary Survey'. "
+         "'Title' matches 'Hillsborough Title', 'Southern Title', etc. "
+         "Set to * to match any value."),
+        ("Price = 0 means no override",
+         FILL_WARN,
+         "If Price is 0, the rule matches but the AI still sets the price (useful for testing pattern logic). "
+         "Set a non-zero price to actually override the AI."),
+    ]
+    for label, fill, desc in teaching_rows:
+        _write(r, 1, label, bold=True, fill=fill)
+        _write(r, 2, desc,  fill=fill, wrap=True)
+        ws.row_dimensions[r].height = 55
         r += 1
 
     # ── Upload ────────────────────────────────────────────────────────────────
