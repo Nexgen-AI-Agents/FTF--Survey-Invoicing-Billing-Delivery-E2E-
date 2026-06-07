@@ -9434,7 +9434,7 @@
     },
     {
       "order_id": "1000284568",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9444,7 +9444,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": "2026-06-07T00:47:46.308847+00:00",
+      "data_collected_at": "2026-06-07T09:16:22.586113+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -9453,12 +9453,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:51.802264+00:00",
-      "updated_at": "2026-06-07T00:47:46.395537+00:00",
+      "updated_at": "2026-06-07T09:16:22.671632+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284567",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9468,7 +9468,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": "2026-06-07T01:16:19.049605+00:00",
+      "data_collected_at": "2026-06-07T09:16:41.747414+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -9477,12 +9477,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.095496+00:00",
-      "updated_at": "2026-06-07T01:16:19.129421+00:00",
+      "updated_at": "2026-06-07T09:16:41.874018+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284566",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9492,7 +9492,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": "2026-06-07T01:16:44.414269+00:00",
+      "data_collected_at": "2026-06-07T09:17:06.597008+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -9501,12 +9501,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.340723+00:00",
-      "updated_at": "2026-06-07T01:16:44.545730+00:00",
+      "updated_at": "2026-06-07T09:17:06.681977+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284565",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9516,7 +9516,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": "2026-06-07T01:17:02.951236+00:00",
+      "data_collected_at": "2026-06-07T09:17:24.533980+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -9525,12 +9525,12 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.581724+00:00",
-      "updated_at": "2026-06-07T01:17:03.046207+00:00",
+      "updated_at": "2026-06-07T09:17:24.661635+00:00",
       "pay_link": null
     },
     {
       "order_id": "1000284564",
-      "status": "invoice_needed",
+      "status": "details_missing",
       "service_type": null,
       "customer_email": "missy.vancil@flagency.net",
       "client_name": "Hillsborough Title of South Shore",
@@ -9540,7 +9540,7 @@
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": "2026-06-07T01:17:19.697171+00:00",
+      "data_collected_at": "2026-06-07T09:17:45.394725+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -9549,7 +9549,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.895782+00:00",
-      "updated_at": "2026-06-07T01:17:19.826496+00:00",
+      "updated_at": "2026-06-07T09:17:45.479918+00:00",
       "pay_link": null
     },
     {
@@ -9626,15 +9626,15 @@
     }
   ],
   "status_counts": {
-    "details_missing": 24,
+    "details_missing": 29,
     "invoice_draft_posted": 278,
     "pricing_needed": 63,
     "condo_rejected": 11,
     "invoice_sent": 13,
     "on_hold": 2,
     "invoice_rejected": 4,
-    "invoice_needed": 6
+    "invoice_needed": 1
   },
   "total": 401,
-  "generated_at": "2026-06-07T09:15:58.239260+00:00"
+  "generated_at": "2026-06-07T09:18:14.952135+00:00"
 }
