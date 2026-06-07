@@ -21,7 +21,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.489948+00:00",
-      "updated_at": "2026-06-07T10:37:52.326862+00:00",
+      "updated_at": "2026-06-07T10:38:48.283724+00:00",
       "pay_link": null
     },
     {
@@ -45,7 +45,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.506677+00:00",
-      "updated_at": "2026-06-07T10:37:52.609325+00:00",
+      "updated_at": "2026-06-07T10:38:48.670627+00:00",
       "pay_link": null
     },
     {
@@ -69,7 +69,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.522197+00:00",
-      "updated_at": "2026-06-07T10:37:52.872485+00:00",
+      "updated_at": "2026-06-07T10:38:48.974268+00:00",
       "pay_link": null
     },
     {
@@ -93,7 +93,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.539134+00:00",
-      "updated_at": "2026-06-07T10:37:53.132923+00:00",
+      "updated_at": "2026-06-07T10:38:49.247043+00:00",
       "pay_link": null
     },
     {
@@ -477,7 +477,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.870173+00:00",
-      "updated_at": "2026-06-07T10:37:54.152139+00:00",
+      "updated_at": "2026-06-07T10:38:50.362487+00:00",
       "pay_link": null
     },
     {
@@ -525,7 +525,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.915731+00:00",
-      "updated_at": "2026-06-07T10:37:53.377214+00:00",
+      "updated_at": "2026-06-07T10:38:49.545624+00:00",
       "pay_link": null
     },
     {
@@ -549,7 +549,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.938970+00:00",
-      "updated_at": "2026-06-07T10:37:53.641404+00:00",
+      "updated_at": "2026-06-07T10:38:49.834061+00:00",
       "pay_link": null
     },
     {
@@ -573,7 +573,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-02T12:17:07.961313+00:00",
-      "updated_at": "2026-06-07T10:37:53.885357+00:00",
+      "updated_at": "2026-06-07T10:38:50.092494+00:00",
       "pay_link": null
     },
     {
@@ -9093,7 +9093,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:47.864633+00:00",
-      "updated_at": "2026-06-07T10:37:51.988466+00:00",
+      "updated_at": "2026-06-07T10:38:47.972721+00:00",
       "pay_link": null
     },
     {
@@ -9117,7 +9117,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.106401+00:00",
-      "updated_at": "2026-06-07T10:37:51.672702+00:00",
+      "updated_at": "2026-06-07T10:38:47.574548+00:00",
       "pay_link": null
     },
     {
@@ -9141,7 +9141,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.405220+00:00",
-      "updated_at": "2026-06-07T10:37:51.399015+00:00",
+      "updated_at": "2026-06-07T10:38:47.109499+00:00",
       "pay_link": null
     },
     {
@@ -9165,7 +9165,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.643405+00:00",
-      "updated_at": "2026-06-07T10:37:51.106320+00:00",
+      "updated_at": "2026-06-07T10:38:46.800080+00:00",
       "pay_link": null
     },
     {
@@ -9189,7 +9189,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:48.878872+00:00",
-      "updated_at": "2026-06-07T10:37:50.840702+00:00",
+      "updated_at": "2026-06-07T10:38:46.493764+00:00",
       "pay_link": null
     },
     {
@@ -9213,7 +9213,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:49.173263+00:00",
-      "updated_at": "2026-06-07T10:37:50.539392+00:00",
+      "updated_at": "2026-06-07T10:38:46.140042+00:00",
       "pay_link": null
     },
     {
@@ -9237,7 +9237,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:49.411948+00:00",
-      "updated_at": "2026-06-07T10:37:50.214273+00:00",
+      "updated_at": "2026-06-07T10:38:45.769990+00:00",
       "pay_link": null
     },
     {
@@ -9261,7 +9261,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:49.702736+00:00",
-      "updated_at": "2026-06-07T10:37:49.911182+00:00",
+      "updated_at": "2026-06-07T10:38:45.464854+00:00",
       "pay_link": null
     },
     {
@@ -9285,7 +9285,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:49.942082+00:00",
-      "updated_at": "2026-06-07T10:37:49.628006+00:00",
+      "updated_at": "2026-06-07T10:38:45.130194+00:00",
       "pay_link": null
     },
     {
@@ -9309,7 +9309,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:50.232302+00:00",
-      "updated_at": "2026-06-07T10:37:49.359473+00:00",
+      "updated_at": "2026-06-07T10:38:44.780072+00:00",
       "pay_link": null
     },
     {
@@ -9333,7 +9333,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:50.473990+00:00",
-      "updated_at": "2026-06-07T10:37:49.116444+00:00",
+      "updated_at": "2026-06-07T10:38:44.475879+00:00",
       "pay_link": null
     },
     {
@@ -9357,7 +9357,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:50.714657+00:00",
-      "updated_at": "2026-06-07T10:37:48.889876+00:00",
+      "updated_at": "2026-06-07T10:38:44.183375+00:00",
       "pay_link": null
     },
     {
@@ -9381,7 +9381,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:51.014904+00:00",
-      "updated_at": "2026-06-07T10:37:48.661829+00:00",
+      "updated_at": "2026-06-07T10:38:43.944981+00:00",
       "pay_link": null
     },
     {
@@ -9405,7 +9405,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:51.257951+00:00",
-      "updated_at": "2026-06-07T10:37:48.422374+00:00",
+      "updated_at": "2026-06-07T10:38:43.718327+00:00",
       "pay_link": null
     },
     {
@@ -9429,7 +9429,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:51.560599+00:00",
-      "updated_at": "2026-06-07T10:37:48.192291+00:00",
+      "updated_at": "2026-06-07T10:38:43.465812+00:00",
       "pay_link": null
     },
     {
@@ -9453,7 +9453,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:51.802264+00:00",
-      "updated_at": "2026-06-07T10:37:47.957380+00:00",
+      "updated_at": "2026-06-07T10:38:43.236535+00:00",
       "pay_link": null
     },
     {
@@ -9477,7 +9477,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.095496+00:00",
-      "updated_at": "2026-06-07T10:37:47.724410+00:00",
+      "updated_at": "2026-06-07T10:38:42.995876+00:00",
       "pay_link": null
     },
     {
@@ -9501,7 +9501,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.340723+00:00",
-      "updated_at": "2026-06-07T10:37:47.500908+00:00",
+      "updated_at": "2026-06-07T10:38:42.727981+00:00",
       "pay_link": null
     },
     {
@@ -9525,7 +9525,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.581724+00:00",
-      "updated_at": "2026-06-07T10:37:47.270909+00:00",
+      "updated_at": "2026-06-07T10:38:42.478861+00:00",
       "pay_link": null
     },
     {
@@ -9549,7 +9549,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:52.895782+00:00",
-      "updated_at": "2026-06-07T10:37:47.056292+00:00",
+      "updated_at": "2026-06-07T10:38:42.258058+00:00",
       "pay_link": null
     },
     {
@@ -9573,7 +9573,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": "2026-06-03T14:18:53.138350+00:00",
-      "updated_at": "2026-06-07T10:37:46.817672+00:00",
+      "updated_at": "2026-06-07T10:38:42.012856+00:00",
       "pay_link": null
     },
     {
@@ -10070,5 +10070,5 @@
     "data_collected": 5
   },
   "total": 419,
-  "generated_at": "2026-06-07T10:37:55.241724+00:00"
+  "generated_at": "2026-06-07T10:38:51.489378+00:00"
 }
