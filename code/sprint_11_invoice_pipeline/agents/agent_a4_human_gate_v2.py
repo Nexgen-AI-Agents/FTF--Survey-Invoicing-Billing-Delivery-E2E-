@@ -45,8 +45,10 @@ from core.logger import get_logger
 AGENT_NAME = "agent_a4_human_gate_v2"
 log = get_logger(AGENT_NAME)
 
-_RULES_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "learned_rules.json")
-_PRICE_RE   = re.compile(r'\$?\s*(\d+(?:\.\d{1,2})?)', re.IGNORECASE)
+_RULES_FILE    = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "learned_rules.json")
+_PRICE_RE      = re.compile(r'\$?\s*(\d+(?:\.\d{1,2})?)', re.IGNORECASE)
+# Parses "Boundary Survey: $475.00 | Elevation Cert: $150.00" → list of {name, amount}
+_BREAKDOWN_RE  = re.compile(r'([^|$:]+?):\s*\$\s*([\d,]+(?:\.\d{1,2})?)\s*(?:\||$)')
 
 
 def _is_approved_sender(sender_name: str, sender_email: str = "") -> bool:
@@ -236,15 +238,95 @@ def _save_learned_price(service_type: str, county: str, amount: float, learned_f
         log.warning("failed to save learned price: %s", exc)
 
 
+def _parse_breakdown_str(s: str) -> list:
+    """Parse 'Boundary Survey: $475.00 | Elevation Cert: $150.00' into [{name, amount}, ...].
+
+    Returns empty list if string is not in breakdown format (e.g. legacy bare-name rows).
+    """
+    return [
+        {"name": m.group(1).strip(), "amount": float(m.group(2).replace(",", ""))}
+        for m in _BREAKDOWN_RE.finditer(s)
+    ]
+
+
+def _apply_total_override(draft: dict, new_total: float) -> dict:
+    """User changed Amount ($) only. Distribute new total proportionally across all services."""
+    draft    = json.loads(json.dumps(draft))  # deep copy
+    services = draft.get("services", [])
+    orig_total = float(draft.get("total_amount", 0) or 0)
+
+    if not services:
+        draft["total_amount"] = new_total
+        return draft
+
+    if orig_total == 0:
+        # No original total to distribute from — split evenly
+        share = round(new_total / len(services), 2)
+        for svc in services:
+            svc["amount"] = share
+        services[0]["amount"] = round(new_total - share * (len(services) - 1), 2)
+    else:
+        ratio = new_total / orig_total
+        for svc in services:
+            svc["amount"] = round(float(svc.get("amount", 0)) * ratio, 2)
+        # Correct rounding penny on first service
+        computed = sum(s["amount"] for s in services)
+        if abs(computed - new_total) > 0.005:
+            services[0]["amount"] = round(services[0]["amount"] + (new_total - computed), 2)
+
+    draft["total_amount"] = new_total
+    draft["services"]     = services
+    return draft
+
+
+def _apply_breakdown_override(draft: dict, parsed_breakdown: list) -> dict:
+    """User edited individual service amounts in the breakdown cell. Apply per-service amounts."""
+    draft    = json.loads(json.dumps(draft))  # deep copy
+    services = draft.get("services", [])
+
+    # Build name→amount from what the user typed
+    user_prices = {item["name"].lower(): item["amount"] for item in parsed_breakdown}
+
+    for svc in services:
+        key = (svc.get("name") or "").lower()
+        if key in user_prices:
+            svc["amount"] = user_prices[key]
+        else:
+            # Substring match — e.g. "boundary" matches "Boundary Survey"
+            for k, v in user_prices.items():
+                if k in key or key in k:
+                    svc["amount"] = v
+                    break
+
+    draft["total_amount"] = round(sum(s.get("amount", 0) for s in services), 2)
+    draft["services"]     = services
+    return draft
+
+
+def _build_breakdown_str_from_draft(services: list) -> str:
+    """Rebuild the Excel breakdown string from invoice_draft services list."""
+    parts = []
+    for svc in services:
+        name = (svc.get("name") or "").strip()
+        amt  = svc.get("amount", 0.0)
+        if name and amt:
+            parts.append(f"{name}: ${float(amt):.2f}")
+        elif name:
+            parts.append(name)
+    return " | ".join(p for p in parts if p)
+
+
 def process_dispatch_input() -> dict:
     """Handle a single order from GitHub Actions workflow_dispatch inputs.
 
     Power Automate watches FTF-Invoicing Agent.xlsx and calls workflow_dispatch
     when the user changes Status column from Pending → Approve / Reject / Hold.
     """
-    order_id = os.getenv("INPUT_ORDER_ID", "").strip()
-    action   = os.getenv("INPUT_ACTION",   "").strip().lower()
-    notes    = os.getenv("INPUT_NOTES",    "").strip()
+    order_id       = os.getenv("INPUT_ORDER_ID",  "").strip()
+    action         = os.getenv("INPUT_ACTION",    "").strip().lower()
+    notes          = os.getenv("INPUT_NOTES",     "").strip()
+    excel_amount   = os.getenv("INPUT_AMOUNT",    "").strip()
+    excel_breakdown= os.getenv("INPUT_BREAKDOWN", "").strip()
 
     if not order_id or not action:
         log.warning("workflow_dispatch: INPUT_ORDER_ID or INPUT_ACTION not set")
@@ -286,10 +368,72 @@ def process_dispatch_input() -> dict:
         }
 
     if action == "approve":
+        # ── Amount reconciliation: pick up any user edits to col E (breakdown) or col F (total) ──
+        raw_draft = db_row.get("invoice_draft")
+        draft = json.loads(raw_draft) if isinstance(raw_draft, str) else (raw_draft or {})
+        orig_total = float(draft.get("total_amount", 0) or 0)
+
+        parsed_breakdown = _parse_breakdown_str(excel_breakdown)
+        orig_service_amounts = {
+            (s.get("name") or "").lower(): float(s.get("amount", 0))
+            for s in draft.get("services", [])
+        }
+        # Detect whether the user changed per-service amounts in the breakdown cell
+        amounts_changed = parsed_breakdown and any(
+            abs(item["amount"] - orig_service_amounts.get(item["name"].lower(), -1)) > 0.01
+            for item in parsed_breakdown
+        )
+
+        try:
+            excel_total = float(excel_amount.replace(",", "").replace("$", ""))
+        except (ValueError, TypeError):
+            excel_total = orig_total
+
+        total_changed = abs(excel_total - orig_total) > 0.01
+
+        if amounts_changed:
+            # User edited individual service amounts — use breakdown values, recalculate total
+            draft = _apply_breakdown_override(draft, parsed_breakdown)
+            log.info(
+                "dispatch: order=%s breakdown-level price edit applied, new total=%.2f",
+                order_id, draft["total_amount"],
+            )
+        elif total_changed:
+            # User edited total only — distribute proportionally
+            draft = _apply_total_override(draft, excel_total)
+            log.info(
+                "dispatch: order=%s total-only price edit applied %.2f→%.2f",
+                order_id, orig_total, excel_total,
+            )
+
+        # Write reconciled values back to Excel so both columns stay in sync
+        if amounts_changed or total_changed:
+            new_breakdown = _build_breakdown_str_from_draft(draft.get("services", []))
+            try:
+                from core.onedrive_excel_client import sync_approval_amounts
+                sync_approval_amounts(order_id, draft["total_amount"], new_breakdown)
+            except Exception as exc:
+                log.warning("sync_approval_amounts failed order=%s (non-fatal): %s", order_id, exc)
+            # Persist the updated draft
+            save_order_state(order_id, invoice_draft=json.dumps(draft, default=str))
+            # Save a learned price rule when user explicitly changed the amount
+            service_type = db_row.get("service_type", "")
+            raw_sources = db_row.get("data_sources")
+            ds = json.loads(raw_sources) if isinstance(raw_sources, str) else (raw_sources or {})
+            county = (ds.get("packet") or {}).get("property_county", {}).get("value", "")
+            _save_learned_price(
+                service_type=service_type,
+                county=county,
+                amount=draft["total_amount"],
+                learned_from="excel_edit",
+                order_id=order_id,
+            )
+
         save_order_state(order_id, status="invoice_approved", approved_by="prateek")
         log_decision(AGENT_NAME, "invoice_approved", order_id=order_id,
                      reason="Approved via OneDrive Excel / Power Automate",
-                     input_summary=f"notes={notes}", output_summary="status → invoice_approved")
+                     input_summary=f"notes={notes} amounts_changed={amounts_changed} total_changed={total_changed}",
+                     output_summary="status → invoice_approved")
         log.info("dispatch: approved order=%s", order_id)
 
     elif action == "reject":

@@ -53,9 +53,11 @@ if __name__ == "__main__":
         action   = item["action"]   # approve / reject / hold
         notes    = item["notes"]
 
-        os.environ["INPUT_ORDER_ID"] = order_id
-        os.environ["INPUT_ACTION"]   = action
-        os.environ["INPUT_NOTES"]    = notes
+        os.environ["INPUT_ORDER_ID"]  = order_id
+        os.environ["INPUT_ACTION"]    = action
+        os.environ["INPUT_NOTES"]     = notes
+        os.environ["INPUT_AMOUNT"]    = str(item.get("amount_cell", ""))
+        os.environ["INPUT_BREAKDOWN"] = str(item.get("breakdown_cell", ""))
 
         try:
             r = process_dispatch_input()

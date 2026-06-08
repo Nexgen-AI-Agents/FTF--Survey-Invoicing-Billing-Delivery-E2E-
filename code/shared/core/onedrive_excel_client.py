@@ -39,7 +39,7 @@ _cache: dict = {}
 
 # Guide tab — bump version string whenever guide content changes to force a re-write
 GUIDE_SHEET_NAME = "Pipeline Guide"
-_GUIDE_VERSION   = "v5"   # increment when guide content changes
+_GUIDE_VERSION   = "v6"   # increment when guide content changes
 
 # Pricing Rules tab — user-editable table of override prices
 PRICING_RULES_SHEET_NAME  = "Pricing Rules"
@@ -52,7 +52,7 @@ _PR_COL_COUNT = len(PRICING_RULES_HEADERS)   # 8
 
 # Column order must stay in sync with append_approval_row() values list
 APPROVAL_HEADERS = [
-    "Order ID", "Order Status", "Client Name", "Property Address", "Service",
+    "Order ID", "Order Status", "Client Name", "Property Address", "Service / Breakdown",
     "Amount ($)", "Confidence", "Escalate", "FTF Link",
     "Action", "Notes", "Posted At", "Processed At",
 ]
@@ -607,8 +607,8 @@ def ensure_guide_sheet() -> None:
             ["Order Status",      "Current FTF status (In Progress, Complete, Field, etc.)"],
             ["Client Name",       "Client or title company who placed the order."],
             ["Property Address",  "Survey site address — the property to be surveyed."],
-            ["Service",           "Survey service type. 'CONDO — Cannot Survey' = order cannot be processed."],
-            ["Amount ($)",        "Invoice amount in USD. For MANUAL PRICING rows: type correct amount here before setting Action = Approve."],
+            ["Service / Breakdown", "AI-priced services with individual amounts. Example: 'Boundary Survey: $475.00 | Elevation Cert: $150.00'. Edit amounts here to change per-service prices before approving. Pipe (|) separates services. 'CONDO — Cannot Survey' = order cannot be processed."],
+            ["Amount ($)",        "Total invoice amount. Edit this for a simple total override (pipeline distributes proportionally across services). For precise per-service changes, edit 'Service / Breakdown' instead. For MANUAL PRICING rows: type correct amount here before setting Action = Approve."],
             ["Confidence",        "HIGH = very likely correct. MEDIUM = reasonable estimate. LOW = AI had limited data. N/A = condo or manual pricing."],
             ["Escalate",          "Yes = AI flagged unusual order. Robert or Ryan should review before approving."],
             ["FTF Link",          "Click 'View Order' to open in FieldToFinish."],
@@ -973,10 +973,12 @@ def get_pending_approvals() -> list[dict]:
         if len(vals) < _COL_COUNT:
             vals = list(vals) + [""] * (_COL_COUNT - len(vals))
 
-        order_id     = str(vals[0]).strip()
-        action_raw   = str(vals[_COL_ACTION]).strip()
-        processed_at = str(vals[_COL_PROCESSED_AT]).strip()
-        notes        = str(vals[10]).strip()   # col K
+        order_id       = str(vals[0]).strip()
+        action_raw     = str(vals[_COL_ACTION]).strip()
+        processed_at   = str(vals[_COL_PROCESSED_AT]).strip()
+        notes          = str(vals[10]).strip()   # col K
+        amount_cell    = str(vals[5]).strip()    # col F — Amount ($), user may have edited
+        breakdown_cell = str(vals[4]).strip()    # col E — Service / Breakdown
 
         if not order_id or not action_raw or processed_at:
             continue   # blank action or already processed
@@ -985,7 +987,13 @@ def get_pending_approvals() -> list[dict]:
         if not action_norm:
             continue   # unrecognised value in Action column
 
-        results.append({"order_id": order_id, "action": action_norm, "notes": notes})
+        results.append({
+            "order_id":      order_id,
+            "action":        action_norm,
+            "notes":         notes,
+            "amount_cell":   amount_cell,
+            "breakdown_cell": breakdown_cell,
+        })
 
     log.info("get_pending_approvals: %d pending decisions found", len(results))
     return results
@@ -1019,3 +1027,40 @@ def mark_row_processed(order_id: str) -> None:
             return
 
     log.warning("mark_row_processed: order_id=%s not found in Excel", order_id)
+
+
+def sync_approval_amounts(order_id: str, new_total: float, new_breakdown_str: str) -> None:
+    """Write the reconciled breakdown string (col E) and total (col F) back to Excel.
+
+    Called by A4 after amount reconciliation so both columns stay consistent with
+    the approved invoice_draft — regardless of whether the user edited the total,
+    the breakdown, or both.
+    """
+    base = _wb_base()
+    h    = _session_headers()
+
+    r = httpx.get(
+        f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows",
+        headers=h, timeout=15.0,
+    )
+    r.raise_for_status()
+
+    for row in reversed(r.json().get("value", [])):
+        vals = row.get("values", [[]])[0]
+        if len(vals) >= 1 and str(vals[0]) == str(order_id):
+            idx       = row["index"]
+            excel_row = idx + 2   # 0-based table index + header + 1
+            # PATCH col E (breakdown) and col F (total) as adjacent range E:F
+            httpx.patch(
+                f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='E{excel_row}:F{excel_row}')",
+                headers=h,
+                json={"values": [[new_breakdown_str, new_total]]},
+                timeout=15.0,
+            ).raise_for_status()
+            log.info(
+                "sync_approval_amounts: order=%s total=%.2f breakdown written back to Excel",
+                order_id, new_total,
+            )
+            return
+
+    log.warning("sync_approval_amounts: order_id=%s not found in Excel", order_id)

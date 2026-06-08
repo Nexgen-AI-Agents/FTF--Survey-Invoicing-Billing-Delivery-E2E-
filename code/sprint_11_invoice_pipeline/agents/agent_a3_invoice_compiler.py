@@ -130,6 +130,26 @@ def _load_learned_rules(order_id: str = "") -> str:
         return ""
 
 
+# ── Service breakdown string ──────────────────────────────────────────────────
+
+def _build_breakdown_str(services: list) -> str:
+    """Build the 'Service / Breakdown' string for the Excel approval column.
+
+    Single service:  'Boundary Survey: $475.00'
+    Multi-service:   'Boundary Survey: $475.00 | Elevation Cert: $150.00'
+    No amount:       'Boundary Survey'  (fallback for pricing_needed/condo)
+    """
+    parts = []
+    for svc in services:
+        name = (svc.get("name") or "").strip()
+        amt  = svc.get("amount", 0.0)
+        if name and amt:
+            parts.append(f"{name}: ${float(amt):.2f}")
+        elif name:
+            parts.append(name)
+    return " | ".join(p for p in parts if p)
+
+
 # ── Client tier classification ────────────────────────────────────────────────
 
 def _classify_client_tier(company_info: dict) -> str:
@@ -574,10 +594,10 @@ def compile_for_order(order_id: str) -> dict:
         return ai_result
 
     # ── 5. Write row to OneDrive approval spreadsheet ─────────────────────────
-    client_name = packet.get("client_name", {}).get("value") or company_info.get("company_name") or ""
-    address     = packet.get("property_address", {}).get("value") or order_details.get("ng_property_address") or ""
-    svc_names   = ", ".join(s.get("name", "") for s in ai_result.get("services", []))
-    posted_at   = datetime.now(_EASTERN).strftime("%Y-%m-%d %H:%M %Z")
+    client_name   = packet.get("client_name", {}).get("value") or company_info.get("company_name") or ""
+    address       = packet.get("property_address", {}).get("value") or order_details.get("ng_property_address") or ""
+    svc_breakdown = _build_breakdown_str(ai_result.get("services", []))
+    posted_at     = datetime.now(_EASTERN).strftime("%Y-%m-%d %H:%M %Z")
 
     escalate_flag   = bool(ai_result.get("escalate_flag"))
     if escalate_flag:
@@ -596,7 +616,7 @@ def compile_for_order(order_id: str) -> dict:
             order_id     = order_id,
             client_name  = client_name,
             address      = address,
-            service      = svc_names or service_type or "",
+            service      = svc_breakdown or service_type or "",
             amount       = ai_result.get("total_amount", 0),
             confidence   = ai_result.get("confidence", "MEDIUM"),
             escalate     = escalate_flag,
