@@ -1,0 +1,14 @@
+{
+  "rules": [
+    {
+      "rule_id": "1",
+      "service": "*",
+      "county": "*",
+      "client": "*",
+      "price": 0.0,
+      "priority": 999,
+      "notes": "EXAMPLE \u2014 delete this. Set Price=0 to keep AI pricing. * = match anything."
+    }
+  ],
+  "synced_at": "2026-06-08T11:15:35.303259-04:00"
+}
