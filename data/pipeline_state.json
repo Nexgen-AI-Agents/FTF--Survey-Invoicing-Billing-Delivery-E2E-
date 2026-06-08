@@ -2162,7 +2162,7 @@
     },
     {
       "order_id": "1000279855",
-      "status": "invoice_draft_posted",
+      "status": "invoice_sent",
       "service_type": "Acreage, Site Plan",
       "customer_email": "veenu_b@nexgenlogix.com",
       "client_name": "Nexgen Land Solutions, LLC",
@@ -2171,17 +2171,17 @@
       "data_sources": "{\"ftf_order\": {\"data\": {\"company_id\": 201801311053398445, \"created_at\": \"2026-03-06T10:13:48\", \"customer_email\": \"veenu_b@nexgenlogix.com\", \"customer_id\": 201904111121065389, \"customer_name\": \"Veenu Singh\", \"customer_type\": \"b2b\", \"delivered_at\": null, \"due_amount\": 300.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": null, \"invoiced\": false, \"order_id\": 1000279855, \"paid\": false, \"property_address\": \"1547 PROSPERITY FARMS RD\", \"property_city\": \"LAKE PARK\", \"property_county\": \"Palm Beach County\", \"property_lat\": \"26.8068413\", \"property_lng\": \"-80.0737982\", \"property_state\": \"FLORIDA\", \"property_zip\": \"33403\", \"service_type\": \"Acreage, Site Plan\", \"special_pricing\": true, \"status\": \"On Hold\", \"status_code\": 11, \"updated_at\": \"2026-04-15T03:41:20\"}, \"success\": true, \"order_id\": \"1000279855\", \"customer_email\": \"veenu_b@nexgenlogix.com\", \"service_type\": \"Acreage, Site Plan\", \"county\": \"\", \"property_address\": \"1547 PROSPERITY FARMS RD\", \"customer_name\": \"Nexgen Land Solutions, LLC\"}, \"ftf_customer\": {}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": null, \"source_url\": null, \"confidence\": \"LOW\", \"error\": \"No county provided\"}, \"aerial_analysis\": {}, \"packet\": {\"client_name\": {\"value\": \"Nexgen Land Solutions, LLC\", \"confidence\": \"MEDIUM\"}, \"client_email\": {\"value\": \"veenu_b@nexgenlogix.com\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"1547 PROSPERITY FARMS RD, LAKE PARK, FL 33403\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Palm Beach County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"Acreage Survey\", \"Site Plan\"], \"confidence\": \"HIGH\", \"notes\": \"Parsed from service_type field 'Acreage, Site Plan'; special_pricing flag is true which may affect scope or pricing\"}, \"special_requirements\": {\"value\": \"Special pricing applied; order currently On Hold\", \"confidence\": \"MEDIUM\"}, \"lot_size\": {\"value\": null, \"confidence\": \"LOW\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": null, \"confidence\": \"LOW\"}, \"property_features\": {\"value\": {}, \"confidence\": \"LOW\", \"notes\": \"No property feature data available; county appraiser unavailable and no emails or attachments provided\"}, \"client_tier\": {\"value\": \"b2b\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"ftf_only\", \"gaps\": [\"Client name discrepancy: order lists 'Veenu Singh' as customer_name but top-level field shows 'Nexgen Land Solutions, LLC' \\u2014 confirm correct billing entity\", \"Lot size / acreage unknown \\u2014 critical for Acreage Survey scoping and pricing\", \"Legal description not provided\", \"Property features unknown (pool, structures, fencing, etc.)\", \"Structure square footage unknown\", \"Reason for 'On Hold' status not specified \\u2014 requires human review before proceeding\", \"No fieldwork or delivery dates scheduled\", \"County property appraiser data unavailable \\u2014 no county was passed to lookup\", \"Special pricing details not documented \\u2014 confirm agreed rate\", \"No supporting emails or attachments found to supplement order data\"], \"summary\": \"B2B order for an Acreage Survey and Site Plan at 1547 Prosperity Farms Rd, Lake Park, FL (Palm Beach County) for Nexgen Land Solutions, LLC, currently On Hold with special pricing applied and a $300 due balance, pending key property details and resolution of the hold status.\"}}",
       "approval_message_id": "1000279855",
       "modification_count": 0,
-      "invoice_id": null,
+      "invoice_id": "349438",
       "data_collected_at": "2026-06-02T16:21:18.792887+00:00",
       "draft_posted_at": "2026-06-05 23:16 UTC",
-      "invoice_created_at": null,
+      "invoice_created_at": "2026-06-08T14:07:06.876207+00:00",
       "processed_reply_ids": null,
-      "approved_by": null,
-      "sent_at": null,
+      "approved_by": "prateek",
+      "sent_at": "2026-06-08T14:07:22.260886+00:00",
       "estimate_amount": 800,
       "deferred_until": null,
       "created_at": "2026-06-02T16:08:13.736955+00:00",
-      "updated_at": "2026-06-05T23:16:59.456209+00:00",
+      "updated_at": "2026-06-08T14:07:22.350887+00:00",
       "pay_link": null
     },
     {
@@ -10107,14 +10107,14 @@
   ],
   "status_counts": {
     "permanently_excluded": 8,
-    "invoice_draft_posted": 307,
+    "invoice_draft_posted": 306,
     "pricing_needed": 73,
     "condo_rejected": 12,
-    "invoice_sent": 13,
+    "invoice_sent": 14,
     "on_hold": 2,
     "invoice_rejected": 4,
     "details_missing": 2
   },
   "total": 421,
-  "generated_at": "2026-06-08T14:05:37.525425+00:00"
+  "generated_at": "2026-06-08T14:07:22.804416+00:00"
 }
