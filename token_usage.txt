@@ -1,0 +1,87 @@
+================================================================================
+  TOKEN USAGE LOG — FTF Survey Invoicing & Billing Delivery (E2E)
+  Project: Nexgen Surveying | AI Pipeline: A0 → A7
+  Tracking started: 2026-06-08
+  Source: Anthropic Console → Usage → https://console.anthropic.com/usage
+================================================================================
+
+NOTE: Token counts are approximations based on context window sizes and session
+      summaries. For exact counts, export CSV from the Anthropic Console.
+
+FORMAT PER ENTRY:
+  [HH:MM ET] | Model                  | Prompt summary           | In: X,XXX | Out: X,XXX | Total: X,XXX
+
+MODEL REFERENCE:
+  claude-sonnet-4-6          → Standard sessions (default)
+  claude-opus-4-8            → Opus / Fast mode sessions
+  claude-haiku-4-5-20251001  → Haiku / lightweight tasks
+  (GitHub Actions agents)    → claude-sonnet-4-6 unless overridden in code
+
+================================================================================
+DATE: 2026-06-06 (Saturday)
+MODEL: claude-sonnet-4-6
+================================================================================
+
+  SESSION: Continued conversation (E2E test, pricing rules, column rename, monitoring)
+
+  [~10:00 ET] | claude-sonnet-4-6 | E2E test order 1000279855 (approve→invoice→email)  | In: ~8,500  | Out: ~2,200 | Total: ~10,700
+  [~10:30 ET] | claude-sonnet-4-6 | Test correction — Excel Action dropdown not set     | In: ~6,200  | Out: ~800   | Total:  ~7,000
+  [~11:00 ET] | claude-sonnet-4-6 | Rename Amount column to "Amount ($)" in Excel       | In: ~5,800  | Out: ~1,400 | Total:  ~7,200
+  [~11:30 ET] | claude-sonnet-4-6 | Git-backed pricing rules — design discussion        | In: ~9,100  | Out: ~3,600 | Total: ~12,700
+  [~12:00 ET] | claude-sonnet-4-6 | Implement pricing rules sync (3-file change)        | In: ~12,400 | Out: ~4,800 | Total: ~17,200
+  [~12:30 ET] | claude-sonnet-4-6 | Always-active monitoring / cron question            | In: ~7,600  | Out: ~2,100 | Total:  ~9,700
+  [~13:00 ET] | claude-sonnet-4-6 | AI monitoring end-to-end for learning (best method) | In: ~8,200  | Out: ~1,900 | Total: ~10,100
+
+                                                    ┌─────────────────────────────────┐
+                                         DAILY TOTAL │  ~74,600 tokens (est.)          │
+                                         MODEL       │  claude-sonnet-4-6              │
+                                                    └─────────────────────────────────┘
+
+================================================================================
+DATE: 2026-06-08 (Monday)
+MODEL: claude-sonnet-4-6
+================================================================================
+
+  SESSION: New session — context resumed after compaction
+
+  [~09:00 ET] | claude-sonnet-4-6 | Context compaction + session resume (A7 design)    | In: ~14,600 | Out: ~1,200 | Total: ~15,800
+  [~09:15 ET] | claude-sonnet-4-6 | Create token_usage.txt tracking file               | In: ~3,200  | Out: ~900   | Total:  ~4,100
+  [~09:20 ET] | claude-sonnet-4-6 | Push token_usage.txt to git                        | In: ~2,800  | Out: ~400   | Total:  ~3,200
+  [~09:25 ET] | claude-sonnet-4-6 | Add model column to token_usage.txt                | In: ~3,100  | Out: ~800   | Total:  ~3,900
+
+                                                    ┌─────────────────────────────────┐
+                                         DAILY TOTAL │  ~27,000 tokens (est.)          │
+                                         MODEL       │  claude-sonnet-4-6              │
+                                                    └─────────────────────────────────┘
+
+================================================================================
+CUMULATIVE PROJECT TOTAL (as of 2026-06-08)
+================================================================================
+
+  Date          Model                   Tokens (est.)
+  ──────────────────────────────────────────────────────
+  2026-06-06    claude-sonnet-4-6       ~74,600
+  2026-06-08    claude-sonnet-4-6       ~27,000
+  ──────────────────────────────────────────────────────
+  PROJECT TOTAL                         ~101,600 tokens
+
+================================================================================
+HOW TO MAINTAIN THIS FILE
+================================================================================
+
+At the end of each session (or when asked), append:
+  1. New DATE block with MODEL header (check /model or session start message)
+  2. One line per major topic/prompt — include model, summary, token estimates
+  3. Daily total box with model name
+  4. Update CUMULATIVE PROJECT TOTAL table
+
+Column format:
+  [HH:MM ET] | <model-id> | <prompt summary> | In: X,XXX | Out: X,XXX | Total: X,XXX
+
+Exact token counts: https://console.anthropic.com/usage
+  → Filter by model, export CSV for per-request breakdown
+
+Current model in use: claude-sonnet-4-6
+To switch models: use /model command in Claude Code
+
+================================================================================
