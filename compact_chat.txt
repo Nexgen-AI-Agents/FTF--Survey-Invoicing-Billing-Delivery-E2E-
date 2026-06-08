@@ -1,0 +1,84 @@
+================================================================================
+  COMPACT CHAT LOG — FTF Survey Invoicing & Billing Delivery (E2E)
+  Project: Nexgen Surveying | AI Pipeline: A0 → A7
+  Tracking started: 2026-06-08
+  Purpose: Records every /compact event — timestamp, tokens freed, context saved
+================================================================================
+
+NOTE: Token counts are estimates. Context window = 200,000 tokens (claude-sonnet-4-6).
+      "Tokens freed" = tokens before compact − tokens in summary passed forward.
+      Exact counts available at: https://console.anthropic.com/usage
+
+FORMAT PER ENTRY:
+  [HH:MM ET]  Tokens before: X,XXX  |  After: X,XXX  |  Freed: X,XXX  |  Saved: XX%
+
+================================================================================
+DATE: 2026-06-08 (Monday)
+================================================================================
+
+  COMPACT #1
+  Time              : ~09:00 ET
+  Triggered by      : User (/compact command)
+  Model             : claude-sonnet-4-6
+  Context state     : Long session from 2026-06-06 covering E2E test, pricing
+                      rules sync, column rename, monitoring design discussion
+  Tokens before     : ~185,000 (estimated — near context limit)
+  Tokens after      : ~22,000  (estimated — summary + new session context)
+  Tokens freed      : ~163,000 (estimated)
+  Context saved     : ~88%
+  Summary written   : Yes — full session summary injected as system context
+
+  ─────────────────────────────────────────────────────────────────────────────
+
+  COMPACT #2
+  Time              : ~10:30 ET
+  Triggered by      : User (/compact command)
+  Model             : claude-sonnet-4-6
+  Context state     : Session covering token_usage.txt creation, compact_chat.txt
+                      creation, Stop hook (token_log_hook.py), CLAUDE.md rule
+                      for auto-tracking, git push coordination
+  Tokens before     : ~155,000 (estimated — large resumed context + session)
+  Tokens after      : ~22,000  (estimated — summary + new session context)
+  Tokens freed      : ~133,000 (estimated)
+  Context saved     : ~86%
+  Summary written   : Yes — full session summary injected as system context
+
+  ─────────────────────────────────────────────────────────────────────────────
+  DATE TOTAL: 2 compactions | ~296,000 tokens freed
+  ─────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+CUMULATIVE SUMMARY (updated 2026-06-08 ~10:30 ET)
+================================================================================
+
+  #   Date          Time        Model               Before     After     Freed    Saved
+  ─────────────────────────────────────────────────────────────────────────────────────
+  1   2026-06-08    ~09:00 ET   claude-sonnet-4-6   ~185,000   ~22,000   ~163,000  ~88%
+  2   2026-06-08    ~10:30 ET   claude-sonnet-4-6   ~155,000   ~22,000   ~133,000  ~86%
+  ─────────────────────────────────────────────────────────────────────────────────────
+  TOTAL COMPACTIONS : 2
+  TOTAL TOKENS FREED: ~296,000
+
+================================================================================
+HOW TO MAINTAIN THIS FILE
+================================================================================
+
+Whenever /compact is used:
+  1. Note the current time (ET)
+  2. Estimate tokens before: check if near context limit (~180,000-195,000)
+     OR use previous token_usage.txt daily total as a proxy
+  3. Estimate tokens after: typically 15,000-25,000 (summary size)
+  4. Add a new COMPACT entry under today's DATE block
+  5. Update DATE TOTAL and CUMULATIVE SUMMARY
+  6. Run: git add compact_chat.txt && git commit -m "chore: update compact log [skip ci]" && git push origin main
+
+Auto-update rule:
+  This file is also updated by the Stop hook (scripts/token_log_hook.py)
+  and the mandatory CLAUDE.md rule — no manual action needed.
+
+Context window reference:
+  claude-sonnet-4-6  : 200,000 tokens max
+  claude-opus-4-8    : 200,000 tokens max
+  claude-haiku-4-5   : 200,000 tokens max
+
+================================================================================

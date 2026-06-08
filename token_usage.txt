@@ -48,9 +48,13 @@ MODEL: claude-sonnet-4-6
   [~09:15 ET] | claude-sonnet-4-6 | Create token_usage.txt tracking file               | In: ~3,200  | Out: ~900   | Total:  ~4,100
   [~09:20 ET] | claude-sonnet-4-6 | Push token_usage.txt to git                        | In: ~2,800  | Out: ~400   | Total:  ~3,200
   [~09:25 ET] | claude-sonnet-4-6 | Add model column to token_usage.txt                | In: ~3,100  | Out: ~800   | Total:  ~3,900
+  [~09:30 ET] | claude-sonnet-4-6 | Create Stop hook (token_log_hook.py)               | In: ~8,400  | Out: ~3,200 | Total: ~11,600
+  [~09:45 ET] | claude-sonnet-4-6 | Create compact_chat.txt + COMPACT #1 entry         | In: ~7,600  | Out: ~2,800 | Total: ~10,400
+  [~10:00 ET] | claude-sonnet-4-6 | CLAUDE.md compact rule — blocked, manual steps     | In: ~5,200  | Out: ~1,100 | Total:  ~6,300
+  [~10:30 ET] | claude-sonnet-4-6 | /compact #2 — session resumed, auto-update compact | In: ~4,800  | Out: ~800   | Total:  ~5,600
 
                                                     ┌─────────────────────────────────┐
-                                         DAILY TOTAL │  ~27,000 tokens (est.)          │
+                                         DAILY TOTAL │  ~60,800 tokens (est.)          │
                                          MODEL       │  claude-sonnet-4-6              │
                                                     └─────────────────────────────────┘
 
@@ -61,9 +65,9 @@ CUMULATIVE PROJECT TOTAL (as of 2026-06-08)
   Date          Model                   Tokens (est.)
   ──────────────────────────────────────────────────────
   2026-06-06    claude-sonnet-4-6       ~74,600
-  2026-06-08    claude-sonnet-4-6       ~27,000
+  2026-06-08    claude-sonnet-4-6       ~60,800
   ──────────────────────────────────────────────────────
-  PROJECT TOTAL                         ~101,600 tokens
+  PROJECT TOTAL                         ~135,400 tokens
 
 ================================================================================
 HOW TO MAINTAIN THIS FILE
