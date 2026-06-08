@@ -9,6 +9,8 @@ Required Graph permissions (application):
 """
 
 import base64
+import json
+import os
 import time
 import urllib.parse
 from datetime import datetime, timezone
@@ -335,23 +337,79 @@ def ensure_pricing_rules_sheet() -> None:
         log.warning("ensure_pricing_rules_sheet failed (non-fatal): %s", exc)
 
 
-# ── In-memory cache for pricing rules (refreshed once per pipeline run) ───────
+# ── Pricing rules — in-memory cache + git-backed JSON file ───────────────────
 _pricing_rules_cache: list | None = None
+
+# Committed to git every pipeline run — zero OneDrive dependency for reads
+_PRICING_RULES_FILE = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "pricing_rules.json")
+)
+
+
+def _parse_rules_from_excel_rows(rows: list) -> list[dict]:
+    """Parse raw Graph API table rows into rule dicts. Shared by fetch and sync."""
+    rules = []
+    for row in rows:
+        vals = (row.get("values") or [[]])[0]
+        if len(vals) < _PR_COL_COUNT:
+            vals = list(vals) + [""] * (_PR_COL_COUNT - len(vals))
+
+        if str(vals[1]).strip().lower() != "active":
+            continue
+
+        price = 0.0
+        try:
+            price = float(vals[5])
+        except (ValueError, TypeError):
+            pass
+
+        priority = 999
+        try:
+            priority = int(float(vals[6]))
+        except (ValueError, TypeError):
+            pass
+
+        rules.append({
+            "rule_id":  str(vals[0]).strip(),
+            "service":  str(vals[2]).strip() or "*",
+            "county":   str(vals[3]).strip() or "*",
+            "client":   str(vals[4]).strip() or "*",
+            "price":    price,
+            "priority": priority,
+            "notes":    str(vals[7]).strip() if len(vals) > 7 else "",
+        })
+    rules.sort(key=lambda r: r["priority"])
+    return rules
 
 
 def get_pricing_rules() -> list[dict]:
-    """Return active pricing rules from the 'Pricing Rules' tab.
+    """Return active pricing rules, sorted by Priority (lower = higher priority).
 
-    Rules are sorted by Priority (ascending — lower number = higher priority).
-    Cached for the duration of the pipeline run — call invalidate if needed.
+    Read order:
+      1. In-memory cache (fastest — populated by sync_pricing_rules_to_json at run start)
+      2. data/pricing_rules.json (git-backed — survives OneDrive outages)
+      3. OneDrive Excel API (fresh fetch — used when JSON file is absent)
 
-    Each rule dict: {service, county, client, price, priority, notes}
+    Each rule dict: {rule_id, service, county, client, price, priority, notes}
     Pattern values: '*' matches anything; otherwise case-insensitive substring match.
     """
     global _pricing_rules_cache
     if _pricing_rules_cache is not None:
         return _pricing_rules_cache
 
+    # Try git-backed JSON file first (no API call needed)
+    if os.path.exists(_PRICING_RULES_FILE):
+        try:
+            with open(_PRICING_RULES_FILE) as f:
+                data = json.load(f)
+            rules = data.get("rules", [])
+            _pricing_rules_cache = rules
+            log.info("get_pricing_rules: %d rules loaded from pricing_rules.json", len(rules))
+            return rules
+        except Exception as exc:
+            log.warning("get_pricing_rules: JSON file unreadable (%s) — falling back to Excel", exc)
+
+    # Fall back to Excel API
     try:
         ensure_pricing_rules_sheet()
         r = httpx.get(
@@ -364,47 +422,56 @@ def get_pricing_rules() -> list[dict]:
             _pricing_rules_cache = []
             return []
 
-        rules = []
-        for row in r.json().get("value", []):
-            vals = (row.get("values") or [[]])[0]
-            if len(vals) < _PR_COL_COUNT:
-                vals = list(vals) + [""] * (_PR_COL_COUNT - len(vals))
-
-            status  = str(vals[1]).strip()
-            if status.lower() != "active":
-                continue
-
-            price = 0.0
-            try:
-                price = float(vals[5])
-            except (ValueError, TypeError):
-                pass
-
-            priority = 999
-            try:
-                priority = int(float(vals[6]))
-            except (ValueError, TypeError):
-                pass
-
-            rules.append({
-                "rule_id":  str(vals[0]).strip(),
-                "service":  str(vals[2]).strip() or "*",
-                "county":   str(vals[3]).strip() or "*",
-                "client":   str(vals[4]).strip() or "*",
-                "price":    price,
-                "priority": priority,
-                "notes":    str(vals[7]).strip() if len(vals) > 7 else "",
-            })
-
-        rules.sort(key=lambda r: r["priority"])
+        rules = _parse_rules_from_excel_rows(r.json().get("value", []))
         _pricing_rules_cache = rules
-        log.info("get_pricing_rules: %d active rules loaded", len(rules))
+        log.info("get_pricing_rules: %d active rules loaded from Excel", len(rules))
         return rules
 
     except Exception as exc:
         log.warning("get_pricing_rules failed — no rules applied: %s", exc)
         _pricing_rules_cache = []
         return []
+
+
+def sync_pricing_rules_to_json() -> int:
+    """Fetch latest pricing rules from Excel and write to data/pricing_rules.json.
+
+    Called once at pipeline start (A0). Subsequent calls to get_pricing_rules()
+    within the same run hit the in-memory cache — no further API calls.
+
+    If OneDrive is unreachable, the existing pricing_rules.json (committed to git
+    from the previous run) is left untouched and used as fallback.
+
+    Returns number of active rules synced.
+    """
+    global _pricing_rules_cache
+    # Clear cache so we force a fresh fetch from Excel
+    _pricing_rules_cache = None
+
+    try:
+        ensure_pricing_rules_sheet()
+        r = httpx.get(
+            f"{_wb_base()}/worksheets/{PRICING_RULES_SHEET_NAME}/tables/{PRICING_RULES_TABLE_NAME}/rows",
+            headers=_session_headers(),
+            timeout=15.0,
+        )
+        if not r.is_success:
+            log.warning("sync_pricing_rules_to_json: Excel read failed (%d) — keeping existing JSON", r.status_code)
+            return 0
+
+        rules = _parse_rules_from_excel_rows(r.json().get("value", []))
+
+        os.makedirs(os.path.dirname(_PRICING_RULES_FILE), exist_ok=True)
+        with open(_PRICING_RULES_FILE, "w") as f:
+            json.dump({"rules": rules, "synced_at": datetime.now(_EASTERN).isoformat()}, f, indent=2)
+
+        _pricing_rules_cache = rules
+        log.info("sync_pricing_rules_to_json: %d rules synced → pricing_rules.json", len(rules))
+        return len(rules)
+
+    except Exception as exc:
+        log.warning("sync_pricing_rules_to_json failed — existing JSON unchanged: %s", exc)
+        return 0
 
 
 def match_pricing_rule(service: str, county: str, client: str) -> dict | None:
