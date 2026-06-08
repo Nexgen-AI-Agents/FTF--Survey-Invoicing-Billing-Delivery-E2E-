@@ -51,7 +51,7 @@ _PR_COL_COUNT = len(PRICING_RULES_HEADERS)   # 8
 # Column order must stay in sync with append_approval_row() values list
 APPROVAL_HEADERS = [
     "Order ID", "Order Status", "Client Name", "Property Address", "Service",
-    "Amount", "Confidence", "Escalate", "FTF Link",
+    "Amount ($)", "Confidence", "Escalate", "FTF Link",
     "Action", "Notes", "Posted At", "Processed At",
 ]
 _COL_COUNT        = len(APPROVAL_HEADERS)   # 13
@@ -541,7 +541,7 @@ def ensure_guide_sheet() -> None:
             ["Client Name",       "Client or title company who placed the order."],
             ["Property Address",  "Survey site address — the property to be surveyed."],
             ["Service",           "Survey service type. 'CONDO — Cannot Survey' = order cannot be processed."],
-            ["Amount",            "Invoice amount in USD. For MANUAL PRICING rows: type correct amount here before setting Action = Approve."],
+            ["Amount ($)",        "Invoice amount in USD. For MANUAL PRICING rows: type correct amount here before setting Action = Approve."],
             ["Confidence",        "HIGH = very likely correct. MEDIUM = reasonable estimate. LOW = AI had limited data. N/A = condo or manual pricing."],
             ["Escalate",          "Yes = AI flagged unusual order. Robert or Ryan should review before approving."],
             ["FTF Link",          "Click 'View Order' to open in FieldToFinish."],
@@ -558,7 +558,7 @@ def ensure_guide_sheet() -> None:
             ["", ""],
             ["── NOTES FIELD GUIDE ──", ""],
             ["CONDO ORDER —",             "Cannot survey. Row is AUTO-REJECTED. Contact client — arrange refund or redirect to interior measurement."],
-            ["MANUAL PRICING REQUIRED —", "AI could not price. Enter correct amount in Amount cell, then set Action = Approve."],
+            ["MANUAL PRICING REQUIRED —", "AI could not price. Enter correct amount in Amount ($) cell, then set Action = Approve."],
             ["ESCALATE —",               "Unusual order (large lot, commercial, FEMA zone, duplicate). Get Robert or Ryan to review."],
             ["(empty notes)",             "Standard order. AI is confident. Review amount and service, then approve if correct."],
             ["", ""],
