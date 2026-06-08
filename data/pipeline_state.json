@@ -10115,11 +10115,6 @@
     "invoice_rejected": 4,
     "details_missing": 2
   },
-<<<<<<< Updated upstream
   "total": 421,
-  "generated_at": "2026-06-08T14:00:33.222663+00:00"
-=======
-  "total": 419,
-  "generated_at": "2026-06-08T14:00:37.126210+00:00"
->>>>>>> Stashed changes
+  "generated_at": "2026-06-08T14:05:37.525425+00:00"
 }
