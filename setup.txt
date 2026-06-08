@@ -1,0 +1,376 @@
+================================================================================
+  SETUP GUIDE — FTF Survey Invoicing & Billing Delivery (E2E)
+  Project: Nexgen Surveying | AI Pipeline: A0 → A7
+  Target: AWS + GitHub Actions
+  Updated: 2026-06-09
+================================================================================
+
+ARCHITECTURE OVERVIEW
+─────────────────────
+  Compute      : GitHub Actions (ubuntu-latest, Python 3.11)
+  Database     : AWS RDS MySQL — nexgen_ftf_db
+  State Store  : Git-committed Excel + JSON files (data/ directory)
+  AI Engine    : Anthropic Claude API (primary) + OpenAI (fallback)
+  Auth         : Azure AD / Microsoft Graph (OneDrive, Teams, Email)
+  Scheduling   : GitHub Actions cron + Power Automate workflow_dispatch
+  Storage      : GitHub repo + OneDrive (no S3 currently)
+
+No EC2, Lambda, or ECS is used. GitHub Actions IS the compute layer.
+AWS is used only for RDS MySQL.
+
+
+================================================================================
+STEP 1 — AWS RDS MYSQL SETUP
+================================================================================
+
+1.1  Create the RDS Instance
+─────────────────────────────
+  Engine           : MySQL 8.0+
+  Instance class   : db.t3.small (minimum for staging), db.t3.medium for prod
+  Storage          : 20 GB gp2 (auto-scaling enabled)
+  Multi-AZ         : No (staging), Yes (prod)
+  Publicly accessible : YES — GitHub Actions runners use public internet
+  DB name          : nexgen_ftf_db
+  Port             : 3306
+  Username         : (your choice, e.g. nexgen_admin)
+  Password         : (strong password, save for GitHub Secrets)
+
+1.2  Security Group Rules
+──────────────────────────
+  Inbound rule:
+    Type     : MySQL/Aurora
+    Port     : 3306
+    Source   : 0.0.0.0/0   ← OK for staging; tighten for prod
+               OR use GitHub Actions IP ranges from:
+               https://api.github.com/meta  (field: "actions")
+
+  Outbound rule:
+    Type     : All traffic
+    Source   : 0.0.0.0/0
+
+1.3  Database & User Setup
+───────────────────────────
+  Connect to RDS:
+    mysql -h <your-rds-host>.rds.amazonaws.com -u nexgen_admin -p
+
+  Run these SQL commands:
+
+    CREATE DATABASE IF NOT EXISTS nexgen_ftf_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+    CREATE USER 'ftf_pipeline'@'%' IDENTIFIED BY '<strong-password>';
+
+    GRANT SELECT, INSERT, UPDATE, DELETE ON nexgen_ftf_db.* TO 'ftf_pipeline'@'%';
+
+    FLUSH PRIVILEGES;
+
+  Verify:
+    SHOW GRANTS FOR 'ftf_pipeline'@'%';
+
+  NOTE: The pipeline READS from the FTF API for order data. RDS MySQL is used for
+  pipeline state tracking (approved orders, learned rules cache). The FTF app's
+  own database is separate — managed by NexGen IT.
+
+1.4  Verify Connectivity
+─────────────────────────
+  From any machine:
+    curl -v telnet://<your-rds-host>.rds.amazonaws.com:3306
+
+  Should return: "Connected to <host>"
+  If it hangs: security group inbound rule is missing.
+
+
+================================================================================
+STEP 2 — GITHUB REPOSITORY SECRETS
+================================================================================
+
+  Go to: GitHub → Repo → Settings → Secrets and variables → Actions → New repository secret
+
+  Add ALL of the following. Missing even one will cause the pipeline to fail.
+
+  ── FTF API ──────────────────────────────────────────────────────────────────
+  FTF_API_KEY              Your FTF API key from NexGen IT
+  FTF_API_BASE_URL         https://stage.fieldtofinish.jobs/ftf-ai-api/v1
+  FTF_ORDER_URL            https://stage.fieldtofinish.jobs/order
+  FTF_SITE_BASE_URL        https://stage.fieldtofinish.jobs
+  FTF_PAY_HASH_KEY         Fernet key — generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+  FTF_BOOKS_BASE_URL       https://stage.fieldtofinish.jobs
+  FTF_BOOKS_USER           Your FTF Books login username
+  FTF_BOOKS_PASSWORD       Your FTF Books login password
+  FTF_PORTAL_BASE_URL      https://stage.fieldtofinish.jobs
+  FTF_PORTAL_USER          Your FTF portal username
+  FTF_PORTAL_PASS          Your FTF portal password
+
+  ── AWS RDS MYSQL ─────────────────────────────────────────────────────────────
+  MYSQL_HOST               <your-rds-host>.rds.amazonaws.com
+  MYSQL_PORT               3306
+  MYSQL_USER               ftf_pipeline
+  MYSQL_PASSWORD           <password from Step 1.3>
+  MYSQL_DB                 nexgen_ftf_db
+
+  ── AZURE AD (Microsoft Graph, OneDrive, Teams) ───────────────────────────────
+  AZURE_TENANT_ID          Azure AD tenant ID (from Azure Portal → Entra ID)
+  AZURE_APP_ID             App registration client ID
+  AZURE_CLIENT_SECRET      App registration client secret
+  ONEDRIVE_SHARE_URL       Shareable link to FTF-Invoicing Agent.xlsx on OneDrive
+  ONEDRIVE_FILE_USER       Email of the OneDrive file owner (e.g. nesa@nexgenlogix.com)
+
+  ── OFFICE 365 EMAIL (SMTP + IMAP) ───────────────────────────────────────────
+  SMTP_HOST                smtp.office365.com
+  SMTP_PORT                587
+  SMTP_USER                nesa@nexgenlogix.com
+  SMTP_PASSWORD            App password or OAuth token
+  SMTP_FROM                nesa@nexgenlogix.com
+  IMAP_HOST                outlook.office365.com
+  IMAP_PORT                993
+  IMAP_USER                nesa@nexgenlogix.com
+  IMAP_PASSWORD            Same as SMTP_PASSWORD
+
+  ── AI API KEYS ───────────────────────────────────────────────────────────────
+  ANTHROPIC_API_KEY        From console.anthropic.com
+  OPENAI_API_KEY           From platform.openai.com (fallback only)
+
+  ── NOTIFICATIONS & SAFETY ───────────────────────────────────────────────────
+  NOTIFICATION_FROM_EMAIL  pchandra@nexgen.enterprises
+  NOTIFICATION_TO_EMAILS   rt@ryantisko.com,robert_e@nexgenlogix.com
+  APPROVED_SENDERS         robert:robert_e@nexgenlogix.com,ryan:rt@ryantisko.com,prateek:pchandra@nexgen.enterprises,nesa:nesa@nexgenlogix.com
+  EMAIL_OVERRIDE_ALL       pchandra@nexgen.enterprises  ← KEEP THIS during staging/testing
+                           Remove ONLY when going to production
+
+  ── EXTERNAL SERVICES ─────────────────────────────────────────────────────────
+  GOOGLE_MAPS_API_KEY      From Google Cloud Console → Maps Static API
+  GOOGLE_REVIEW_URL        Your Google Business review link
+
+  ── DASHBOARD (cross-repo push) ───────────────────────────────────────────────
+  DASHBOARD_GITHUB_TOKEN   PAT with repo scope — for pushing dashboard updates
+
+
+================================================================================
+STEP 3 — AZURE APP REGISTRATION (OneDrive + Teams)
+================================================================================
+
+  Required for: reading/writing the Excel approval sheet on OneDrive,
+                sending Teams notifications, reading Teams replies.
+
+  3.1  In Azure Portal → Entra ID → App Registrations → New registration
+        Name: FTF-Pipeline
+        Redirect URI: none (service app)
+
+  3.2  API Permissions (Application type, not Delegated):
+        Microsoft Graph:
+          Files.ReadWrite.All
+          Mail.Send
+          Mail.ReadWrite
+          User.Read.All
+          ChannelMessage.Send          (for Teams posting)
+          ChannelMessage.Read.All      (for reading Teams replies)
+
+        Click "Grant admin consent" — required for Application permissions
+
+  3.3  Certificates & Secrets → New client secret
+        Copy the VALUE immediately (shown only once) → AZURE_CLIENT_SECRET
+
+  3.4  Overview → copy:
+        Application (client) ID → AZURE_APP_ID
+        Directory (tenant) ID   → AZURE_TENANT_ID
+
+
+================================================================================
+STEP 4 — ONEDRIVE EXCEL FILE SETUP
+================================================================================
+
+  4.1  Create or confirm this file exists on OneDrive:
+        FTF-Invoicing Agent.xlsx
+
+  4.2  The pipeline will auto-create required sheets on first run:
+        "Approvals"   — main approval workflow sheet
+        "Guide"       — column descriptions and instructions
+
+  4.3  Get the shareable link:
+        OneDrive → right-click file → Share → Copy link
+        Paste as ONEDRIVE_SHARE_URL in GitHub Secrets
+
+  4.4  Grant access to the Azure App:
+        The file owner's account must have the Azure App granted Files.ReadWrite.All
+        (done in Step 3.2 — admin consent covers all users in tenant)
+
+
+================================================================================
+STEP 5 — POWER AUTOMATE TRIGGERS
+================================================================================
+
+  The pipeline does NOT run on a time schedule by itself.
+  Power Automate calls GitHub's workflow_dispatch API to trigger runs.
+
+  5.1  Invoice Pipeline (runs every 30 minutes):
+        Power Automate → Scheduled flow → Recurrence: 30 min
+        HTTP action:
+          Method : POST
+          URL    : https://api.github.com/repos/Nexgen-AI-Agents/FTF--Survey-Invoicing-Billing-Delivery-E2E-/actions/workflows/invoice_pipeline.yml/dispatches
+          Headers: Authorization: Bearer <GitHub PAT with workflow scope>
+                   Accept: application/vnd.github+json
+          Body   : {"ref": "main"}
+
+  5.2  Excel Approval Watcher (runs every 5 minutes):
+        Same setup but target workflow: excel_approval_watcher.yml
+
+  5.3  Test the trigger manually:
+        GitHub → Repo → Actions → Invoice Pipeline → Run workflow → Run workflow (manual)
+
+
+================================================================================
+STEP 6 — LOCAL DEVELOPMENT SETUP
+================================================================================
+
+  Prerequisites:
+    Python 3.11+ (not 3.12+ — TLS regression with FEMA API)
+    Git
+    Access to GitHub repo
+
+  6.1  Clone the repo:
+        git clone https://github.com/Nexgen-AI-Agents/FTF--Survey-Invoicing-Billing-Delivery-E2E-.git
+        cd FTF--Survey-Invoicing-Billing-Delivery-E2E-
+
+  6.2  Create virtual environment:
+        python -m venv .venv
+        .venv\Scripts\activate          (Windows)
+        source .venv/bin/activate       (Linux/Mac)
+
+  6.3  Install dependencies:
+        pip install -r requirements.txt
+
+  6.4  Create .env file:
+        copy .env.example .env
+        (Fill in all values — see Step 2 for what each secret is)
+
+  6.5  Verify database connection:
+        cd code/sprint_11_invoice_pipeline
+        python -c "from code.shared.core.ftf_mysql import get_connection; c = get_connection(); print('DB OK'); c.close()"
+
+  6.6  Run the pipeline manually:
+        cd code/sprint_11_invoice_pipeline
+        python -m agents.agent_a0_orchestrator
+
+  6.7  Run tests:
+        pytest code/ -v --tb=short
+
+
+================================================================================
+STEP 7 — GITHUB ACTIONS WORKFLOWS REFERENCE
+================================================================================
+
+  Workflow                    Trigger                 Entry Point
+  ─────────────────────────────────────────────────────────────────────────────
+  invoice_pipeline.yml        workflow_dispatch       agent_a0_orchestrator.py
+                              (Power Automate 30min)  Runs A0 → A1 → A2 → A3 → A7
+
+  excel_approval_watcher.yml  workflow_dispatch       run_excel_watcher.py
+                              (Power Automate 5min)   Reads Excel → A4 → A5 → A6
+
+  approval_poller.yml         workflow_dispatch       run_approval_poller.py
+                              (manual/Teams reply)    A4 → A5 → A6 (fast path)
+
+  ar_followup.yml             cron: 0 7 * * *         agent_10_ar_scanner.py
+                              (07:00 UTC daily)       Agent 10 → Agent 11
+
+  monthly_statements.yml      cron: 0 8 1 * *         agent_15_statement_generator.py
+                              (08:00 UTC, 1st of mo)  Agent 15 → 16 → 17
+
+  nightly_memory.yml          cron: 0 4 * * *         memory_manager.py
+                              (04:00 UTC nightly)     Memory + Dream processor
+
+  approval_reminder.yml       workflow_dispatch       (manual only — sends reminder)
+  set_excel_actions.yml       workflow_dispatch       (test helper — sets Excel cells)
+
+
+================================================================================
+STEP 8 — VERIFYING THE SETUP
+================================================================================
+
+  8.1  Check GitHub Actions secrets are set:
+        GitHub → Repo → Settings → Secrets → Actions
+        Confirm all secrets from Step 2 are listed (values hidden, names visible)
+
+  8.2  Run the invoice pipeline manually:
+        GitHub → Actions → Invoice Pipeline → Run workflow → Run workflow
+        Watch the run log — should complete in 5-10 minutes
+        Look for: "a0_orchestrator: batch complete" in the final log lines
+
+  8.3  Check the data files were updated:
+        GitHub → Code → data/
+        pipeline_state.json and invoice_pipeline_state.xlsx should have
+        a recent commit timestamp
+
+  8.4  Check the OneDrive Excel:
+        Open FTF-Invoicing Agent.xlsx on OneDrive
+        "Approvals" tab should show any orders that A3 compiled invoices for
+        (or be empty if no new orders were processed)
+
+  8.5  Verify EMAIL_OVERRIDE_ALL is active:
+        Check pchandra@nexgen.enterprises inbox for any test invoices
+        ALL emails go here during staging — expected behavior
+
+  8.6  Verify the approval flow:
+        In Excel, set Action column to "Approve" on a test order
+        Trigger excel_approval_watcher manually (GitHub Actions → Run workflow)
+        Check the order status changed to invoice_sent in pipeline_state.json
+
+
+================================================================================
+STEP 9 — GOING TO PRODUCTION
+================================================================================
+
+  STAGING → PROD checklist:
+
+  [ ] Staging has been stable for 48+ hours (zero pipeline crashes)
+  [ ] All 5 workflows complete without errors
+  [ ] Approval → Invoice → Email flow verified end-to-end on real test order
+  [ ] EMAIL_OVERRIDE_ALL removed from GitHub Secrets (or cleared to empty)
+  [ ] FTF_API_BASE_URL changed from stage.fieldtofinish.jobs to fieldtofinish.jobs
+  [ ] RDS instance switched from db.t3.small to db.t3.medium (or higher)
+  [ ] RDS Multi-AZ enabled
+  [ ] RDS security group tightened (remove 0.0.0.0/0 if possible)
+  [ ] Prateek sign-off received
+  [ ] CHANGELOG.md updated
+
+
+================================================================================
+KNOWN GOTCHAS
+================================================================================
+
+  1. GitHub Actions IP ranges change periodically — if RDS connection fails,
+     check https://api.github.com/meta and update the security group inbound rule.
+
+  2. OneDrive Graph API token expires. The Azure App uses client credentials
+     (no user login needed), so no manual refresh is required as long as
+     AZURE_CLIENT_SECRET is not expired. Rotate it before the expiry date shown
+     in Azure Portal.
+
+  3. Python version MUST be 3.11. Python 3.12+ has a TLS regression that breaks
+     the FEMA ArcGIS REST API calls. Pinned in all workflow files.
+
+  4. The data/ directory files (pipeline_state.json, invoice_pipeline_state.xlsx)
+     are committed to git after every run by the GitHub Actions bot. On concurrent
+     runs the last-writer-wins. This is intentional — not a bug.
+
+  5. EMAIL_OVERRIDE_ALL must be set during all staging/testing. Every invoice
+     email (including customer-facing ones) gets redirected to that address.
+     Removing it in staging by accident will send real emails to real customers.
+
+  6. PAT (DASHBOARD_GITHUB_TOKEN) used for cross-repo dashboard pushes must have
+     repo scope. Fine-grained PATs work only if explicitly granted write access to
+     the target dashboard repo.
+
+  7. APPROVED_SENDERS controls which email senders can trigger approval actions
+     via email reply. Format: name:email,name:email — no spaces around commas.
+
+
+================================================================================
+SUPPORT CONTACTS
+================================================================================
+
+  Pipeline owner   : Prateek Chandra (ai@nexgen.enterprises)
+  FTF API issues   : NexGen IT (info@nexgensurveying.com)
+  Azure AD issues  : NexGen IT
+  AWS RDS issues   : NexGen IT (or Prateek for IAM/security group changes)
+
+================================================================================
