@@ -94,6 +94,7 @@ SPRINT HISTORY
   │             │ 2026-06-09 │ Red highlight + warning for Delivered+$0 orders     │
   │             │            │ env_profiles.py — stage/prod one-switch config      │
   │             │            │ Build timeline file (this file)                     │
+  │             │            │ Auto-compact cron removed — manual /compact only    │
   └─────────────┴────────────┴─────────────────────────────────────────────────────┘
 
 ================================================================================
