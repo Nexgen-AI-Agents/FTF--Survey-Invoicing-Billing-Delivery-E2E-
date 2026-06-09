@@ -28,7 +28,7 @@ ACTIVE_ENV: str = "stage"   # "stage" | "prod"
 # ─────────────────────────────────────────────────────────────────────────────
 
 _STAGE = "https://stage.fieldtofinish.jobs"
-_PROD  = "https://app.fieldtofinish.jobs"
+_PROD  = "https://fieldtofinish.jobs"
 
 PROFILES: dict[str, dict[str, str]] = {
     "stage": {
