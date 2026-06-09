@@ -93,14 +93,14 @@ FTF_PAY_HASH_KEY:  str = os.getenv("FTF_PAY_HASH_KEY", "")
 FTF_SITE_BASE_URL: str = os.getenv("FTF_SITE_BASE_URL") or _PROFILE["FTF_SITE_BASE_URL"]
 
 # FTF Portal — nesa HR user auth (invoice generation + delivery)
-FTF_PORTAL_BASE_URL: str      = os.getenv("FTF_PORTAL_BASE_URL") or _PROFILE["FTF_PORTAL_BASE_URL"]
-FTF_PORTAL_USER:     str      = os.getenv("FTF_PORTAL_USER", "")
-FTF_PORTAL_PASS:     str      = os.getenv("FTF_PORTAL_PASS", "")
+FTF_PORTAL_BASE_URL: str = os.getenv("FTF_PORTAL_BASE_URL") or _PROFILE["FTF_PORTAL_BASE_URL"]
+FTF_PORTAL_USER:     str = os.getenv("FTF_PORTAL_USER") or _PROFILE["FTF_PORTAL_USER"]
+FTF_PORTAL_PASS:     str = os.getenv("FTF_PORTAL_PASS") or _PROFILE["FTF_PORTAL_PASS"]
 
 # FTF Books (AR Excel download — session-cookie auth)
 FTF_BOOKS_BASE_URL: str      = os.getenv("FTF_BOOKS_BASE_URL") or _PROFILE["FTF_BOOKS_BASE_URL"]
-FTF_BOOKS_USER:     str | None = os.getenv("FTF_BOOKS_USER")
-FTF_BOOKS_PASSWORD: str | None = os.getenv("FTF_BOOKS_PASSWORD")
+FTF_BOOKS_USER:     str      = os.getenv("FTF_BOOKS_USER") or _PROFILE["FTF_BOOKS_USER"]
+FTF_BOOKS_PASSWORD: str      = os.getenv("FTF_BOOKS_PASSWORD") or _PROFILE["FTF_BOOKS_PASSWORD"]
 
 # Anthropic
 ANTHROPIC_API_KEY: str | None = os.getenv("ANTHROPIC_API_KEY")

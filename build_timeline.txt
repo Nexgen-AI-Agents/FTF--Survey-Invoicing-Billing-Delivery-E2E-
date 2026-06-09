@@ -1,0 +1,169 @@
+================================================================================
+  BUILD TIMELINE — FTF Survey Invoicing & Billing Delivery (E2E)
+  Client : NexGen Surveying (nexgen_ftf_db)
+  Build  : Claude Agentic AI Pipeline (A0 → A7)
+  Owner  : Prateek Chandra (ai@nexgen.enterprises)
+================================================================================
+
+  Project started   : 2026-05-20 (Wednesday)
+  Last activity     : 2026-06-09 (Monday)        ← auto-updated each session
+  Calendar span     : 20 days
+  Active build days : 17 days  (no commits: May 23, 24, 30, 31)
+  Current phase     : Sprint 11 — Live & Processing Orders (Stage)
+
+================================================================================
+SPRINT HISTORY
+================================================================================
+
+  ┌─────────────┬────────────┬─────────────────────────────────────────────────────┐
+  │ Sprint      │ Date       │ What was built                                      │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Pre-Sprint  │ 2026-05-20 │ Initial workspace — docs, sprints, memory, resources│
+  │             │            │ Team framework: dev_team/, qa_team/, 22 role cards  │
+  │             │            │ Issue tracker, CHANGELOG, learnings.md              │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Sprint 0    │ 2026-05-21 │ Full foundation — core/, config/, DB schema         │
+  │             │            │ CI stubs, 42 tests passing                          │
+  │             │            │ FTF API parsing, FEMA SSL, encoding fixes           │
+  │             │            │ .env.example, README, requirements.txt              │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Sprint 1    │ 2026-05-21 │ FTF API ingestion — 500 real orders ingested        │
+  │             │ 2026-05-22 │ Deduplication, status hierarchy, pagination         │
+  │             │            │ Phase 1 demo delivered to Ryan + Wyatt              │
+  │             │            │ 51/51 tests passing                                 │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Sprint 2    │ 2026-05-25 │ Agent 3 — Classifier (24 service types)             │
+  │             │            │ Agent 5 — Pricing Engine (base rate + complexity)   │
+  │             │            │ 4 new classifier triggers from Robert feedback       │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Sprint 3    │ 2026-05-25 │ Agent 4 — Human Gate (approval/reject/hold)         │
+  │             │            │ 24hr escalation rule, CLI triggers                  │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Sprint 4+5  │ 2026-05-26 │ Agent 6 — Invoice Writer                           │
+  │             │            │ Agent 7 — Invoice Reviewer                          │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Sprint 6    │ 2026-05-26 │ Agent 8 — Sender                                   │
+  │             │            │ Agent 9 — Reporter                                  │
+  │             │            │ 138/138 tests passing                               │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Sprint 7    │ 2026-05-27 │ Agents 10–11 — AR Escalation Loop                  │
+  │             │            │ 220/220 tests passing                               │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Sprint 8    │ 2026-05-27 │ Agents 15–17 — Monthly Statement Generator         │
+  │             │            │ 239/239 tests passing                               │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Sprint 9    │ 2026-05-26 │ Memory Loop + Orchestrator (A0)                    │
+  │             │            │ Postgres LISTEN/NOTIFY real-time trigger            │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Sprint 10   │ 2026-05-27 │ FEMA 3-strategy fallback, all systems live         │
+  │             │            │ 29/30 tests passing — production-ready baseline     │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Sprint 11   │ 2026-05-27 │ Full invoice pipeline redesign — A0 → A7           │
+  │ (START)     │            │ New agents: A1 FlagHunter, A2 DataCollector,        │
+  │             │            │ A3 InvoiceCompiler, A4 HumanGate v2,               │
+  │             │            │ A5 Finalizer, A6 Sender v2, A7 FeedbackLearner     │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Sprint 11   │ 2026-05-28 │ Expert surveyor persona added                      │
+  │ (cont.)     │ 2026-05-29 │ Architecture diagrams v2 (Sprint 0-11)             │
+  │             │ 2026-06-01 │ Full architecture redesign committed                │
+  │             │            │ Teams approval flow replaced with OneDrive Excel    │
+  │             │            │ Architecture diagrams v3 (Invoice Pipeline)         │
+  │             │ 2026-06-02 │ Legacy Sprint 9 cleanup, dead code removal          │
+  │             │ 2026-06-03 │ Batch cap (5/run), @Robert/@Ryan escalations        │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Sprint 11   │ 2026-06-04 │ Pay Now link generation in invoice emails           │
+  │ (LIVE)      │            │ OpenAI gpt-4o fallback when Anthropic unavailable   │
+  │             │            │ E2E TEST PASSED — invoice 349397 sent to customer   │
+  │             │            │ Condo auto-reject + orphan handler fixes            │
+  │             │ 2026-06-05 │ Excel schema v2 — Order Status col, Action dropdown │
+  │             │            │ FTF portal invoice delivery (Nesa auth)             │
+  │             │            │ Excel Approval Watcher (polls OneDrive every 5 min) │
+  │             │            │ OneDrive sharing link resolution for Graph API       │
+  │             │ 2026-06-06 │ Auto-format Excel rows (borders, currency, links)   │
+  │             │            │ Eastern Time for timestamps                         │
+  │             │            │ Concurrent run safety (cancel-in-progress: false)   │
+  │             │            │ INVOICE_BATCH_SIZE bumped 10 → 50 to drain backlog  │
+  │             │ 2026-06-07 │ Pipeline Guide tab in Excel                         │
+  │             │            │ Pricing Rules tab (client negotiated rates)         │
+  │             │            │ Canceled order filter, backfill script              │
+  │             │            │ Git-backed pricing_rules.json                       │
+  │             │ 2026-06-08 │ Per-service breakdown in Excel col E               │
+  │             │            │ A4 reconciliation (per-service + total override)    │
+  │             │            │ A7 FeedbackLearner activated (learned_rules.json)   │
+  │             │            │ Token usage tracking + compact chat log             │
+  │             │ 2026-06-09 │ Red highlight + warning for Delivered+$0 orders     │
+  │             │            │ env_profiles.py — stage/prod one-switch config      │
+  │             │            │ Build timeline file (this file)                     │
+  └─────────────┴────────────┴─────────────────────────────────────────────────────┘
+
+================================================================================
+LIVE PIPELINE STATS                               (updated by pipeline each run)
+================================================================================
+
+  Last pipeline run   : 2026-06-09
+  Environment         : Stage (stage.fieldtofinish.jobs)
+  Total orders tracked: 426
+
+  ┌─────────────────────────────┬────────┐
+  │ Status                      │ Count  │
+  ├─────────────────────────────┼────────┤
+  │ invoice_draft_posted        │   308  │
+  │ pricing_needed              │    73  │
+  │ condo_rejected              │    12  │
+  │ invoice_sent                │    14  │
+  │ invoice_rejected            │     4  │
+  │ on_hold                     │     2  │
+  │ details_missing             │     5  │
+  │ permanently_excluded        │     8  │
+  ├─────────────────────────────┼────────┤
+  │ TOTAL TRACKED               │   426  │
+  └─────────────────────────────┴────────┘
+
+  Invoices sent to customers    :    14
+  Awaiting human approval       :   308
+  Needs manual pricing          :    73
+  Condos (auto-rejected)        :    12
+
+================================================================================
+CUMULATIVE BUILD STATS
+================================================================================
+
+  Active build days             : 17
+  Calendar days elapsed         : 20  (2026-05-20 → 2026-06-09)
+  Sprints completed             : 0 through 10 (Sprint 11 live & ongoing)
+  Agents built                  : A0, A1, A2, A3, A4, A5, A6, A7
+                                  + AR agents 10, 11
+                                  + Statement agents 15, 16, 17
+  GitHub Actions workflows      : 7
+  GitHub Secrets configured     : 30+
+  Test coverage (Sprint 10 peak): 239 tests, all passing
+  Orders processed (stage)      : 426 ingested, 14 invoices delivered
+
+================================================================================
+WHAT'S NEXT
+================================================================================
+
+  [ ] Prod deployment (DEPLOY_ENV=prod)
+      - Set DEPLOY_ENV=prod in GitHub Secrets
+      - Clear EMAIL_OVERRIDE_ALL secret
+      - Confirm prod FTF_API_KEY
+      - Confirm prod MYSQL_HOST
+      - Prateek + Robert/Ryan sign-off
+
+  [ ] Prod FTF API key (obtain from NexGen IT)
+  [ ] Stage → Prod cutover checklist (see setup.txt Step 9)
+
+================================================================================
+HOW THIS FILE IS MAINTAINED
+================================================================================
+
+  History section  : Updated manually by Claude during development sessions
+                     when a meaningful sprint milestone is reached
+
+  Live Stats       : Updated automatically by scripts/update_build_timeline.py
+                     which runs as part of every GitHub Actions pipeline commit step
+
+  To update manually:
+    python scripts/update_build_timeline.py
+
+================================================================================

@@ -85,6 +85,10 @@ jobs:
         if: always()
         run: python scripts/export_pipeline_json.py
 
+      - name: Update build timeline
+        if: always()
+        run: python scripts/update_build_timeline.py
+
       - name: Commit updated pipeline state
         if: always()
         run: |
@@ -101,7 +105,7 @@ jobs:
           cp /tmp/runner_state.xlsx data/invoice_pipeline_state.xlsx
           cp /tmp/runner_state.json data/pipeline_state.json
           cp -f /tmp/runner_pricing_rules.json data/pricing_rules.json 2>/dev/null || true
-          git add data/invoice_pipeline_state.xlsx data/pipeline_state.json data/learned_rules.json data/pricing_rules.json
+          git add data/invoice_pipeline_state.xlsx data/pipeline_state.json data/learned_rules.json data/pricing_rules.json build_timeline.txt
           git diff --cached --quiet || git commit -m "chore: update pipeline state [skip ci]"
           git push
 
