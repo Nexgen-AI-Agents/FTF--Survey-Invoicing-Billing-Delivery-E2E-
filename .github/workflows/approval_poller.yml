@@ -54,6 +54,7 @@ jobs:
       FTF_PORTAL_BASE_URL:        ${{ secrets.FTF_PORTAL_BASE_URL }}
       FTF_PORTAL_USER:            ${{ secrets.FTF_PORTAL_USER }}
       FTF_PORTAL_PASS:            ${{ secrets.FTF_PORTAL_PASS }}
+      DEPLOY_ENV:                 ${{ secrets.DEPLOY_ENV }}
       # workflow_dispatch inputs — read by A4 to process the approval
       INPUT_ORDER_ID:             ${{ inputs.order_id }}
       INPUT_ACTION:               ${{ inputs.action }}

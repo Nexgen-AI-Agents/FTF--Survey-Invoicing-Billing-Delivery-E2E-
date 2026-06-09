@@ -37,6 +37,7 @@ jobs:
       FTF_PORTAL_BASE_URL:     ${{ secrets.FTF_PORTAL_BASE_URL }}
       FTF_PORTAL_USER:         ${{ secrets.FTF_PORTAL_USER }}
       FTF_PORTAL_PASS:         ${{ secrets.FTF_PORTAL_PASS }}
+      DEPLOY_ENV:              ${{ secrets.DEPLOY_ENV }}
 
     steps:
       - uses: actions/checkout@v4

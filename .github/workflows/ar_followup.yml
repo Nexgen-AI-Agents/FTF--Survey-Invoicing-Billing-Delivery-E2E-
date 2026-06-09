@@ -32,6 +32,7 @@ jobs:
           DB_USER:              ${{ secrets.DB_USER }}
           DB_PASSWORD:          ${{ secrets.DB_PASSWORD }}
           TEAMS_WEBHOOK_URL:    ${{ secrets.TEAMS_WEBHOOK_URL }}
+          DEPLOY_ENV:           ${{ secrets.DEPLOY_ENV }}
         run: python code/sprint_07_ar_followup/agents/agent_10_ar_scanner.py
 
       - name: Run AR Escalation Alerts (Agent 11)

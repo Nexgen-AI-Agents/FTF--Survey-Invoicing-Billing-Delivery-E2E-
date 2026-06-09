@@ -27,4 +27,5 @@ jobs:
           SMTP_FROM:               ${{ secrets.SMTP_FROM }}
           NOTIFICATION_TO_EMAILS:  ${{ secrets.NOTIFICATION_TO_EMAILS }}
           FTF_ORDER_URL:           ${{ secrets.FTF_ORDER_URL }}
+          DEPLOY_ENV:              ${{ secrets.DEPLOY_ENV }}
         run: python scripts/send_daily_reminder.py

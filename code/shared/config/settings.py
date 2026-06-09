@@ -4,6 +4,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from config.env_profiles import active_profile, active_env_name  # noqa: E402
+
+_PROFILE = active_profile()
+DEPLOY_ENV: str = active_env_name()   # "stage" | "prod" — readable by any agent
+
 # Pipeline behaviour
 MAX_REVIEWER_RETRIES: int = 3
 MAX_SENDER_RETRIES:   int = int(os.getenv("MAX_SENDER_RETRIES", "3"))
@@ -73,9 +78,9 @@ COMPLEXITY_FACTORS = COMPLEXITY_REFERENCE  # Sprint 9 alias — renamed to COMPL
 SERVICE_STATE:        str = "FL"
 
 # FTF API
-FTF_API_BASE_URL: str = os.getenv("FTF_API_BASE_URL", "https://stage.fieldtofinish.jobs/ftf-ai-api/v1")
+FTF_API_BASE_URL: str = os.getenv("FTF_API_BASE_URL") or _PROFILE["FTF_API_BASE_URL"]
 FTF_API_KEY:      str | None = os.getenv("FTF_API_KEY")
-FTF_ORDER_URL:    str = os.getenv("FTF_ORDER_URL", "https://stage.fieldtofinish.jobs/order")
+FTF_ORDER_URL:    str = os.getenv("FTF_ORDER_URL") or _PROFILE["FTF_ORDER_URL"]
 # OneDrive approval spreadsheet (Graph API — Files.ReadWrite.All application permission)
 ONEDRIVE_FILE_USER:  str = os.getenv("ONEDRIVE_FILE_USER",  "nesa@nexgenlogix.com")
 ONEDRIVE_FILE_PATH:  str = os.getenv("ONEDRIVE_FILE_PATH",  "Documents/FTF-Invoicing Agent.xlsx")
@@ -85,15 +90,15 @@ ONEDRIVE_TABLE_NAME: str = os.getenv("ONEDRIVE_TABLE_NAME", "ApprovalTable")
 
 # Pay Now link generation — uses same Fernet key as the FTF portal (data_vars['hash_key'])
 FTF_PAY_HASH_KEY:  str = os.getenv("FTF_PAY_HASH_KEY", "")
-FTF_SITE_BASE_URL: str = os.getenv("FTF_SITE_BASE_URL", "https://stage.fieldtofinish.jobs")
+FTF_SITE_BASE_URL: str = os.getenv("FTF_SITE_BASE_URL") or _PROFILE["FTF_SITE_BASE_URL"]
 
 # FTF Portal — nesa HR user auth (invoice generation + delivery)
-FTF_PORTAL_BASE_URL: str      = os.getenv("FTF_PORTAL_BASE_URL", "https://stage.fieldtofinish.jobs")
+FTF_PORTAL_BASE_URL: str      = os.getenv("FTF_PORTAL_BASE_URL") or _PROFILE["FTF_PORTAL_BASE_URL"]
 FTF_PORTAL_USER:     str      = os.getenv("FTF_PORTAL_USER", "")
 FTF_PORTAL_PASS:     str      = os.getenv("FTF_PORTAL_PASS", "")
 
 # FTF Books (AR Excel download — session-cookie auth)
-FTF_BOOKS_BASE_URL: str      = os.getenv("FTF_BOOKS_BASE_URL", "https://stage.fieldtofinish.jobs")
+FTF_BOOKS_BASE_URL: str      = os.getenv("FTF_BOOKS_BASE_URL") or _PROFILE["FTF_BOOKS_BASE_URL"]
 FTF_BOOKS_USER:     str | None = os.getenv("FTF_BOOKS_USER")
 FTF_BOOKS_PASSWORD: str | None = os.getenv("FTF_BOOKS_PASSWORD")
 
@@ -157,14 +162,20 @@ OPENAI_TTS_MODEL:   str        = os.getenv("OPENAI_TTS_MODEL", "tts-1-hd")
 OPENAI_TTS_VOICE:   str        = os.getenv("OPENAI_TTS_VOICE", "nova")        # warm female
 OPENAI_EMBED_MODEL: str        = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small")
 
-LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+LOG_LEVEL: str = os.getenv("LOG_LEVEL") or _PROFILE["LOG_LEVEL"]
 
 # Invoice pipeline
 MAX_INVOICE_MODIFICATIONS: int = int(os.getenv("MAX_INVOICE_MODIFICATIONS", "5"))
-INVOICE_BATCH_SIZE:        int = int(os.getenv("INVOICE_BATCH_SIZE", "5"))
+INVOICE_BATCH_SIZE:        int = int(os.getenv("INVOICE_BATCH_SIZE") or _PROFILE["INVOICE_BATCH_SIZE"])
 # Testing override — when set, ALL invoice emails are redirected to this address.
-# No client ever receives an email while this is active. Set via GitHub secret.
+# MUST be empty (or secret deleted) in prod. Guarded below.
 EMAIL_OVERRIDE_ALL: str = os.getenv("EMAIL_OVERRIDE_ALL", "")
+
+if DEPLOY_ENV == "prod" and EMAIL_OVERRIDE_ALL:
+    raise RuntimeError(
+        "EMAIL_OVERRIDE_ALL is set but DEPLOY_ENV=prod — "
+        "delete or clear the EMAIL_OVERRIDE_ALL GitHub Secret before running in production."
+    )
 
 # IMAP — email inbox for nesa@nexgenlogix.com
 IMAP_HOST:     str = os.getenv("IMAP_HOST", "outlook.office365.com")
