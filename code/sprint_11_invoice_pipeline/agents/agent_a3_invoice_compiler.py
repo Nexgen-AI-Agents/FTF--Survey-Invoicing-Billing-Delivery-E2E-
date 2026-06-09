@@ -570,22 +570,32 @@ def compile_for_order(order_id: str) -> dict:
             str(s) for s in packet.get("services_requested", {}).get("value", []) if s
         )
         _pn_reason  = ai_result.get("escalate_reason") or ai_result.get("pricing_reasoning") or "AI could not determine price"
-        _pn_notes   = (
-            f"MANUAL PRICING REQUIRED — {_pn_reason}. "
-            "Enter the correct amount in the Amount column, then set Action = Approve."
-        )
+        _pn_ftf_status = str(order_details.get("ng_status_desc") or "")
+        _pn_is_delivered = _pn_ftf_status.strip().lower() == "delivered"
+        if _pn_is_delivered:
+            _pn_notes = (
+                f"⚠️ Invoice can't be created for the delivered order — "
+                f"MANUAL PRICING REQUIRED — {_pn_reason}. "
+                "Enter the correct amount in the Amount column, then set Action = Approve."
+            )
+        else:
+            _pn_notes = (
+                f"MANUAL PRICING REQUIRED — {_pn_reason}. "
+                "Enter the correct amount in the Amount column, then set Action = Approve."
+            )
         try:
             append_approval_row(
-                order_id     = order_id,
-                client_name  = _pn_client,
-                address      = _pn_addr,
-                service      = _pn_svc or "Unknown — see notes",
-                amount       = 0.0,
-                confidence   = "LOW",
-                escalate     = True,
-                ftf_link     = link,
-                order_status = str(order_details.get("ng_status_desc") or ""),
-                notes        = _pn_notes,
+                order_id      = order_id,
+                client_name   = _pn_client,
+                address       = _pn_addr,
+                service       = _pn_svc or "Unknown — see notes",
+                amount        = 0.0,
+                confidence    = "LOW",
+                escalate      = True,
+                ftf_link      = link,
+                order_status  = _pn_ftf_status,
+                notes         = _pn_notes,
+                highlight_red = _pn_is_delivered,
             )
             log.info("order=%s pricing_needed written to Excel for manual pricing", order_id)
         except Exception as exc:

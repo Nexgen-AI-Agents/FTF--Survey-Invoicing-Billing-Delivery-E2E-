@@ -901,8 +901,14 @@ def append_approval_row(
     order_status: str = "",
     posted_at:    Optional[str] = None,
     notes:        str = "",
+    highlight_red: bool = False,
 ) -> None:
-    """Append a new row to the approval table. Action column is blank — user picks from dropdown."""
+    """Append a new row to the approval table. Action column is blank — user picks from dropdown.
+
+    highlight_red=True fills the entire row with red (#FF4444) to flag critical issues
+    (e.g. Delivered orders that returned a $0 invoice — cannot be processed automatically).
+    The red fill is overridden once the user picks an Action value (conditional formatting wins).
+    """
     ensure_approval_sheet()
 
     if not posted_at:
@@ -933,11 +939,21 @@ def append_approval_row(
     r.raise_for_status()
     log.info("excel row appended order_id=%s amount=%.2f status=%s", order_id, amount, order_status)
 
-    # Apply borders, currency format, and hyperlink to the new row
+    # Apply borders, currency format, hyperlink, and optional red highlight to the new row
     try:
         new_index = r.json().get("index")   # 0-based table row index
         if new_index is not None:
             _format_new_row(new_index, ftf_link=ftf_link)
+            if highlight_red:
+                excel_row  = new_index + 2
+                row_range  = f"A{excel_row}:{_END_COL}{excel_row}"
+                httpx.patch(
+                    f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{row_range}')/format/fill",
+                    headers=_session_headers(),
+                    json={"color": "#FF4444"},
+                    timeout=10.0,
+                ).raise_for_status()
+                log.info("row %d highlighted red (delivered-zero-amount order=%s)", excel_row, order_id)
     except Exception as exc:
         log.warning("row formatting failed (non-fatal) order_id=%s: %s", order_id, exc)
 
