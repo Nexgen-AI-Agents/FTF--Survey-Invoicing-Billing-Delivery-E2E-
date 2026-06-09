@@ -8,7 +8,12 @@
 > 5. `TEAM/leadership/prateek_thinking_patterns.md` â€” how Prateek actually thinks
 > 6. `expert_identity.md` â€” FL PSM + survey business expertise
 > 7. `learnings.md` â€” known patterns and mistakes
-> 8. Then act.
+> 8. `memory/auto_compact_rule.md` â€” **MANDATORY: register auto-compact cron at session start**
+> 9. Then act.
+>
+> **AUTO-COMPACT (MANDATORY AT SESSION START):** After reading memory files, immediately run CronList.
+> If no auto-compact cron exists, create it with CronCreate — cron: “9,24,39,54 * * * *”, durable: true.
+> Full instructions in `memory/auto_compact_rule.md`.
 >
 > The hierarchy file and routing guide are new (2026-05-29). Every agent has a place. Every message has a route.
 > `expert_identity.md` defines your domain expertise as a Florida PSM and survey business expert â€” read it and internalize it, do not skip it.
