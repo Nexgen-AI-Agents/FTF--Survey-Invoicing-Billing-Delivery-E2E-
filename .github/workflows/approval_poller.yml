@@ -35,6 +35,7 @@ jobs:
       FTF_API_KEY:                ${{ secrets.FTF_API_KEY }}
       FTF_API_BASE_URL:           ${{ secrets.FTF_API_BASE_URL }}
       ANTHROPIC_API_KEY:          ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY:             ${{ secrets.OPENAI_API_KEY }}
       MYSQL_HOST:                 ${{ secrets.MYSQL_HOST }}
       MYSQL_PORT:                 ${{ secrets.MYSQL_PORT }}
       MYSQL_USER:                 ${{ secrets.MYSQL_USER }}

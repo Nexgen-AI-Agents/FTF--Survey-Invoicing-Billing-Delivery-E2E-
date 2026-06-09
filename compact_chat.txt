@@ -103,11 +103,26 @@ DATE: 2026-06-09 (Monday)
   Summary written   : Yes — full session summary injected as system context
 
   ─────────────────────────────────────────────────────────────────────────────
-  DATE TOTAL: 2 compactions | ~247,000 tokens freed
+  COMPACT #6
+  Time              : ~14:00 ET
+  Triggered by      : User (/compact command)
+  Model             : claude-sonnet-4-6
+  Context state     : Session covering FTF pipeline suggestions (Nesa correction),
+                      confirmation that OpenAI fallback code exists in claude_client.py
+                      but OPENAI_API_KEY was missing from all 3 GitHub Actions workflows —
+                      invoice_pipeline.yml, excel_approval_watcher.yml, approval_poller.yml
+  Tokens before     : ~90,000 (estimated — fresh session after compact #5)
+  Tokens after      : ~16,000  (estimated — summary + new session context)
+  Tokens freed      : ~74,000 (estimated)
+  Context saved     : ~82%
+  Summary written   : Yes — full session summary injected as system context
+
+  ─────────────────────────────────────────────────────────────────────────────
+  DATE TOTAL: 3 compactions | ~321,000 tokens freed
   ─────────────────────────────────────────────────────────────────────────────
 
 ================================================================================
-CUMULATIVE SUMMARY (updated 2026-06-09 ~13:30 ET)
+CUMULATIVE SUMMARY (updated 2026-06-09 ~14:00 ET)
 ================================================================================
 
   #   Date          Time        Model               Before     After     Freed    Saved
@@ -117,9 +132,10 @@ CUMULATIVE SUMMARY (updated 2026-06-09 ~13:30 ET)
   3   2026-06-08    ~11:30 ET   claude-sonnet-4-6   ~160,000   ~22,000   ~138,000  ~86%
   4   2026-06-09    ~10:30 ET   claude-sonnet-4-6   ~150,000   ~20,000   ~130,000  ~87%
   5   2026-06-09    ~13:30 ET   claude-sonnet-4-6   ~135,000   ~18,000   ~117,000  ~87%
+  6   2026-06-09    ~14:00 ET   claude-sonnet-4-6    ~90,000   ~16,000    ~74,000  ~82%
   ─────────────────────────────────────────────────────────────────────────────────────
-  TOTAL COMPACTIONS : 5
-  TOTAL TOKENS FREED: ~681,000
+  TOTAL COMPACTIONS : 6
+  TOTAL TOKENS FREED: ~755,000
 
 ================================================================================
 HOW TO MAINTAIN THIS FILE

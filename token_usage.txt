@@ -78,9 +78,10 @@ MODEL: claude-sonnet-4-6
   [~13:00 ET] | claude-sonnet-4-6 | Auto-compact cron removal (memory.md rewrite)         | In: ~10,000 | Out: ~2,000 | Total: ~12,000
   [~13:30 ET] | claude-sonnet-4-6 | A3 reasoning explanation — order 1000284604           | In: ~12,000 | Out: ~2,500 | Total: ~14,500
   [~13:45 ET] | claude-sonnet-4-6 | Tracking files update + Nesa project suggestions      | In:  ~8,000 | Out: ~1,500 | Total:  ~9,500
+  [~14:00 ET] | claude-sonnet-4-6 | OpenAI fallback wire-up — 3 workflows + health check  | In:  ~9,000 | Out: ~2,000 | Total: ~11,000
 
                                                     ┌─────────────────────────────────┐
-                                         DAILY TOTAL │  ~160,300 tokens (est.)         │
+                                         DAILY TOTAL │  ~171,300 tokens (est.)         │
                                          MODEL       │  claude-sonnet-4-6              │
                                                     └─────────────────────────────────┘
 
@@ -92,9 +93,9 @@ CUMULATIVE PROJECT TOTAL (as of 2026-06-09)
   ──────────────────────────────────────────────────────
   2026-06-06    claude-sonnet-4-6       ~74,600
   2026-06-08    claude-sonnet-4-6       ~115,800
-  2026-06-09    claude-sonnet-4-6       ~160,300
+  2026-06-09    claude-sonnet-4-6       ~171,300
   ──────────────────────────────────────────────────────
-  PROJECT TOTAL                         ~350,700 tokens
+  PROJECT TOTAL                         ~361,700 tokens
 
 ================================================================================
 HOW TO MAINTAIN THIS FILE

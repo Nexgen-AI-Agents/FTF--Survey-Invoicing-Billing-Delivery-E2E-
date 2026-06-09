@@ -20,6 +20,7 @@ jobs:
       FTF_API_KEY:                ${{ secrets.FTF_API_KEY }}
       FTF_API_BASE_URL:           ${{ secrets.FTF_API_BASE_URL }}
       ANTHROPIC_API_KEY:          ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY:             ${{ secrets.OPENAI_API_KEY }}
       MYSQL_HOST:                 ${{ secrets.MYSQL_HOST }}
       MYSQL_PORT:                 ${{ secrets.MYSQL_PORT }}
       MYSQL_USER:                 ${{ secrets.MYSQL_USER }}
@@ -65,6 +66,14 @@ jobs:
             -H "x-api-key: $ANTHROPIC_API_KEY" \
             -H "anthropic-version: 2023-06-01" \
             https://api.anthropic.com/v1/models || echo "curl failed: $?"
+          echo "=== OpenAI API (fallback) ==="
+          if [ -n "$OPENAI_API_KEY" ]; then
+            curl -sS -o /dev/null -w "HTTP %{http_code} | time %{time_total}s\n" \
+              -H "Authorization: Bearer $OPENAI_API_KEY" \
+              https://api.openai.com/v1/models || echo "curl failed: $?"
+          else
+            echo "OPENAI_API_KEY not set — fallback unavailable"
+          fi
           echo "=== FTF API health ==="
           curl -sS -o /dev/null -w "HTTP %{http_code} | time %{time_total}s\n" \
             -H "Authorization: Bearer $FTF_API_KEY" \
