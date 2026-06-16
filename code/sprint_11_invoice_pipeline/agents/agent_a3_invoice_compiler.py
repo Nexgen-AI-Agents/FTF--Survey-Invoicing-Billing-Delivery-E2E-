@@ -434,6 +434,59 @@ def compile_for_order(order_id: str) -> dict:
         save_order_state(order_id, status="permanently_excluded")
         return {}
 
+    # Canceled / Delivered orders: do NOT price. Flag them in the sheet for the team
+    # and skip the AI pricing pass entirely (no meaningful estimate for these).
+    _ftf_status_desc = str(order_details.get("ng_status_desc") or "").strip()
+    if _ftf_status_desc.lower() in ("canceled", "cancelled", "delivered"):
+        _is_delivered = _ftf_status_desc.lower() == "delivered"
+        _flag_client = (
+            packet.get("client_name", {}).get("value")
+            or order_details.get("ng_client_name")
+            or db_row.get("client_name", "")
+        )
+        _flag_addr = (
+            packet.get("property_address", {}).get("value")
+            or order_details.get("ng_property_address", "")
+        )
+        _flag_svc = order_details.get("ng_service_requested") or ""
+        if _is_delivered:
+            _flag_notes = (
+                "⚠️ DELIVERED — order already delivered. No automatic pricing performed. "
+                "Verify whether an invoice is still required; if so, enter the amount "
+                "manually and set Action = Approve."
+            )
+            _flag_status = "delivered_flagged"
+        else:
+            _flag_notes = (
+                "⛔ CANCELED — order canceled in FTF. No invoice required. Auto-flagged; "
+                "no pricing performed. Set Action = Reject to clear."
+            )
+            _flag_status = "canceled_flagged"
+        save_order_state(
+            order_id,
+            status=_flag_status,
+            estimate_amount=0.0,
+            draft_posted_at=datetime.now(timezone.utc).isoformat(),
+        )
+        try:
+            append_approval_row(
+                order_id     = order_id,
+                client_name  = _flag_client,
+                address      = _flag_addr,
+                service      = _flag_svc or _ftf_status_desc,
+                amount       = 0.0,
+                confidence   = "N/A",
+                escalate     = True,
+                ftf_link     = link,
+                order_status = _ftf_status_desc,
+                notes        = _flag_notes,
+                highlight_red= True,
+            )
+            log.info("order=%s %s — flagged, no pricing", order_id, _flag_status)
+        except Exception as exc:
+            log.warning("flag write failed order=%s: %s (non-fatal)", order_id, exc)
+        return {}
+
     company_id    = int(order_details.get("ng_company_id") or 0)
     company_info  = get_company_info(company_id) if company_id else {}
     tier          = _classify_client_tier(company_info)
