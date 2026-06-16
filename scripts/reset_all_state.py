@@ -212,8 +212,12 @@ if __name__ == "__main__":
     print()
     clear_json_state()
 
-    if args.trigger:
+    # Only dispatch on a fully-clean reset — a partial OneDrive clear + dispatch would run
+    # the pipeline against a split-brain (local empty, OneDrive populated).
+    if args.trigger and onedrive_ok:
         trigger_pipeline()
+    elif args.trigger and not onedrive_ok:
+        print("\n[trigger] SKIPPED — reset was partial; not dispatching. Fix OneDrive, re-run, then dispatch.")
 
     if onedrive_ok:
         print("\nDone — all stores cleared cleanly. "
