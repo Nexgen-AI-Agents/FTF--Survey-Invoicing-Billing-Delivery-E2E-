@@ -39,7 +39,11 @@ _cache: dict = {}
 
 # Guide tab — bump version string whenever guide content changes to force a re-write
 GUIDE_SHEET_NAME = "Pipeline Guide"
-_GUIDE_VERSION   = "v6"   # increment when guide content changes
+_GUIDE_VERSION   = "v7"   # increment when guide content changes
+
+# How-To tab — plain-language step-by-step guide for end users
+HOWTO_SHEET_NAME = "How to use Invoicing agent"
+_HOWTO_VERSION   = "v1"   # increment when how-to content changes
 
 # Pricing Rules tab — user-editable table of override prices
 PRICING_RULES_SHEET_NAME  = "Pricing Rules"
@@ -550,6 +554,8 @@ def ensure_approval_sheet() -> None:
     ensure_guide_sheet()
     # Ensure the user-editable Pricing Rules tab exists
     ensure_pricing_rules_sheet()
+    # Ensure the plain-language How-To tab is current (version-gated)
+    ensure_howto_sheet()
 
 
 def ensure_guide_sheet() -> None:
@@ -625,6 +631,8 @@ def ensure_guide_sheet() -> None:
             ["", ""],
             ["── NOTES FIELD GUIDE ──", ""],
             ["CONDO ORDER —",             "Cannot survey. Row is AUTO-REJECTED. Contact client — arrange refund or redirect to interior measurement."],
+            ["⛔ CANCELED —",             "Order canceled in FTF. No invoice needed. Flagged red, not priced. Set Action = Reject to clear."],
+            ["⚠️ DELIVERED —",            "Order already delivered. Flagged red, not auto-priced. Verify if an invoice is still needed; enter amount manually if so."],
             ["MANUAL PRICING REQUIRED —", "AI could not price. Enter correct amount in Amount ($) cell, then set Action = Approve."],
             ["ESCALATE —",               "Unusual order (large lot, commercial, FEMA zone, duplicate). Get Robert or Ryan to review."],
             ["(empty notes)",             "Standard order. AI is confident. Review amount and service, then approve if correct."],
@@ -643,21 +651,23 @@ def ensure_guide_sheet() -> None:
             ["invoice_draft_posted",  "AI priced and posted to this sheet — awaiting your action."],
             ["pricing_needed",        "AI could not price. Row posted — enter amount manually."],
             ["condo_rejected",        "Condo detected — cannot survey. Posted as auto-rejected. Contact client."],
+            ["canceled_flagged",      "Order canceled in FTF. Flagged red — no pricing performed. Set Action = Reject to clear."],
+            ["delivered_flagged",     "Order already delivered. Flagged red — no automatic pricing. Verify if an invoice is still needed."],
             ["invoice_approved",      "You approved — pipeline creating FTF invoice (A5 running)."],
-            ["invoice_sent",          "Invoice created in FTF and emailed to client (A6 complete)."],
+            ["invoice_sent",          "Invoice created in FTF and emailed to the client (A6 complete)."],
             ["invoice_rejected",      "Rejected (or auto-rejected: condo). No invoice created or sent."],
             ["on_hold",               "You selected On-hold. Pipeline paused for this order."],
             ["details_missing",       "FTF has insufficient data. Update in FTF or handle manually."],
-            ["permanently_excluded",  "Order will never be processed — canceled in FTF, internal email, etc."],
+            ["permanently_excluded",  "Order will never be processed — canceled in FTF (ng_status=0), internal email, etc."],
             ["", ""],
             ["── PIPELINE FLOW (every 30 min via GitHub Actions) ──", ""],
             ["A1 — Flag Hunter",      "Scans FTF DB for orders with ng_invoice_needed=1. Queues new orders."],
             ["A2 — Data Collector",   "Collects FTF API, emails, county appraiser, aerial image. AI builds order packet."],
-            ["A3 — Invoice Compiler", "Detects condos. Checks Pricing Rules tab first. Then AI pricing. Posts to this sheet."],
+            ["A3 — Invoice Compiler", "Detects condos and flags Canceled/Delivered orders (no pricing). Checks Pricing Rules tab first, then AI pricing. Posts to this sheet."],
             ["A4 — Human Gate",       "Reads your Action decision every 30 min. Routes to A5 (approve) or rejected/on-hold."],
-            ["A5 — Invoice Finalizer","Creates real FTF invoice. Retrieves pay link."],
-            ["A6 — Email Sender",     "Emails invoice and pay link. Redirects to ai@nexgen.enterprises during staging."],
-            ["A7 — Feedback Learner", "Learns from decisions to improve future pricing."],
+            ["A5 — Invoice Finalizer","Creates the real FTF invoice via API."],
+            ["A6 — Email Sender",     "Delivers the invoice email to the client via the FTF portal (sent as 'nesa'). LIVE — emails go to real customers."],
+            ["A7 — Feedback Learner", "Learns from your decisions to improve future pricing."],
         ]
 
         end_row = len(rows)
@@ -691,6 +701,165 @@ def ensure_guide_sheet() -> None:
     except Exception as exc:
         log.warning("guide sheet write failed (non-fatal): %s", exc)
 
+
+def ensure_howto_sheet() -> None:
+    """Create or update the 'How to use Invoicing agent' tab — a plain-language,
+    step-by-step guide for end users, with a worked dummy example.
+
+    Version-gated (cell B2). Uses Graph API only — works even when the file is open.
+    """
+    try:
+        h    = _session_headers()
+        base = _wb_base()
+        r = httpx.get(
+            f"{base}/worksheets/{HOWTO_SHEET_NAME}/range(address='B2')",
+            headers=h, timeout=10.0,
+        )
+        if r.is_success:
+            existing_version = (r.json().get("values") or [[""]])[0][0]
+            if str(existing_version).strip() == _HOWTO_VERSION:
+                log.debug("how-to sheet already at %s — skipping update", _HOWTO_VERSION)
+                return
+    except Exception:
+        pass
+
+    log.info("how-to sheet missing or outdated — writing %s via Graph API", _HOWTO_VERSION)
+
+    try:
+        h    = _session_headers()
+        base = _wb_base()
+
+        r_sheets = httpx.get(f"{base}/worksheets", headers=h, timeout=15.0)
+        r_sheets.raise_for_status()
+        existing = [s["name"] for s in r_sheets.json().get("value", [])]
+
+        if HOWTO_SHEET_NAME not in existing:
+            httpx.post(
+                f"{base}/worksheets/add",
+                headers=h, json={"name": HOWTO_SHEET_NAME}, timeout=15.0,
+            ).raise_for_status()
+            log.info("how-to sheet tab created")
+        else:
+            httpx.post(
+                f"{base}/worksheets/{HOWTO_SHEET_NAME}/range(address='A1:B200')/clear",
+                headers=h, json={"applyTo": "Contents"}, timeout=15.0,
+            )
+
+        stamp = f"{_HOWTO_VERSION} — {datetime.now(_EASTERN).strftime('%Y-%m-%d %H:%M %Z')}"
+        rows = [
+            ["How to Use the Invoicing Agent", ""],
+            ["Version", stamp],
+            ["", ""],
+            ["What is this?", "The Invoicing Agent reads new survey orders from FieldToFinish, works out the price, and lists each one on the 'Approvals' tab. You review each order and choose Approve, Reject, or On-hold. When you Approve, it creates the invoice in FTF and emails it to the customer automatically."],
+            ["Where do I work?", "On the 'Approvals' tab — that is the only place you take action. This tab is just instructions."],
+            ["", ""],
+            ["── THE 30-SECOND VERSION ──", ""],
+            ["1.", "Open the 'Approvals' tab."],
+            ["2.", "Read each row: Client, Property, Service / Breakdown, and Amount ($)."],
+            ["3.", "If the amount looks right, set the 'Action' column to Approve."],
+            ["4.", "Within ~30 minutes the agent invoices the customer and emails them. Done."],
+            ["", ""],
+            ["── YOUR DAILY WORKFLOW (step by step) ──", ""],
+            ["Step 1 — Open Approvals", "Go to the 'Approvals' tab. Each row is one order waiting for your decision."],
+            ["Step 2 — Review the order", "Check Client Name, Property Address, Service / Breakdown and Amount ($). Click the FTF Link to open the order in FieldToFinish if you need more detail."],
+            ["Step 3 — Check the price", "If Amount ($) is correct, leave it. If it is wrong, see 'FIXING A PRICE' below."],
+            ["Step 4 — Read the Notes", "The Notes column tells you if anything needs attention (manual pricing, escalation, condo, canceled, delivered)."],
+            ["Step 5 — Decide", "Set the 'Action' column to Approve, Reject, or On-hold. Leave blank to skip for now."],
+            ["Step 6 — Wait ~30 min", "The agent runs every 30 minutes. It picks up your decision and acts on it. 'Processed At' fills in when it is done."],
+            ["", ""],
+            ["── THE 3 ACTIONS (Action column) ──", ""],
+            ["Approve", "Creates a REAL invoice in FTF and emails it to the customer. This cannot be undone from here."],
+            ["Reject", "No invoice, no email. Use for orders that should not be billed."],
+            ["On-hold", "Pauses the order. Come back and change it to Approve or Reject later."],
+            ["(leave blank)", "The agent ignores the row until you choose an action."],
+            ["", ""],
+            ["── HOW TO READ A ROW (key columns) ──", ""],
+            ["Service / Breakdown", "What is being billed and the price of each part, e.g. 'Boundary Survey: $475.00 | Elevation Cert: $275.00'. Edit a number here to change that one service's price."],
+            ["Amount ($)", "The total that will be invoiced. To change the whole total, edit this cell."],
+            ["Confidence", "HIGH / MEDIUM / LOW — how sure the AI is about the price. LOW means double-check it."],
+            ["Escalate", "Yes = unusual order; have Robert or Ryan look before approving."],
+            ["Notes", "Plain-language reason or instruction from the agent. Always read this."],
+            ["", ""],
+            ["── WORKED EXAMPLE (a dummy order) ──", ""],
+            ["1. The row appears", "Order 1000299001 | Sunshine Title | 123 Palm Ave, Naples FL | Service: 'Boundary Survey: $475.00 | Elevation Cert: $275.00' | Amount: $750.00 | Confidence: HIGH | Action: (blank)"],
+            ["2. You review it", "The service and the $750.00 total look correct for a boundary survey + elevation certificate in Naples."],
+            ["3. (Optional) fix price", "Say you agreed $700 with this client. Type 700 in the Amount ($) cell — the agent splits it across the services for you."],
+            ["4. You approve", "Set the Action cell to 'Approve'."],
+            ["5. What happens next", "Within ~30 min the agent creates the invoice in FTF, emails it to Sunshine Title's address on file, and fills in 'Processed At'."],
+            ["6. Result", "Sunshine Title receives a $700 invoice by email. You did nothing except review and click Approve."],
+            ["", ""],
+            ["── WHAT HAPPENS AFTER YOU APPROVE ──", ""],
+            ["1. Human Gate (A4)", "Reads your Approve and locks in the amount."],
+            ["2. Finalizer (A5)", "Creates the real invoice inside FieldToFinish."],
+            ["3. Sender (A6)", "Emails the invoice to the customer (sent as 'nesa')."],
+            ["Processed At", "Fills in automatically — that is your confirmation it is done."],
+            ["", ""],
+            ["── SPECIAL ROWS YOU MIGHT SEE ──", ""],
+            ["MANUAL PRICING REQUIRED", "The AI could not set a price. Type the correct amount in Amount ($), then Approve."],
+            ["CONDO — Cannot Survey", "A condo / airspace unit. Auto-rejected. Contact the client; do not approve."],
+            ["⛔ CANCELED (red row)", "Order was canceled in FTF. No invoice needed. Set Action = Reject to clear it."],
+            ["⚠️ DELIVERED (red row)", "Order already delivered. Not auto-priced. Only invoice if one is genuinely still owed — enter the amount and Approve."],
+            ["ESCALATE", "Unusual order. Get Robert or Ryan to review before approving."],
+            ["", ""],
+            ["── FIXING A PRICE / TEACHING THE AI ──", ""],
+            ["One-off change", "Edit Amount ($) (for the total) or Service / Breakdown (for one service) on the row, then Approve."],
+            ["Permanent rule", "Use the 'Pricing Rules' tab to set a fixed price for a client, county, or service — so the AI gets it right next time. No coding needed."],
+            ["Example rule", "Service=Boundary Survey | County=Collier | Client=Sunshine Title | Price=700 | Priority=1 | Status=Active"],
+            ["", ""],
+            ["── TIMING ──", ""],
+            ["How often", "The agent runs every 30 minutes, around the clock."],
+            ["How many", "Up to 10 new orders are added to the Approvals tab each run."],
+            ["Your decisions", "Picked up on the next run after you set the Action — usually within 30 minutes."],
+            ["", ""],
+            ["── GOLDEN RULES ──", ""],
+            ["Approve = real email", "Approving sends a real invoice to a real customer. Only approve when the price is right."],
+            ["When unsure", "Use On-hold, or ask Robert / Ryan. Nothing happens until you choose an action."],
+            ["Always read Notes", "The agent flags anything unusual there."],
+        ]
+
+        end_row = len(rows)
+        httpx.patch(
+            f"{base}/worksheets/{HOWTO_SHEET_NAME}/range(address='A1:B{end_row}')",
+            headers=h, json={"values": rows}, timeout=30.0,
+        ).raise_for_status()
+
+        # Column widths + wrap long text in column B
+        try:
+            httpx.patch(
+                f"{base}/worksheets/{HOWTO_SHEET_NAME}/range(address='A1:A{end_row}')/format",
+                headers=h, json={"columnWidth": 190}, timeout=10.0,
+            )
+            httpx.patch(
+                f"{base}/worksheets/{HOWTO_SHEET_NAME}/range(address='B1:B{end_row}')/format",
+                headers=h, json={"columnWidth": 680, "wrapText": True}, timeout=10.0,
+            )
+        except Exception:
+            pass
+
+        # Bold section header rows ("──")
+        section_rows = [i + 1 for i, row in enumerate(rows) if str(row[0]).startswith("──")]
+        for sr in section_rows:
+            try:
+                httpx.patch(
+                    f"{base}/worksheets/{HOWTO_SHEET_NAME}/range(address='A{sr}:B{sr}')/format/font",
+                    headers=h, json={"bold": True}, timeout=10.0,
+                )
+            except Exception:
+                pass
+
+        # Title row bold + large
+        try:
+            httpx.patch(
+                f"{base}/worksheets/{HOWTO_SHEET_NAME}/range(address='A1:B1')/format/font",
+                headers=h, json={"bold": True, "size": 16}, timeout=10.0,
+            )
+        except Exception:
+            pass
+
+        log.info("how-to sheet '%s' written via Graph API (%s)", HOWTO_SHEET_NAME, _HOWTO_VERSION)
+
+    except Exception as exc:
+        log.warning("how-to sheet write failed (non-fatal): %s", exc)
 
 
 def auto_reject_condo_row(order_id: str) -> None:
