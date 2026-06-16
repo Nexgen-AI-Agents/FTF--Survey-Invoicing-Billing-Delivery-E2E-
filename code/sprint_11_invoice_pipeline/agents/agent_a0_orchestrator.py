@@ -85,7 +85,7 @@ def run() -> dict:
         results["a6_sender"] = {"error": str(exc)}
 
     try:
-        results["a7_feedback_learner"] = run_a7()  # Always runs last — no-op stub until Excel learning is implemented
+        results["a7_feedback_learner"] = run_a7()  # Always runs last — learns approved prices into learned_rules.json
     except Exception as exc:
         log.error("A7 failed: %s", exc)
         results["a7_feedback_learner"] = {"error": str(exc)}

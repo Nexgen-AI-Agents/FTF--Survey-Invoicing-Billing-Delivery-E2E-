@@ -60,7 +60,8 @@ from core.ftf_client import get_historical_pricing_orders, get_order
 from core.ftf_mysql import get_order_details, get_company_info, find_duplicate_orders
 from core.logger import get_logger
 from core.onedrive_excel_client import (
-    append_approval_row, auto_reject_condo_row, get_pending_order_ids, match_pricing_rule,
+    append_approval_row, auto_reject_condo_row, get_pending_order_ids,
+    get_pricing_rules, match_pricing_rule,
 )
 
 AGENT_NAME = "agent_a3_invoice_compiler"
@@ -128,6 +129,47 @@ def _load_learned_rules(order_id: str = "") -> str:
         return "\n".join(lines)
     except Exception:
         return ""
+
+
+def _load_user_pricing_rules_block() -> str:
+    """Format the user-defined Pricing Rules tab entries for the AI prompt.
+
+    The deterministic match_pricing_rule() already short-circuits the AI when an
+    order matches a rule EXACTLY (all of service/county/client). This block hands
+    the SAME user rules to the AI so it can apply them — and their intent — to
+    closely-related orders that DON'T match exactly: a similar service name, a
+    neighbouring county, or the same client on a related service. This is how the
+    agent "learns" from the Pricing Rules tab on the very next run.
+
+    Rules with price <= 0 mean "keep AI pricing" (no fixed price) — skipped here.
+    """
+    try:
+        rules = get_pricing_rules()
+    except Exception:
+        return ""
+
+    lines = []
+    for r in rules:
+        if float(r.get("price", 0) or 0) <= 0:
+            continue
+        svc = (r.get("service") or "*").strip()
+        cty = (r.get("county") or "*").strip()
+        cli = (r.get("client") or "*").strip()
+        scope = []
+        if svc and svc != "*":
+            scope.append(f"service ~ '{svc}'")
+        if cty and cty != "*":
+            scope.append(f"county ~ '{cty}'")
+        if cli and cli != "*":
+            scope.append(f"client ~ '{cli}'")
+        scope_str = ", ".join(scope) if scope else "ANY order"
+        note = (r.get("notes") or "").strip()
+        line = f"  • When {scope_str} → ${float(r['price']):.2f}"
+        if note:
+            line += f"  ({note})"
+        lines.append(line)
+
+    return "\n".join(lines[:30])  # cap so the prompt stays bounded
 
 
 # ── Service breakdown string ──────────────────────────────────────────────────
@@ -337,16 +379,32 @@ Return ONLY valid JSON (no markdown, no explanation outside JSON):
   "flags": []
 }}"""
 
-    # Inject learned rules + any one-time order overrides
-    learned_block = _load_learned_rules(order_id=order_id)
+    # Inject user-defined Pricing Rules (tab) + A7 learned rules + one-time order overrides.
+    # Pricing Rules tab first (management-set, highest authority for related scenarios),
+    # then learned/feedback rules.
+    user_rules_block = _load_user_pricing_rules_block()
+    learned_block    = _load_learned_rules(order_id=order_id)
+
+    inject = ""
+    if user_rules_block:
+        inject += (
+            "── USER PRICING RULES (from the Pricing Rules tab — AUTHORITATIVE) ──\n"
+            "Management-set prices. An order that matches one EXACTLY is priced from it\n"
+            "before you ever see it — these are shown so you apply the SAME pricing to\n"
+            "closely-related orders (similar service name, neighbouring county, or the\n"
+            "same client on a related service). Prefer these over the generic guidelines\n"
+            "below; explain in pricing_reasoning which rule you followed and why.\n"
+            f"{user_rules_block}\n\n"
+        )
     if learned_block:
+        inject += (
+            "── FIELD USER RULES (from human feedback — apply as instructed) ────\n"
+            f"{learned_block}\n\n"
+        )
+    if inject:
         context = context.replace(
             "── YOUR TASK ────────────────────────────────────",
-            (
-                "── FIELD USER RULES (from human feedback — apply as instructed) ────\n"
-                f"{learned_block}\n\n"
-                "── YOUR TASK ────────────────────────────────────"
-            ),
+            inject + "── YOUR TASK ────────────────────────────────────",
             1,
         )
 
