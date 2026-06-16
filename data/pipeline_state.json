@@ -8628,5 +8628,9 @@
     "invoice_needed": 255
   },
   "total": 359,
+<<<<<<< Updated upstream
   "generated_at": "2026-06-16T23:53:53.354171+00:00"
+=======
+  "generated_at": "2026-06-16T23:54:27.351196+00:00"
+>>>>>>> Stashed changes
 }
