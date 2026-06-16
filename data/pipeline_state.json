@@ -1,10 +1,4 @@
 {
-<<<<<<< Updated upstream
-  "orders": [],
-  "status_counts": {},
-  "total": 0,
-  "generated_at": "2026-06-16T16:21:42.901682+00:00"
-=======
   "orders": [
     {
       "order_id": "1000284561",
@@ -10722,6 +10716,5 @@
     "details_missing": 6
   },
   "total": 446,
-  "generated_at": "2026-06-16T16:22:26.821268+00:00"
->>>>>>> Stashed changes
+  "generated_at": "2026-06-16T16:26:01.543678+00:00"
 }
