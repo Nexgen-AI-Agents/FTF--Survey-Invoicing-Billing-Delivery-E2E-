@@ -4807,6 +4807,11 @@
     "data_collected": 1,
     "invoice_needed": 190
   },
+<<<<<<< Updated upstream
   "total": 200,
   "generated_at": "2026-06-16T19:18:13.507604+00:00"
+=======
+  "total": 100,
+  "generated_at": "2026-06-16T19:18:57.862395+00:00"
+>>>>>>> Stashed changes
 }
