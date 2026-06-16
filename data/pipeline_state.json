@@ -2430,6 +2430,11 @@
     "invoice_draft_posted": 5,
     "invoice_needed": 95
   },
+<<<<<<< Updated upstream
   "total": 101,
   "generated_at": "2026-06-16T17:50:08.858096+00:00"
+=======
+  "total": 1,
+  "generated_at": "2026-06-16T17:50:42.252514+00:00"
+>>>>>>> Stashed changes
 }
