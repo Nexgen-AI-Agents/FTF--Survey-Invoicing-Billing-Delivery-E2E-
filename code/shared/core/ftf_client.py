@@ -102,7 +102,15 @@ def get_order(order_id: str) -> dict:
             timeout=_TIMEOUT,
         )
         r.raise_for_status()
-        return r.json()
+        payload = r.json()
+        # The FTF API wraps the order in an envelope: {"data": {...}, "success": true}.
+        # Unwrap it so callers can read fields (invoiced, paid, customer_email,
+        # service_type, ...) directly off the returned dict. Without this every
+        # top-level .get() returns None — which silently broke A3's already-invoiced
+        # guard and A2's data collection (they fell back to defaults/MySQL).
+        if isinstance(payload, dict) and isinstance(payload.get("data"), dict):
+            return payload["data"]
+        return payload
     except httpx.HTTPStatusError as exc:
         raise AgentError(f"get_order({order_id}) HTTP {exc.response.status_code}") from exc
     except Exception as exc:

@@ -497,9 +497,11 @@ def compile_for_order(order_id: str) -> dict:
     # check they would be re-posted to the approval sheet (risking a duplicate invoice).
     try:
         _ftf_live = get_order(order_id)
-        if _ftf_live.get("invoiced"):
+        # get_order() unwraps the API envelope, but stay robust to either shape.
+        _live = _ftf_live.get("data", _ftf_live) if isinstance(_ftf_live, dict) else {}
+        if _live.get("invoiced"):
             log.info("order=%s already invoiced in FTF (paid=%s) — marking already_invoiced, skipping Excel post",
-                     order_id, _ftf_live.get("paid"))
+                     order_id, _live.get("paid"))
             save_order_state(order_id, status="already_invoiced")
             return {}
     except Exception as exc:

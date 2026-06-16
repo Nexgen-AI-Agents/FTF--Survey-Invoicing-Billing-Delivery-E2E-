@@ -34,6 +34,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code", "shared
 from core.onedrive_excel_client import (  # noqa: E402
     ONEDRIVE_SHEET_NAME,
     ONEDRIVE_TABLE_NAME,
+    ensure_action_dropdown,
     _session_headers,
     _wb_base,
 )
@@ -75,6 +76,9 @@ def clear_onedrive_approvals() -> int:
         else:
             print(f"  [!] failed to delete row index={idx}: {resp.status_code} {resp.text[:120]}")
     print(f"  Deleted {deleted}/{len(rows)} rows. Header + schema preserved.")
+    # Row deletion strips the Action-column dropdown — re-apply it.
+    ensure_action_dropdown()
+    print("  Action dropdown (Approve/Reject/On-hold) re-applied.")
     return deleted
 
 

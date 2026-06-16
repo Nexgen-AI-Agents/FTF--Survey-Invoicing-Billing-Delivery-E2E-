@@ -556,6 +556,83 @@ def ensure_approval_sheet() -> None:
     ensure_pricing_rules_sheet()
     # Ensure the plain-language How-To tab is current (version-gated)
     ensure_howto_sheet()
+    # Self-heal the Action-column dropdown (validation can be stripped by row deletes)
+    ensure_action_dropdown()
+
+
+def ensure_action_dropdown() -> None:
+    """(Re)apply the Approve/Reject/On-hold list validation on the Action column.
+
+    The dropdown is normally written once by _setup_full_sheet_via_openpyxl, but Excel
+    drops the validation when whole table rows are deleted (e.g. a full sheet reset).
+    Since the sheet/table still exist after that, _setup_full_sheet_via_openpyxl won't
+    re-run — so the dropdown silently disappears.
+
+    The Graph workbook REST API does NOT expose data validation, so this re-applies it
+    the only way possible: download the file, add the validation via openpyxl (only if
+    it is actually missing), and re-upload. Idempotent — when the dropdown already
+    covers column J it does nothing (no upload, no 423-lock risk). The PUT upload needs
+    the file closed/unlocked; if it is open in Excel the upload may 423 — logged as
+    non-fatal so the pipeline still runs.
+    """
+    import io
+    import openpyxl
+    from openpyxl.styles import PatternFill
+    from openpyxl.formatting.rule import FormulaRule
+    from openpyxl.worksheet.datavalidation import DataValidation
+
+    action_letter = chr(ord("A") + _COL_ACTION)   # "J"
+    addr          = f"{action_letter}2:{action_letter}10000"
+
+    try:
+        _close_session()   # release lock before any potential upload
+        raw = _download_workbook_bytes()
+        wb  = openpyxl.load_workbook(io.BytesIO(raw))
+        if ONEDRIVE_SHEET_NAME not in wb.sheetnames:
+            log.info("ensure_action_dropdown: Approvals sheet absent — nothing to do")
+            return
+        ws = wb[ONEDRIVE_SHEET_NAME]
+
+        # Idempotency: skip only if a list validation covers the EXACT canonical range.
+        # Graph row-deletes shift/shrink the range (e.g. J2:J10000 → J3:J9991), which
+        # leaves the first data row (J2) with no dropdown — so anything that isn't an
+        # exact match must be removed and rebuilt.
+        existing = [
+            d for d in list(ws.data_validations.dataValidation)
+            if d.type == "list" and action_letter in str(d.sqref)
+        ]
+        if len(existing) == 1 and str(existing[0].sqref).replace(" ", "") == addr:
+            log.debug("ensure_action_dropdown: dropdown already canonical (%s) — skip", addr)
+            return
+        for d in existing:
+            ws.data_validations.dataValidation.remove(d)   # drop drifted/partial ranges
+
+        dv = DataValidation(
+            type="list",
+            formula1='"Approve,Reject,On-hold"',
+            allow_blank=True,
+            showDropDown=False,   # False = arrow IS shown in Excel
+        )
+        dv.error      = "Select Approve, Reject, or On-hold"
+        dv.errorTitle = "Invalid action"
+        dv.sqref      = addr
+        ws.add_data_validation(dv)
+
+        # Re-apply the Action-value row colors too (conditional formatting is range-based)
+        for action_val, hex_color in [("Approve", "C6EFCE"), ("Reject", "FFC7CE"), ("On-hold", "FFEB9C")]:
+            fill = PatternFill(start_color=hex_color, end_color=hex_color, fill_type="solid")
+            ws.conditional_formatting.add(
+                f"A2:{_END_COL}10000",
+                FormulaRule(formula=[f'${action_letter}2="{action_val}"'], fill=fill),
+            )
+
+        buf = io.BytesIO()
+        wb.save(buf)
+        buf.seek(0)
+        _upload_workbook_bytes(buf.read())
+        log.info("ensure_action_dropdown: re-applied list validation on %s via openpyxl", addr)
+    except Exception as exc:
+        log.warning("ensure_action_dropdown failed (non-fatal): %s", exc)
 
 
 def ensure_guide_sheet() -> None:

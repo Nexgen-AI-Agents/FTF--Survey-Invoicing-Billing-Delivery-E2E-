@@ -97,14 +97,17 @@ MODEL: claude-opus-4-8
   [~18:00 ET] | claude-opus-4-8 | Flip 6 GitHub Secrets to prod via PAT (sealed-box)     | In:  ~9,000 | Out: ~2,000 | Total: ~11,000
   [~18:15 ET] | claude-opus-4-8 | Clear OneDrive approval sheet + reset pipeline_state    | In: ~12,000 | Out: ~3,000 | Total: ~15,000
   [~18:30 ET] | claude-opus-4-8 | Prod FTF API verify + tracking update                  | In:  ~7,000 | Out: ~1,500 | Total:  ~8,500
+  [~19:30 ET] | claude-opus-4-8 | Fix already-invoiced skip (1000285363) + EST timezone  | In: ~13,000 | Out: ~2,500 | Total: ~15,500
+  [~20:00 ET] | claude-opus-4-8 | Pricing Rules tab → AI prompt learning (related cases) | In: ~16,000 | Out: ~3,500 | Total: ~19,500
+  [~20:30 ET] | claude-opus-4-8 | reset_all_state.py + full wipe + re-run (fresh prod)   | In: ~12,000 | Out: ~2,500 | Total: ~14,500
 
                                                     ┌─────────────────────────────────┐
-                                         DAILY TOTAL │  ~64,000 tokens (est.)          │
+                                         DAILY TOTAL │  ~113,500 tokens (est.)         │
                                          MODEL       │  claude-opus-4-8               │
                                                     └─────────────────────────────────┘
 
 ================================================================================
-CUMULATIVE PROJECT TOTAL (as of 2026-06-16)
+CUMULATIVE PROJECT TOTAL (as of 2026-06-17)
 ================================================================================
 
   Date          Model                   Tokens (est.)
@@ -112,9 +115,9 @@ CUMULATIVE PROJECT TOTAL (as of 2026-06-16)
   2026-06-06    claude-sonnet-4-6       ~74,600
   2026-06-08    claude-sonnet-4-6       ~115,800
   2026-06-09    claude-sonnet-4-6       ~171,300
-  2026-06-16    claude-opus-4-8        ~64,000
+  2026-06-16    claude-opus-4-8        ~113,500
   ──────────────────────────────────────────────────────
-  PROJECT TOTAL                         ~425,700 tokens
+  PROJECT TOTAL                         ~475,200 tokens
 
 ================================================================================
 HOW TO MAINTAIN THIS FILE
