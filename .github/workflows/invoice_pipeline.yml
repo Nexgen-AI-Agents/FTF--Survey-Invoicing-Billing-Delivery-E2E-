@@ -91,6 +91,13 @@ jobs:
           cd code/sprint_11_invoice_pipeline
           python -m agents.agent_a0_orchestrator
 
+      - name: Alert on failure (email)
+        if: failure()
+        run: |
+          python scripts/notify_failure_email.py \
+            --workflow "Invoice Pipeline" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
       - name: Backfill any pricing_needed/condo_rejected rows missing from Excel
         if: always()
         run: |

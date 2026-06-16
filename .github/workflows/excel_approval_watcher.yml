@@ -35,6 +35,11 @@ jobs:
       FTF_SITE_BASE_URL:       ${{ secrets.FTF_SITE_BASE_URL }}
       NOTIFICATION_FROM_EMAIL: ${{ secrets.NOTIFICATION_FROM_EMAIL }}
       NOTIFICATION_TO_EMAILS:  ${{ secrets.NOTIFICATION_TO_EMAILS }}
+      SMTP_HOST:               ${{ secrets.SMTP_HOST }}
+      SMTP_PORT:               ${{ secrets.SMTP_PORT }}
+      SMTP_USER:               ${{ secrets.SMTP_USER }}
+      SMTP_PASSWORD:           ${{ secrets.SMTP_PASSWORD }}
+      SMTP_FROM:               ${{ secrets.SMTP_FROM }}
       APPROVED_SENDERS:        ${{ secrets.APPROVED_SENDERS }}
       EMAIL_OVERRIDE_ALL:      ${{ secrets.EMAIL_OVERRIDE_ALL }}
       FTF_PORTAL_BASE_URL:     ${{ secrets.FTF_PORTAL_BASE_URL }}
@@ -57,6 +62,13 @@ jobs:
         run: |
           cd code/sprint_11_invoice_pipeline
           python run_excel_watcher.py
+
+      - name: Alert on failure (email)
+        if: failure()
+        run: |
+          python scripts/notify_failure_email.py \
+            --workflow "Excel Approval Watcher" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Export pipeline state to JSON
         if: always()
