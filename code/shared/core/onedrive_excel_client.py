@@ -1000,8 +1000,13 @@ def auto_reject_condo_row(order_id: str) -> None:
 
 # ── Public write API ──────────────────────────────────────────────────────────
 
-def get_pending_order_ids() -> set:
-    """Return order IDs that already have a row in the approval table with blank Action (awaiting decision)."""
+def get_pending_order_ids(strict: bool = False) -> set:
+    """Return order IDs that already have a row in the approval table with blank Action (awaiting decision).
+
+    strict=True re-raises on a fetch failure instead of returning an empty set. A3 uses
+    this so it can ABORT the batch rather than treat a failed read as "sheet empty" — which
+    would re-post orders that are already in the sheet (duplicate rows).
+    """
     try:
         ensure_approval_sheet()
         r = httpx.get(
@@ -1020,14 +1025,16 @@ def get_pending_order_ids() -> set:
         return pending
     except Exception as exc:
         log.warning("get_pending_order_ids failed (dedup disabled): %s", exc)
+        if strict:
+            raise
         return set()
 
 
-def get_all_approval_order_ids() -> set:
+def get_all_approval_order_ids(strict: bool = False) -> set:
     """Return ALL order IDs already in the approval table regardless of action status.
 
-    Used by backfill scripts to avoid writing duplicate rows for orders that were
-    already posted (e.g. condo_rejected rows with Action=Reject already filled).
+    Used by backfill scripts and A3 dedup to avoid writing duplicate rows for orders that
+    were already posted. strict=True re-raises on a fetch failure (see get_pending_order_ids).
     """
     try:
         ensure_approval_sheet()
@@ -1046,6 +1053,8 @@ def get_all_approval_order_ids() -> set:
         return ids
     except Exception as exc:
         log.warning("get_all_approval_order_ids failed: %s", exc)
+        if strict:
+            raise
         return set()
 
 

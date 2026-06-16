@@ -32,21 +32,30 @@ def _get_client() -> anthropic.Anthropic:
 
 
 def _openai_call(system: str, user: str, max_tokens: int) -> str:
-    """Fallback to OpenAI gpt-4o when Anthropic is unavailable."""
+    """Fallback to OpenAI gpt-4o when Anthropic is unavailable (with its own retry)."""
     import openai as _openai
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise LLMUnavailableError("OpenAI fallback unavailable — OPENAI_API_KEY not set")
     oc = _openai.OpenAI(api_key=api_key)
-    resp = oc.chat.completions.create(
-        model=_OPENAI_FALLBACK_MODEL,
-        max_tokens=max_tokens,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user",   "content": user},
-        ],
-    )
-    return resp.choices[0].message.content or ""
+    last_exc: Optional[Exception] = None
+    for attempt in range(1, _MAX_RETRIES + 1):
+        try:
+            resp = oc.chat.completions.create(
+                model=_OPENAI_FALLBACK_MODEL,
+                max_tokens=max_tokens,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user",   "content": user},
+                ],
+            )
+            return resp.choices[0].message.content or ""
+        except Exception as exc:
+            last_exc = exc
+            logger.warning("OpenAI fallback error (attempt %d/%d): %r", attempt, _MAX_RETRIES, exc)
+            if attempt < _MAX_RETRIES:
+                time.sleep(_RETRY_BASE_DELAY * attempt)
+    raise LLMUnavailableError(f"OpenAI fallback exhausted: {last_exc!r}")
 
 
 def _openai_call_with_image(system: str, user_text: str, image_b64: str,
@@ -132,6 +141,14 @@ def call_with_image(
             if attempt < _MAX_RETRIES:
                 time.sleep(_RETRY_BASE_DELAY)
 
+        except Exception as exc:
+            # ANY other Claude failure (auth error, bad request, decode error, etc.) —
+            # do not let it escape uncaught; route straight to the OpenAI fallback so the
+            # agent never hard-fails on an unexpected Claude error class.
+            logger.error("Claude unexpected error (attempt %d/%d): %r", attempt, _MAX_RETRIES, exc)
+            last_exc = exc
+            break
+
     logger.warning("Claude exhausted — falling back to OpenAI %s", _OPENAI_FALLBACK_MODEL)
     try:
         return _openai_call_with_image(system, user_text, image_b64, media_type, max_tokens)
@@ -182,6 +199,14 @@ def call(model: str, system: str, user: str, max_tokens: int = 1024,
             last_exc = exc
             if attempt < _MAX_RETRIES:
                 time.sleep(_RETRY_BASE_DELAY)
+
+        except Exception as exc:
+            # ANY other Claude failure (auth error, bad request, decode error, etc.) —
+            # do not let it escape uncaught; route straight to the OpenAI fallback so the
+            # agent never hard-fails on an unexpected Claude error class.
+            logger.error("Claude unexpected error (attempt %d/%d): %r", attempt, _MAX_RETRIES, exc)
+            last_exc = exc
+            break
 
     logger.warning("Claude exhausted — falling back to OpenAI %s", _OPENAI_FALLBACK_MODEL)
     try:

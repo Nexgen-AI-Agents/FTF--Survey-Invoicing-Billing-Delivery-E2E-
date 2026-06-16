@@ -39,13 +39,17 @@ def _parse_draft(raw) -> dict:
 
 
 def main():
-    pricing_needed = get_orders_by_status("pricing_needed")
-    condo_rejected  = get_orders_by_status("condo_rejected")
-    targets = pricing_needed + condo_rejected
+    pricing_needed    = get_orders_by_status("pricing_needed")
+    condo_rejected    = get_orders_by_status("condo_rejected")
+    canceled_flagged  = get_orders_by_status("canceled_flagged")
+    delivered_flagged = get_orders_by_status("delivered_flagged")
+    targets = pricing_needed + condo_rejected + canceled_flagged + delivered_flagged
 
     log.info(
-        "backfill targets: %d pricing_needed + %d condo_rejected = %d total",
-        len(pricing_needed), len(condo_rejected), len(targets),
+        "backfill targets: %d pricing_needed + %d condo_rejected + %d canceled_flagged "
+        "+ %d delivered_flagged = %d total",
+        len(pricing_needed), len(condo_rejected), len(canceled_flagged),
+        len(delivered_flagged), len(targets),
     )
 
     existing = get_all_approval_order_ids()
@@ -78,6 +82,8 @@ def main():
         except Exception:
             order_status = ""
 
+        highlight_red = False
+
         if status == "pricing_needed":
             service    = service_type or "Unknown — see notes"
             amount     = float(order.get("estimate_amount") or 0.0)
@@ -89,6 +95,29 @@ def main():
             notes = (
                 f"MANUAL PRICING REQUIRED — {pn_reason}. "
                 "Enter the correct amount in the Amount column, then set Action = Approve."
+            )
+
+        elif status == "canceled_flagged":
+            service       = service_type or (order_status or "Canceled")
+            amount        = 0.0
+            confidence    = "N/A"
+            escalate      = True
+            highlight_red = True
+            notes = (
+                "⛔ CANCELED — order canceled in FTF. No invoice required. Auto-flagged; "
+                "no pricing performed. Set Action = Reject to clear."
+            )
+
+        elif status == "delivered_flagged":
+            service       = service_type or (order_status or "Delivered")
+            amount        = float(order.get("estimate_amount") or 0.0)
+            confidence    = "N/A"
+            escalate      = True
+            highlight_red = True
+            notes = (
+                "⚠️ DELIVERED — order already delivered. No automatic pricing performed. "
+                "Verify whether an invoice is still required; if so, enter the amount "
+                "manually and set Action = Approve."
             )
 
         else:  # condo_rejected
@@ -120,6 +149,7 @@ def main():
                 ftf_link=ftf_link,
                 order_status=order_status,
                 notes=notes,
+                highlight_red=highlight_red,
             )
             log.info("posted order=%s status=%s", order_id, status)
 
@@ -137,11 +167,13 @@ def main():
             errors += 1
 
     result = {
-        "posted":         posted,
-        "skipped":        skipped,
-        "errors":         errors,
-        "pricing_needed": len(pricing_needed),
-        "condo_rejected": len(condo_rejected),
+        "posted":            posted,
+        "skipped":           skipped,
+        "errors":            errors,
+        "pricing_needed":    len(pricing_needed),
+        "condo_rejected":    len(condo_rejected),
+        "canceled_flagged":  len(canceled_flagged),
+        "delivered_flagged": len(delivered_flagged),
     }
     log.info("backfill complete: %s", result)
     print(json.dumps(result, indent=2))

@@ -482,19 +482,34 @@ def process_dispatch_input() -> dict:
                      output_summary="status → invoice_approved")
         log.info("dispatch: approved order=%s", order_id)
 
-    elif action == "reject":
-        save_order_state(order_id, status="invoice_rejected")
-        log_decision(AGENT_NAME, "invoice_rejected", order_id=order_id,
-                     reason=f"Rejected via OneDrive Excel: {notes}",
-                     input_summary=f"notes={notes}", output_summary="status → invoice_rejected")
-        log.info("dispatch: rejected order=%s notes=%s", order_id, notes)
+    elif action in ("reject", "hold"):
+        # Guard: never let a stray Excel reject/hold overwrite an order that already
+        # progressed past approval — that would corrupt state (e.g. flip a sent invoice to
+        # "rejected"), break A7 learning, and confuse the dashboard.
+        _FINAL = {"invoice_approved", "invoice_finalized", "invoice_sent", "already_invoiced"}
+        if current_status in _FINAL:
+            log.warning("dispatch: %s ignored — order %s is %s (past approval, immutable)",
+                        action, order_id, current_status)
+            try:
+                from core.onedrive_excel_client import mark_row_processed
+                mark_row_processed(order_id)
+            except Exception:
+                pass
+            return {"ok": True, "order_id": order_id, "action": "ignored",
+                    "reason": f"order already {current_status}"}
 
-    elif action == "hold":
-        save_order_state(order_id, status="on_hold")
-        log_decision(AGENT_NAME, "invoice_on_hold", order_id=order_id,
-                     reason=f"Held via OneDrive Excel: {notes}",
-                     input_summary=f"notes={notes}", output_summary="status → on_hold")
-        log.info("dispatch: held order=%s", order_id)
+        if action == "reject":
+            save_order_state(order_id, status="invoice_rejected")
+            log_decision(AGENT_NAME, "invoice_rejected", order_id=order_id,
+                         reason=f"Rejected via OneDrive Excel: {notes}",
+                         input_summary=f"notes={notes}", output_summary="status → invoice_rejected")
+            log.info("dispatch: rejected order=%s notes=%s", order_id, notes)
+        else:  # hold
+            save_order_state(order_id, status="on_hold")
+            log_decision(AGENT_NAME, "invoice_on_hold", order_id=order_id,
+                         reason=f"Held via OneDrive Excel: {notes}",
+                         input_summary=f"notes={notes}", output_summary="status → on_hold")
+            log.info("dispatch: held order=%s", order_id)
 
     else:
         log.warning("dispatch: unknown action=%s for order=%s", action, order_id)

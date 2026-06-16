@@ -1,0 +1,32 @@
+name: Pipeline Health Check
+
+on:
+  schedule:
+    # GitHub fires cron in UTC only. 13:00 UTC = 09:00 ET (EDT) / 08:00 ET (EST).
+    - cron: "0 13 * * *"   # ~09:00 AM Eastern, daily
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    env:
+      TZ: America/New_York   # run in Eastern Time (DST-aware)
+      HEALTH_AGE_HOURS:        "24"
+      SMTP_HOST:               ${{ secrets.SMTP_HOST }}
+      SMTP_PORT:               ${{ secrets.SMTP_PORT }}
+      SMTP_USER:               ${{ secrets.SMTP_USER }}
+      SMTP_PASSWORD:           ${{ secrets.SMTP_PASSWORD }}
+      SMTP_FROM:               ${{ secrets.SMTP_FROM }}
+      NOTIFICATION_TO_EMAILS:  ${{ secrets.NOTIFICATION_TO_EMAILS }}
+      NOTIFICATION_FROM_EMAIL: ${{ secrets.NOTIFICATION_FROM_EMAIL }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check for stuck orders and email a digest
+        run: python scripts/pipeline_health_check.py

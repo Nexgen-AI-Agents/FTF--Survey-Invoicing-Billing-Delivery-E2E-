@@ -206,7 +206,12 @@ def _classify_client_tier(company_info: dict) -> str:
     order_count = company_info.get("ng_order_count", 0)
 
     if dtentered:
-        reg_year = dtentered.year if hasattr(dtentered, "year") else int(str(dtentered)[:4])
+        # Poison-data guard: ng_dtentered may be a datetime, a 'YYYY-...' string, or junk
+        # (empty string, None-like). int("") would raise and kill pricing for the order.
+        try:
+            reg_year = dtentered.year if hasattr(dtentered, "year") else int(str(dtentered)[:4])
+        except (ValueError, TypeError):
+            reg_year = 0
         if reg_year >= NEW_TITLE_YEAR_CUTOFF and order_count < NEW_TITLE_ORDER_CUTOFF:
             return "new_title"
 
@@ -820,8 +825,16 @@ def run() -> dict:
     orders  = get_orders_by_status("data_collected")[:INVOICE_BATCH_SIZE]
     summary = {"processed": 0, "posted": 0, "skipped_excel": 0, "errors": 0}
 
-    pending_ids = get_pending_order_ids()        # rows awaiting a decision (blank Action)
-    all_ids     = get_all_approval_order_ids()   # ALL rows, including already-actioned
+    # Dedup reads are STRICT: if the OneDrive read fails we must NOT treat the sheet as
+    # empty (that would re-post orders already in it → duplicate rows). Abort the batch and
+    # let the next run retry — the workflow's failure alert covers a sustained outage.
+    try:
+        pending_ids = get_pending_order_ids(strict=True)      # rows awaiting a decision
+        all_ids     = get_all_approval_order_ids(strict=True)  # ALL rows, incl. actioned
+    except Exception as exc:
+        log.error("A3 dedup read failed — aborting batch to avoid duplicate posts: %s", exc)
+        summary["errors"] += 1
+        return summary
 
     for db_row in orders:
         order_id = db_row["order_id"]

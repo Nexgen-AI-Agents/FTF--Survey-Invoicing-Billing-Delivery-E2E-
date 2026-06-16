@@ -5,7 +5,7 @@
 
 **Keep this file updated after each git push and deployment.**
 
-_Last updated: 2026-06-17 — QA-hardening pass: A5 idempotency guard (no duplicate invoices), A3 dedup vs all actioned rows, fail-closed already-invoiced guard, manual-pricing finalize fix, shared `invoice-state-write` concurrency, self-healing Action dropdown, FTF data-envelope unwrap. Update the date + latest commit hash (`git rev-parse --short HEAD`) on every push._
+_Last updated: 2026-06-17 — Reliability hardening pass (resilience audit): failure-email alerts on every workflow, scheduled stuck-order health digest, A0 try/finally session cleanup, broadened Claude→OpenAI fallback (+OpenAI retry), A4 reject/hold terminal guard, poison-data guard, A3 strict dedup, backfill covers canceled/delivered. Plus earlier: A5 idempotency, approval-time duplicate check + Notes, throughput 12/run. Update the date + latest commit hash (`git rev-parse --short HEAD`) on every push._
 
 ---
 
@@ -89,6 +89,9 @@ All in `code/sprint_11_invoice_pipeline/agents/`:
 | `ar_followup.yml` | cron `0 11 * * *` (~7am ET) | AR follow-ups |
 | `nightly_memory.yml` | cron `0 6 * * *` (~2am ET) | Memory loop |
 | `monthly_statements.yml` | cron `0 12 1 * *` (~8am ET 1st) | Monthly statements |
+| `pipeline_health.yml` | cron `0 13 * * *` (~9am ET) | Stuck-order sweep → emails a digest if any order is stuck >24h |
+
+**Failure alerting:** `invoice_pipeline.yml` + `excel_approval_watcher.yml` have an `if: failure()` step that runs `scripts/notify_failure_email.py` → emails `NOTIFICATION_TO_EMAILS` so a failed run never goes unnoticed.
 
 Secrets via GitHub repo Secrets (Anthropic, OpenAI, FTF, MySQL, Azure/Graph, SMTP, etc.). `.env` is gitignored — local mirror of those Secrets (prod values).
 
@@ -105,7 +108,9 @@ Active production path is **sprint_11_invoice_pipeline**.
 
 ## 6. Scripts (`scripts/`)
 
-Key: `reset_all_state.py` (full reset), `diag_order.py` (dump prod FTF order JSON),
+Key: `reset_all_state.py` (full reset), `repair_row_fills.py` (fix stale red row fills),
+`pipeline_health_check.py` (stuck-order digest), `notify_failure_email.py` (workflow-failure
+email), `diag_order.py` (dump prod FTF order JSON),
 `retest_reset_order.py` (reset one order for retest), `export_pipeline_json.py`,
 `export_pipeline_excel.py`, `update_build_timeline.py`, `test_connections.py`,
 `train_pricing.py`, `fetch_historical_pricing.py`, plus demo/report/QA generators.

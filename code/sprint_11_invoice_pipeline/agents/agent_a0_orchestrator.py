@@ -91,13 +91,19 @@ def run() -> dict:
         results["a7_feedback_learner"] = {"error": str(exc)}
 
     log.info("=== Invoice Pipeline Run Complete: %s ===", results)
-
-    # Release the OneDrive workbook session so the file is not locked for raw uploads
-    _close_session()
-
     return results
 
 
 if __name__ == "__main__":
     import json
-    print(json.dumps(run(), indent=2))
+    # try/finally guarantees the OneDrive workbook session is released even if run() or the
+    # JSON dump raises — a leaked session locks the file and breaks the NEXT run. default=str
+    # keeps json.dumps from crashing on any non-serializable value an agent might return.
+    try:
+        _result = run()
+        print(json.dumps(_result, indent=2, default=str))
+    finally:
+        try:
+            _close_session()
+        except Exception as _exc:
+            log.warning("close_session on exit failed (non-fatal): %s", _exc)
