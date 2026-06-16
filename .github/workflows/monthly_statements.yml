@@ -2,12 +2,15 @@ name: Monthly Statements Loop
 
 on:
   schedule:
-    - cron: "0 8 1 * *"   # 08:00 UTC on the 1st of every month
+    # GitHub fires cron in UTC only. 12:00 UTC = 08:00 ET (EDT) / 07:00 ET (EST).
+    - cron: "0 12 1 * *"   # ~08:00 AM Eastern, 1st of every month
   workflow_dispatch:
 
 jobs:
   run-statements-loop:
     runs-on: ubuntu-latest
+    env:
+      TZ: America/New_York   # run this job in Eastern Time (DST-aware)
 
     steps:
       - uses: actions/checkout@v4

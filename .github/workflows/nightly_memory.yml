@@ -2,12 +2,15 @@ name: Nightly Memory Loop
 
 on:
   schedule:
-    - cron: "0 4 * * *"   # 04:00 UTC = midnight ET (11 PM ET)
+    # GitHub fires cron in UTC only. 06:00 UTC = 02:00 ET (EDT) / 01:00 ET (EST).
+    - cron: "0 6 * * *"   # ~02:00 AM Eastern, nightly
   workflow_dispatch:
 
 jobs:
   run-memory-loop:
     runs-on: ubuntu-latest
+    env:
+      TZ: America/New_York   # run this job in Eastern Time (DST-aware)
 
     steps:
       - uses: actions/checkout@v4

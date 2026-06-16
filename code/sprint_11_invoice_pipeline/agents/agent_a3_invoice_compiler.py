@@ -56,7 +56,7 @@ from core.excel_db import (
     save_order_state, log_decision,
 )
 from core.exceptions import AgentError
-from core.ftf_client import get_historical_pricing_orders
+from core.ftf_client import get_historical_pricing_orders, get_order
 from core.ftf_mysql import get_order_details, get_company_info, find_duplicate_orders
 from core.logger import get_logger
 from core.onedrive_excel_client import (
@@ -433,6 +433,19 @@ def compile_for_order(order_id: str) -> dict:
         log.info("order=%s Canceled in FTF — marking permanently_excluded, skipping Excel post", order_id)
         save_order_state(order_id, status="permanently_excluded")
         return {}
+
+    # Guard: order already has an invoice in FTF — never re-post or re-invoice.
+    # FTF flags ng_invoice_needed=1 on some already-invoiced orders, so without this
+    # check they would be re-posted to the approval sheet (risking a duplicate invoice).
+    try:
+        _ftf_live = get_order(order_id)
+        if _ftf_live.get("invoiced"):
+            log.info("order=%s already invoiced in FTF (paid=%s) — marking already_invoiced, skipping Excel post",
+                     order_id, _ftf_live.get("paid"))
+            save_order_state(order_id, status="already_invoiced")
+            return {}
+    except Exception as exc:
+        log.warning("invoiced-check failed order=%s (continuing): %s", order_id, exc)
 
     # Canceled / Delivered orders: do NOT price. Flag them in the sheet for the team
     # and skip the AI pricing pass entirely (no meaningful estimate for these).

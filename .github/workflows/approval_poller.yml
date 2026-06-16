@@ -32,6 +32,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      TZ:                         "America/New_York"   # run agent in Eastern Time (DST-aware)
       FTF_API_KEY:                ${{ secrets.FTF_API_KEY }}
       FTF_API_BASE_URL:           ${{ secrets.FTF_API_BASE_URL }}
       ANTHROPIC_API_KEY:          ${{ secrets.ANTHROPIC_API_KEY }}

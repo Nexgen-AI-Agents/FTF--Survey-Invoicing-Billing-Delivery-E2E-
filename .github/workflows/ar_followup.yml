@@ -2,12 +2,15 @@ name: AR Follow-Up Loop
 
 on:
   schedule:
-    - cron: "0 7 * * *"   # 07:00 UTC daily
+    # GitHub fires cron in UTC only. 11:00 UTC = 07:00 ET (EDT) / 06:00 ET (EST).
+    - cron: "0 11 * * *"   # ~07:00 AM Eastern, daily
   workflow_dispatch:
 
 jobs:
   run-ar-loop:
     runs-on: ubuntu-latest
+    env:
+      TZ: America/New_York   # run this job in Eastern Time (DST-aware)
 
     steps:
       - uses: actions/checkout@v4

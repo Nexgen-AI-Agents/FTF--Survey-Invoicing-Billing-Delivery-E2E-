@@ -39,7 +39,7 @@ _cache: dict = {}
 
 # Guide tab — bump version string whenever guide content changes to force a re-write
 GUIDE_SHEET_NAME = "Pipeline Guide"
-_GUIDE_VERSION   = "v7"   # increment when guide content changes
+_GUIDE_VERSION   = "v8"   # increment when guide content changes
 
 # How-To tab — plain-language step-by-step guide for end users
 HOWTO_SHEET_NAME = "How to use Invoicing agent"
@@ -655,6 +655,7 @@ def ensure_guide_sheet() -> None:
             ["delivered_flagged",     "Order already delivered. Flagged red — no automatic pricing. Verify if an invoice is still needed."],
             ["invoice_approved",      "You approved — pipeline creating FTF invoice (A5 running)."],
             ["invoice_sent",          "Invoice created in FTF and emailed to the client (A6 complete)."],
+            ["already_invoiced",      "Order already had an invoice in FTF — skipped (not re-posted, not re-invoiced)."],
             ["invoice_rejected",      "Rejected (or auto-rejected: condo). No invoice created or sent."],
             ["on_hold",               "You selected On-hold. Pipeline paused for this order."],
             ["details_missing",       "FTF has insufficient data. Update in FTF or handle manually."],
