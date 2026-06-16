@@ -1,9 +1,6 @@
 {
   "orders": [],
-  "status_counts": {
-    "invoice_draft_posted": 5,
-    "invoice_needed": 95
-  },
-  "total": 100,
-  "generated_at": "2026-06-16T18:35:44.333844+00:00"
+  "status_counts": {},
+  "total": 0,
+  "generated_at": "2026-06-16T18:55:56.608741+00:00"
 }
