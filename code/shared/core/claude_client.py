@@ -19,7 +19,15 @@ _OPENAI_FALLBACK_MODEL = "gpt-4o"
 def _get_client() -> anthropic.Anthropic:
     global _client
     if _client is None:
-        _client = anthropic.Anthropic()
+        # FTF Invoicing Agent uses its OWN dedicated Anthropic key.
+        # Falls back to the generic ANTHROPIC_API_KEY if the dedicated one is unset,
+        # and to library default (env) if neither — so a missing var never hard-fails
+        # here; a bad/absent key surfaces on the API call and triggers the OpenAI fallback.
+        api_key = (
+            os.getenv("FTF_INVOICING_AGENT_ANTHROPIC_API_KEY")
+            or os.getenv("ANTHROPIC_API_KEY")
+        )
+        _client = anthropic.Anthropic(api_key=api_key) if api_key else anthropic.Anthropic()
     return _client
 
 
