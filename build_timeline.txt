@@ -95,6 +95,11 @@ SPRINT HISTORY
   │             │            │ env_profiles.py — stage/prod one-switch config      │
   │             │            │ Build timeline file (this file)                     │
   │             │            │ Auto-compact cron removed — manual /compact only    │
+  ├─────────────┼────────────┼─────────────────────────────────────────────────────┤
+  │ Sprint 11   │ 2026-06-16 │ STAGE → PROD cutover: .env + 6 GitHub Secrets to    │
+  │ (PROD prep) │            │ prod URLs/key; OneDrive sheet + pipeline_state      │
+  │             │            │ cleared of stage orders; prod FTF API verified.     │
+  │             │            │ EMAIL_OVERRIDE_ALL still active until go-live.      │
   └─────────────┴────────────┴─────────────────────────────────────────────────────┘
 
 ================================================================================

@@ -86,7 +86,25 @@ MODEL: claude-sonnet-4-6
                                                     └─────────────────────────────────┘
 
 ================================================================================
-CUMULATIVE PROJECT TOTAL (as of 2026-06-09)
+DATE: 2026-06-16 (Tuesday)
+MODEL: claude-opus-4-8
+================================================================================
+
+  SESSION: Stage → Prod cutover
+
+  [~17:30 ET] | claude-opus-4-8 | Prod cutover plan + setup.txt Step 9 review            | In: ~14,000 | Out: ~3,000 | Total: ~17,000
+  [~17:45 ET] | claude-opus-4-8 | .env prod cleanup (dup-key bug fix) + FTF_PAY_HASH dead | In: ~10,000 | Out: ~2,500 | Total: ~12,500
+  [~18:00 ET] | claude-opus-4-8 | Flip 6 GitHub Secrets to prod via PAT (sealed-box)     | In:  ~9,000 | Out: ~2,000 | Total: ~11,000
+  [~18:15 ET] | claude-opus-4-8 | Clear OneDrive approval sheet + reset pipeline_state    | In: ~12,000 | Out: ~3,000 | Total: ~15,000
+  [~18:30 ET] | claude-opus-4-8 | Prod FTF API verify + tracking update                  | In:  ~7,000 | Out: ~1,500 | Total:  ~8,500
+
+                                                    ┌─────────────────────────────────┐
+                                         DAILY TOTAL │  ~64,000 tokens (est.)          │
+                                         MODEL       │  claude-opus-4-8               │
+                                                    └─────────────────────────────────┘
+
+================================================================================
+CUMULATIVE PROJECT TOTAL (as of 2026-06-16)
 ================================================================================
 
   Date          Model                   Tokens (est.)
@@ -94,8 +112,9 @@ CUMULATIVE PROJECT TOTAL (as of 2026-06-09)
   2026-06-06    claude-sonnet-4-6       ~74,600
   2026-06-08    claude-sonnet-4-6       ~115,800
   2026-06-09    claude-sonnet-4-6       ~171,300
+  2026-06-16    claude-opus-4-8        ~64,000
   ──────────────────────────────────────────────────────
-  PROJECT TOTAL                         ~361,700 tokens
+  PROJECT TOTAL                         ~425,700 tokens
 
 ================================================================================
 HOW TO MAINTAIN THIS FILE
