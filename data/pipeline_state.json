@@ -7208,11 +7208,6 @@
     "delivered_flagged": 1,
     "invoice_needed": 285
   },
-<<<<<<< Updated upstream
   "total": 300,
-  "generated_at": "2026-06-16T19:49:06.079392+00:00"
-=======
-  "total": 200,
-  "generated_at": "2026-06-16T19:49:53.127521+00:00"
->>>>>>> Stashed changes
+  "generated_at": "2026-06-16T19:51:20.297409+00:00"
 }
