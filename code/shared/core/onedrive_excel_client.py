@@ -1309,6 +1309,46 @@ def mark_row_processed(order_id: str) -> None:
     log.warning("mark_row_processed: order_id=%s not found in Excel", order_id)
 
 
+_COL_NOTES = APPROVAL_HEADERS.index("Notes")   # 10 (col K)
+
+
+def update_approval_notes(order_id: str, note: str, mark_processed: bool = True) -> bool:
+    """Write `note` into the Notes column (K) for an order's row, and optionally stamp
+    Processed At (M). Used to record outcomes the human should see — e.g. "invoice already
+    exists in FTF, none generated". Returns True if a row was updated.
+    """
+    base = _wb_base()
+    h    = _session_headers()
+    try:
+        r = httpx.get(
+            f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows",
+            headers=h, timeout=15.0,
+        )
+        r.raise_for_status()
+        processed_at = datetime.now(_EASTERN).strftime("%Y-%m-%d %H:%M %Z")
+        for row in reversed(r.json().get("value", [])):
+            vals = row.get("values", [[]])[0]
+            if len(vals) >= 1 and str(vals[0]).strip() == str(order_id):
+                idx = row["index"]
+                new_vals = list(vals) + [""] * (_COL_COUNT - len(vals))
+                new_vals[_COL_NOTES] = str(note)
+                if mark_processed:
+                    new_vals[_COL_PROCESSED_AT] = processed_at
+                httpx.patch(
+                    f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows/itemAt(index={idx})",
+                    headers=h,
+                    json={"values": [new_vals[:_COL_COUNT]]},
+                    timeout=15.0,
+                ).raise_for_status()
+                log.info("update_approval_notes: order_id=%s note set (processed=%s)", order_id, mark_processed)
+                return True
+        log.warning("update_approval_notes: order_id=%s not found in Excel", order_id)
+        return False
+    except Exception as exc:
+        log.warning("update_approval_notes failed order_id=%s (non-fatal): %s", order_id, exc)
+        return False
+
+
 def sync_approval_amounts(order_id: str, new_total: float, new_breakdown_str: str) -> None:
     """Write the reconciled breakdown string (col E) and total (col F) back to Excel.
 

@@ -32,6 +32,7 @@ from config.settings import (
     FTF_ORDER_URL, MAX_INVOICE_MODIFICATIONS,
 )
 from core.claude_client import call as llm_call
+from core.ftf_client import get_order
 from core.excel_db import (
     get_orders_awaiting_invoice_approval, get_order_by_id,
     get_orders_by_status,
@@ -383,6 +384,35 @@ def process_dispatch_input() -> dict:
         }
 
     if action == "approve":
+        # ── Re-check FTF at approval time: never generate a second invoice ─────────
+        # If the order already has an invoice in FTF (created/sent out-of-band or by a
+        # prior run), do NOT proceed to finalization. Record it in the row's Notes so the
+        # human sees why nothing was generated, mark the row processed, and stop here.
+        try:
+            _live = get_order(order_id)
+            _live = _live.get("data", _live) if isinstance(_live, dict) else {}
+        except Exception as exc:
+            log.warning("approval FTF re-check failed order=%s (proceeding to finalize): %s", order_id, exc)
+            _live = {}
+        if _live.get("invoiced"):
+            _paid = _live.get("paid")
+            note = (
+                "Approved, but an invoice already exists in FTF — no new invoice generated "
+                f"(duplicate prevented; paid={_paid}). If you need changes, edit the existing "
+                "invoice in FTF directly."
+            )
+            save_order_state(order_id, status="already_invoiced")
+            try:
+                from core.onedrive_excel_client import update_approval_notes
+                update_approval_notes(order_id, note)
+            except Exception as exc:
+                log.warning("could not write already-invoiced note order=%s: %s", order_id, exc)
+            log_decision(AGENT_NAME, "approve_skipped_already_invoiced", order_id=order_id,
+                         reason="Invoice already exists in FTF at approval time — skipped to avoid duplicate",
+                         input_summary=f"paid={_paid}", output_summary="status → already_invoiced; note written")
+            log.info("dispatch: order=%s already invoiced in FTF — approval skipped, no duplicate", order_id)
+            return {"ok": True, "order_id": order_id, "action": "skipped_already_invoiced"}
+
         # ── Amount reconciliation: pick up any user edits to col E (breakdown) or col F (total) ──
         raw_draft = db_row.get("invoice_draft")
         draft = json.loads(raw_draft) if isinstance(raw_draft, str) else (raw_draft or {})

@@ -51,7 +51,8 @@ jobs:
       FTF_PORTAL_BASE_URL:        ${{ secrets.FTF_PORTAL_BASE_URL }}
       FTF_PORTAL_USER:            ${{ secrets.FTF_PORTAL_USER }}
       FTF_PORTAL_PASS:            ${{ secrets.FTF_PORTAL_PASS }}
-      INVOICE_BATCH_SIZE:         "10"
+      INVOICE_BATCH_SIZE:         "12"
+      A2_MAX_PER_RUN:             "12"   # data-collector throughput (was default 5) — drains the invoice_needed backlog faster
       DEPLOY_ENV:                 ${{ secrets.DEPLOY_ENV }}
 
     steps:
