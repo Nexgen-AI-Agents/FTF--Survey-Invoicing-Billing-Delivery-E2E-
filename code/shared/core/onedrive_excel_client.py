@@ -560,8 +560,13 @@ def ensure_approval_sheet() -> None:
     ensure_action_dropdown()
 
 
-def ensure_action_dropdown() -> None:
+def ensure_action_dropdown() -> bool:
     """(Re)apply the Approve/Reject/On-hold list validation on the Action column.
+
+    Returns True if the dropdown is present/canonical at the end of the call (either
+    already correct, or successfully re-applied), False if it could not be applied
+    (e.g. upload 423-locked because the file is open in Excel). Callers can surface
+    this to the operator instead of falsely reporting success.
 
     The dropdown is normally written once by _setup_full_sheet_via_openpyxl, but Excel
     drops the validation when whole table rows are deleted (e.g. a full sheet reset).
@@ -590,7 +595,7 @@ def ensure_action_dropdown() -> None:
         wb  = openpyxl.load_workbook(io.BytesIO(raw))
         if ONEDRIVE_SHEET_NAME not in wb.sheetnames:
             log.info("ensure_action_dropdown: Approvals sheet absent — nothing to do")
-            return
+            return False
         ws = wb[ONEDRIVE_SHEET_NAME]
 
         # Idempotency: skip only if a list validation covers the EXACT canonical range.
@@ -603,7 +608,7 @@ def ensure_action_dropdown() -> None:
         ]
         if len(existing) == 1 and str(existing[0].sqref).replace(" ", "") == addr:
             log.debug("ensure_action_dropdown: dropdown already canonical (%s) — skip", addr)
-            return
+            return True
         for d in existing:
             ws.data_validations.dataValidation.remove(d)   # drop drifted/partial ranges
 
@@ -631,8 +636,10 @@ def ensure_action_dropdown() -> None:
         buf.seek(0)
         _upload_workbook_bytes(buf.read())
         log.info("ensure_action_dropdown: re-applied list validation on %s via openpyxl", addr)
+        return True
     except Exception as exc:
         log.warning("ensure_action_dropdown failed (non-fatal): %s", exc)
+        return False
 
 
 def ensure_guide_sheet() -> None:

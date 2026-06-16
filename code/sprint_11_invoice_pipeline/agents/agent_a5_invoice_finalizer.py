@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared")
 
 from core.excel_db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
 from core.exceptions import AgentError
-from core.ftf_client import create_invoice, get_invoice
+from core.ftf_client import create_invoice, get_invoice, get_order
 from core.logger import get_logger
 
 AGENT_NAME = "agent_a5_invoice_finalizer"
@@ -37,6 +37,31 @@ def finalize_order(order_id: str) -> dict:
     db_row = get_order_by_id(order_id)
     if not db_row:
         raise AgentError(f"finalize_order: order {order_id} not in DB")
+
+    # ── Idempotency guard (prevents DUPLICATE FTF invoices) ───────────────────
+    # Two workflows (A0 orchestrator + Excel approval watcher) can both run A5 on the
+    # same invoice_approved order. Never create a second invoice:
+    #   1. If state already finalized/sent, skip.
+    #   2. Ask FTF directly — if the order is already invoiced, record it and skip.
+    #   3. If the FTF check errors, FAIL CLOSED (raise → retry next run) rather than
+    #      risk billing the customer twice.
+    cur_status = db_row.get("status")
+    if cur_status in ("invoice_finalized", "invoice_sent"):
+        log.info("finalize_order: order=%s already %s — skipping (idempotent)", order_id, cur_status)
+        return {"invoice_id": db_row.get("invoice_id", ""), "ok": True, "skipped": cur_status}
+    try:
+        _live = get_order(order_id)
+        _live = _live.get("data", _live) if isinstance(_live, dict) else {}
+    except Exception as exc:
+        raise AgentError(
+            f"finalize_order: FTF invoiced precheck failed for {order_id} — NOT creating "
+            f"invoice (will retry): {exc}"
+        ) from exc
+    if _live.get("invoiced"):
+        log.warning("finalize_order: order=%s already invoiced in FTF — recording, NOT creating a second invoice",
+                    order_id)
+        save_order_state(order_id, status="invoice_finalized")
+        return {"invoice_id": db_row.get("invoice_id", ""), "ok": True, "skipped": "already_invoiced_ftf"}
 
     raw_draft = db_row.get("invoice_draft")
     if not raw_draft:

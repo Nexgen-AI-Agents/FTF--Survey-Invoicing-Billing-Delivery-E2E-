@@ -49,7 +49,14 @@ GITHUB_REPO = os.getenv("GITHUB_REPO", "Nexgen-AI-Agents/FTF--Survey-Invoicing-B
 
 # ── 1. OneDrive Approvals table ───────────────────────────────────────────────
 
-def clear_onedrive_approvals() -> int:
+def clear_onedrive_approvals() -> bool:
+    """Delete every Approvals data row; restore the Action dropdown.
+
+    Returns True ONLY if the clear is fully complete: all rows deleted (or none
+    existed) AND the Action dropdown was successfully (re)applied. A partial clear
+    (e.g. some rows survive a 423 lock) returns False so the caller does not falsely
+    report a clean fresh-start.
+    """
     print("[1/3] Clearing OneDrive Approvals table...")
     base = _wb_base()
     h    = _session_headers()
@@ -62,10 +69,13 @@ def clear_onedrive_approvals() -> int:
     print(f"  {len(rows)} data rows found.")
 
     deleted = 0
+    skipped_no_index = 0
+    failed = 0
     # Delete from the highest index down so earlier indices stay valid.
-    for row in sorted(rows, key=lambda x: x.get("index", 0), reverse=True):
+    for row in sorted(rows, key=lambda x: x.get("index", -1), reverse=True):
         idx = row.get("index")
         if idx is None:
+            skipped_no_index += 1
             continue
         resp = httpx.delete(
             f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows/itemAt(index={idx})",
@@ -74,12 +84,22 @@ def clear_onedrive_approvals() -> int:
         if resp.is_success:
             deleted += 1
         else:
+            failed += 1
             print(f"  [!] failed to delete row index={idx}: {resp.status_code} {resp.text[:120]}")
-    print(f"  Deleted {deleted}/{len(rows)} rows. Header + schema preserved.")
-    # Row deletion strips the Action-column dropdown — re-apply it.
-    ensure_action_dropdown()
-    print("  Action dropdown (Approve/Reject/On-hold) re-applied.")
-    return deleted
+
+    rows_complete = (deleted == len(rows)) and skipped_no_index == 0 and failed == 0
+    print(f"  Deleted {deleted}/{len(rows)} rows "
+          f"(failed={failed}, no-index={skipped_no_index}). Header + schema preserved.")
+
+    # Row deletion strips the Action-column dropdown — re-apply it (returns bool).
+    dropdown_ok = ensure_action_dropdown()
+    if dropdown_ok:
+        print("  Action dropdown (Approve/Reject/On-hold) re-applied.")
+    else:
+        print("  [!] Action dropdown NOT re-applied — likely the file is open in Excel "
+              "(423 lock). Close it and re-run, or it self-heals on the next pipeline run.")
+
+    return rows_complete and dropdown_ok
 
 
 # ── 2. Authoritative xlsx state store ─────────────────────────────────────────
@@ -117,13 +137,47 @@ def clear_json_state() -> int:
             state = json.load(f)
     before = len(state.get("orders", []))
     state["orders"] = []
-    with open(JSON_STATE, "w") as f:
+    # Zero out known aggregate keys so the dashboard doesn't show non-zero totals
+    # against zero orders until export_pipeline_json.py regenerates the file next run.
+    for k in ("status_counts", "totals", "summary"):
+        if isinstance(state.get(k), dict):
+            state[k] = {}
+    with open(JSON_STATE, "w", encoding="utf-8") as f:
         json.dump(state, f, indent=2, default=str)
-    print(f"  orders[]: {before} -> 0")
+    print(f"  orders[]: {before} -> 0 (aggregate keys cleared; full regen on next export run)")
     return before
 
 
+def commit_and_push_state() -> bool:
+    """Commit + push the emptied data/ files so the dispatched runner checks out the
+    fresh state. Without this, --trigger fires a run that checks out origin/main (the OLD
+    populated state) and resurrects the deleted orders. Returns True on a clean push."""
+    import subprocess
+    print("\n[commit] Committing + pushing emptied state before dispatch...")
+    try:
+        subprocess.run(["git", "add", "data/invoice_pipeline_state.xlsx", "data/pipeline_state.json"],
+                       cwd=_REPO_ROOT, check=True)
+        diff = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=_REPO_ROOT)
+        if diff.returncode == 0:
+            print("  no state changes to commit (already clean).")
+            return True
+        subprocess.run(["git", "commit", "-m", "chore: reset pipeline state to empty [skip ci]"],
+                       cwd=_REPO_ROOT, check=True)
+        subprocess.run(["git", "pull", "--rebase", "-X", "ours", "origin", "main"], cwd=_REPO_ROOT, check=True)
+        subprocess.run(["git", "push", "origin", "main"], cwd=_REPO_ROOT, check=True)
+        print("  pushed.")
+        return True
+    except Exception as exc:
+        print(f"  [!] commit/push failed: {exc}")
+        return False
+
+
 def trigger_pipeline() -> None:
+    # HIGH-3: never dispatch before the emptied state is on origin/main, or the runner
+    # resurrects the deleted orders from the old committed state.
+    if not commit_and_push_state():
+        print("  [!] Aborting dispatch — emptied state was not pushed. Commit/push manually, then dispatch.")
+        return
     print("\n[trigger] Dispatching invoice_pipeline workflow...")
     if not GITHUB_PAT:
         print("  [!] GITHUB_PAT not set — commit + dispatch manually.")
@@ -148,10 +202,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("\n=== FULL PIPELINE STATE RESET ===\n")
+    onedrive_ok = False
     try:
-        clear_onedrive_approvals()
+        onedrive_ok = clear_onedrive_approvals()
     except Exception as exc:
-        print(f"  [!] OneDrive clear failed (continuing): {exc}")
+        print(f"  [!] OneDrive clear failed: {exc}")
     print()
     clear_xlsx_state()
     print()
@@ -160,4 +215,12 @@ if __name__ == "__main__":
     if args.trigger:
         trigger_pipeline()
 
-    print("\nDone. Commit data/ changes and the next run starts fresh from live FTF $-flagged orders.")
+    if onedrive_ok:
+        print("\nDone — all stores cleared cleanly. "
+              + ("Pipeline dispatched against the fresh state." if args.trigger
+                 else "Commit + push data/ (or re-run with --trigger) to start fresh from live FTF orders."))
+    else:
+        print("\n[!] PARTIAL RESET — OneDrive Approvals was not fully cleared (rows survived or the "
+              "dropdown could not be re-applied; the file may be open in Excel). Local xlsx/JSON ARE "
+              "empty. Close the file and re-run to avoid a split-brain (OneDrive populated, local empty).")
+    sys.exit(0 if onedrive_ok else 1)

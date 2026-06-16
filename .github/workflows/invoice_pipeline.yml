@@ -8,8 +8,12 @@ permissions:
 
 # Pipeline runs ~5-10 min. cancel-in-progress: false lets a running job finish
 # even when Power Automate dispatches again. Pending jobs queue behind the active one.
+# Shared group with excel_approval_watcher.yml + approval_poller.yml: all three write
+# pipeline state and run A5/A6. Serializing them prevents two workflows from finalizing
+# the same invoice_approved order concurrently (duplicate-invoice guard, with A5's
+# FTF-invoiced precheck as the primary safety net).
 concurrency:
-  group: invoice-pipeline-main
+  group: invoice-state-write
   cancel-in-progress: false
 
 jobs:

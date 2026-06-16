@@ -60,8 +60,8 @@ from core.ftf_client import get_historical_pricing_orders, get_order
 from core.ftf_mysql import get_order_details, get_company_info, find_duplicate_orders
 from core.logger import get_logger
 from core.onedrive_excel_client import (
-    append_approval_row, auto_reject_condo_row, get_pending_order_ids,
-    get_pricing_rules, match_pricing_rule,
+    append_approval_row, auto_reject_condo_row, get_all_approval_order_ids,
+    get_pending_order_ids, get_pricing_rules, match_pricing_rule,
 )
 
 AGENT_NAME = "agent_a3_invoice_compiler"
@@ -495,17 +495,25 @@ def compile_for_order(order_id: str) -> dict:
     # Guard: order already has an invoice in FTF — never re-post or re-invoice.
     # FTF flags ng_invoice_needed=1 on some already-invoiced orders, so without this
     # check they would be re-posted to the approval sheet (risking a duplicate invoice).
+    # FAIL CLOSED: this is the ONLY gate that stops an already-invoiced order (which
+    # still carries ng_invoice_needed=1 in FTF) from being re-posted and re-invoiced.
+    # If get_order() errors we must NOT proceed to pricing/posting — a transient API
+    # blip would otherwise let every already-invoiced order through and risk a
+    # duplicate invoice on a real customer. Leave the order at data_collected so the
+    # next run retries the check.
     try:
         _ftf_live = get_order(order_id)
-        # get_order() unwraps the API envelope, but stay robust to either shape.
-        _live = _ftf_live.get("data", _ftf_live) if isinstance(_ftf_live, dict) else {}
-        if _live.get("invoiced"):
-            log.info("order=%s already invoiced in FTF (paid=%s) — marking already_invoiced, skipping Excel post",
-                     order_id, _live.get("paid"))
-            save_order_state(order_id, status="already_invoiced")
-            return {}
     except Exception as exc:
-        log.warning("invoiced-check failed order=%s (continuing): %s", order_id, exc)
+        log.warning("invoiced-check API error order=%s — holding at data_collected for retry (NOT posting): %s",
+                    order_id, exc)
+        return {}
+    # get_order() unwraps the API envelope, but stay robust to either shape.
+    _live = _ftf_live.get("data", _ftf_live) if isinstance(_ftf_live, dict) else {}
+    if _live.get("invoiced"):
+        log.info("order=%s already invoiced in FTF (paid=%s) — marking already_invoiced, skipping Excel post",
+                 order_id, _live.get("paid"))
+        save_order_state(order_id, status="already_invoiced")
+        return {}
 
     # Canceled / Delivered orders: do NOT price. Flag them in the sheet for the team
     # and skip the AI pricing pass entirely (no meaningful estimate for these).
@@ -812,14 +820,25 @@ def run() -> dict:
     orders  = get_orders_by_status("data_collected")[:INVOICE_BATCH_SIZE]
     summary = {"processed": 0, "posted": 0, "skipped_excel": 0, "errors": 0}
 
-    pending_ids = get_pending_order_ids()   # IDs currently in the OneDrive approval sheet
+    pending_ids = get_pending_order_ids()        # rows awaiting a decision (blank Action)
+    all_ids     = get_all_approval_order_ids()   # ALL rows, including already-actioned
 
     for db_row in orders:
         order_id = db_row["order_id"]
-        # Excel is the authoritative dedup source — if already in sheet, sync state and skip
-        if str(order_id) in pending_ids:
-            log.info("skipping order=%s — already in OneDrive Excel", order_id)
+        oid = str(order_id)
+        # Excel is the authoritative dedup source.
+        # 1) Already in sheet AWAITING a decision → sync state to draft_posted and skip.
+        if oid in pending_ids:
+            log.info("skipping order=%s — already awaiting decision in OneDrive Excel", order_id)
             save_order_state(order_id, status="invoice_draft_posted")
+            summary["skipped_excel"] += 1
+            summary["processed"] += 1
+            continue
+        # 2) Already in sheet but ACTIONED (Approve/Reject/processed) → do NOT re-post and
+        #    do NOT downgrade its status. Re-posting would create a duplicate row and risk a
+        #    duplicate invoice on a second approval.
+        if oid in all_ids:
+            log.info("skipping order=%s — already actioned in OneDrive Excel (no re-post)", order_id)
             summary["skipped_excel"] += 1
             summary["processed"] += 1
             continue

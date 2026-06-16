@@ -249,13 +249,23 @@ def _parse_breakdown_str(s: str) -> list:
     ]
 
 
-def _apply_total_override(draft: dict, new_total: float) -> dict:
-    """User changed Amount ($) only. Distribute new total proportionally across all services."""
+def _apply_total_override(draft: dict, new_total: float, service_name: str = "Survey") -> dict:
+    """User changed Amount ($) only. Distribute new total proportionally across all services.
+
+    When the draft has NO services (e.g. a pricing_needed / delivered_flagged row the human
+    is pricing manually), synthesize a single service line so A5 can finalize it. Without
+    this the manual-pricing workflow dead-ends: A5 requires services AND total>0.
+    """
     draft    = json.loads(json.dumps(draft))  # deep copy
     services = draft.get("services", [])
     orig_total = float(draft.get("total_amount", 0) or 0)
 
     if not services:
+        draft["services"] = [{
+            "name":        (service_name or "Survey").strip() or "Survey",
+            "description": "Manually priced on approval",
+            "amount":      round(float(new_total), 2),
+        }]
         draft["total_amount"] = new_total
         return draft
 
@@ -350,11 +360,15 @@ def process_dispatch_input() -> dict:
             pass
         return {"ok": True, "order_id": order_id, "action": "skipped", "reason": f"already {current_status}"}
 
-    # Guard: block approval of orders that require manual intervention — cannot be auto-processed
-    _BLOCKED = {"condo_rejected"}
-    if action == "approve" and current_status in _BLOCKED:
+    # Guard: only orders in a human-actionable state may be approved. This stops a stray
+    # Action=Approve on a non-actionable row (canceled_flagged, already_invoiced,
+    # permanently_excluded, condo_rejected, data_collected, etc.) from jumping straight to
+    # invoice_approved and being finalized. pricing_needed / delivered_flagged ARE allowed
+    # because the human prices those manually before approving.
+    _APPROVABLE = {"invoice_draft_posted", "pricing_needed", "delivered_flagged", "on_hold"}
+    if action == "approve" and current_status not in _APPROVABLE:
         log.warning(
-            "dispatch: order %s is %s — approval blocked; manual intervention required",
+            "dispatch: order %s is %s — approval blocked (not a human-actionable state)",
             order_id, current_status,
         )
         return {
@@ -363,7 +377,8 @@ def process_dispatch_input() -> dict:
             "action": "blocked",
             "reason": (
                 f"Order is '{current_status}' and cannot be approved through the pipeline. "
-                "Manual intervention required — contact client and handle outside the system."
+                "Only draft / manual-pricing / on-hold rows are approvable. "
+                "Manual intervention required — handle outside the system if needed."
             ),
         }
 
@@ -399,8 +414,9 @@ def process_dispatch_input() -> dict:
                 order_id, draft["total_amount"],
             )
         elif total_changed:
-            # User edited total only — distribute proportionally
-            draft = _apply_total_override(draft, excel_total)
+            # User edited total only — distribute proportionally (synthesize a service
+            # line from the order's service type if the draft has none, e.g. pricing_needed)
+            draft = _apply_total_override(draft, excel_total, service_name=db_row.get("service_type", "Survey"))
             log.info(
                 "dispatch: order=%s total-only price edit applied %.2f→%.2f",
                 order_id, orig_total, excel_total,
