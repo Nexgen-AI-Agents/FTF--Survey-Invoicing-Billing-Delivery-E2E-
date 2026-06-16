@@ -1198,16 +1198,26 @@ def append_approval_row(
         new_index = r.json().get("index")   # 0-based table row index
         if new_index is not None:
             _format_new_row(new_index, ftf_link=ftf_link)
+            excel_row  = new_index + 2
+            row_range  = f"A{excel_row}:{_END_COL}{excel_row}"
             if highlight_red:
-                excel_row  = new_index + 2
-                row_range  = f"A{excel_row}:{_END_COL}{excel_row}"
                 httpx.patch(
                     f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{row_range}')/format/fill",
                     headers=_session_headers(),
                     json={"color": "#FF4444"},
                     timeout=10.0,
                 ).raise_for_status()
-                log.info("row %d highlighted red (delivered-zero-amount order=%s)", excel_row, order_id)
+                log.info("row %d highlighted red (flagged order=%s)", excel_row, order_id)
+            else:
+                # ALWAYS clear the fill for a normal row. Graph row-deletes leave direct
+                # cell fills on the physical grid, so a recycled row position can inherit a
+                # stale red from a previously-deleted flagged order. Clearing makes the
+                # fill deterministic per row regardless of what was there before.
+                httpx.post(
+                    f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{row_range}')/format/fill/clear",
+                    headers=_session_headers(),
+                    timeout=10.0,
+                ).raise_for_status()
     except Exception as exc:
         log.warning("row formatting failed (non-fatal) order_id=%s: %s", order_id, exc)
 
