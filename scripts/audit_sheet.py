@@ -42,6 +42,9 @@ for row in rows:
     status = str(v[1]).strip() if len(v) > 1 else ""
     amount = v[5] if len(v) > 5 else ""
     action = str(v[_COL_ACTION]).strip() if len(v) > _COL_ACTION else ""
+    processed = str(v[12]).strip() if len(v) > 12 else ""
+    # A row with Action set OR Processed At stamped is closed — not an open/actionable bug.
+    open_row = not action and not processed
     notes = str(v[10])[:60] if len(v) > 10 else ""
     excel_row = row.get("index", -1) + 2
     fill = fills.get(excel_row)
@@ -59,12 +62,12 @@ for row in rows:
         invoiced = bool(d.get("invoiced"))
         ftf_status = d.get("status", "")
         ftf = f"invoiced={invoiced} ftf_status={ftf_status!r}"
-        if invoiced and not action:
-            bugs.append(f"INVOICED-IN-SHEET (awaiting action): order {oid} is invoiced in FTF but sits unactioned (status col={status!r})")
-        # canceled-after-posting: FTF now Canceled but row still awaiting action and priced
+        if invoiced and open_row:
+            bugs.append(f"INVOICED-IN-SHEET (open): order {oid} is invoiced in FTF but sits unactioned (status col={status!r})")
+        # canceled-after-posting: FTF now Canceled but row still open and priced
         if str(ftf_status).lower() in ("canceled", "cancelled") or d.get("status_code") == 0:
-            if not action and status.lower() not in ("canceled", "cancelled"):
-                bugs.append(f"CANCELED-IN-SHEET (stale): order {oid} is Canceled in FTF but row shows status={status!r} amt={amount} unactioned — approving it would invoice a canceled order")
+            if open_row and status.lower() not in ("canceled", "cancelled"):
+                bugs.append(f"CANCELED-IN-SHEET (stale): order {oid} is Canceled in FTF but row shows status={status!r} amt={amount} open — approving it would invoice a canceled order")
         # red-fill correctness: red iff Canceled/Delivered
         should_red = status.lower() in ("canceled", "cancelled", "delivered")
         if is_red and not should_red:
