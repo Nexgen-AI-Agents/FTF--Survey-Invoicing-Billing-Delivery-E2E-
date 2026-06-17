@@ -94,6 +94,36 @@ def main():
     else:
         print("\n!! no order-like column found — cannot pull rows for the probe order")
 
+    # 4) What do real invoice-generation events look like? (find the exact marker + user format)
+    print("\n=== recent ng_type='Invoice' events (any order) ===")
+    cur.execute(
+        "SELECT ng_order, ng_user, ng_action, LEFT(ng_value,60) AS ng_value, "
+        "LEFT(ng_result,60) AS ng_result, ng_dtentered, LEFT(notes,40) AS notes "
+        "FROM ng_log_trackflow WHERE ng_type='Invoice' ORDER BY ng_dtentered DESC LIMIT 15"
+    )
+    for r in cur.fetchall():
+        d = r if isinstance(r, dict) else dict(zip([c[0] for c in cur.description], r))
+        print("   ", {k: (str(v)[:60] if v is not None else None) for k, v in d.items()})
+
+    print("\n=== distinct ng_action where ng_type='Invoice' ===")
+    cur.execute("SELECT DISTINCT ng_action FROM ng_log_trackflow WHERE ng_type='Invoice' LIMIT 40")
+    for r in cur.fetchall():
+        print("   ", _vals(r)[0])
+
+    # 5) Match diagnostics for the probe order — int vs string, and ANY type
+    for label, val in (("string", ORDER_ID), ("int", int(ORDER_ID) if str(ORDER_ID).isdigit() else ORDER_ID)):
+        cur.execute("SELECT COUNT(*) AS c FROM ng_log_trackflow WHERE ng_order=%s", (val,))
+        c = _vals(cur.fetchall()[0])[0]
+        print(f"\norder {ORDER_ID} as {label}: {c} total trackflow rows")
+    cur.execute(
+        "SELECT ng_type, COUNT(*) AS c FROM ng_log_trackflow WHERE ng_order=%s GROUP BY ng_type",
+        (int(ORDER_ID) if str(ORDER_ID).isdigit() else ORDER_ID,),
+    )
+    print(f"   by type for {ORDER_ID}:")
+    for r in cur.fetchall():
+        d = r if isinstance(r, dict) else dict(zip(["ng_type", "c"], r))
+        print("     ", d)
+
     cur.close()
     con.close()
     print("\nprobe complete (read-only).")
