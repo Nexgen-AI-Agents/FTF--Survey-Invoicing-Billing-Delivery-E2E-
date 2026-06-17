@@ -63,6 +63,14 @@ def finalize_order(order_id: str) -> dict:
         save_order_state(order_id, status="invoice_finalized")
         return {"invoice_id": db_row.get("invoice_id", ""), "ok": True, "skipped": "already_invoiced_ftf"}
 
+    # Canceled guard: never create an invoice for an order that was canceled in FTF.
+    _fstatus = str(_live.get("status") or "")
+    if _fstatus.lower() in ("canceled", "cancelled") or _live.get("status_code") == 0:
+        log.warning("finalize_order: order=%s is CANCELED in FTF (status=%r) — NOT creating an invoice",
+                    order_id, _fstatus)
+        save_order_state(order_id, status="canceled_flagged")
+        return {"invoice_id": "", "ok": True, "skipped": "canceled_ftf"}
+
     raw_draft = db_row.get("invoice_draft")
     if not raw_draft:
         raise AgentError(f"finalize_order: order {order_id} has no invoice_draft")

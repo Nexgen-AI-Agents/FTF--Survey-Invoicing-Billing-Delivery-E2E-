@@ -372,6 +372,21 @@ def process_dispatch_input() -> dict:
             "dispatch: order %s is %s — approval blocked (not a human-actionable state)",
             order_id, current_status,
         )
+        # Mark processed so the watcher doesn't re-yield this blocked row every 5-min cycle
+        # forever, and leave a note so the operator sees why it was blocked.
+        try:
+            from core.onedrive_excel_client import update_approval_notes
+            update_approval_notes(
+                order_id,
+                f"Approval blocked — order is '{current_status}', not an actionable state. "
+                "Handle outside the system if needed.",
+            )
+        except Exception:
+            try:
+                from core.onedrive_excel_client import mark_row_processed
+                mark_row_processed(order_id)
+            except Exception:
+                pass
         return {
             "ok": False,
             "order_id": order_id,
@@ -412,6 +427,27 @@ def process_dispatch_input() -> dict:
                          input_summary=f"paid={_paid}", output_summary="status → already_invoiced; note written")
             log.info("dispatch: order=%s already invoiced in FTF — approval skipped, no duplicate", order_id)
             return {"ok": True, "order_id": order_id, "action": "skipped_already_invoiced"}
+
+        # Canceled-after-posting guard: an order can be Canceled in FTF AFTER A3 posted it
+        # to the sheet (the sheet row is then stale). Approving it would invoice a canceled
+        # order. Refuse, flag it, and write a note so the human sees why.
+        _ftf_status = str(_live.get("status") or "")
+        if _ftf_status.lower() in ("canceled", "cancelled") or _live.get("status_code") == 0:
+            note = (
+                f"Approved, but the order is CANCELED in FTF (status='{_ftf_status}') — no "
+                "invoice generated. If this is wrong, un-cancel the order in FTF and re-approve."
+            )
+            save_order_state(order_id, status="canceled_flagged")
+            try:
+                from core.onedrive_excel_client import update_approval_notes
+                update_approval_notes(order_id, note)
+            except Exception as exc:
+                log.warning("could not write canceled note order=%s: %s", order_id, exc)
+            log_decision(AGENT_NAME, "approve_skipped_canceled", order_id=order_id,
+                         reason="Order canceled in FTF at approval time — skipped to avoid invoicing a canceled order",
+                         input_summary=f"ftf_status={_ftf_status}", output_summary="status → canceled_flagged; note written")
+            log.info("dispatch: order=%s canceled in FTF — approval skipped", order_id)
+            return {"ok": True, "order_id": order_id, "action": "skipped_canceled"}
 
         # ── Amount reconciliation: pick up any user edits to col E (breakdown) or col F (total) ──
         raw_draft = db_row.get("invoice_draft")
@@ -474,6 +510,26 @@ def process_dispatch_input() -> dict:
                 learned_from="excel_edit",
                 order_id=order_id,
             )
+
+        # Guard: a draft with no priced services can't be finalized — A5 would raise on every
+        # run and the order would be SILENTLY stranded at invoice_approved (looking "processed").
+        # This is the manual-pricing case where the human approved without entering an Amount.
+        _final_services = draft.get("services") or []
+        _final_total = float(draft.get("total_amount", 0) or 0)
+        if not _final_services or _final_total <= 0:
+            note = (
+                "Cannot approve — no amount entered. Type the invoice amount in the Amount "
+                "column (or per-service in Service / Breakdown), then set Action = Approve again."
+            )
+            log.warning("dispatch: order=%s approved with no amount — not advancing; asked for price", order_id)
+            try:
+                from core.onedrive_excel_client import update_approval_notes
+                update_approval_notes(order_id, note)   # marks processed so it isn't re-yielded
+            except Exception as exc:
+                log.warning("could not write no-amount note order=%s: %s", order_id, exc)
+            # Leave status unchanged (still pricing_needed / draft_posted) so a later re-approve
+            # with an amount processes normally.
+            return {"ok": False, "order_id": order_id, "action": "needs_amount"}
 
         save_order_state(order_id, status="invoice_approved", approved_by="prateek")
         log_decision(AGENT_NAME, "invoice_approved", order_id=order_id,
