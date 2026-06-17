@@ -3,8 +3,10 @@ import os
 import sys
 import pytest
 
-# Ensure shared is on path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
+# Ensure shared (core/config) AND the sprint_11 dir (so `import agents.*` resolves) are on
+# the path, regardless of pytest's working directory.
+sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "shared")))
+sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 @pytest.fixture
