@@ -126,6 +126,13 @@ def main():
 
     cur.close()
     con.close()
+
+    # 6) Exercise the real lookup the agent will use (get_invoice_generator)
+    from core.ftf_mysql import get_invoice_generator
+    print("\n=== get_invoice_generator() live check ===")
+    for oid in (ORDER_ID, "1000281984", "1000279855", "1000267220"):
+        print(f"   {oid} -> {get_invoice_generator(oid)}")
+
     print("\nprobe complete (read-only).")
 
 

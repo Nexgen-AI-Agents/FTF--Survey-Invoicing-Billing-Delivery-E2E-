@@ -245,3 +245,45 @@ def get_county_urls(county: str) -> dict:
         "url_appr":   row.get("url_appr") or "",
         "url_aerial": row.get("url_aerial") or "",
     }
+
+
+def get_invoice_generator(order_id) -> dict | None:
+    """Return who generated the invoice for this order, from ng_log_trackflow.
+
+    The FTF portal logs every invoice generation as a row with
+    ng_type='Invoice', ng_action='Generated'; ng_user is the actor
+    ('nesa' = our AI agent, otherwise a portal username) and ng_dtentered
+    the time. An order can have several (regenerations) — we return the LATEST.
+
+    Returns {"user": <ng_user>, "at": <ng_dtentered as str>} or None if no
+    generation event is logged for the order. READ-ONLY and never raises — on
+    any error it logs and returns None so callers can fall back gracefully.
+    """
+    try:
+        conn = _connect()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT ng_user, ng_dtentered
+                    FROM ng_log_trackflow
+                    WHERE ng_order = %s AND ng_type = 'Invoice' AND ng_action = 'Generated'
+                    ORDER BY ng_dtentered DESC
+                    LIMIT 1
+                    """,
+                    (order_id,),
+                )
+                row = cur.fetchone()
+        finally:
+            conn.close()
+    except Exception as exc:
+        logger.warning("get_invoice_generator(%s) failed: %s", order_id, exc)
+        return None
+
+    if not row:
+        return None
+    user = (row.get("user") or row.get("ng_user") or "").strip()
+    if not user:
+        return None
+    at = row.get("at") or row.get("ng_dtentered")
+    return {"user": user, "at": str(at) if at is not None else ""}
