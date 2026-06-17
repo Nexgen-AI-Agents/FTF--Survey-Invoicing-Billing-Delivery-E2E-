@@ -107,9 +107,10 @@ MODEL: claude-opus-4-8
   [~01:30 ET] | claude-opus-4-8 | Throughput bump + approval-time dup check + Notes        | In: ~20,000 | Out: ~4,000 | Total: ~24,000
   [~02:30 ET] | claude-opus-4-8 | Resilience audit + hardening (alerts, health, fallbacks) | In: ~30,000 | Out: ~6,000 | Total: ~36,000
   [~09:30 ET] | claude-opus-4-8 | Sheet re-audit QA: canceled-order guard (A4/A5) + cleanup | In: ~28,000 | Out: ~5,500 | Total: ~33,500
+  [~10:30 ET] | claude-opus-4-8 | Full verification: compile/YAML/tests; modernized test net | In: ~26,000 | Out: ~5,000 | Total: ~31,000
 
                                                     ┌─────────────────────────────────┐
-                                         DAILY TOTAL │  ~305,500 tokens (est.)         │
+                                         DAILY TOTAL │  ~336,500 tokens (est.)         │
                                          MODEL       │  claude-opus-4-8               │
                                                     └─────────────────────────────────┘
 
@@ -122,9 +123,9 @@ CUMULATIVE PROJECT TOTAL (as of 2026-06-17)
   2026-06-06    claude-sonnet-4-6       ~74,600
   2026-06-08    claude-sonnet-4-6       ~115,800
   2026-06-09    claude-sonnet-4-6       ~171,300
-  2026-06-16    claude-opus-4-8        ~305,500
+  2026-06-16    claude-opus-4-8        ~336,500
   ──────────────────────────────────────────────────────
-  PROJECT TOTAL                         ~667,200 tokens
+  PROJECT TOTAL                         ~698,200 tokens
 
 ================================================================================
 HOW TO MAINTAIN THIS FILE
