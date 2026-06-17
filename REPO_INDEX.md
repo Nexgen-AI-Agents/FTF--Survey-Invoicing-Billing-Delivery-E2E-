@@ -5,7 +5,7 @@
 
 **Keep this file updated after each git push and deployment.**
 
-_Last updated: 2026-06-17 — Reliability hardening pass (resilience audit): failure-email alerts on every workflow, scheduled stuck-order health digest, A0 try/finally session cleanup, broadened Claude→OpenAI fallback (+OpenAI retry), A4 reject/hold terminal guard, poison-data guard, A3 strict dedup, backfill covers canceled/delivered. Plus earlier: A5 idempotency, approval-time duplicate check + Notes, throughput 12/run. Update the date + latest commit hash (`git rev-parse --short HEAD`) on every push._
+_Last updated: 2026-06-17 (40f906a5) — A4 already-invoiced approve note now names WHO generated the existing invoice via new `ftf_mysql.get_invoice_generator()` (ng_log_trackflow: ng_type='Invoice'/ng_action='Generated', latest), falling back gracefully when no log row exists; read-only `scripts/probe_trackflow.py` diagnostic added. Plus earlier: reliability hardening (failure-email alerts, stuck-order health digest, A0 session cleanup, broadened Claude→OpenAI fallback, reject/hold + poison-data guards, A3 strict dedup), A5 idempotency, approval-time duplicate check + Notes, throughput 12/run. Update the date + latest commit hash (`git rev-parse --short HEAD`) on every push._
 
 ---
 
@@ -50,7 +50,7 @@ All in `code/sprint_11_invoice_pipeline/agents/`:
 |------|----------------|
 | `claude_client.py` | LLM call wrapper. FTF-dedicated Anthropic key → 3 retries → **OpenAI gpt-4o fallback** |
 | `ftf_client.py` | FTF REST API. **`get_order()` unwraps the `{"data":…,"success":…}` envelope** — read fields directly |
-| `ftf_mysql.py` | FTF MySQL (AWS RDS). `get_invoice_needed_orders()` (the `$`-flag intake), `get_order_details()`, `get_company_info()`, `find_duplicate_orders()` |
+| `ftf_mysql.py` | FTF MySQL (AWS RDS). `get_invoice_needed_orders()` (the `$`-flag intake), `get_order_details()`, `get_company_info()`, `find_duplicate_orders()`, `get_invoice_generator()` (who generated an existing invoice, from `ng_log_trackflow`) |
 | `ftf_portal_client.py` | FTF portal login (nesa HR user) for invoice generation/delivery |
 | `ftf_books_client.py` | FTF Books endpoints |
 | `onedrive_excel_client.py` | OneDrive workbook via Graph API. Approvals tab, Pipeline Guide, Pricing Rules, How-To. `append_approval_row()`, `get_pending_order_ids()` (dedup truth), `get_pricing_rules()`, `match_pricing_rule()`, `ensure_action_dropdown()` (self-heals J2:J10000 dropdown via openpyxl) |
@@ -110,7 +110,8 @@ Active production path is **sprint_11_invoice_pipeline**.
 
 Key: `reset_all_state.py` (full reset), `repair_row_fills.py` (fix stale red row fills),
 `pipeline_health_check.py` (stuck-order digest), `notify_failure_email.py` (workflow-failure
-email), `diag_order.py` (dump prod FTF order JSON),
+email), `diag_order.py` (dump prod FTF order JSON), `probe_trackflow.py` (read-only
+ng_log_trackflow schema/diagnostic — used to build the invoice-generator lookup),
 `retest_reset_order.py` (reset one order for retest), `export_pipeline_json.py`,
 `export_pipeline_excel.py`, `update_build_timeline.py`, `test_connections.py`,
 `train_pricing.py`, `fetch_historical_pricing.py`, plus demo/report/QA generators.
