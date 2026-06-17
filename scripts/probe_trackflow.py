@@ -23,6 +23,11 @@ from config.settings import MYSQL_DB
 ORDER_ID = sys.argv[1] if len(sys.argv) > 1 else "1000285363"
 
 
+def _vals(row):
+    """Return a row's values as a list, whether the cursor yields dicts or tuples."""
+    return list(row.values()) if isinstance(row, dict) else list(row)
+
+
 def main():
     con = _connect()
     cur = con.cursor()
@@ -45,13 +50,14 @@ def main():
             (MYSQL_DB,),
         )
         for r in cur.fetchall():
-            print("   candidate table:", r[0])
+            print("   candidate table:", _vals(r)[0])
         cur.close(); con.close()
         return
 
-    col_names = [c[0] for c in cols]
+    col_pairs = [_vals(c) for c in cols]
+    col_names = [c[0] for c in col_pairs]
     print("=== ng_log_trackflow columns ===")
-    for name, dtype in cols:
+    for name, dtype in col_pairs:
         print(f"   {name:30s} {dtype}")
 
     # Heuristic: find the order-id column and the user/actor column
@@ -70,7 +76,7 @@ def main():
         cur.execute(f"SELECT DISTINCT `{type_col}` FROM ng_log_trackflow LIMIT 50")
         print(f"\n=== distinct `{type_col}` values ===")
         for r in cur.fetchall():
-            print("   ", r[0])
+            print("   ", _vals(r)[0])
 
     # 3) Recent rows for the probe order — full row dump
     if order_col:
@@ -84,7 +90,7 @@ def main():
         print(f"\n=== last {len(rows)} ng_log_trackflow rows for order {ORDER_ID} ===")
         print("   cols:", header)
         for r in rows:
-            print("   ", dict(zip(header, [str(v)[:80] for v in r])))
+            print("   ", dict(zip(header, [str(v)[:80] for v in _vals(r)])))
     else:
         print("\n!! no order-like column found — cannot pull rows for the probe order")
 
