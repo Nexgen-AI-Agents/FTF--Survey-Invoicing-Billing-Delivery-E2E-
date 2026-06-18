@@ -177,6 +177,33 @@ def _wb_base() -> str:
     return f"{_GRAPH}/users/{ONEDRIVE_FILE_USER}/drive/items/{item_id}/workbook"
 
 
+_TRANSIENT_STATUS = {429, 500, 501, 502, 503, 504}
+
+
+def _graph_get_retry(url: str, headers: dict, timeout: float = 15.0, tries: int = 4):
+    """GET with retry on transient Graph errors (429/5xx, incl. the 501 the workbook API
+    returns while RE-INDEXING a freshly-uploaded file). Returns the final httpx.Response
+    (the caller decides how to handle a still-bad status). Brief linear backoff."""
+    import time
+    resp = None
+    for attempt in range(1, tries + 1):
+        try:
+            resp = httpx.get(url, headers=headers, timeout=timeout)
+        except Exception as exc:
+            if attempt == tries:
+                raise
+            log.warning("graph GET error (attempt %d/%d) %s: %s", attempt, tries, url[-60:], exc)
+            time.sleep(2 * attempt)
+            continue
+        if resp.status_code not in _TRANSIENT_STATUS:
+            return resp
+        if attempt < tries:
+            log.warning("graph GET %d (attempt %d/%d) — transient, retrying %s",
+                        resp.status_code, attempt, tries, url[-60:])
+            time.sleep(2 * attempt)
+    return resp
+
+
 def _session_headers() -> dict:
     """Add workbook-session-id header for batched operations (faster)."""
     h = _headers()
@@ -531,7 +558,16 @@ def ensure_approval_sheet() -> None:
     # ── Check sheet + table ───────────────────────────────────────────────────
     needs_setup = False
 
-    r_sheets = httpx.get(f"{base}/worksheets", headers=h, timeout=15.0)
+    r_sheets = _graph_get_retry(f"{base}/worksheets", headers=h, timeout=15.0)
+    # Transient Graph workbook-API errors (e.g. 501 while re-indexing a just-uploaded file)
+    # must NOT crash the caller. Skip the schema check this cycle and proceed — the file
+    # itself is fine (it was written via /content); the API recovers shortly.
+    if r_sheets is None or r_sheets.status_code in _TRANSIENT_STATUS:
+        log.warning("ensure_approval_sheet: worksheets list unavailable (status %s) — "
+                    "skipping schema check this cycle (Graph workbook API transient)",
+                    getattr(r_sheets, "status_code", "n/a"))
+        _cache["od_formatting_done"] = True
+        return
     r_sheets.raise_for_status()
     existing_sheets = [s["name"] for s in r_sheets.json().get("value", [])]
 
@@ -539,10 +575,15 @@ def ensure_approval_sheet() -> None:
         log.info("ensure_approval_sheet: sheet missing — will create via openpyxl")
         needs_setup = True
     else:
-        r_cols = httpx.get(
+        r_cols = _graph_get_retry(
             f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/columns",
             headers=h, timeout=15.0,
         )
+        if r_cols is not None and r_cols.status_code in _TRANSIENT_STATUS:
+            log.warning("ensure_approval_sheet: columns read transient (status %d) — skipping check this cycle",
+                        r_cols.status_code)
+            _cache["od_formatting_done"] = True
+            return
         if not r_cols.is_success:
             log.info("ensure_approval_sheet: table missing or unreadable (status %d) — will recreate", r_cols.status_code)
             needs_setup = True
@@ -1279,11 +1320,18 @@ def get_pending_approvals() -> list[dict]:
     Returns list of dicts: {order_id, action (normalized), notes}
     """
     ensure_approval_sheet()
-    r = httpx.get(
+    # Plain headers (no session) + retry: the workbook session createSession itself returns
+    # 501 while Graph re-indexes a freshly-uploaded file. On a persistent transient error we
+    # return [] (no pending this cycle) rather than crash the watcher — it recovers next cycle.
+    r = _graph_get_retry(
         f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows",
-        headers=_session_headers(),
+        headers=_headers(),
         timeout=15.0,
     )
+    if r is None or r.status_code in _TRANSIENT_STATUS:
+        log.warning("get_pending_approvals: rows read unavailable (status %s) — treating as 0 pending "
+                    "this cycle (Graph workbook API transient)", getattr(r, "status_code", "n/a"))
+        return []
     r.raise_for_status()
 
     results = []
