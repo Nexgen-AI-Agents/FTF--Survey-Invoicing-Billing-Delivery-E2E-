@@ -8594,26 +8594,26 @@
     },
     {
       "order_id": "1000245231",
-      "status": "data_collected",
+      "status": "invoice_draft_posted",
       "service_type": "Land Survey Only",
       "customer_email": "seattlefootdoctor@yahoo.com",
       "client_name": "MIKHAIL BURAKOVSKIY AND ALLA BURAKOVSKIY",
       "property_address": "8548 GRAND PRIX LN, BOYNTON BEACH, FL 33472",
-      "invoice_draft": null,
+      "invoice_draft": "{\"total_amount\": 212.0, \"services\": [{\"name\": \"Land Survey (Boundary)\", \"description\": \"Residential boundary/land survey for Lot 184, Palm Meadows Estates, Palm Beach County. Negotiated base rate applied per management agreement for this client.\", \"amount\": 150.0}, {\"name\": \"Pool Complexity Upcharge\", \"description\": \"Pool visible in rear yard per aerial analysis. Standard pool upcharge applied.\", \"amount\": 62.0}], \"pricing_reasoning\": \"Base rate of $150.00 is fixed per management's negotiated agreement with this individual client and cannot be substituted with standard pricing. The lot is approximately 0.18 acres (rectangular, platted subdivision), which falls under the smallest lot tier \\u2014 no acreage upcharge applies. FEMA Zone X carries no flood zone complexity. The rear boundary adjoins a lake/pond, but aerial imagery does not confirm a canal or navigable waterway sufficient to trigger the waterfront canal upcharge ($87); the lake-adjacent rear is noted for easement awareness but is a common condition in this subdivision. The legal description is a simple lot-and-plat reference (no metes-and-bounds), and no encroachments or heavy vegetation are observed. The pool in the rear yard is clearly visible and supports the $62.00 pool upcharge. No EC was ordered and no other complexity factors are substantiated by the data.\", \"confidence\": \"MEDIUM\", \"escalate_flag\": false, \"escalate_reason\": null, \"flags\": [\"DUPLICATE ORDER DETECTED: Order 1000240414 references the same property address (8548 Grand Prix Ln, Palm Beach County), same coordinates, and same Folio/MLS number (00424517100001840) with the same service type (Land Survey Only). Human review required before scheduling fieldwork to avoid duplicate dispatch.\", \"ORDER ON HOLD: Per order notes, this order is currently on hold with special pricing applied and no fieldwork scheduled. Confirm hold status and pricing approval before proceeding.\", \"REAR LOT WATERFRONT: Rear boundary adjacent to lake/pond. Easement or setback documentation may be required. Waterfront canal upcharge was NOT applied as aerial does not confirm a canal; however, surveyor should verify recorded easements along the water's edge at time of fieldwork.\"]}",
       "data_sources": "{\"ftf_order\": {\"company_id\": 202406271537488487, \"created_at\": \"2024-06-27T13:09:04\", \"customer_email\": \"seattlefootdoctor@yahoo.com\", \"customer_id\": 202406271537489224, \"customer_name\": \"MIKHAIL BURAKOVSKIY AND ALLA BURAKOVSKIY\", \"customer_type\": \"individual\", \"delivered_at\": null, \"due_amount\": 0.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": \"12099C0770F\\nZONE: X\\nEFF: 10/05/2017\", \"invoiced\": false, \"order_id\": 1000245231, \"paid\": true, \"property_address\": \"8548 GRAND PRIX LN\", \"property_city\": \"BOYNTON BEACH\", \"property_county\": \"Palm Beach County\", \"property_lat\": \"26.5404179\", \"property_lng\": \"-80.1839538\", \"property_state\": \"FL\", \"property_zip\": \"33472\", \"service_type\": \"Land Survey Only\", \"special_pricing\": true, \"status\": \"On Hold\", \"status_code\": 11, \"updated_at\": \"2026-01-16T06:04:08\"}, \"ftf_customer\": {\"data\": {\"company_id\": 202406271537488487, \"company_name\": \"MIKHAIL BURAKOVSKIY AND ALLA BURAKOVSKIY\", \"created_at\": null, \"custom_rate\": 150.0, \"customer_id\": 202406271537489224, \"customer_type\": \"individual\", \"email\": \"seattlefootdoctor@yahoo.com\", \"first_name\": \"MIKHAIL BURAKOVSKIY AND ALLA BURAKOVSKIY\", \"last_name\": \" \", \"phone\": \"(425) 301-5614\", \"pricing_type\": 0, \"special_pricing\": true}, \"success\": true}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": \"No property-specific data was returned in the page text. The page appears to be the Palm Beach County PAO homepage rather than a specific property detail page. A direct parcel lookup for 8548 GRAND PRIX LN, Palm Beach County, FL would be needed to retrieve parcel data.\", \"source_url\": \"https://pbcpao.gov/?address=8548%20GRAND%20PRIX%20LN\", \"error\": null, \"confidence\": \"LOW\"}, \"aerial_analysis\": {\"lot_shape\": \"rectangular\", \"estimated_lot_size\": \"~0.18 acres\", \"main_structure_footprint_sqft\": 2400, \"visible_structures\": [\"main house\", \"pool\"], \"driveway_count\": 1, \"pool_visible\": true, \"apparent_encroachments\": null, \"access_type\": \"street\", \"site_notes\": \"Property appears to be located in a planned residential subdivision with uniform lot sizes. Row of homes backs up to a lake/pond to the north, which may indicate rear setback or easement requirements along the water's edge. Shared street access via internal subdivision road. Lot appears consistent with neighboring parcels in size and orientation. Pool located in rear yard area near waterfront side.\", \"confidence\": \"MEDIUM\"}, \"packet\": {\"client_name\": {\"value\": \"MIKHAIL BURAKOVSKIY AND ALLA BURAKOVSKIY\", \"confidence\": \"HIGH\"}, \"client_email\": {\"value\": \"seattlefootdoctor@yahoo.com\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"8548 GRAND PRIX LN, BOYNTON BEACH, FL 33472\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"Palm Beach County\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"Land Survey Only\"], \"confidence\": \"HIGH\", \"notes\": \"Service type explicitly stated as 'Land Survey Only' in FTF order data. No additional services indicated.\"}, \"special_requirements\": {\"value\": \"Special pricing applied; order is currently On Hold (status code 11). Rear of property backs to lake/pond \\u2014 potential rear easement or setback documentation may be relevant.\", \"confidence\": \"MEDIUM\"}, \"lot_size\": {\"value\": \"~0.18 acres\", \"confidence\": \"MEDIUM\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": 2400, \"confidence\": \"MEDIUM\"}, \"property_features\": {\"value\": {\"pool\": true, \"driveway_count\": 1, \"main_house\": true, \"waterfront\": true, \"encroachments\": \"none visible\"}, \"confidence\": \"MEDIUM\", \"notes\": \"Pool and main house visible in aerial imagery. Single driveway. Rear of lot borders a lake/pond. No encroachments detected.\"}, \"client_tier\": {\"value\": \"residential\", \"confidence\": \"HIGH\"}, \"urgency\": {\"value\": \"unknown\", \"confidence\": \"LOW\"}, \"source_of_truth\": \"mixed\", \"gaps\": [\"Legal description of the property not provided\", \"Fieldwork date not scheduled (fieldwork_at is null)\", \"Reason for 'On Hold' status not documented\", \"Urgency/rush status not indicated\", \"Exact lot dimensions not confirmed \\u2014 lot size is aerial estimate only\", \"Rear easement or setback details along waterfront not confirmed\", \"No matching emails found \\u2014 no additional client communication on file\", \"Invoice not yet generated (invoiced: false)\"], \"summary\": \"Residential land survey order for Mikhail and Alla Burakovskiy at 8548 Grand Prix Ln, Boynton Beach, FL (Palm Beach County) \\u2014 currently on hold with special pricing applied, no fieldwork scheduled, and a rear lot boundary adjacent to a lake/pond that may require easement review.\"}}",
-      "approval_message_id": null,
-      "modification_count": null,
+      "approval_message_id": "1000245231",
+      "modification_count": 0,
       "invoice_id": null,
       "data_collected_at": "2026-06-18T05:50:57.987198+00:00",
-      "draft_posted_at": null,
+      "draft_posted_at": "2026-06-18 02:17 EDT",
       "invoice_created_at": null,
       "processed_reply_ids": null,
       "approved_by": null,
       "sent_at": null,
-      "estimate_amount": null,
+      "estimate_amount": 212,
       "deferred_until": null,
       "created_at": null,
-      "updated_at": "2026-06-18T05:50:58.063921+00:00",
+      "updated_at": "2026-06-18T06:17:23.486933+00:00",
       "pay_link": "2026-06-17T16:47:10.867504+00:00"
     }
   ],
@@ -8621,11 +8621,10 @@
     "already_invoiced": 8,
     "pricing_needed": 55,
     "condo_rejected": 6,
-    "invoice_draft_posted": 190,
+    "invoice_draft_posted": 191,
     "delivered_flagged": 97,
-    "details_missing": 2,
-    "data_collected": 1
+    "details_missing": 2
   },
   "total": 359,
-  "generated_at": "2026-06-18T06:15:40.588279+00:00"
+  "generated_at": "2026-06-18T06:18:02.478449+00:00"
 }
