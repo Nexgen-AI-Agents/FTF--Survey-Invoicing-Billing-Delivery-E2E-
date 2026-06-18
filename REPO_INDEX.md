@@ -5,7 +5,7 @@
 
 **Keep this file updated after each git push and deployment.**
 
-_Last updated: 2026-06-17 (40f906a5) — A4 already-invoiced approve note now names WHO generated the existing invoice via new `ftf_mysql.get_invoice_generator()` (ng_log_trackflow: ng_type='Invoice'/ng_action='Generated', latest), falling back gracefully when no log row exists; read-only `scripts/probe_trackflow.py` diagnostic added. Plus earlier: reliability hardening (failure-email alerts, stuck-order health digest, A0 session cleanup, broadened Claude→OpenAI fallback, reject/hold + poison-data guards, A3 strict dedup), A5 idempotency, approval-time duplicate check + Notes, throughput 12/run. Update the date + latest commit hash (`git rev-parse --short HEAD`) on every push._
+_Last updated: 2026-06-18 (f09bd17f) — Approvals schema 13→15 cols: "Amount ($)"→"Amount ($) by AI", new "Amount ($) by User" (G, AI-filled actual human amount) + "AI Learning" (O); all column indices DERIVED from APPROVAL_HEADERS (no hardcoding), dropdown J→K, end col M→O, guide v9 / how-to v2 (auto-applies on next run once the OneDrive file is unlocked). New AI pricing-learning loop: A3's already-invoiced path now emits a LEARNING row (AI shadow price vs actual `due_amount`) + `pricing_learning.py` (bounds, clamp-or-flag, delta/verdict, negotiated-discount tagging, ±5%/cycle limiter, condo-EC graduation, learned_rules persistence). `ftf_client.get_user_invoiced_amount()` (REST due_amount; not in MySQL). Plus earlier: A4 names invoice generator, reliability hardening, A5 idempotency. Update the date + latest commit hash (`git rev-parse --short HEAD`) on every push._
 
 ---
 
@@ -36,6 +36,7 @@ All in `code/sprint_11_invoice_pipeline/agents/`:
 | **A5** | `agent_a5_invoice_finalizer.py` | Finalizes the approved invoice in FTF |
 | **A6** | `agent_a6_sender_v2.py` | Emails the invoice to the customer. Recipient = `EMAIL_OVERRIDE_ALL or client_email` (override CLEARED in prod → real customers) |
 | **A7** | `agent_a7_feedback_learner.py` | Learns approved per-service prices → `data/learned_rules.json` (2+ consistent approvals ⇒ `active`; injected into A3 prompt) |
+| — | `pricing_learning.py` | Pure helpers for the AI pricing-learning loop: price floors/ceilings, clamp-or-flag, AI-vs-human delta + verdict, negotiated-discount tagging, ±5%/cycle movement limiter, condo-EC graduation, and `record_observation()` → `learned_rules.json`. Used by A3's already-invoiced learning row. |
 
 **Run scripts / maintenance** (`code/sprint_11_invoice_pipeline/`):
 `run_excel_watcher.py`, `run_approval_poller.py`, `backfill_excel_rows.py`,
@@ -49,7 +50,7 @@ All in `code/sprint_11_invoice_pipeline/agents/`:
 | File | Responsibility |
 |------|----------------|
 | `claude_client.py` | LLM call wrapper. FTF-dedicated Anthropic key → 3 retries → **OpenAI gpt-4o fallback** |
-| `ftf_client.py` | FTF REST API. **`get_order()` unwraps the `{"data":…,"success":…}` envelope** — read fields directly |
+| `ftf_client.py` | FTF REST API. **`get_order()` unwraps the `{"data":…,"success":…}` envelope** — read fields directly. `get_user_invoiced_amount()` = the human-set amount (REST `due_amount`; the MySQL invoice tables do NOT hold it) for the learning loop |
 | `ftf_mysql.py` | FTF MySQL (AWS RDS). `get_invoice_needed_orders()` (the `$`-flag intake), `get_order_details()`, `get_company_info()`, `find_duplicate_orders()`, `get_invoice_generator()` (who generated an existing invoice, from `ng_log_trackflow`) |
 | `ftf_portal_client.py` | FTF portal login (nesa HR user) for invoice generation/delivery |
 | `ftf_books_client.py` | FTF Books endpoints |
