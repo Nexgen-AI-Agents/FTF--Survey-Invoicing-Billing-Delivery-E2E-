@@ -43,8 +43,9 @@ def main():
     for t in tables:
         print("  ", t)
 
-    # 2) For ng_payments + ng_orders, list columns that look monetary
-    for tbl in ("ng_payments", "ng_orders"):
+    # 2) For payment/invoice tables, list columns that look monetary + sample by order
+    for tbl in ("ng_payments", "ng_orders", "ls_setup_invoices", "ls_setup_invoices_detail",
+                "ng_payment_items", "ng_crew_invoice"):
         cur.execute(
             "SELECT COLUMN_NAME, DATA_TYPE FROM information_schema.COLUMNS "
             "WHERE TABLE_SCHEMA=%s AND TABLE_NAME=%s ORDER BY ORDINAL_POSITION",
@@ -56,11 +57,14 @@ def main():
             continue
         money = [c for c in cols
                  if any(k in c[0].lower() for k in ("amount", "amt", "total", "price", "due", "paid", "balance", "rate", "fee", "cost"))]
-        print(f"\n=== {tbl}: monetary-looking columns ===")
+        print(f"\n=== {tbl}: ALL columns ===")
+        print("   " + ", ".join(c[0] for c in cols))
+        print(f"=== {tbl}: monetary-looking columns ===")
         for name, dt in money:
             print(f"   {name:28s} {dt}")
-        # find order-id column
-        oid_col = next((c[0] for c in cols if "order" in c[0].lower()), None)
+        # find order-id column (prefer exact 'ng_order'/'order_id', else any with 'order')
+        oid_col = next((c[0] for c in cols if c[0].lower() in ("ng_order", "order_id", "ng_order_id")), None) \
+            or next((c[0] for c in cols if "order" in c[0].lower()), None)
         print(f"   (order-id column guess: {oid_col})")
 
         # 3) Sample rows for both orders
