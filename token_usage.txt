@@ -127,9 +127,10 @@ MODEL: claude-opus-4-8
   [~14:30 ET] | claude-opus-4-8 | FL surveyor brief + Excel 15-col schema migration (robust indices) | In: ~40,000 | Out: ~7,000 | Total: ~47,000
   [~15:30 ET] | claude-opus-4-8 | Amount-source probes (REST due_amount vs MySQL) + get_user_invoiced_amount | In: ~32,000 | Out: ~4,500 | Total: ~36,500
   [~16:30 ET] | claude-opus-4-8 | pricing_learning.py (guardrails/graduation) + A3 learning row + tests | In: ~30,000 | Out: ~7,500 | Total: ~37,500
+  [~17:15 ET] | claude-opus-4-8 | Use the learning: inject learned prices into A3 prompt + graduated condo-EC pricing | In: ~18,000 | Out: ~3,000 | Total: ~21,000
 
                                                     ┌─────────────────────────────────┐
-                                         DAILY TOTAL │  ~121,000 tokens (est.)         │
+                                         DAILY TOTAL │  ~142,000 tokens (est.)         │
                                          MODEL       │  claude-opus-4-8               │
                                                     └─────────────────────────────────┘
 
@@ -143,9 +144,9 @@ CUMULATIVE PROJECT TOTAL (as of 2026-06-17)
   2026-06-08    claude-sonnet-4-6       ~115,800
   2026-06-09    claude-sonnet-4-6       ~171,300
   2026-06-16    claude-opus-4-8        ~428,500
-  2026-06-18    claude-opus-4-8        ~121,000
+  2026-06-18    claude-opus-4-8        ~142,000
   ──────────────────────────────────────────────────────
-  PROJECT TOTAL                         ~911,200 tokens
+  PROJECT TOTAL                         ~932,200 tokens
 
 ================================================================================
 HOW TO MAINTAIN THIS FILE
