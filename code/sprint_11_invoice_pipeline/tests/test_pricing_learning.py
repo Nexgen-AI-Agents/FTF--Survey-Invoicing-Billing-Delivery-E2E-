@@ -89,6 +89,21 @@ def test_condo_graduation_needs_enough_close_examples():
 
 
 # ── persistence ───────────────────────────────────────────────────────────────
+def test_condo_ec_pricing_enabled(tmp_path):
+    import json
+    f = tmp_path / "lr.json"
+    # no file → not enabled (safe default)
+    assert p.condo_ec_pricing_enabled(str(f)) is False
+    # condo_ec bucket but still observing → not enabled
+    f.write_text(json.dumps({"observations": {
+        "condo_ec|broward|individual": {"service": "condo_ec", "status": "observing"}}}))
+    assert p.condo_ec_pricing_enabled(str(f)) is False
+    # condo_ec bucket active → enabled
+    f.write_text(json.dumps({"observations": {
+        "condo_ec|broward|individual": {"service": "condo_ec", "status": "active"}}}))
+    assert p.condo_ec_pricing_enabled(str(f)) is True
+
+
 def test_record_observation_writes_bucket(tmp_path):
     f = tmp_path / "learned_rules.json"
     b = p.record_observation("1001", "Land Survey Only", "Broward", "individual",

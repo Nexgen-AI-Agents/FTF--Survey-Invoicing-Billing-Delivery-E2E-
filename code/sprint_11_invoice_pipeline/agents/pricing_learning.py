@@ -190,6 +190,26 @@ _RULES_FILE = os.path.normpath(
 )
 
 
+def condo_ec_pricing_enabled(rules_path: str = _RULES_FILE) -> bool:
+    """True if condo Elevation Certificate pricing has GRADUATED to auto-pricing.
+
+    Reads learned_rules.json and returns True only if at least one condo_ec observation
+    bucket has reached status 'active'. Read-only; never raises — returns False on error
+    so condos stay safely escalated by default.
+    """
+    try:
+        if not os.path.exists(rules_path):
+            return False
+        with open(rules_path, encoding="utf-8") as f:
+            data = json.load(f)
+        for b in data.get("observations", {}).values():
+            if b.get("service") == "condo_ec" and b.get("status") == "active":
+                return True
+        return False
+    except Exception:
+        return False
+
+
 def record_observation(order_id: str, service: str, county: str, tier: str,
                        ai_price: float, human_price: float, observed_at: str,
                        rules_path: str = _RULES_FILE) -> dict:

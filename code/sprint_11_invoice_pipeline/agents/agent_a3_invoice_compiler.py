@@ -127,6 +127,21 @@ def _load_learned_rules(order_id: str = "") -> str:
             label = r["type"].replace("_", " ").upper()
             lines.append(f"  • [{label}] {r['description']}")
 
+        # Learned price observations (from the human-vs-AI learning loop). Only ACTIVE
+        # buckets (enough SCORED samples) feed the prompt; learned_price is guardrailed.
+        for b in data.get("observations", {}).values():
+            try:
+                price = float(b.get("learned_price", 0) or 0)
+            except (ValueError, TypeError):
+                price = 0.0
+            if b.get("status") == "active" and price > 0:
+                scored = [s for s in b.get("samples", []) if s.get("scored")]
+                lines.append(
+                    f"  • [LEARNED PRICE] {b.get('service')} in county '{b.get('county')}' "
+                    f"for {b.get('tier')} client ~ ${price:.0f} "
+                    f"(learned from {len(scored)} human-invoiced orders)"
+                )
+
         return "\n".join(lines)
     except Exception:
         return ""
@@ -672,8 +687,18 @@ def compile_for_order(order_id: str) -> dict:
     condo_reason = _detect_condo(order_details)
     duplicates   = _detect_duplicates(order_id, order_details)
 
-    # Hard stop — condo orders cannot be surveyed
-    if condo_reason:
+    # Graduated condo Elevation Certificates: once the learning loop has enough close
+    # human-matched condo-EC examples (pricing_learning.condo_ec_pricing_enabled), the AI
+    # MAY price condo ECs — but only ECs (never boundary/area on a condo), and never
+    # silently: the row is force-escalated with a "verify scope" note for human review.
+    _svc_l = str(service_type).lower()
+    _is_condo_ec = any(k in _svc_l for k in ("elevation", "elev cert", "ec")) and "boundary" not in _svc_l
+    _allow_condo_ec = bool(condo_reason) and _is_condo_ec and pricing_learning.condo_ec_pricing_enabled()
+    if _allow_condo_ec:
+        log.info("order=%s condo EC — graduated auto-pricing enabled; pricing with verify-scope escalation", order_id)
+
+    # Hard stop — condo orders cannot be surveyed (unless a graduated condo EC)
+    if condo_reason and not _allow_condo_ec:
         stop_result = {
             "total_amount": 0.0,
             "services": [],
@@ -775,6 +800,15 @@ def compile_for_order(order_id: str) -> dict:
             duplicates, link, pricing_ctx,
         )
         ai_result = _ai_compile_price(context)
+
+    # Graduated condo EC: never silent — force human review with a verify-scope note.
+    if _allow_condo_ec and ai_result.get("total_amount"):
+        ai_result["escalate_flag"]   = True
+        ai_result["escalate_reason"] = (
+            "CONDO ELEVATION CERTIFICATE — AI auto-pricing has graduated for condo ECs, "
+            "but VERIFY per-unit vs per-building scope (and floor/flood zone) before approving."
+        )
+        ai_result.setdefault("flags", []).append("condo_ec_graduated")
 
     # ── 4c. Pricing failed — write to Excel for manual pricing ──────────────
     total = ai_result.get("total_amount", 0)
