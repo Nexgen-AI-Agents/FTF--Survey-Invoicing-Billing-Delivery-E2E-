@@ -117,6 +117,33 @@ def get_order(order_id: str) -> dict:
         raise AgentError(f"get_order({order_id}) failed") from exc
 
 
+def get_user_invoiced_amount(order_id: str, order: Optional[dict] = None) -> Optional[float]:
+    """Return the amount a HUMAN set on this order in FTF, for the AI to learn from.
+
+    Source of truth is the REST API's `due_amount` (verified: returns the real human
+    figure — e.g. 500/400/950 — for orders that carry an amount). The FTF MySQL
+    invoice/payment tables do NOT hold these amounts for such orders, so we deliberately
+    read the REST field rather than the DB.
+
+    Returns the float amount when present and > 0, else None (e.g. paid orders whose
+    balance is 0, or orders with no amount yet). Never raises — returns None on any error
+    so the learning loop degrades gracefully.
+
+    `order` may be passed in to avoid a duplicate API call if the caller already has the
+    order dict from get_order().
+    """
+    try:
+        data = order if isinstance(order, dict) else get_order(order_id)
+        data = data.get("data", data) if isinstance(data, dict) else {}
+        raw = data.get("due_amount")
+        if raw is None:
+            return None
+        amt = float(raw)
+        return amt if amt > 0 else None
+    except Exception:
+        return None
+
+
 def get_customer(customer_id: str) -> dict:
     try:
         r = httpx.get(

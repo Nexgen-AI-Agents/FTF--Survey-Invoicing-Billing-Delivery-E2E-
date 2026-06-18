@@ -56,12 +56,13 @@ from core.excel_db import (
     save_order_state, log_decision,
 )
 from core.exceptions import AgentError
-from core.ftf_client import get_historical_pricing_orders, get_order
+from core.ftf_client import get_historical_pricing_orders, get_order, get_user_invoiced_amount
+from agents import pricing_learning
 from core.ftf_mysql import get_order_details, get_company_info, find_duplicate_orders
 from core.logger import get_logger
 from core.onedrive_excel_client import (
     append_approval_row, auto_reject_condo_row, get_all_approval_order_ids,
-    get_pending_order_ids, get_pricing_rules, match_pricing_rule,
+    get_pending_order_ids, get_pricing_rules, match_pricing_rule, mark_row_processed,
 )
 
 AGENT_NAME = "agent_a3_invoice_compiler"
@@ -472,6 +473,89 @@ def _ai_compile_price(context: str) -> dict:
     }
 
 
+def _emit_learning_row(order_id, packet, data_sources, order_details, live, link, db_row) -> bool:
+    """For an order already invoiced in FTF, capture a LEARNING row instead of skipping silently.
+
+    Records what the AI would have priced (Amount $ by AI) vs the actual human amount
+    (Amount $ by User, from FTF due_amount), writes a structured AI_LEARN note, and feeds
+    the observation into learned_rules.json so future pricing improves. NEVER raises — the
+    caller still marks the order already_invoiced regardless. Returns True if a row was written.
+
+    This runs only on already-invoiced orders (which are never invoiced again), so any failure
+    here cannot affect real billing.
+    """
+    human_amt = get_user_invoiced_amount(order_id, order=live)
+    if human_amt is None or human_amt <= 0:
+        return False   # no human amount to learn from (e.g. paid-off balance = 0)
+
+    company_id   = int(order_details.get("ng_company_id") or 0)
+    company_info = get_company_info(company_id) if company_id else {}
+    tier         = _classify_client_tier(company_info)
+    service_type = order_details.get("ng_service_requested") or ""
+    county_val   = order_details.get("ng_property_county") or ""
+    flood        = (order_details.get("ng_flood_zone") or "").split("\n")[0] or None
+
+    # Shadow price: what the AI WOULD have charged. Pricing rule first, else the AI pass.
+    pr = match_pricing_rule(service=service_type, county=county_val,
+                            client=company_info.get("company_name", ""))
+    if pr and pr.get("price", 0) > 0:
+        ai_price, ai_services = float(pr["price"]), [{"name": service_type or "Survey", "amount": float(pr["price"])}]
+    else:
+        try:
+            duplicates = _detect_duplicates(order_id, order_details)
+            ctx = _build_ai_context(order_id, packet, data_sources, order_details,
+                                    company_info, tier, duplicates, link, "")
+            res = _ai_compile_price(ctx)
+            ai_price = float(res.get("total_amount") or 0.0)
+            ai_services = res.get("services") or []
+        except Exception as exc:
+            log.warning("learning shadow-price failed order=%s: %s", order_id, exc)
+            ai_price, ai_services = 0.0, []
+
+    observed_at = datetime.now(_EASTERN).strftime("%Y-%m-%d %H:%M %Z")
+    learn_note  = pricing_learning.build_ai_learn_record(
+        order_id=order_id, service=service_type, tier=tier, county=county_val,
+        ai_price=ai_price, human_price=human_amt, observed_at=observed_at, flood=flood,
+    )
+    # Persist the observation (guardrailed; negotiated discounts excluded from scoring).
+    try:
+        pricing_learning.record_observation(order_id, service_type, county_val, tier,
+                                            ai_price, human_amt, observed_at)
+    except Exception as exc:
+        log.warning("record_observation failed order=%s: %s", order_id, exc)
+
+    client_name = packet.get("client_name", {}).get("value") or company_info.get("company_name") or db_row.get("client_name", "")
+    address     = packet.get("property_address", {}).get("value") or order_details.get("ng_property_address") or ""
+    svc_str     = _build_breakdown_str(ai_services) or service_type or "Survey"
+    note        = ("Already invoiced in FTF — LEARNING row (no new invoice). "
+                   "AI compared its price to the actual amount and recorded what it learned.")
+    try:
+        append_approval_row(
+            order_id     = order_id,
+            client_name  = client_name,
+            address      = address,
+            service      = svc_str,
+            amount       = ai_price,            # Amount ($) by AI — the AI's shadow price
+            amount_user  = human_amt,           # Amount ($) by User — the real human amount
+            ai_learning  = learn_note,          # AI Learning — structured record
+            confidence   = "N/A",
+            escalate     = False,
+            ftf_link     = link,
+            order_status = str(order_details.get("ng_status_desc") or ""),
+            notes        = note,
+        )
+        # Learning rows are informational — mark processed so the watcher never actions them.
+        try:
+            mark_row_processed(order_id)
+        except Exception:
+            pass
+        log.info("learning row written order=%s ai=%.2f human=%.2f", order_id, ai_price, human_amt)
+        return True
+    except Exception as exc:
+        log.warning("learning row write failed order=%s: %s (non-fatal)", order_id, exc)
+        return False
+
+
 # ── Main entry point ──────────────────────────────────────────────────────────
 
 def compile_for_order(order_id: str) -> dict:
@@ -515,8 +599,14 @@ def compile_for_order(order_id: str) -> dict:
     # get_order() unwraps the API envelope, but stay robust to either shape.
     _live = _ftf_live.get("data", _ftf_live) if isinstance(_ftf_live, dict) else {}
     if _live.get("invoiced"):
-        log.info("order=%s already invoiced in FTF (paid=%s) — marking already_invoiced, skipping Excel post",
+        log.info("order=%s already invoiced in FTF (paid=%s) — marking already_invoiced, capturing learning",
                  order_id, _live.get("paid"))
+        # Turn the skip into a LEARNING opportunity: compare the AI's price to the actual
+        # human amount and record it. Fully isolated — never invoices, never raises.
+        try:
+            _emit_learning_row(order_id, packet, data_sources, order_details, _live, link, db_row)
+        except Exception as exc:
+            log.warning("learning capture failed order=%s (non-fatal): %s", order_id, exc)
         save_order_state(order_id, status="already_invoiced")
         return {}
 
