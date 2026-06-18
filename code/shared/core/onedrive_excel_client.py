@@ -39,11 +39,11 @@ _cache: dict = {}
 
 # Guide tab — bump version string whenever guide content changes to force a re-write
 GUIDE_SHEET_NAME = "Pipeline Guide"
-_GUIDE_VERSION   = "v8"   # increment when guide content changes
+_GUIDE_VERSION   = "v9"   # increment when guide content changes
 
 # How-To tab — plain-language step-by-step guide for end users
 HOWTO_SHEET_NAME = "How to use Invoicing agent"
-_HOWTO_VERSION   = "v1"   # increment when how-to content changes
+_HOWTO_VERSION   = "v2"   # increment when how-to content changes
 
 # Pricing Rules tab — user-editable table of override prices
 PRICING_RULES_SHEET_NAME  = "Pricing Rules"
@@ -57,13 +57,23 @@ _PR_COL_COUNT = len(PRICING_RULES_HEADERS)   # 8
 # Column order must stay in sync with append_approval_row() values list
 APPROVAL_HEADERS = [
     "Order ID", "Order Status", "Client Name", "Property Address", "Service / Breakdown",
-    "Amount ($)", "Confidence", "Escalate", "FTF Link",
-    "Action", "Notes", "Posted At", "Processed At",
+    "Amount ($) by AI", "Amount ($) by User", "Confidence", "Escalate", "FTF Link",
+    "Action", "Notes", "Posted At", "Processed At", "AI Learning",
 ]
-_COL_COUNT        = len(APPROVAL_HEADERS)   # 13
-_END_COL          = chr(ord("A") + _COL_COUNT - 1)   # "M"
-_COL_ACTION       = 9    # J  — dropdown: Approve / Reject / On-hold
-_COL_PROCESSED_AT = 12   # M
+_COL_COUNT        = len(APPROVAL_HEADERS)   # 15
+_END_COL          = chr(ord("A") + _COL_COUNT - 1)   # "O"
+
+# All column indices are DERIVED from APPROVAL_HEADERS (never hardcoded) so the schema
+# can grow without silently breaking absolute-index arithmetic across this module.
+_COL_ORDER_ID     = APPROVAL_HEADERS.index("Order ID")            # 0  (A)
+_COL_SERVICE      = APPROVAL_HEADERS.index("Service / Breakdown") # 4  (E)
+_COL_AMOUNT_AI    = APPROVAL_HEADERS.index("Amount ($) by AI")    # 5  (F)  AI's proposed price (approver may edit)
+_COL_AMOUNT_USER  = APPROVAL_HEADERS.index("Amount ($) by User")  # 6  (G)  actual amount the human invoiced (AI-filled)
+_COL_FTF_LINK     = APPROVAL_HEADERS.index("FTF Link")            # 9  (J)
+_COL_ACTION       = APPROVAL_HEADERS.index("Action")              # 10 (K)  dropdown: Approve / Reject / On-hold
+_COL_NOTES        = APPROVAL_HEADERS.index("Notes")               # 11 (L)
+_COL_PROCESSED_AT = APPROVAL_HEADERS.index("Processed At")        # 13 (N)
+_COL_AI_LEARNING  = APPROVAL_HEADERS.index("AI Learning")         # 14 (O)  AI's per-order learning record (AI-filled)
 
 # Row fill colors for Action dropdown choices (light palette, Excel-compatible hex)
 _ACTION_COLORS = {
@@ -698,7 +708,8 @@ def ensure_guide_sheet() -> None:
             ["Client Name",       "Client or title company who placed the order."],
             ["Property Address",  "Survey site address — the property to be surveyed."],
             ["Service / Breakdown", "AI-priced services with individual amounts. Example: 'Boundary Survey: $475.00 | Elevation Cert: $150.00'. Edit amounts here to change per-service prices before approving. Pipe (|) separates services. 'CONDO — Cannot Survey' = order cannot be processed."],
-            ["Amount ($)",        "Total invoice amount. Edit this for a simple total override (pipeline distributes proportionally across services). For precise per-service changes, edit 'Service / Breakdown' instead. For MANUAL PRICING rows: type correct amount here before setting Action = Approve."],
+            ["Amount ($) by AI",  "The AI's proposed total. Edit this for a simple total override (pipeline distributes proportionally across services). For precise per-service changes, edit 'Service / Breakdown' instead. For MANUAL PRICING rows: type correct amount here before setting Action = Approve."],
+            ["Amount ($) by User","AI-filled (read-only). When an invoice already exists in FTF, the AI records the ACTUAL amount the human charged here — so it can compare against its own price and learn. Blank for normal new orders."],
             ["Confidence",        "HIGH = very likely correct. MEDIUM = reasonable estimate. LOW = AI had limited data. N/A = condo or manual pricing."],
             ["Escalate",          "Yes = AI flagged unusual order. Robert or Ryan should review before approving."],
             ["FTF Link",          "Click 'View Order' to open in FieldToFinish."],
@@ -706,6 +717,7 @@ def ensure_guide_sheet() -> None:
             ["Notes",             "Pre-filled by pipeline with reason for escalation or required action. Read before acting."],
             ["Posted At",         "Date/time pipeline posted this row (Eastern Time)."],
             ["Processed At",      "Auto-filled when pipeline processes your decision. Once filled = complete."],
+            ["AI Learning",       "AI-filled (read-only). The AI's per-order learning record — what it priced vs. what the human actually charged, and its takeaway. Builds smarter pricing over time (incl. condos)."],
             ["", ""],
             ["── ACTION GUIDE ──", ""],
             ["Approve",           "Pipeline creates a real FTF invoice and emails client. CANNOT be undone from pipeline."],
@@ -717,7 +729,7 @@ def ensure_guide_sheet() -> None:
             ["CONDO ORDER —",             "Cannot survey. Row is AUTO-REJECTED. Contact client — arrange refund or redirect to interior measurement."],
             ["⛔ CANCELED —",             "Order canceled in FTF. No invoice needed. Flagged red, not priced. Set Action = Reject to clear."],
             ["⚠️ DELIVERED —",            "Order already delivered. Flagged red, not auto-priced. Verify if an invoice is still needed; enter amount manually if so."],
-            ["MANUAL PRICING REQUIRED —", "AI could not price. Enter correct amount in Amount ($) cell, then set Action = Approve."],
+            ["MANUAL PRICING REQUIRED —", "AI could not price. Enter correct amount in 'Amount ($) by AI' cell, then set Action = Approve."],
             ["ESCALATE —",               "Unusual order (large lot, commercial, FEMA zone, duplicate). Get Robert or Ryan to review."],
             ["(empty notes)",             "Standard order. AI is confident. Review amount and service, then approve if correct."],
             ["", ""],
@@ -840,14 +852,14 @@ def ensure_howto_sheet() -> None:
             ["", ""],
             ["── THE 30-SECOND VERSION ──", ""],
             ["1.", "Open the 'Approvals' tab."],
-            ["2.", "Read each row: Client, Property, Service / Breakdown, and Amount ($)."],
+            ["2.", "Read each row: Client, Property, Service / Breakdown, and Amount ($) by AI."],
             ["3.", "If the amount looks right, set the 'Action' column to Approve."],
             ["4.", "Within ~30 minutes the agent invoices the customer and emails them. Done."],
             ["", ""],
             ["── YOUR DAILY WORKFLOW (step by step) ──", ""],
             ["Step 1 — Open Approvals", "Go to the 'Approvals' tab. Each row is one order waiting for your decision."],
-            ["Step 2 — Review the order", "Check Client Name, Property Address, Service / Breakdown and Amount ($). Click the FTF Link to open the order in FieldToFinish if you need more detail."],
-            ["Step 3 — Check the price", "If Amount ($) is correct, leave it. If it is wrong, see 'FIXING A PRICE' below."],
+            ["Step 2 — Review the order", "Check Client Name, Property Address, Service / Breakdown and Amount ($) by AI. Click the FTF Link to open the order in FieldToFinish if you need more detail."],
+            ["Step 3 — Check the price", "If Amount ($) by AI is correct, leave it. If it is wrong, see 'FIXING A PRICE' below."],
             ["Step 4 — Read the Notes", "The Notes column tells you if anything needs attention (manual pricing, escalation, condo, canceled, delivered)."],
             ["Step 5 — Decide", "Set the 'Action' column to Approve, Reject, or On-hold. Leave blank to skip for now."],
             ["Step 6 — Wait ~30 min", "The agent runs every 30 minutes. It picks up your decision and acts on it. 'Processed At' fills in when it is done."],
@@ -860,15 +872,17 @@ def ensure_howto_sheet() -> None:
             ["", ""],
             ["── HOW TO READ A ROW (key columns) ──", ""],
             ["Service / Breakdown", "What is being billed and the price of each part, e.g. 'Boundary Survey: $475.00 | Elevation Cert: $275.00'. Edit a number here to change that one service's price."],
-            ["Amount ($)", "The total that will be invoiced. To change the whole total, edit this cell."],
+            ["Amount ($) by AI", "The total the AI proposes. To change the whole total, edit this cell."],
+            ["Amount ($) by User", "Read-only. If the order was already invoiced in FTF, the AI shows the real amount the human charged here (it learns from the difference). Blank for normal new orders — don't edit."],
+            ["AI Learning", "Read-only. The AI's note on what it learned from this order (its price vs. the real one). You don't act on this."],
             ["Confidence", "HIGH / MEDIUM / LOW — how sure the AI is about the price. LOW means double-check it."],
             ["Escalate", "Yes = unusual order; have Robert or Ryan look before approving."],
             ["Notes", "Plain-language reason or instruction from the agent. Always read this."],
             ["", ""],
             ["── WORKED EXAMPLE (a dummy order) ──", ""],
-            ["1. The row appears", "Order 1000299001 | Sunshine Title | 123 Palm Ave, Naples FL | Service: 'Boundary Survey: $475.00 | Elevation Cert: $275.00' | Amount: $750.00 | Confidence: HIGH | Action: (blank)"],
+            ["1. The row appears", "Order 1000299001 | Sunshine Title | 123 Palm Ave, Naples FL | Service: 'Boundary Survey: $475.00 | Elevation Cert: $275.00' | Amount by AI: $750.00 | Confidence: HIGH | Action: (blank)"],
             ["2. You review it", "The service and the $750.00 total look correct for a boundary survey + elevation certificate in Naples."],
-            ["3. (Optional) fix price", "Say you agreed $700 with this client. Type 700 in the Amount ($) cell — the agent splits it across the services for you."],
+            ["3. (Optional) fix price", "Say you agreed $700 with this client. Type 700 in the Amount ($) by AI cell — the agent splits it across the services for you."],
             ["4. You approve", "Set the Action cell to 'Approve'."],
             ["5. What happens next", "Within ~30 min the agent creates the invoice in FTF, emails it to Sunshine Title's address on file, and fills in 'Processed At'."],
             ["6. Result", "Sunshine Title receives a $700 invoice by email. You did nothing except review and click Approve."],
@@ -880,14 +894,14 @@ def ensure_howto_sheet() -> None:
             ["Processed At", "Fills in automatically — that is your confirmation it is done."],
             ["", ""],
             ["── SPECIAL ROWS YOU MIGHT SEE ──", ""],
-            ["MANUAL PRICING REQUIRED", "The AI could not set a price. Type the correct amount in Amount ($), then Approve."],
+            ["MANUAL PRICING REQUIRED", "The AI could not set a price. Type the correct amount in Amount ($) by AI, then Approve."],
             ["CONDO — Cannot Survey", "A condo / airspace unit. Auto-rejected. Contact the client; do not approve."],
             ["⛔ CANCELED (red row)", "Order was canceled in FTF. No invoice needed. Set Action = Reject to clear it."],
             ["⚠️ DELIVERED (red row)", "Order already delivered. Not auto-priced. Only invoice if one is genuinely still owed — enter the amount and Approve."],
             ["ESCALATE", "Unusual order. Get Robert or Ryan to review before approving."],
             ["", ""],
             ["── FIXING A PRICE / TEACHING THE AI ──", ""],
-            ["One-off change", "Edit Amount ($) (for the total) or Service / Breakdown (for one service) on the row, then Approve."],
+            ["One-off change", "Edit Amount ($) by AI (for the total) or Service / Breakdown (for one service) on the row, then Approve."],
             ["Permanent rule", "Use the 'Pricing Rules' tab to set a fixed price for a client, county, or service — so the AI gets it right next time. No coding needed."],
             ["Example rule", "Service=Boundary Survey | County=Collier | Client=Sunshine Title | Price=700 | Priority=1 | Status=Active"],
             ["", ""],
@@ -976,8 +990,8 @@ def auto_reject_condo_row(order_id: str) -> None:
             return
 
         excel_row  = target_index + 2   # 0-based table index + header + 1
-        action_col = chr(ord("A") + _COL_ACTION)        # "J"
-        proc_col   = chr(ord("A") + _COL_PROCESSED_AT)  # "M"
+        action_col = chr(ord("A") + _COL_ACTION)        # "K"
+        proc_col   = chr(ord("A") + _COL_PROCESSED_AT)  # "N"
         stamped_at = datetime.now(_EASTERN).strftime("%Y-%m-%d %H:%M %Z")
         wb_b       = _wb_base()
         h          = _session_headers()
@@ -1134,16 +1148,20 @@ def _format_new_row(table_row_index: int, ftf_link: str = "") -> None:
             timeout=10.0,
         ).raise_for_status()
 
+    # Currency format on BOTH amount columns: "Amount ($) by AI" and "Amount ($) by User"
+    amt_ai_letter   = chr(ord("A") + _COL_AMOUNT_AI)     # "F"
+    amt_user_letter = chr(ord("A") + _COL_AMOUNT_USER)   # "G"
     httpx.patch(
-        f"{wb}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='F{excel_row}')/format",
+        f"{wb}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{amt_ai_letter}{excel_row}:{amt_user_letter}{excel_row}')/format",
         headers=h,
-        json={"numberFormat": [["$#,##0.00"]]},
+        json={"numberFormat": [["$#,##0.00", "$#,##0.00"]]},
         timeout=10.0,
     ).raise_for_status()
 
     if ftf_link and ftf_link.startswith("http"):
+        ftf_letter = chr(ord("A") + _COL_FTF_LINK)       # "J"
         httpx.patch(
-            f"{wb}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='I{excel_row}')",
+            f"{wb}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{ftf_letter}{excel_row}')",
             headers=h,
             json={"formulas": [[f'=HYPERLINK("{ftf_link}","View Order")']]},
             timeout=10.0,
@@ -1165,8 +1183,16 @@ def append_approval_row(
     posted_at:    Optional[str] = None,
     notes:        str = "",
     highlight_red: bool = False,
+    amount_user:  Optional[float] = None,
+    ai_learning:  str = "",
 ) -> None:
     """Append a new row to the approval table. Action column is blank — user picks from dropdown.
+
+    amount        → "Amount ($) by AI": the AI's proposed price (approver may edit to override).
+    amount_user   → "Amount ($) by User": the actual amount a human already invoiced in FTF.
+                    Left blank (None) for normal new orders; filled for already-invoiced
+                    learning rows. AI-filled / read-only to the approver.
+    ai_learning   → "AI Learning": the AI's per-order learning record (AI-filled).
 
     highlight_red=True fills the entire row with red (#FF4444) to flag critical issues
     (e.g. Delivered orders that returned a $0 invoice — cannot be processed automatically).
@@ -1177,21 +1203,25 @@ def append_approval_row(
     if not posted_at:
         posted_at = datetime.now(_EASTERN).strftime("%Y-%m-%d %H:%M %Z")
 
-    values = [[
-        str(order_id),
-        str(order_status),          # Order Status — FTF stage status (ng_status_desc)
-        str(client_name),
-        str(address)[:120],
-        str(service),
-        float(amount),
-        str(confidence),
-        "Yes" if escalate else "No",
-        str(ftf_link),
-        "",                         # Action — blank; user selects Approve/Reject/On-hold
-        str(notes),                 # Notes — pre-filled for escalations
-        posted_at,
-        "",                         # Processed At — filled after pipeline processes decision
-    ]]
+    # Build the row by column index so it can never drift out of sync with APPROVAL_HEADERS.
+    row = [""] * _COL_COUNT
+    row[_COL_ORDER_ID]     = str(order_id)
+    row[1]                 = str(order_status)   # Order Status — FTF stage status
+    row[2]                 = str(client_name)
+    row[3]                 = str(address)[:120]
+    row[_COL_SERVICE]      = str(service)
+    row[_COL_AMOUNT_AI]    = float(amount)
+    row[_COL_AMOUNT_USER]  = float(amount_user) if amount_user is not None else ""
+    row[_COL_FTF_LINK]     = str(ftf_link)
+    row[_COL_ACTION]       = ""                  # blank; user selects Approve/Reject/On-hold
+    row[_COL_NOTES]        = str(notes)          # pre-filled for escalations
+    row[12]                = posted_at           # Posted At
+    row[_COL_PROCESSED_AT] = ""                  # filled after pipeline processes decision
+    row[_COL_AI_LEARNING]  = str(ai_learning)
+    # Confidence / Escalate (indices computed for safety)
+    row[APPROVAL_HEADERS.index("Confidence")] = str(confidence)
+    row[APPROVAL_HEADERS.index("Escalate")]   = "Yes" if escalate else "No"
+    values = [row]
 
     r = httpx.post(
         f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows/add",
@@ -1262,12 +1292,12 @@ def get_pending_approvals() -> list[dict]:
         if len(vals) < _COL_COUNT:
             vals = list(vals) + [""] * (_COL_COUNT - len(vals))
 
-        order_id       = str(vals[0]).strip()
+        order_id       = str(vals[_COL_ORDER_ID]).strip()
         action_raw     = str(vals[_COL_ACTION]).strip()
         processed_at   = str(vals[_COL_PROCESSED_AT]).strip()
-        notes          = str(vals[10]).strip()   # col K
-        amount_cell    = str(vals[5]).strip()    # col F — Amount ($), user may have edited
-        breakdown_cell = str(vals[4]).strip()    # col E — Service / Breakdown
+        notes          = str(vals[_COL_NOTES]).strip()
+        amount_cell    = str(vals[_COL_AMOUNT_AI]).strip()    # Amount ($) by AI — approver may have edited
+        breakdown_cell = str(vals[_COL_SERVICE]).strip()      # Service / Breakdown
 
         if not order_id or not action_raw or processed_at:
             continue   # blank action or already processed
@@ -1316,9 +1346,6 @@ def mark_row_processed(order_id: str) -> None:
             return
 
     log.warning("mark_row_processed: order_id=%s not found in Excel", order_id)
-
-
-_COL_NOTES = APPROVAL_HEADERS.index("Notes")   # 10 (col K)
 
 
 def update_approval_notes(order_id: str, note: str, mark_processed: bool = True) -> bool:
@@ -1379,9 +1406,11 @@ def sync_approval_amounts(order_id: str, new_total: float, new_breakdown_str: st
         if len(vals) >= 1 and str(vals[0]) == str(order_id):
             idx       = row["index"]
             excel_row = idx + 2   # 0-based table index + header + 1
-            # PATCH col E (breakdown) and col F (total) as adjacent range E:F
+            # PATCH Service/Breakdown + Amount ($) by AI as the adjacent range (E:F today)
+            svc_letter = chr(ord("A") + _COL_SERVICE)      # "E"
+            amt_letter = chr(ord("A") + _COL_AMOUNT_AI)    # "F"
             httpx.patch(
-                f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='E{excel_row}:F{excel_row}')",
+                f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{svc_letter}{excel_row}:{amt_letter}{excel_row}')",
                 headers=h,
                 json={"values": [[new_breakdown_str, new_total]]},
                 timeout=15.0,

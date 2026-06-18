@@ -1,0 +1,38 @@
+name: DB Probe (one-off, read-only)
+
+# Manual diagnostic: runs a read-only probe script on the runner (which can reach the
+# firewalled RDS). Read-only. Safe to delete after the schema is confirmed.
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: "Probe script under scripts/ (e.g. probe_amount.py)"
+        required: true
+        default: "probe_amount.py"
+      args:
+        description: "Arguments to pass to the script"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      MYSQL_HOST:     ${{ secrets.MYSQL_HOST }}
+      MYSQL_PORT:     ${{ secrets.MYSQL_PORT }}
+      MYSQL_USER:     ${{ secrets.MYSQL_USER }}
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      MYSQL_DB:       ${{ secrets.MYSQL_DB }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run probe (read-only)
+        run: python "scripts/${{ github.event.inputs.script }}" ${{ github.event.inputs.args }}
