@@ -43,13 +43,15 @@ def main():
     condo_rejected    = get_orders_by_status("condo_rejected")
     canceled_flagged  = get_orders_by_status("canceled_flagged")
     delivered_flagged = get_orders_by_status("delivered_flagged")
-    targets = pricing_needed + condo_rejected + canceled_flagged + delivered_flagged
+    invoice_drafted   = get_orders_by_status("invoice_draft_posted")
+    targets = (pricing_needed + condo_rejected + canceled_flagged
+               + delivered_flagged + invoice_drafted)
 
     log.info(
         "backfill targets: %d pricing_needed + %d condo_rejected + %d canceled_flagged "
-        "+ %d delivered_flagged = %d total",
+        "+ %d delivered_flagged + %d invoice_draft_posted = %d total",
         len(pricing_needed), len(condo_rejected), len(canceled_flagged),
-        len(delivered_flagged), len(targets),
+        len(delivered_flagged), len(invoice_drafted), len(targets),
     )
 
     existing = get_all_approval_order_ids()
@@ -120,6 +122,28 @@ def main():
                 "manually and set Action = Approve."
             )
 
+        elif status == "invoice_draft_posted":
+            # Normal priced order whose sheet row was wiped by the 15-col schema rebuild.
+            # Re-post it from the saved draft (service breakdown + AI total + escalation).
+            svcs = draft.get("services") or []
+            parts = []
+            for s in svcs:
+                nm = str(s.get("name", "")).strip()
+                amt = s.get("amount", 0) or 0
+                try:
+                    amt = float(amt)
+                except (ValueError, TypeError):
+                    amt = 0.0
+                parts.append(f"{nm}: ${amt:.2f}" if amt else nm)
+            service    = " | ".join(p for p in parts if p) or service_type or "Survey"
+            amount     = float(draft.get("total_amount") or order.get("estimate_amount") or 0.0)
+            confidence = draft.get("confidence") or "MEDIUM"
+            escalate   = bool(draft.get("escalate_flag"))
+            notes      = (
+                f"ESCALATE — {draft.get('escalate_reason') or 'review before approving'}. "
+                "Needs Robert or Ryan review before approving." if escalate else ""
+            )
+
         else:  # condo_rejected
             service    = "CONDO — Cannot Survey"
             amount     = 0.0
@@ -174,6 +198,7 @@ def main():
         "condo_rejected":    len(condo_rejected),
         "canceled_flagged":  len(canceled_flagged),
         "delivered_flagged": len(delivered_flagged),
+        "invoice_draft_posted": len(invoice_drafted),
     }
     log.info("backfill complete: %s", result)
     print(json.dumps(result, indent=2))
