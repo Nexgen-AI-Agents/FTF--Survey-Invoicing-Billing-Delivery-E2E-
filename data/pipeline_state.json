@@ -9194,17 +9194,17 @@
     },
     {
       "order_id": "1000285378",
-      "status": "invoice_needed",
+      "status": "data_collected",
       "service_type": "Land Survey Only",
       "customer_email": "LMorgen@pacificgroup.com",
       "client_name": "LORIE MORGEN",
-      "property_address": "331 CAPE CORAL PKWY W",
+      "property_address": "331 CAPE CORAL PKWY W, CAPE CORAL, FLORIDA 33914",
       "invoice_draft": null,
-      "data_sources": null,
+      "data_sources": "{\"ftf_order\": {\"company_id\": 202312061705406119, \"created_at\": \"2026-06-15T17:05:06\", \"customer_email\": \"LMorgen@pacificgroup.com\", \"customer_id\": 202312061705407127, \"customer_name\": \"LORIE MORGEN\", \"customer_type\": \"individual\", \"delivered_at\": null, \"due_amount\": 0.0, \"elevation_cert\": false, \"estimate_sent\": false, \"fieldwork_at\": null, \"flood_zone\": \"12071C0403G\\nZONE:AE\\nEFF: 11/17/2022\", \"invoiced\": false, \"order_id\": 1000285378, \"paid\": false, \"property_address\": \"331 CAPE CORAL PKWY W\", \"property_city\": \"CAPE CORAL\", \"property_county\": \"LEE COUNTY\", \"property_lat\": \"26.5631444\", \"property_lng\": \"-81.9819414\", \"property_state\": \"FLORIDA\", \"property_zip\": \"33914\", \"service_type\": \"Land Survey Only\", \"special_pricing\": true, \"status\": \"Quote\", \"status_code\": 12, \"updated_at\": \"2026-06-19T15:28:45\"}, \"ftf_customer\": {\"data\": {\"company_id\": 202312061705406119, \"company_name\": \"LORIE MORGEN\", \"created_at\": null, \"custom_rate\": 450.0, \"customer_id\": 202312061705407127, \"customer_type\": \"individual\", \"email\": \"LMorgen@pacificgroup.com\", \"first_name\": \"LORIE\", \"last_name\": \"MORGEN\", \"phone\": \"2395412300\", \"pricing_type\": 0, \"special_pricing\": true}, \"success\": true}, \"emails_found\": 0, \"email_snippets\": [], \"appraiser_data\": {\"legal_description\": null, \"lot_size\": null, \"structure_sqft\": null, \"parcel_id\": null, \"year_built\": null, \"notes\": \"No property data was returned in the page text. The page appears to be the Lee County Property Appraiser homepage/search interface without specific property details loaded. A direct query to https://www.leepa.org for 331 CAPE CORAL PKWY W did not return parcel-specific information in the provided text.\", \"source_url\": \"https://www.leepa.org/?address=331%20CAPE%20CORAL%20PKWY%20W\", \"error\": null, \"confidence\": \"LOW\"}, \"aerial_analysis\": {\"lot_shape\": \"rectangular\", \"estimated_lot_size\": \"~0.5 acres\", \"main_structure_footprint_sqft\": 4200, \"visible_structures\": [\"main commercial building with blue/teal roof\", \"parking lot\", \"landscaping features\"], \"driveway_count\": 2, \"pool_visible\": false, \"apparent_encroachments\": \"None clearly visible, though proximity to adjacent commercial structures on east side warrants boundary verification\", \"access_type\": \"street\", \"site_notes\": \"Property appears to be a standalone commercial structure with blue metal roof situated at or near a major intersection (Cape Coral Pkwy W). Retention pond/stormwater feature visible to the northeast which may affect drainage easements. Shared or adjacent parking area near eastern boundary with neighboring commercial strip. Setback from major arterial road should be verified. Curb cuts visible on Cape Coral Pkwy W frontage. Multiple utility poles visible along roadway. High-traffic corner location may have dedicated turn lanes and ROW impacts.\", \"confidence\": \"MEDIUM\"}, \"packet\": {\"client_name\": {\"value\": \"LORIE MORGEN\", \"confidence\": \"HIGH\"}, \"client_email\": {\"value\": \"LMorgen@pacificgroup.com\", \"confidence\": \"HIGH\"}, \"property_address\": {\"value\": \"331 CAPE CORAL PKWY W, CAPE CORAL, FLORIDA 33914\", \"confidence\": \"HIGH\"}, \"property_county\": {\"value\": \"LEE COUNTY\", \"confidence\": \"HIGH\"}, \"services_requested\": {\"value\": [\"Land Survey Only\"], \"confidence\": \"HIGH\", \"notes\": \"Service type explicitly stated as 'Land Survey Only'; no elevation certificate requested; commercial property at high-traffic intersection may warrant boundary and ROW survey components\"}, \"special_requirements\": {\"value\": \"Special pricing applied; custom rate on file at $450.00\", \"confidence\": \"HIGH\"}, \"lot_size\": {\"value\": \"~0.5 acres\", \"confidence\": \"MEDIUM\"}, \"legal_description\": {\"value\": null, \"confidence\": \"LOW\"}, \"structure_sqft\": {\"value\": 4200, \"confidence\": \"MEDIUM\"}, \"property_features\": {\"value\": {\"main_structure\": \"commercial building with blue/teal metal roof\", \"pool\": false, \"driveways\": 2, \"parking_lot\": true, \"landscaping\": true, \"retention_pond_nearby\": true, \"utility_poles\": true, \"adjacent_commercial\": true}, \"confidence\": \"MEDIUM\", \"notes\": \"Features derived from aerial image analysis; no pool visible; 2 curb cuts/driveways on Cape Coral Pkwy W frontage; retention/stormwater pond to northeast may affect drainage easements; shared or adjacent parking near eastern boundary\"}, \"client_tier\": {\"value\": \"residential\", \"confidence\": \"MEDIUM\"}, \"urgency\": {\"value\": \"normal\", \"confidence\": \"MEDIUM\"}, \"source_of_truth\": \"mixed\", \"gaps\": [\"Legal description not provided \\u2014 needed for survey preparation\", \"Parcel ID / folio number not provided\", \"Fieldwork date not yet scheduled (fieldwork_at is null)\", \"Invoice not yet generated (invoiced = false)\", \"No matching emails found \\u2014 no additional context from client communications\", \"Client type listed as 'individual' but email domain (@pacificgroup.com) suggests possible business affiliation \\u2014 clarify billing entity\", \"Flood zone AE designation noted (Panel 12071C0403G, eff. 11/17/2022) \\u2014 confirm whether elevation certificate will be needed despite current flag being false\", \"ROW impacts from Cape Coral Pkwy W frontage should be confirmed with Lee County\", \"Drainage easement implications from nearby retention pond need verification\", \"Eastern boundary proximity to adjacent commercial structures \\u2014 potential encroachments to investigate\", \"Exact lot dimensions not confirmed \\u2014 aerial estimate only (~0.5 acres)\"], \"summary\": \"Land Survey Only order for LORIE MORGEN on a ~0.5-acre commercial property at 331 Cape Coral Pkwy W in Cape Coral (Lee County, Flood Zone AE), currently in Quote status with special pricing at $450.00 and pending fieldwork scheduling, legal description, and invoice generation.\"}}",
       "approval_message_id": null,
       "modification_count": null,
       "invoice_id": null,
-      "data_collected_at": null,
+      "data_collected_at": "2026-06-22T13:46:29.906377+00:00",
       "draft_posted_at": null,
       "invoice_created_at": null,
       "processed_reply_ids": null,
@@ -9213,7 +9213,7 @@
       "estimate_amount": null,
       "deferred_until": null,
       "created_at": null,
-      "updated_at": "2026-06-22T12:45:43.038132+00:00",
+      "updated_at": "2026-06-22T13:46:30.041014+00:00",
       "pay_link": "2026-06-22T12:45:43.038132+00:00"
     }
   ],
@@ -9224,13 +9224,8 @@
     "invoice_draft_posted": 191,
     "delivered_flagged": 97,
     "details_missing": 3,
-    "data_collected": 23,
-    "invoice_needed": 1
+    "data_collected": 24
   },
   "total": 384,
-<<<<<<< Updated upstream
-  "generated_at": "2026-06-22T13:41:23.587742+00:00"
-=======
-  "generated_at": "2026-06-22T13:42:19.455266+00:00"
->>>>>>> Stashed changes
+  "generated_at": "2026-06-22T14:03:15.122013+00:00"
 }
