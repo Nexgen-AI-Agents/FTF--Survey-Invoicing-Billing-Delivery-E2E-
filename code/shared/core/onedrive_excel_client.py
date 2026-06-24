@@ -241,7 +241,6 @@ def _setup_full_sheet_via_openpyxl() -> None:
     from openpyxl.styles import Font, PatternFill
     from openpyxl.formatting.rule import FormulaRule
     from openpyxl.worksheet.datavalidation import DataValidation
-    from openpyxl.worksheet.table import Table, TableStyleInfo
 
     try:
         raw = _download_workbook_bytes()
@@ -262,14 +261,12 @@ def _setup_full_sheet_via_openpyxl() -> None:
         cell = ws.cell(row=1, column=col_idx, value=header)
         cell.font = Font(bold=True)
 
-    # ── Excel Table (so Graph API /tables/{name}/rows/add works) ─────────────
-    table_ref = f"A1:{_END_COL}1"
-    tab = Table(displayName=ONEDRIVE_TABLE_NAME, ref=table_ref)
-    tab.tableStyleInfo = TableStyleInfo(
-        name="TableStyleMedium9", showFirstColumn=False,
-        showLastColumn=False, showRowStripes=True, showColumnStripes=False,
-    )
-    ws.add_table(tab)
+    # ── NO Excel Table here ───────────────────────────────────────────────────
+    # A header-only openpyxl table (zero data rows) makes Microsoft Graph reject the
+    # ENTIRE workbook with 501 UnsupportedWorkbook/FileCorruptTryRepair (verified:
+    # two header-only tables in one file => 501; same tables with >=1 data row => 200).
+    # The ApprovalTable is therefore created via the Graph API AFTER upload, by
+    # _ensure_approval_table_via_api(), where Graph manages an empty table cleanly.
 
     # ── Dropdown on Action column ─────────────────────────────────────────────
     action_letter = chr(ord("A") + _COL_ACTION)   # "J"
@@ -303,8 +300,42 @@ def _setup_full_sheet_via_openpyxl() -> None:
             "_setup_full_sheet_via_openpyxl: Approvals sheet created — %d cols, dropdown + row colors applied",
             _COL_COUNT,
         )
+        _ensure_approval_table_via_api()
     except Exception as exc:
         log.warning("_setup_full_sheet_via_openpyxl: upload failed: %s", exc)
+
+
+def _ensure_approval_table_via_api() -> None:
+    """Create the ApprovalTable over the header row via the Graph API (idempotent).
+
+    Must run AFTER the file is uploaded and the workbook API is healthy. We create
+    the table here rather than in openpyxl because a header-only openpyxl table makes
+    Graph reject the whole workbook (501). Graph manages an empty table fine.
+    The runtime's append_approval_row()/get_pending_approvals() need this table.
+    """
+    base = _wb_base()
+    h = _headers()
+    try:
+        existing = _graph_get_retry(
+            f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables", h, timeout=15.0
+        )
+        if existing is not None and existing.status_code == 200:
+            names = [t.get("name") for t in existing.json().get("value", [])]
+            if ONEDRIVE_TABLE_NAME in names:
+                log.info("ApprovalTable already present — skipping create")
+                return
+        add = httpx.post(
+            f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/add",
+            headers=h, json={"address": f"A1:{_END_COL}1", "hasHeaders": True}, timeout=20.0,
+        )
+        add.raise_for_status()
+        tid = add.json().get("id")
+        if tid:
+            httpx.patch(f"{base}/tables/{tid}", headers=h,
+                        json={"name": ONEDRIVE_TABLE_NAME}, timeout=15.0)
+        log.info("ApprovalTable created via Graph API")
+    except Exception as exc:
+        log.warning("_ensure_approval_table_via_api failed (non-fatal): %s", exc)
 
 
 def ensure_pricing_rules_sheet() -> None:
