@@ -32,27 +32,66 @@ def _connect():
     )
 
 
-def get_invoice_needed_orders() -> list[dict]:
-    """Return ALL orders with ng_invoice_needed = 1 from FTF stage MySQL DB.
+def get_max_ng_id() -> int:
+    """Return the current MAX(ng_id) in ng_orders — the intake high-water mark.
+
+    A1 captures this once on first run to set the 'process from today onward'
+    watermark: every genuinely new order gets a strictly higher auto-increment
+    ng_id, so 'ng_id > watermark' cleanly means 'created after the reset point'
+    and the historical backlog is excluded. Returns 0 on any error (caller treats
+    0 as 'unknown' and will not advance/initialize the watermark).
+    """
+    conn = _connect()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT MAX(ng_id) AS mx FROM ng_orders")
+            row = cur.fetchone()
+    finally:
+        conn.close()
+    try:
+        return int((row or {}).get("mx") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def get_invoice_needed_orders(min_ng_id: int = 0) -> list[dict]:
+    """Return orders with ng_invoice_needed = 1 from FTF stage MySQL DB.
 
     No LIMIT — every flagged order is returned so none are permanently invisible.
     A1 flag hunter deduplicates via order_exists() and caps new intake per run
     to avoid flooding the Excel state on a sudden backlog.
+
+    min_ng_id > 0 restricts the scan to orders newer than the intake watermark
+    (ng_id > min_ng_id) so only orders created after the 'start from today' reset
+    point are ever queued. Default 0 = no cutoff (legacy 'all flagged' behavior).
 
     Returns newest first (ORDER BY ng_id DESC) so recent orders get priority.
     """
     conn = _connect()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                """SELECT ng_id, ng_order, ng_client_name, ng_email,
-                          ng_property_address, ng_service_requested,
-                          ng_status, ng_property_county, ng_notes
-                   FROM ng_orders
-                   WHERE ng_invoice_needed = 1
-                     AND ng_status != 0
-                   ORDER BY ng_id DESC"""
-            )
+            if min_ng_id and min_ng_id > 0:
+                cur.execute(
+                    """SELECT ng_id, ng_order, ng_client_name, ng_email,
+                              ng_property_address, ng_service_requested,
+                              ng_status, ng_property_county, ng_notes
+                       FROM ng_orders
+                       WHERE ng_invoice_needed = 1
+                         AND ng_status != 0
+                         AND ng_id > %s
+                       ORDER BY ng_id DESC""",
+                    (min_ng_id,),
+                )
+            else:
+                cur.execute(
+                    """SELECT ng_id, ng_order, ng_client_name, ng_email,
+                              ng_property_address, ng_service_requested,
+                              ng_status, ng_property_county, ng_notes
+                       FROM ng_orders
+                       WHERE ng_invoice_needed = 1
+                         AND ng_status != 0
+                       ORDER BY ng_id DESC"""
+                )
             rows = cur.fetchall()
     finally:
         conn.close()
@@ -72,7 +111,7 @@ def get_invoice_needed_orders() -> list[dict]:
             "notes":           (row.get("ng_notes") or "").strip(),
         })
 
-    logger.info("get_invoice_needed_orders: %d orders from MySQL", len(results))
+    logger.info("get_invoice_needed_orders: %d orders from MySQL (min_ng_id=%s)", len(results), min_ng_id)
     return results
 
 

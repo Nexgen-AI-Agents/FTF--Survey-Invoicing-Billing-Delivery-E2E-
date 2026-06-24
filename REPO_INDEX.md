@@ -51,7 +51,9 @@ All in `code/sprint_11_invoice_pipeline/agents/`:
 |------|----------------|
 | `claude_client.py` | LLM call wrapper. FTF-dedicated Anthropic key → 3 retries → **OpenAI gpt-4o fallback** |
 | `ftf_client.py` | FTF REST API. **`get_order()` unwraps the `{"data":…,"success":…}` envelope** — read fields directly. `get_user_invoiced_amount()` = the human-set amount (REST `due_amount`; the MySQL invoice tables do NOT hold it) for the learning loop |
-| `ftf_mysql.py` | FTF MySQL (AWS RDS). `get_invoice_needed_orders()` (the `$`-flag intake), `get_order_details()`, `get_company_info()`, `find_duplicate_orders()`, `get_invoice_generator()` (who generated an existing invoice, from `ng_log_trackflow`) |
+| `ftf_mysql.py` | FTF MySQL (AWS RDS). `get_invoice_needed_orders(min_ng_id)` (the `$`-flag intake, watermark-gated), `get_max_ng_id()` (intake high-water mark), `get_order_details()`, `get_company_info()`, `find_duplicate_orders()`, `get_invoice_generator()` (who generated an existing invoice, from `ng_log_trackflow`) |
+| `intake_watermark.py` | 'Process from today onward' high-water mark (`data/intake_watermark.json`). A1 sets it once (MAX(ng_id)) on first run; later runs only queue `ng_id > watermark` so the historical backlog is permanently skipped |
+| `xlsx_shared_strings.py` | `to_shared_strings()` — converts openpyxl's inline-string xlsx into a shared-string xlsx. **openpyxl files Graph rejects with 501 UnsupportedWorkbook until this runs**; wired into `_upload_workbook_bytes()` |
 | `ftf_portal_client.py` | FTF portal login (nesa HR user) for invoice generation/delivery |
 | `ftf_books_client.py` | FTF Books endpoints |
 | `onedrive_excel_client.py` | OneDrive workbook via Graph API. Approvals tab, Pipeline Guide, Pricing Rules, How-To. `append_approval_row()`, `get_pending_order_ids()` (dedup truth), `get_pricing_rules()`, `match_pricing_rule()`, `ensure_action_dropdown()` (self-heals J2:J10000 dropdown via openpyxl) |
@@ -72,6 +74,7 @@ All in `code/sprint_11_invoice_pipeline/agents/`:
 | `pipeline_state.json` | Dashboard export only (mirror of state) | committed |
 | `pricing_rules.json` | Synced from the OneDrive Pricing Rules tab each run | committed |
 | `learned_rules.json` | A7 self-learned price rules + order overrides | committed |
+| `intake_watermark.json` | 'From today onward' MAX(ng_id) cutoff; A1 self-inits, only `ng_id >` it is queued | committed |
 
 **OneDrive workbook** (`FTF-Invoicing Agent.xlsx`, via `ONEDRIVE_SHARE_URL`): tabs **Approvals** (authoritative dedup source for A3), **Pipeline Guide**, **Pricing Rules** (user input → both deterministic override AND AI learning), **How to use Invoicing agent**.
 

@@ -1148,8 +1148,21 @@ def _download_workbook_bytes() -> bytes:
 
 
 def _upload_workbook_bytes(data: bytes) -> None:
-    """Replace the workbook file with new content (PUT upload). Retries once on 423."""
+    """Replace the workbook file with new content (PUT upload). Retries once on 423.
+
+    The bytes are first converted to a shared-string workbook. openpyxl writes inline
+    strings with NO sharedStrings.xml, which Microsoft Graph's Excel (workbook) API
+    REJECTS with HTTP 501 UnsupportedWorkbook/FileCorruptTryRepair — breaking every
+    /workbook/* call until a human re-saves the file in Excel. to_shared_strings()
+    makes the upload Graph-compatible up front so that never happens again. Idempotent
+    on files that already have a shared-string table.
+    """
     import time
+    from core.xlsx_shared_strings import to_shared_strings
+    try:
+        data = to_shared_strings(data)
+    except Exception as exc:
+        log.warning("shared-string conversion failed (uploading as-is): %s", exc)
     drive_id = _cache.get("od_drive_id")
     item_id  = _get_item_id()
     url = (
