@@ -1562,16 +1562,18 @@ def mark_row_processed(order_id: str) -> None:
     for row in reversed(r.json().get("value", [])):
         vals = row.get("values", [[]])[0]
         if len(vals) >= 1 and str(vals[0]) == str(order_id):
-            idx = row["index"]
-            new_vals = list(vals) + [""] * (_COL_COUNT - len(vals))
-            new_vals[_COL_PROCESSED_AT] = processed_at
+            # Single-cell range PATCH (Processed At only). A full-row table PATCH would
+            # rewrite col A's =HYPERLINK() formula as plain text and kill the clickable
+            # Order ID link — so we touch ONLY the one cell we're changing.
+            excel_row   = row["index"] + 2   # 0-based table index + header + 1
+            proc_letter = _col_letter(_COL_PROCESSED_AT)   # "M"
             httpx.patch(
-                f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows/itemAt(index={idx})",
+                f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{proc_letter}{excel_row}')",
                 headers=h,
-                json={"values": [new_vals[:_COL_COUNT]]},
+                json={"values": [[processed_at]]},
                 timeout=15.0,
             ).raise_for_status()
-            log.info("marked processed order_id=%s at=%s", order_id, processed_at)
+            log.info("marked processed order_id=%s at=%s (cell %s%d)", order_id, processed_at, proc_letter, excel_row)
             return
 
     log.warning("mark_row_processed: order_id=%s not found in Excel", order_id)
@@ -1594,17 +1596,21 @@ def update_approval_notes(order_id: str, note: str, mark_processed: bool = True)
         for row in reversed(r.json().get("value", [])):
             vals = row.get("values", [[]])[0]
             if len(vals) >= 1 and str(vals[0]).strip() == str(order_id):
-                idx = row["index"]
-                new_vals = list(vals) + [""] * (_COL_COUNT - len(vals))
-                new_vals[_COL_NOTES] = str(note)
-                if mark_processed:
-                    new_vals[_COL_PROCESSED_AT] = processed_at
+                # Single-cell range PATCHes (Notes, optionally Processed At). A full-row
+                # table PATCH would rewrite col A's =HYPERLINK() formula as plain text and
+                # kill the clickable Order ID link — so we touch ONLY the cells we change.
+                excel_row    = row["index"] + 2   # 0-based table index + header + 1
+                notes_letter = _col_letter(_COL_NOTES)   # "K"
                 httpx.patch(
-                    f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows/itemAt(index={idx})",
-                    headers=h,
-                    json={"values": [new_vals[:_COL_COUNT]]},
-                    timeout=15.0,
+                    f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{notes_letter}{excel_row}')",
+                    headers=h, json={"values": [[str(note)]]}, timeout=15.0,
                 ).raise_for_status()
+                if mark_processed:
+                    proc_letter = _col_letter(_COL_PROCESSED_AT)   # "M"
+                    httpx.patch(
+                        f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{proc_letter}{excel_row}')",
+                        headers=h, json={"values": [[processed_at]]}, timeout=15.0,
+                    ).raise_for_status()
                 log.info("update_approval_notes: order_id=%s note set (processed=%s)", order_id, mark_processed)
                 return True
         log.warning("update_approval_notes: order_id=%s not found in Excel", order_id)
