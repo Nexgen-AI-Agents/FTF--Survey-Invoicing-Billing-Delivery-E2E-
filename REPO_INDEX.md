@@ -87,6 +87,7 @@ All in `code/sprint_11_invoice_pipeline/agents/`:
 **The invoice pipeline now runs on the prod server `FTF-NEAdmin-HA-01` (52.23.128.232), NOT GitHub Actions** — it is the only host that reaches the private RDS (intake A1). Single-runner model: deploy dir `~/FTF Invoicing Agent`, venv `.venv`, `.env` (`DEPLOY_ENV=prod`). Two cron jobs share one `flock` lock; state is kept LOCAL on the server (not pushed to git):
 - `*/30 * * * *` → `scripts/run_server_pipeline.sh` → A0 orchestrator (intake A1→A3 + backstop A5/A6/A7), 10 orders/run.
 - `5,10,…,55 * * * *` → `scripts/run_server_watcher.sh` → `run_excel_watcher.py` (A4 approval → A5 invoice → A6 send). REQUIRED because A0's `run_a4()` is a no-op stub — it does not action sheet approvals.
+- `0 10,11 * * *` (06:00-ET guard in the wrapper) → `scripts/run_server_daily_report.sh` → `daily_report.py`: posts the morning report (sheet link + precise what-to-do + AI-written learnings) to the 'AI - Invoicing Agent' Teams chat. App-only Graph can't post chat messages, so it POSTs `{"message": html}` to a Power Automate HTTP flow (`TEAMS_FLOW_URL` in `.env`); the flow posts into the chat.
 
 Both wrappers email via `notify_failure_email.py` on non-zero rc. **A redeploy must NOT overwrite the server's `data/` (live state).**
 
