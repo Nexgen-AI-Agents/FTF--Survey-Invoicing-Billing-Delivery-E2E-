@@ -182,9 +182,9 @@ CUMULATIVE PROJECT TOTAL (as of 2026-06-26)
   2026-06-16    claude-opus-4-8        ~428,500
   2026-06-18    claude-opus-4-8        ~142,000
   2026-06-24    claude-opus-4-8        ~115,000
-  2026-06-26    claude-opus-4-8        ~820,000
+  2026-06-26    claude-opus-4-8      ~1,052,000
   ──────────────────────────────────────────────────────
-  PROJECT TOTAL                       ~1,867,200 tokens
+  PROJECT TOTAL                       ~2,099,200 tokens
 
 ================================================================================
 HOW TO MAINTAIN THIS FILE
@@ -208,3 +208,10 @@ To switch models: use /model command in Claude Code
 ================================================================================
 
 [09:36 ET] | claude-opus-4-8[1m] | PO go-live readiness assessment (server deploy, watcher gap, EMAIL_OVERRIDE_ALL contradiction) | In: ~48,000 | Out: ~6,500 | Total: ~54,500
+[08:30 ET] | claude-opus-4-8[1m] | Daily report Mon-Fri + token-lean (max_tokens 500, weekday guard); deployed | In: ~22,000 | Out: ~3,000 | Total: ~25,000
+[08:30 ET] | claude-opus-4-8[1m] | Power Automate flow auth probe (app token 403/500); group-chat delivery blocked by MS app-only restriction | In: ~14,000 | Out: ~2,000 | Total: ~16,000
+[08:30 ET] | claude-opus-4-8[1m] | Flip amount cols (Amount by User editable / Amount by AI locked); guide v11/howto v4; deployed | In: ~40,000 | Out: ~8,000 | Total: ~48,000
+[08:30 ET] | claude-opus-4-8[1m] | INVOICE_DRY_RUN lever (A5/A6) + dry-run E2E harness; senior-dev subagent send-path map | In: ~70,000 | Out: ~6,000 | Total: ~76,000
+[08:30 ET] | claude-opus-4-8[1m] | INCIDENT: dry-run left dangling Approve rows; live watcher invoiced+emailed 6 real clients (3 at test amounts). Assessed, cleared, reported. | In: ~30,000 | Out: ~5,000 | Total: ~35,000
+[08:30 ET] | claude-opus-4-8[1m] | Fresh start: backup 31 rows, watermark reset, wipe sheet; re-arm watcher; commit+push 59c3563b | In: ~28,000 | Out: ~4,000 | Total: ~32,000
+   SESSION-2 SUBTOTAL ~232,000  (In ~204,000 | Out ~28,000)
