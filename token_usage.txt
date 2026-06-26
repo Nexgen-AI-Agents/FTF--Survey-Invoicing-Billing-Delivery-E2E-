@@ -162,9 +162,11 @@ MODEL: claude-opus-4-8 (1M context)
   [~05:30 ET] | claude-opus-4-8 | Disable 3 CI workflows; flip prod; manual A0 run rc=0 (6 drafts posted); found A0/watcher approval gap | In: ~30,000 | Out: ~7,000 | Total: ~37,000
   [~06:00 ET] | claude-opus-4-8 | 6-agent validation (QAx2/DevOps/pipeline/PO/security) GO-WITH-FIXES; applied fixes (alerting, close_session, 3.11) | In: ~60,000 | Out: ~12,000 | Total: ~72,000 (+~445,000 subagent)
   [~06:45 ET] | claude-opus-4-8 | Deploy fixes; install A0+watcher crons (GO-LIVE); remove server PAT; push to git main | In: ~30,000 | Out: ~6,000 | Total: ~36,000
+  [~08:30 ET] | claude-opus-4-8 | Excel rework: drop FTF Link + clickable Order ID, flatten learning, add user-learning col + AI learn-loop, gray/blue colors; live migration (31 rows preserved) + deploy + commit | In: ~90,000 | Out: ~22,000 | Total: ~112,000
+  [~11:00 ET] | claude-opus-4-8 | Daily 6AM-ET Teams report (AI-written: sheet link + what-to-do + learnings); Graph app-only 403 -> Power Automate flow delivery; cron + commit | In: ~70,000 | Out: ~16,000 | Total: ~86,000
 
                                                     ┌─────────────────────────────────┐
-                                         DAILY TOTAL │  ~550,000 tokens (est.)         │
+                                         DAILY TOTAL │  ~820,000 tokens (est.)         │
                                          MODEL       │  claude-opus-4-8 (1M context)  │
                                                     └─────────────────────────────────┘
 
@@ -180,9 +182,9 @@ CUMULATIVE PROJECT TOTAL (as of 2026-06-26)
   2026-06-16    claude-opus-4-8        ~428,500
   2026-06-18    claude-opus-4-8        ~142,000
   2026-06-24    claude-opus-4-8        ~115,000
-  2026-06-26    claude-opus-4-8        ~550,000
+  2026-06-26    claude-opus-4-8        ~820,000
   ──────────────────────────────────────────────────────
-  PROJECT TOTAL                       ~1,597,200 tokens
+  PROJECT TOTAL                       ~1,867,200 tokens
 
 ================================================================================
 HOW TO MAINTAIN THIS FILE
