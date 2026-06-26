@@ -82,13 +82,21 @@ All in `code/sprint_11_invoice_pipeline/agents/`:
 
 ---
 
-## 4. CI/CD — `.github/workflows/` (all run `TZ=America/New_York`)
+## 4. Production runtime — PROD SERVER (since 2026-06-26) + CI/CD `.github/workflows/`
+
+**The invoice pipeline now runs on the prod server `FTF-NEAdmin-HA-01` (52.23.128.232), NOT GitHub Actions** — it is the only host that reaches the private RDS (intake A1). Single-runner model: deploy dir `~/FTF Invoicing Agent`, venv `.venv`, `.env` (`DEPLOY_ENV=prod`). Two cron jobs share one `flock` lock; state is kept LOCAL on the server (not pushed to git):
+- `*/30 * * * *` → `scripts/run_server_pipeline.sh` → A0 orchestrator (intake A1→A3 + backstop A5/A6/A7), 10 orders/run.
+- `5,10,…,55 * * * *` → `scripts/run_server_watcher.sh` → `run_excel_watcher.py` (A4 approval → A5 invoice → A6 send). REQUIRED because A0's `run_a4()` is a no-op stub — it does not action sheet approvals.
+
+Both wrappers email via `notify_failure_email.py` on non-zero rc. **A redeploy must NOT overwrite the server's `data/` (live state).**
+
+**DISABLED on GitHub (replaced by the server):** `invoice_pipeline.yml`, `excel_approval_watcher.yml`, `approval_poller.yml`. Their Power Automate triggers should be turned OFF to stop 403 noise. The still-active workflows below are unrelated to the invoice runner.
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| `invoice_pipeline.yml` | `workflow_dispatch` (Power Automate, ~30 min) | Runs A0→A7; commits state; pushes dashboard. `INVOICE_BATCH_SIZE=10` |
-| `excel_approval_watcher.yml` | schedule | Reads approvals, drives A4→A6 |
-| `approval_poller.yml` | schedule | Polls approval replies |
+| `invoice_pipeline.yml` | DISABLED (moved to server cron) | was A0→A7 every ~30 min |
+| `excel_approval_watcher.yml` | DISABLED (moved to server cron) | was A4→A6 approval watcher |
+| `approval_poller.yml` | DISABLED (moved to server cron) | was approval-reply poller |
 | `approval_reminder.yml` / `set_excel_actions.yml` | schedule | Reminders / action helpers |
 | `ar_followup.yml` | cron `0 11 * * *` (~7am ET) | AR follow-ups |
 | `nightly_memory.yml` | cron `0 6 * * *` (~2am ET) | Memory loop |
@@ -111,6 +119,8 @@ Active production path is **sprint_11_invoice_pipeline**.
 ---
 
 ## 6. Scripts (`scripts/`)
+
+**Server runtime (prod cron):** `run_server_pipeline.sh` (A0 intake every 30 min), `run_server_watcher.sh` (approve→invoice→send every 5 min) — see §4. `make_rds_runbook.py` (DevOps secure-DB-access options PDF).
 
 Key: `reset_all_state.py` (full reset), `repair_row_fills.py` (fix stale red row fills),
 `pipeline_health_check.py` (stuck-order digest), `notify_failure_email.py` (workflow-failure

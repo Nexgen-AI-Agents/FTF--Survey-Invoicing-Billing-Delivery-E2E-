@@ -12,6 +12,7 @@ Triggered by GitHub Actions on a 5-minute schedule, or via workflow_dispatch
 for an immediate check.
 """
 
+import atexit
 import json
 import os
 import sys
@@ -22,9 +23,21 @@ from agents.agent_a4_human_gate_v2     import process_dispatch_input
 from agents.agent_a5_invoice_finalizer import run as run_a5
 from agents.agent_a6_sender_v2         import run as run_a6
 from core.logger import get_logger
-from core.onedrive_excel_client        import get_pending_approvals
+from core.onedrive_excel_client        import get_pending_approvals, _close_session
 
 log = get_logger("run_excel_watcher")
+
+
+# Always release the OneDrive workbook session on exit (any path) so we don't leak a
+# session every 5-min watcher tick — a leaked session can lock the file for the next run.
+def _safe_close() -> None:
+    try:
+        _close_session()
+    except Exception:  # noqa: BLE001
+        pass
+
+
+atexit.register(_safe_close)
 
 
 if __name__ == "__main__":

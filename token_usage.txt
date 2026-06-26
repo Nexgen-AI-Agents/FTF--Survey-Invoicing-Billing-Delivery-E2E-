@@ -151,7 +151,25 @@ MODEL: claude-opus-4-8 (1M context)
                                                     └─────────────────────────────────┘
 
 ================================================================================
-CUMULATIVE PROJECT TOTAL (as of 2026-06-17)
+DATE: 2026-06-26 (Friday)
+MODEL: claude-opus-4-8 (1M context)
+================================================================================
+
+  SESSION: Deploy FTF Invoice Pipeline to prod server (single-runner cutover) + 6-agent validation
+
+  [~04:30 ET] | claude-opus-4-8 | Locate SSH host (fieldtofinish:22 closed) -> 52.23.128.232; probe Ubuntu 22.04/py3.10, RDS:3306 REACHABLE | In: ~20,000 | Out: ~4,000 | Total: ~24,000
+  [~05:00 ET] | claude-opus-4-8 | Deploy slim tarball + venv + .env to ~/FTF Invoicing Agent; A1 intake proven (27 flagged); single-runner architecture | In: ~35,000 | Out: ~9,000 | Total: ~44,000
+  [~05:30 ET] | claude-opus-4-8 | Disable 3 CI workflows; flip prod; manual A0 run rc=0 (6 drafts posted); found A0/watcher approval gap | In: ~30,000 | Out: ~7,000 | Total: ~37,000
+  [~06:00 ET] | claude-opus-4-8 | 6-agent validation (QAx2/DevOps/pipeline/PO/security) GO-WITH-FIXES; applied fixes (alerting, close_session, 3.11) | In: ~60,000 | Out: ~12,000 | Total: ~72,000 (+~445,000 subagent)
+  [~06:45 ET] | claude-opus-4-8 | Deploy fixes; install A0+watcher crons (GO-LIVE); remove server PAT; push to git main | In: ~30,000 | Out: ~6,000 | Total: ~36,000
+
+                                                    ┌─────────────────────────────────┐
+                                         DAILY TOTAL │  ~550,000 tokens (est.)         │
+                                         MODEL       │  claude-opus-4-8 (1M context)  │
+                                                    └─────────────────────────────────┘
+
+================================================================================
+CUMULATIVE PROJECT TOTAL (as of 2026-06-26)
 ================================================================================
 
   Date          Model                   Tokens (est.)
@@ -162,8 +180,9 @@ CUMULATIVE PROJECT TOTAL (as of 2026-06-17)
   2026-06-16    claude-opus-4-8        ~428,500
   2026-06-18    claude-opus-4-8        ~142,000
   2026-06-24    claude-opus-4-8        ~115,000
+  2026-06-26    claude-opus-4-8        ~550,000
   ──────────────────────────────────────────────────────
-  PROJECT TOTAL                       ~1,047,200 tokens
+  PROJECT TOTAL                       ~1,597,200 tokens
 
 ================================================================================
 HOW TO MAINTAIN THIS FILE
@@ -185,3 +204,5 @@ Current model in use: claude-sonnet-4-6
 To switch models: use /model command in Claude Code
 
 ================================================================================
+
+[09:36 ET] | claude-opus-4-8[1m] | PO go-live readiness assessment (server deploy, watcher gap, EMAIL_OVERRIDE_ALL contradiction) | In: ~48,000 | Out: ~6,500 | Total: ~54,500

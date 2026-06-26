@@ -2,6 +2,12 @@
 .env
 .mcp.json
 
+# SSH / server keys — never commit
+*.ppk
+*.pem
+*.key
+Prod-Server-Key*
+
 # Python
 __pycache__/
 *.py[cod]
@@ -41,6 +47,9 @@ scripts/pending_confirmations.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Deploy artifacts — slim tarballs built for server transfer
+*.tar.gz
 
 # Large media — video recordings exceed GitHub 100 MB limit
 *.mp4

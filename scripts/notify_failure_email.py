@@ -15,6 +15,13 @@ import smtplib
 import sys
 from email.mime.text import MIMEText
 
+from dotenv import load_dotenv
+
+# Server runs this standalone (not under the orchestrator), so pull SMTP_* from the
+# deploy .env here. No-op in GitHub Actions where these are already real env vars
+# (load_dotenv does not override values already present in the environment).
+load_dotenv()
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
