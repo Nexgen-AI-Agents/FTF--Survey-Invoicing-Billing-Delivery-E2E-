@@ -24,6 +24,7 @@ import httpx
 
 from config.settings import (
     AZURE_APP_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID,
+    FTF_ORDER_URL,
     ONEDRIVE_FILE_USER, ONEDRIVE_FILE_PATH, ONEDRIVE_SHARE_URL,
     ONEDRIVE_SHEET_NAME, ONEDRIVE_TABLE_NAME,
 )
@@ -662,9 +663,13 @@ def ensure_approval_sheet() -> None:
 
 
 def ensure_action_dropdown() -> bool:
-    """(Re)apply the Approve/Reject/On-hold list validation on the Action column.
+    """Maintain the two things that require an openpyxl download/upload (the Graph
+    workbook REST API exposes neither): (1) the Approve/Reject/On-hold list validation on
+    the Action column, and (2) NATIVE clickable hyperlinks on each Order ID cell (col A).
+    Both are done in ONE download/save/upload so the dropdown, conditional formatting and
+    links always stay consistent, and the upload happens only when something changed.
 
-    Returns True if the dropdown is present/canonical at the end of the call (either
+    Returns True if the dropdown/links are present/correct at the end of the call (either
     already correct, or successfully re-applied), False if it could not be applied
     (e.g. upload 423-locked because the file is open in Excel). Callers can surface
     this to the operator instead of falsely reporting success.
@@ -683,7 +688,7 @@ def ensure_action_dropdown() -> bool:
     """
     import io
     import openpyxl
-    from openpyxl.styles import PatternFill
+    from openpyxl.styles import Font, PatternFill
     from openpyxl.formatting.rule import FormulaRule
     from openpyxl.worksheet.datavalidation import DataValidation
 
@@ -699,6 +704,9 @@ def ensure_action_dropdown() -> bool:
             return False
         ws = wb[ONEDRIVE_SHEET_NAME]
 
+        changed = False
+
+        # ── 1. Action dropdown (list validation) ──────────────────────────────────
         # Idempotency: skip only if a list validation covers the EXACT canonical range.
         # Graph row-deletes shift/shrink the range (e.g. J2:J10000 → J3:J9991), which
         # leaves the first data row (J2) with no dropdown — so anything that isn't an
@@ -707,36 +715,58 @@ def ensure_action_dropdown() -> bool:
             d for d in list(ws.data_validations.dataValidation)
             if d.type == "list" and action_letter in str(d.sqref)
         ]
-        if len(existing) == 1 and str(existing[0].sqref).replace(" ", "") == addr:
-            log.debug("ensure_action_dropdown: dropdown already canonical (%s) — skip", addr)
-            return True
-        for d in existing:
-            ws.data_validations.dataValidation.remove(d)   # drop drifted/partial ranges
-
-        dv = DataValidation(
-            type="list",
-            formula1='"Approve,Reject,On-hold"',
-            allow_blank=True,
-            showDropDown=False,   # False = arrow IS shown in Excel
-        )
-        dv.error      = "Select Approve, Reject, or On-hold"
-        dv.errorTitle = "Invalid action"
-        dv.sqref      = addr
-        ws.add_data_validation(dv)
-
-        # Re-apply the Action-value row colors too (conditional formatting is range-based)
-        for action_val, hex_color in [("Approve", "C6EFCE"), ("Reject", "FFC7CE"), ("On-hold", "FFEB9C")]:
-            fill = PatternFill(start_color=hex_color, end_color=hex_color, fill_type="solid")
-            ws.conditional_formatting.add(
-                f"A2:{_END_COL}10000",
-                FormulaRule(formula=[f'${action_letter}2="{action_val}"'], fill=fill),
+        if not (len(existing) == 1 and str(existing[0].sqref).replace(" ", "") == addr):
+            for d in existing:
+                ws.data_validations.dataValidation.remove(d)   # drop drifted/partial ranges
+            dv = DataValidation(
+                type="list",
+                formula1='"Approve,Reject,On-hold"',
+                allow_blank=True,
+                showDropDown=False,   # False = arrow IS shown in Excel
             )
+            dv.error      = "Select Approve, Reject, or On-hold"
+            dv.errorTitle = "Invalid action"
+            dv.sqref      = addr
+            ws.add_data_validation(dv)
+            # Re-apply the Action-value row colors too (conditional formatting is range-based)
+            for action_val, hex_color in [("Approve", "C6EFCE"), ("Reject", "FFC7CE"), ("On-hold", "FFEB9C")]:
+                fill = PatternFill(start_color=hex_color, end_color=hex_color, fill_type="solid")
+                ws.conditional_formatting.add(
+                    f"A2:{_END_COL}10000",
+                    FormulaRule(formula=[f'${action_letter}2="{action_val}"'], fill=fill),
+                )
+            changed = True
+            log.info("ensure_action_dropdown: re-applied list validation on %s", addr)
+
+        # ── 2. Order ID clickable links (col A) ────────────────────────────────────
+        # NATIVE Excel cell hyperlinks — NOT =HYPERLINK() formulas. A formula in a table
+        # column is treated by Excel as a "calculated column" and auto-propagated across
+        # the WHOLE column, which collapses every Order ID to the last one written. A
+        # native cell hyperlink carries no formula, moves with the row on sort, and never
+        # propagates. Set per row only when missing/stale so the upload stays idempotent.
+        link_font = Font(color="0563C1", underline="single")
+        oid_col   = _COL_ORDER_ID + 1   # openpyxl is 1-based
+        for rr in range(2, ws.max_row + 1):
+            cell = ws.cell(row=rr, column=oid_col)
+            oid  = str(cell.value or "").strip()
+            if not oid or oid.startswith("="):
+                continue   # blank row, or a stale formula we deliberately leave alone
+            want = f"{FTF_ORDER_URL}/?order={oid}"
+            cur  = cell.hyperlink.target if cell.hyperlink else None
+            if cur != want:
+                cell.hyperlink = want
+                cell.font      = link_font
+                changed = True
+
+        if not changed:
+            log.debug("ensure_action_dropdown: dropdown + Order ID links already current — skip upload")
+            return True
 
         buf = io.BytesIO()
         wb.save(buf)
         buf.seek(0)
         _upload_workbook_bytes(buf.read())
-        log.info("ensure_action_dropdown: re-applied list validation on %s via openpyxl", addr)
+        log.info("ensure_action_dropdown: uploaded via openpyxl (dropdown/Order-ID links refreshed)")
         return True
     except Exception as exc:
         log.warning("ensure_action_dropdown failed (non-fatal): %s", exc)
