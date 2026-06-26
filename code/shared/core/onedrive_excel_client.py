@@ -1300,18 +1300,23 @@ def _format_new_row(table_row_index: int, ftf_link: str = "", order_id: str = ""
         timeout=10.0,
     ).raise_for_status()
 
-    # The Order ID cell IS the clickable link to the FTF order (link + ID in one cell, so
-    # they can never drift apart on sort/reorder — the bug the separate FTF Link col had).
-    if ftf_link and ftf_link.startswith("http") and order_id:
+    # Order ID stays a PLAIN VALUE — NEVER a =HYPERLINK() formula. Excel treats a formula
+    # inside a table column as a "calculated column" and auto-propagates ONE row's formula
+    # across the WHOLE column. Because the link is a per-row literal (order=<id>), that
+    # propagation collapsed every Order ID to the last one written — the "same order id in
+    # multiple rows" bug. Plain values never propagate. We (re)write the value here so the
+    # cell also overwrites any formula a previously-propagated cell may have inherited.
+    # (Clickability is handled out-of-band, not via an in-cell formula — see notes.)
+    if order_id:
         httpx.patch(
             f"{wb}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{_col_letter(_COL_ORDER_ID)}{excel_row}')",
             headers=h,
-            json={"formulas": [[f'=HYPERLINK("{ftf_link}","{order_id}")']]},
+            json={"values": [[str(order_id)]]},
             timeout=10.0,
         ).raise_for_status()
 
     _apply_row_colors(excel_row)
-    log.debug("row %d formatted (borders + currency + order-id link + colors)", excel_row)
+    log.debug("row %d formatted (borders + currency + plain order-id value + colors)", excel_row)
 
 
 def append_approval_row(
