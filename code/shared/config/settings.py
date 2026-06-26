@@ -177,6 +177,12 @@ if DEPLOY_ENV == "prod" and EMAIL_OVERRIDE_ALL:
         "delete or clear the EMAIL_OVERRIDE_ALL GitHub Secret before running in production."
     )
 
+# Dry-run safety lever — when truthy, A5/A6 LOG the exact FTF invoice payload + recipient
+# they WOULD send but make NO FTF writes, send NO email, and do NOT advance order state.
+# Lets the full approve→generate→send path be exercised on real data with zero side effects.
+# Works in any environment (including prod). Clear it for real invoicing.
+INVOICE_DRY_RUN: bool = os.getenv("INVOICE_DRY_RUN", "").strip().lower() in ("1", "true", "yes", "on")
+
 # IMAP — email inbox for nesa@nexgenlogix.com
 IMAP_HOST:     str = os.getenv("IMAP_HOST", "outlook.office365.com")
 IMAP_PORT:     int = int(os.getenv("IMAP_PORT", "993"))

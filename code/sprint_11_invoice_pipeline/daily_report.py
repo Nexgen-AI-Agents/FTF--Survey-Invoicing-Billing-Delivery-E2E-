@@ -71,9 +71,12 @@ def _gather_state() -> dict:
             ready.append({"order": oid, "client": client, "amount": round(amt, 2)})
     return {
         "awaiting_total": len(ready) + len(manual) + len(escalated),
-        "ready_to_approve": ready,
-        "need_manual_price": manual,
-        "escalated_for_review": escalated,
+        "ready_to_approve_count": len(ready),
+        "need_manual_price_count": len(manual),
+        "escalated_for_review_count": len(escalated),
+        "ready_to_approve": ready[:6],          # examples only; *_count holds the true totals
+        "need_manual_price": manual[:6],
+        "escalated_for_review": escalated[:6],
         "already_processed_total": sent_total,
         "total_rows_on_sheet": len(rows),
     }
@@ -97,8 +100,8 @@ def _gather_learnings() -> dict:
             learned.append({"service": b.get("service"), "county": b.get("county"),
                             "tier": b.get("tier"), "learned_price": round(price),
                             "from_orders": len(scored)})
-    operator_notes = [g.get("note") for g in d.get("user_guidance", [])[-8:] if isinstance(g, dict)]
-    return {"learned_prices": learned[:12], "operator_notes_recent": operator_notes}
+    operator_notes = [g.get("note") for g in d.get("user_guidance", [])[-6:] if isinstance(g, dict)]
+    return {"learned_prices": learned[:8], "operator_notes_recent": operator_notes}
 
 
 def _build_body_html(state: dict, learn: dict) -> str:
@@ -113,10 +116,11 @@ def _build_body_html(state: dict, learn: dict) -> str:
         "example order numbers; if nothing is pending, say so plainly and reassuringly. "
         "(2) 'What I learned' — state, in your own words, YOUR takeaways from the learned prices "
         "and operator notes; if there is little yet, say you are still learning. "
-        "Under 170 words total. Never invent numbers — use only the data provided."
+        "The *_count fields are the true totals; the matching lists hold only a few example orders. "
+        "Under 150 words total. Never invent numbers — use only the data provided."
     )
     try:
-        html = llm_call(model=HUMAN_GATE_MODEL, system=system, user=payload, max_tokens=900).strip()
+        html = llm_call(model=HUMAN_GATE_MODEL, system=system, user=payload, max_tokens=500).strip()
         if html.startswith("```"):
             html = re.sub(r"^```[a-z]*\n?", "", html).rstrip("`").strip()
         if html:
@@ -126,9 +130,9 @@ def _build_body_html(state: dict, learn: dict) -> str:
     return (
         "<p><b>What to do today</b></p>"
         f"<p>{state['awaiting_total']} order(s) awaiting your review — "
-        f"{len(state['ready_to_approve'])} ready to approve, "
-        f"{len(state['need_manual_price'])} need a price, "
-        f"{len(state['escalated_for_review'])} escalated for review.</p>"
+        f"{state['ready_to_approve_count']} ready to approve, "
+        f"{state['need_manual_price_count']} need a price, "
+        f"{state['escalated_for_review_count']} escalated for review.</p>"
         "<p><b>What I learned</b></p>"
         f"<p>{len(learn['learned_prices'])} learned price pattern(s) active so far.</p>"
     )

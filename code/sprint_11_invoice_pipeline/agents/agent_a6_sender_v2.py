@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
-from config.settings import EMAIL_OVERRIDE_ALL
+from config.settings import EMAIL_OVERRIDE_ALL, INVOICE_DRY_RUN
 from core.excel_db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
 from core.exceptions import AgentError
 from core.ftf_portal_client import deliver_invoice_as_nesa
@@ -34,6 +34,19 @@ def send_for_order(order_id: str) -> dict:
     db_row = get_order_by_id(order_id)
     if not db_row:
         raise AgentError(f"send_for_order: order {order_id} not in DB")
+
+    # Dry-run: resolve the recipient EXACTLY as the real path would (override or client email),
+    # log it, and stop — no portal call, no email, no state advance.
+    if INVOICE_DRY_RUN:
+        client_email = db_row.get("customer_email", "")
+        recipient    = EMAIL_OVERRIDE_ALL or client_email
+        log.warning(
+            "DRY_RUN A6: would deliver invoice for order=%s to recipient=%s "
+            "(override=%s, client_email=%s) — NO portal call, NO email, NO state advance",
+            order_id, recipient or "(none)", EMAIL_OVERRIDE_ALL or "(none)", client_email or "(none)",
+        )
+        return {"sent": False, "dry_run": True, "to": recipient,
+                "invoice_id": db_row.get("invoice_id", "")}
 
     invoice_id = db_row.get("invoice_id") or ""
     if not invoice_id or "TEST" in str(invoice_id).upper():

@@ -40,11 +40,11 @@ _cache: dict = {}
 
 # Guide tab — bump version string whenever guide content changes to force a re-write
 GUIDE_SHEET_NAME = "Pipeline Guide"
-_GUIDE_VERSION   = "v10"  # increment when guide content changes
+_GUIDE_VERSION   = "v11"  # increment when guide content changes
 
 # How-To tab — plain-language step-by-step guide for end users
 HOWTO_SHEET_NAME = "How to use Invoicing agent"
-_HOWTO_VERSION   = "v3"   # increment when how-to content changes
+_HOWTO_VERSION   = "v4"   # increment when how-to content changes
 
 # Pricing Rules tab — user-editable table of override prices
 PRICING_RULES_SHEET_NAME  = "Pricing Rules"
@@ -74,8 +74,8 @@ _COL_ORDER_STATUS  = APPROVAL_HEADERS.index("Order Status")               # 1  (
 _COL_CLIENT        = APPROVAL_HEADERS.index("Client Name")                # 2  (C)
 _COL_ADDRESS       = APPROVAL_HEADERS.index("Property Address")           # 3  (D)
 _COL_SERVICE       = APPROVAL_HEADERS.index("Service / Breakdown")        # 4  (E)
-_COL_AMOUNT_AI     = APPROVAL_HEADERS.index("Amount ($) by AI")           # 5  (F)  AI's proposed price (approver may edit)
-_COL_AMOUNT_USER   = APPROVAL_HEADERS.index("Amount ($) by User")         # 6  (G)  actual amount the human invoiced (AI-filled)
+_COL_AMOUNT_AI     = APPROVAL_HEADERS.index("Amount ($) by AI")           # 5  (F)  AI's proposed price — LOCKED (preserved for AI-vs-user learning)
+_COL_AMOUNT_USER   = APPROVAL_HEADERS.index("Amount ($) by User")         # 6  (G)  approver's price override — EDITABLE (blank = accept AI's price)
 _COL_CONFIDENCE    = APPROVAL_HEADERS.index("Confidence")                 # 7  (H)
 _COL_ESCALATE      = APPROVAL_HEADERS.index("Escalate")                   # 8  (I)
 _COL_ACTION        = APPROVAL_HEADERS.index("Action")                     # 9  (J)  dropdown: Approve / Reject / On-hold
@@ -89,7 +89,7 @@ _COL_USER_LEARNING = APPROVAL_HEADERS.index("Learning provided by user")  # 14 (
 # other column is AI-managed and tinted gray ("locked — don't edit by hand"). Applied
 # per-row so a recycled row position can never inherit a stale fill.
 _USER_EDITABLE_HEADERS = {
-    "Service / Breakdown", "Amount ($) by AI", "Action", "Notes", "Learning provided by user",
+    "Service / Breakdown", "Amount ($) by User", "Action", "Notes", "Learning provided by user",
 }
 _AI_LOCKED_FILL = "#D9D9D9"   # gray  — AI-managed / read-only
 _USER_EDIT_FILL = "#DDEBF7"   # blue  — approver edits here
@@ -794,14 +794,14 @@ def ensure_guide_sheet() -> None:
             ["Version", stamp],
             ["", ""],
             ["── COLUMN REFERENCE (Approvals tab) ──", ""],
-            ["COLOR KEY",         "GRAY columns are AI-managed — please do NOT edit them. BLUE columns are yours: Service / Breakdown, Amount ($) by AI, Action, Notes, Learning provided by user."],
+            ["COLOR KEY",         "GRAY columns are AI-managed — please do NOT edit them. BLUE columns are yours: Service / Breakdown, Amount ($) by User, Action, Notes, Learning provided by user."],
             ["Order ID",          "Unique FTF order number — CLICK IT to open this order in FieldToFinish. (gray / AI-managed)"],
             ["Order Status",      "Current FTF status (In Progress, Complete, Field, etc.). (gray / AI-managed)"],
             ["Client Name",       "Client or title company who placed the order. (gray / AI-managed)"],
             ["Property Address",  "Survey site address — the property to be surveyed. (gray / AI-managed)"],
             ["Service / Breakdown", "BLUE / editable. AI-priced services with amounts, e.g. 'Boundary Survey: $475.00 | Elevation Cert: $150.00'. Edit an amount here to change that service's price. Pipe (|) separates services."],
-            ["Amount ($) by AI",  "BLUE / editable. The AI's proposed total — edit for a simple total override. For MANUAL PRICING rows: type the correct amount here, then set Action = Approve."],
-            ["Amount ($) by User","Gray / AI-managed (read-only). When an invoice already exists in FTF, the AI records the ACTUAL amount the human charged — so it can compare and learn. Blank for normal new orders."],
+            ["Amount ($) by AI",  "GRAY / locked. The AI's proposed total — shown for reference and so the AI can learn from your changes. To override, use 'Amount ($) by User' (next column). Do NOT edit this cell."],
+            ["Amount ($) by User","BLUE / editable — YOUR price. Leave BLANK to accept the AI's amount. To override, type your total here (or fix one service in 'Service / Breakdown'), then set Action = Approve. For MANUAL PRICING rows: type the correct amount here."],
             ["Confidence",        "HIGH = very likely correct. MEDIUM = reasonable. LOW = limited data. N/A = condo or manual pricing. (gray)"],
             ["Escalate",          "Yes = AI flagged an unusual order; Robert or Ryan should review before approving. (gray)"],
             ["Action",            "BLUE / YOUR DECISION — Approve / Reject / On-hold. Leave blank to defer. Pipeline checks every few minutes."],
@@ -821,7 +821,7 @@ def ensure_guide_sheet() -> None:
             ["CONDO ORDER —",             "Cannot survey. Row is AUTO-REJECTED. Contact client — arrange refund or redirect to interior measurement."],
             ["⛔ CANCELED —",             "Order canceled in FTF. No invoice needed. Flagged red, not priced. Set Action = Reject to clear."],
             ["⚠️ DELIVERED —",            "Order already delivered. Flagged red, not auto-priced. Verify if an invoice is still needed; enter amount manually if so."],
-            ["MANUAL PRICING REQUIRED —", "AI could not price. Enter correct amount in 'Amount ($) by AI' cell, then set Action = Approve."],
+            ["MANUAL PRICING REQUIRED —", "AI could not price. Enter correct amount in 'Amount ($) by User' cell, then set Action = Approve."],
             ["ESCALATE —",               "Unusual order (large lot, commercial, FEMA zone, duplicate). Get Robert or Ryan to review."],
             ["(empty notes)",             "Standard order. AI is confident. Review amount and service, then approve if correct."],
             ["", ""],
@@ -964,11 +964,11 @@ def ensure_howto_sheet() -> None:
             ["", ""],
             ["── HOW TO READ A ROW (key columns) ──", ""],
             ["Service / Breakdown", "What is being billed and the price of each part, e.g. 'Boundary Survey: $475.00 | Elevation Cert: $275.00'. Edit a number here to change that one service's price."],
-            ["Amount ($) by AI", "The total the AI proposes. To change the whole total, edit this cell."],
-            ["Amount ($) by User", "Read-only. If the order was already invoiced in FTF, the AI shows the real amount the human charged here (it learns from the difference). Blank for normal new orders — don't edit."],
+            ["Amount ($) by AI", "The total the AI proposes — LOCKED (gray). Don't edit it; to change the total, enter your price in 'Amount ($) by User'."],
+            ["Amount ($) by User", "YOUR price (blue / editable). Leave blank to accept the AI's amount, or type your total here to override. The AI keeps its own number in the column to the left and learns from the difference."],
             ["AI Learning", "Gray / read-only. The AI's one-line note on what it learned from this order (its price vs. the real one). You don't act on this."],
             ["Learning provided by user", "BLUE / yours to fill. Type anything you want the AI to learn for this order or client — it reads your note on the next run and folds it into its pricing learning. No coding needed."],
-            ["COLOR KEY", "Gray cells = AI-managed, please don't edit. Blue cells = yours: Service / Breakdown, Amount ($) by AI, Action, Notes, Learning provided by user."],
+            ["COLOR KEY", "Gray cells = AI-managed, please don't edit. Blue cells = yours: Service / Breakdown, Amount ($) by User, Action, Notes, Learning provided by user."],
             ["Confidence", "HIGH / MEDIUM / LOW — how sure the AI is about the price. LOW means double-check it."],
             ["Escalate", "Yes = unusual order; have Robert or Ryan look before approving."],
             ["Notes", "Plain-language reason or instruction from the agent. Always read this."],
@@ -976,7 +976,7 @@ def ensure_howto_sheet() -> None:
             ["── WORKED EXAMPLE (a dummy order) ──", ""],
             ["1. The row appears", "Order 1000299001 | Sunshine Title | 123 Palm Ave, Naples FL | Service: 'Boundary Survey: $475.00 | Elevation Cert: $275.00' | Amount by AI: $750.00 | Confidence: HIGH | Action: (blank)"],
             ["2. You review it", "The service and the $750.00 total look correct for a boundary survey + elevation certificate in Naples."],
-            ["3. (Optional) fix price", "Say you agreed $700 with this client. Type 700 in the Amount ($) by AI cell — the agent splits it across the services for you."],
+            ["3. (Optional) fix price", "Say you agreed $700 with this client. Type 700 in the 'Amount ($) by User' cell — the agent splits it across the services for you and keeps its own $750 for learning."],
             ["4. You approve", "Set the Action cell to 'Approve'."],
             ["5. What happens next", "Within ~30 min the agent creates the invoice in FTF, emails it to Sunshine Title's address on file, and fills in 'Processed At'."],
             ["6. Result", "Sunshine Title receives a $700 invoice by email. You did nothing except review and click Approve."],
@@ -988,14 +988,14 @@ def ensure_howto_sheet() -> None:
             ["Processed At", "Fills in automatically — that is your confirmation it is done."],
             ["", ""],
             ["── SPECIAL ROWS YOU MIGHT SEE ──", ""],
-            ["MANUAL PRICING REQUIRED", "The AI could not set a price. Type the correct amount in Amount ($) by AI, then Approve."],
+            ["MANUAL PRICING REQUIRED", "The AI could not set a price. Type the correct amount in 'Amount ($) by User', then Approve."],
             ["CONDO — Cannot Survey", "A condo / airspace unit. Auto-rejected. Contact the client; do not approve."],
             ["⛔ CANCELED (red row)", "Order was canceled in FTF. No invoice needed. Set Action = Reject to clear it."],
             ["⚠️ DELIVERED (red row)", "Order already delivered. Not auto-priced. Only invoice if one is genuinely still owed — enter the amount and Approve."],
             ["ESCALATE", "Unusual order. Get Robert or Ryan to review before approving."],
             ["", ""],
             ["── FIXING A PRICE / TEACHING THE AI ──", ""],
-            ["One-off change", "Edit Amount ($) by AI (for the total) or Service / Breakdown (for one service) on the row, then Approve."],
+            ["One-off change", "Enter your price in 'Amount ($) by User' (for the total) or edit Service / Breakdown (for one service) on the row, then Approve."],
             ["Permanent rule", "Use the 'Pricing Rules' tab to set a fixed price for a client, county, or service — so the AI gets it right next time. No coding needed."],
             ["Example rule", "Service=Boundary Survey | County=Collier | Client=Sunshine Title | Price=700 | Priority=1 | Status=Active"],
             ["", ""],
@@ -1332,10 +1332,11 @@ def append_approval_row(
 ) -> None:
     """Append a new row to the approval table. Action column is blank — user picks from dropdown.
 
-    amount        → "Amount ($) by AI": the AI's proposed price (approver may edit to override).
-    amount_user   → "Amount ($) by User": the actual amount a human already invoiced in FTF.
-                    Left blank (None) for normal new orders; filled for already-invoiced
-                    learning rows. AI-filled / read-only to the approver.
+    amount        → "Amount ($) by AI": the AI's proposed price — LOCKED (gray), preserved
+                    for AI-vs-approver learning.
+    amount_user   → "Amount ($) by User": the approver's price override — EDITABLE (blue).
+                    Left blank (None) for normal new orders (blank = accept the AI's price);
+                    pre-filled only for already-invoiced learning rows.
     ai_learning   → "AI Learning": the AI's per-order learning record (AI-filled).
 
     highlight_red=True fills the entire row with red (#FF4444) to flag critical issues
@@ -1521,7 +1522,10 @@ def get_pending_approvals() -> list[dict]:
         action_raw     = str(vals[_COL_ACTION]).strip()
         processed_at   = str(vals[_COL_PROCESSED_AT]).strip()
         notes          = str(vals[_COL_NOTES]).strip()
-        amount_cell    = str(vals[_COL_AMOUNT_AI]).strip()    # Amount ($) by AI — approver may have edited
+        amt_ai_cell    = str(vals[_COL_AMOUNT_AI]).strip()    # Amount ($) by AI — locked AI proposal
+        amt_user_cell  = str(vals[_COL_AMOUNT_USER]).strip()  # Amount ($) by User — approver's override (blue/editable)
+        # Effective price to invoice: the approver's override if they typed one, else the AI's proposal.
+        amount_cell    = amt_user_cell if amt_user_cell else amt_ai_cell
         breakdown_cell = str(vals[_COL_SERVICE]).strip()      # Service / Breakdown
 
         if not order_id or not action_raw or processed_at:
@@ -1611,11 +1615,12 @@ def update_approval_notes(order_id: str, note: str, mark_processed: bool = True)
 
 
 def sync_approval_amounts(order_id: str, new_total: float, new_breakdown_str: str) -> None:
-    """Write the reconciled breakdown string (col E) and total (col F) back to Excel.
+    """Write the reconciled breakdown (col E) and the FINAL invoiced total (col G,
+    "Amount ($) by User") back to Excel after A4 reconciliation.
 
-    Called by A4 after amount reconciliation so both columns stay consistent with
-    the approved invoice_draft — regardless of whether the user edited the total,
-    the breakdown, or both.
+    The AI's original proposal in col F ("Amount ($) by AI") is left UNTOUCHED so the
+    AI-vs-approver gap stays visible for learning. Col G records what was actually
+    invoiced — whether the approver entered an override or accepted the AI's price.
     """
     base = _wb_base()
     h    = _session_headers()
@@ -1631,17 +1636,20 @@ def sync_approval_amounts(order_id: str, new_total: float, new_breakdown_str: st
         if len(vals) >= 1 and str(vals[0]) == str(order_id):
             idx       = row["index"]
             excel_row = idx + 2   # 0-based table index + header + 1
-            # PATCH Service/Breakdown + Amount ($) by AI as the adjacent range (E:F today)
-            svc_letter = chr(ord("A") + _COL_SERVICE)      # "E"
-            amt_letter = chr(ord("A") + _COL_AMOUNT_AI)    # "F"
+            svc_letter  = _col_letter(_COL_SERVICE)      # "E"  Service / Breakdown
+            user_letter = _col_letter(_COL_AMOUNT_USER)  # "G"  Amount ($) by User
+            # E and G are NOT adjacent (F = locked AI proposal sits between) → two PATCHes,
+            # so col F is never overwritten.
             httpx.patch(
-                f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{svc_letter}{excel_row}:{amt_letter}{excel_row}')",
-                headers=h,
-                json={"values": [[new_breakdown_str, new_total]]},
-                timeout=15.0,
+                f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{svc_letter}{excel_row}')",
+                headers=h, json={"values": [[new_breakdown_str]]}, timeout=15.0,
+            ).raise_for_status()
+            httpx.patch(
+                f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{user_letter}{excel_row}')",
+                headers=h, json={"values": [[new_total]]}, timeout=15.0,
             ).raise_for_status()
             log.info(
-                "sync_approval_amounts: order=%s total=%.2f breakdown written back to Excel",
+                "sync_approval_amounts: order=%s total=%.2f → col G (Amount by User); breakdown → col E; col F (AI) preserved",
                 order_id, new_total,
             )
             return

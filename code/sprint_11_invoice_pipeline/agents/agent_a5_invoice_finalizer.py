@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
+from config.settings import INVOICE_DRY_RUN
 from core.excel_db import get_orders_by_status, get_order_by_id, save_order_state, log_decision
 from core.exceptions import AgentError
 from core.ftf_client import create_invoice, get_invoice, get_order
@@ -92,6 +93,16 @@ def finalize_order(order_id: str) -> dict:
         }
         for svc in services
     ]
+
+    # Dry-run: prove the path without touching FTF. Log the exact would-be payload and stop
+    # BEFORE any write or state change, so the order stays invoice_approved (re-runnable).
+    if INVOICE_DRY_RUN:
+        log.warning(
+            "DRY_RUN A5: would POST /invoices order=%s total=%.2f services=%s — NO write, NO state advance",
+            order_id, total, json.dumps(ftf_services),
+        )
+        return {"invoice_id": "", "ok": True, "dry_run": True,
+                "would_total": total, "would_services": ftf_services}
 
     # Create invoice with retry
     last_exc = None
