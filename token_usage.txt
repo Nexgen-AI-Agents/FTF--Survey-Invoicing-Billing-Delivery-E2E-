@@ -182,9 +182,9 @@ CUMULATIVE PROJECT TOTAL (as of 2026-06-26)
   2026-06-16    claude-opus-4-8        ~428,500
   2026-06-18    claude-opus-4-8        ~142,000
   2026-06-24    claude-opus-4-8        ~115,000
-  2026-06-26    claude-opus-4-8      ~1,052,000
+  2026-06-26    claude-opus-4-8      ~1,192,000
   ──────────────────────────────────────────────────────
-  PROJECT TOTAL                       ~2,099,200 tokens
+  PROJECT TOTAL                       ~2,239,200 tokens
 
 ================================================================================
 HOW TO MAINTAIN THIS FILE
@@ -215,3 +215,9 @@ To switch models: use /model command in Claude Code
 [08:30 ET] | claude-opus-4-8[1m] | INCIDENT: dry-run left dangling Approve rows; live watcher invoiced+emailed 6 real clients (3 at test amounts). Assessed, cleared, reported. | In: ~30,000 | Out: ~5,000 | Total: ~35,000
 [08:30 ET] | claude-opus-4-8[1m] | Fresh start: backup 31 rows, watermark reset, wipe sheet; re-arm watcher; commit+push 59c3563b | In: ~28,000 | Out: ~4,000 | Total: ~32,000
    SESSION-2 SUBTOTAL ~232,000  (In ~204,000 | Out ~28,000)
+
+[11:10 ET] | claude-opus-4-8[1m] | Standing rule recorded (never send to prod customers) + Excel column UX explainer (Service/Breakdown vs Amount by AI/User) | In: ~26,000 | Out: ~3,500 | Total: ~29,500
+[12:00 ET] | claude-opus-4-8[1m] | Row 5 distorted/non-clickable: root-cause full-row PATCH clobbering col-A hyperlink; fix mark_row_processed + update_approval_notes to single-cell PATCH; deploy + repair + commit 01e0ffeb | In: ~28,000 | Out: ~4,500 | Total: ~32,500
+[14:30 ET] | claude-opus-4-8[1m] | Duplicate Order IDs across rows: DB+sheet diagnostics, root-cause = Excel table calc-column auto-propagating =HYPERLINK; fix to plain value; recover true IDs (addr match) + repair 8 rows; deploy + commit 83908a26 | In: ~44,000 | Out: ~7,500 | Total: ~51,500
+[16:45 ET] | claude-opus-4-8[1m] | Restore clickable Order IDs via NATIVE hyperlinks in openpyxl maintenance pass (propagation-proof); verified live incl. new cron row; deploy + commit 16bd579a | In: ~22,000 | Out: ~4,500 | Total: ~26,500
+   SESSION-3 SUBTOTAL ~140,000  (In ~120,000 | Out ~20,000)
