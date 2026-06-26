@@ -1,9 +1,12 @@
 name: Monthly Statements Loop
 
 on:
-  schedule:
-    # GitHub fires cron in UTC only. 12:00 UTC = 08:00 ET (EDT) / 07:00 ET (EST).
-    - cron: "0 12 1 * *"   # ~08:00 AM Eastern, 1st of every month
+  # Monthly auto-send PAUSED 2026-06-26 per user request — no automated customer
+  # statement emails for now ("we'll see that later"). To resume, un-comment the
+  # schedule below. Manual runs remain available via workflow_dispatch.
+  # schedule:
+  #   # GitHub fires cron in UTC only. 12:00 UTC = 08:00 ET (EDT) / 07:00 ET (EST).
+  #   - cron: "0 12 1 * *"   # ~08:00 AM Eastern, 1st of every month
   workflow_dispatch:
 
 jobs:
