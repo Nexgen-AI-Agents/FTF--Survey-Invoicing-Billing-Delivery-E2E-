@@ -9,6 +9,7 @@ Required Graph permissions (application):
 """
 
 import base64
+import hashlib
 import json
 import os
 import time
@@ -39,11 +40,11 @@ _cache: dict = {}
 
 # Guide tab — bump version string whenever guide content changes to force a re-write
 GUIDE_SHEET_NAME = "Pipeline Guide"
-_GUIDE_VERSION   = "v9"   # increment when guide content changes
+_GUIDE_VERSION   = "v10"  # increment when guide content changes
 
 # How-To tab — plain-language step-by-step guide for end users
 HOWTO_SHEET_NAME = "How to use Invoicing agent"
-_HOWTO_VERSION   = "v2"   # increment when how-to content changes
+_HOWTO_VERSION   = "v3"   # increment when how-to content changes
 
 # Pricing Rules tab — user-editable table of override prices
 PRICING_RULES_SHEET_NAME  = "Pricing Rules"
@@ -54,26 +55,44 @@ PRICING_RULES_HEADERS = [
 ]
 _PR_COL_COUNT = len(PRICING_RULES_HEADERS)   # 8
 
-# Column order must stay in sync with append_approval_row() values list
+# Column order must stay in sync with append_approval_row() values list.
+# 2026-06-26: dropped "FTF Link" (the Order ID cell is now the clickable link, so the
+# link can never drift from its row); added "Learning provided by user" (approver writes
+# feedback here → the AI folds it into its learning on the next run).
 APPROVAL_HEADERS = [
     "Order ID", "Order Status", "Client Name", "Property Address", "Service / Breakdown",
-    "Amount ($) by AI", "Amount ($) by User", "Confidence", "Escalate", "FTF Link",
-    "Action", "Notes", "Posted At", "Processed At", "AI Learning",
+    "Amount ($) by AI", "Amount ($) by User", "Confidence", "Escalate",
+    "Action", "Notes", "Posted At", "Processed At", "AI Learning", "Learning provided by user",
 ]
 _COL_COUNT        = len(APPROVAL_HEADERS)   # 15
 _END_COL          = chr(ord("A") + _COL_COUNT - 1)   # "O"
 
 # All column indices are DERIVED from APPROVAL_HEADERS (never hardcoded) so the schema
-# can grow without silently breaking absolute-index arithmetic across this module.
-_COL_ORDER_ID     = APPROVAL_HEADERS.index("Order ID")            # 0  (A)
-_COL_SERVICE      = APPROVAL_HEADERS.index("Service / Breakdown") # 4  (E)
-_COL_AMOUNT_AI    = APPROVAL_HEADERS.index("Amount ($) by AI")    # 5  (F)  AI's proposed price (approver may edit)
-_COL_AMOUNT_USER  = APPROVAL_HEADERS.index("Amount ($) by User")  # 6  (G)  actual amount the human invoiced (AI-filled)
-_COL_FTF_LINK     = APPROVAL_HEADERS.index("FTF Link")            # 9  (J)
-_COL_ACTION       = APPROVAL_HEADERS.index("Action")              # 10 (K)  dropdown: Approve / Reject / On-hold
-_COL_NOTES        = APPROVAL_HEADERS.index("Notes")               # 11 (L)
-_COL_PROCESSED_AT = APPROVAL_HEADERS.index("Processed At")        # 13 (N)
-_COL_AI_LEARNING  = APPROVAL_HEADERS.index("AI Learning")         # 14 (O)  AI's per-order learning record (AI-filled)
+# can change without silently breaking absolute-index arithmetic across this module.
+_COL_ORDER_ID      = APPROVAL_HEADERS.index("Order ID")                   # 0  (A)
+_COL_ORDER_STATUS  = APPROVAL_HEADERS.index("Order Status")               # 1  (B)
+_COL_CLIENT        = APPROVAL_HEADERS.index("Client Name")                # 2  (C)
+_COL_ADDRESS       = APPROVAL_HEADERS.index("Property Address")           # 3  (D)
+_COL_SERVICE       = APPROVAL_HEADERS.index("Service / Breakdown")        # 4  (E)
+_COL_AMOUNT_AI     = APPROVAL_HEADERS.index("Amount ($) by AI")           # 5  (F)  AI's proposed price (approver may edit)
+_COL_AMOUNT_USER   = APPROVAL_HEADERS.index("Amount ($) by User")         # 6  (G)  actual amount the human invoiced (AI-filled)
+_COL_CONFIDENCE    = APPROVAL_HEADERS.index("Confidence")                 # 7  (H)
+_COL_ESCALATE      = APPROVAL_HEADERS.index("Escalate")                   # 8  (I)
+_COL_ACTION        = APPROVAL_HEADERS.index("Action")                     # 9  (J)  dropdown: Approve / Reject / On-hold
+_COL_NOTES         = APPROVAL_HEADERS.index("Notes")                      # 10 (K)
+_COL_POSTED_AT     = APPROVAL_HEADERS.index("Posted At")                  # 11 (L)
+_COL_PROCESSED_AT  = APPROVAL_HEADERS.index("Processed At")               # 12 (M)
+_COL_AI_LEARNING   = APPROVAL_HEADERS.index("AI Learning")                # 13 (N)  AI's per-order learning record (AI-filled)
+_COL_USER_LEARNING = APPROVAL_HEADERS.index("Learning provided by user")  # 14 (O)  approver feedback → AI learns next run
+
+# Cell-fill ownership: approver-editable columns are tinted blue ("edit here"); every
+# other column is AI-managed and tinted gray ("locked — don't edit by hand"). Applied
+# per-row so a recycled row position can never inherit a stale fill.
+_USER_EDITABLE_HEADERS = {
+    "Service / Breakdown", "Amount ($) by AI", "Action", "Notes", "Learning provided by user",
+}
+_AI_LOCKED_FILL = "#D9D9D9"   # gray  — AI-managed / read-only
+_USER_EDIT_FILL = "#DDEBF7"   # blue  — approver edits here
 
 # Row fill colors for Action dropdown choices (light palette, Excel-compatible hex)
 _ACTION_COLORS = {
@@ -775,21 +794,22 @@ def ensure_guide_sheet() -> None:
             ["Version", stamp],
             ["", ""],
             ["── COLUMN REFERENCE (Approvals tab) ──", ""],
-            ["Order ID",          "Unique FTF order number. Click FTF Link to open in FieldToFinish."],
-            ["Order Status",      "Current FTF status (In Progress, Complete, Field, etc.)"],
-            ["Client Name",       "Client or title company who placed the order."],
-            ["Property Address",  "Survey site address — the property to be surveyed."],
-            ["Service / Breakdown", "AI-priced services with individual amounts. Example: 'Boundary Survey: $475.00 | Elevation Cert: $150.00'. Edit amounts here to change per-service prices before approving. Pipe (|) separates services. 'CONDO — Cannot Survey' = order cannot be processed."],
-            ["Amount ($) by AI",  "The AI's proposed total. Edit this for a simple total override (pipeline distributes proportionally across services). For precise per-service changes, edit 'Service / Breakdown' instead. For MANUAL PRICING rows: type correct amount here before setting Action = Approve."],
-            ["Amount ($) by User","AI-filled (read-only). When an invoice already exists in FTF, the AI records the ACTUAL amount the human charged here — so it can compare against its own price and learn. Blank for normal new orders."],
-            ["Confidence",        "HIGH = very likely correct. MEDIUM = reasonable estimate. LOW = AI had limited data. N/A = condo or manual pricing."],
-            ["Escalate",          "Yes = AI flagged unusual order. Robert or Ryan should review before approving."],
-            ["FTF Link",          "Click 'View Order' to open in FieldToFinish."],
-            ["Action",            "YOUR DECISION — Approve / Reject / On-hold. Leave blank to defer. Pipeline checks every 30 min."],
-            ["Notes",             "Pre-filled by pipeline with reason for escalation or required action. Read before acting."],
-            ["Posted At",         "Date/time pipeline posted this row (Eastern Time)."],
-            ["Processed At",      "Auto-filled when pipeline processes your decision. Once filled = complete."],
-            ["AI Learning",       "AI-filled (read-only). The AI's per-order learning record — what it priced vs. what the human actually charged, and its takeaway. Builds smarter pricing over time (incl. condos)."],
+            ["COLOR KEY",         "GRAY columns are AI-managed — please do NOT edit them. BLUE columns are yours: Service / Breakdown, Amount ($) by AI, Action, Notes, Learning provided by user."],
+            ["Order ID",          "Unique FTF order number — CLICK IT to open this order in FieldToFinish. (gray / AI-managed)"],
+            ["Order Status",      "Current FTF status (In Progress, Complete, Field, etc.). (gray / AI-managed)"],
+            ["Client Name",       "Client or title company who placed the order. (gray / AI-managed)"],
+            ["Property Address",  "Survey site address — the property to be surveyed. (gray / AI-managed)"],
+            ["Service / Breakdown", "BLUE / editable. AI-priced services with amounts, e.g. 'Boundary Survey: $475.00 | Elevation Cert: $150.00'. Edit an amount here to change that service's price. Pipe (|) separates services."],
+            ["Amount ($) by AI",  "BLUE / editable. The AI's proposed total — edit for a simple total override. For MANUAL PRICING rows: type the correct amount here, then set Action = Approve."],
+            ["Amount ($) by User","Gray / AI-managed (read-only). When an invoice already exists in FTF, the AI records the ACTUAL amount the human charged — so it can compare and learn. Blank for normal new orders."],
+            ["Confidence",        "HIGH = very likely correct. MEDIUM = reasonable. LOW = limited data. N/A = condo or manual pricing. (gray)"],
+            ["Escalate",          "Yes = AI flagged an unusual order; Robert or Ryan should review before approving. (gray)"],
+            ["Action",            "BLUE / YOUR DECISION — Approve / Reject / On-hold. Leave blank to defer. Pipeline checks every few minutes."],
+            ["Notes",             "BLUE / editable. Pre-filled by the pipeline with the reason for escalation or the required action — read before acting."],
+            ["Posted At",         "Date/time the pipeline posted this row (Eastern Time). (gray)"],
+            ["Processed At",      "Auto-filled when the pipeline processes your decision. Once filled = complete. (gray)"],
+            ["AI Learning",       "Gray / AI-managed (read-only). The AI's one-line learning note for this order — what it priced vs. what was actually charged, and its takeaway."],
+            ["Learning provided by user", "BLUE / YOURS. Type anything you want the AI to learn for this order or client (e.g. 'this client is always $1,800 for a boundary'). The AI reads it on its next run and folds it into its pricing learning."],
             ["", ""],
             ["── ACTION GUIDE ──", ""],
             ["Approve",           "Pipeline creates a real FTF invoice and emails client. CANNOT be undone from pipeline."],
@@ -829,11 +849,11 @@ def ensure_guide_sheet() -> None:
             ["details_missing",       "FTF has insufficient data. Update in FTF or handle manually."],
             ["permanently_excluded",  "Order will never be processed — canceled in FTF (ng_status=0), internal email, etc."],
             ["", ""],
-            ["── PIPELINE FLOW (every 30 min via GitHub Actions) ──", ""],
+            ["── PIPELINE FLOW (prod server: intake every 30 min, approvals every ~5 min) ──", ""],
             ["A1 — Flag Hunter",      "Scans FTF DB for orders with ng_invoice_needed=1. Queues new orders."],
             ["A2 — Data Collector",   "Collects FTF API, emails, county appraiser, aerial image. AI builds order packet."],
             ["A3 — Invoice Compiler", "Detects condos and flags Canceled/Delivered orders (no pricing). Checks Pricing Rules tab first, then AI pricing. Posts to this sheet."],
-            ["A4 — Human Gate",       "Reads your Action decision every 30 min. Routes to A5 (approve) or rejected/on-hold."],
+            ["A4 — Human Gate",       "Reads your Action decision every ~5 min. Routes to A5 (approve) or rejected/on-hold."],
             ["A5 — Invoice Finalizer","Creates the real FTF invoice via API."],
             ["A6 — Email Sender",     "Delivers the invoice email to the client via the FTF portal (sent as 'nesa'). LIVE — emails go to real customers."],
             ["A7 — Feedback Learner", "Learns from your decisions to improve future pricing."],
@@ -930,7 +950,7 @@ def ensure_howto_sheet() -> None:
             ["", ""],
             ["── YOUR DAILY WORKFLOW (step by step) ──", ""],
             ["Step 1 — Open Approvals", "Go to the 'Approvals' tab. Each row is one order waiting for your decision."],
-            ["Step 2 — Review the order", "Check Client Name, Property Address, Service / Breakdown and Amount ($) by AI. Click the FTF Link to open the order in FieldToFinish if you need more detail."],
+            ["Step 2 — Review the order", "Check Client Name, Property Address, Service / Breakdown and Amount ($) by AI. Click the Order ID to open the order in FieldToFinish if you need more detail."],
             ["Step 3 — Check the price", "If Amount ($) by AI is correct, leave it. If it is wrong, see 'FIXING A PRICE' below."],
             ["Step 4 — Read the Notes", "The Notes column tells you if anything needs attention (manual pricing, escalation, condo, canceled, delivered)."],
             ["Step 5 — Decide", "Set the 'Action' column to Approve, Reject, or On-hold. Leave blank to skip for now."],
@@ -946,7 +966,9 @@ def ensure_howto_sheet() -> None:
             ["Service / Breakdown", "What is being billed and the price of each part, e.g. 'Boundary Survey: $475.00 | Elevation Cert: $275.00'. Edit a number here to change that one service's price."],
             ["Amount ($) by AI", "The total the AI proposes. To change the whole total, edit this cell."],
             ["Amount ($) by User", "Read-only. If the order was already invoiced in FTF, the AI shows the real amount the human charged here (it learns from the difference). Blank for normal new orders — don't edit."],
-            ["AI Learning", "Read-only. The AI's note on what it learned from this order (its price vs. the real one). You don't act on this."],
+            ["AI Learning", "Gray / read-only. The AI's one-line note on what it learned from this order (its price vs. the real one). You don't act on this."],
+            ["Learning provided by user", "BLUE / yours to fill. Type anything you want the AI to learn for this order or client — it reads your note on the next run and folds it into its pricing learning. No coding needed."],
+            ["COLOR KEY", "Gray cells = AI-managed, please don't edit. Blue cells = yours: Service / Breakdown, Amount ($) by AI, Action, Notes, Learning provided by user."],
             ["Confidence", "HIGH / MEDIUM / LOW — how sure the AI is about the price. LOW means double-check it."],
             ["Escalate", "Yes = unusual order; have Robert or Ryan look before approving."],
             ["Notes", "Plain-language reason or instruction from the agent. Always read this."],
@@ -1218,8 +1240,43 @@ def _upload_workbook_bytes(data: bytes) -> None:
     raise AgentError("workbook upload failed: file locked after 3 retries (423)")
 
 
-def _format_new_row(table_row_index: int, ftf_link: str = "") -> None:
-    """Apply thin borders, currency format, and clickable FTF hyperlink to a newly added row."""
+def _col_letter(idx: int) -> str:
+    return chr(ord("A") + idx)
+
+
+def _color_runs() -> list:
+    """Contiguous column runs grouped by owner fill-color: (start_letter, end_letter, color).
+    Lets a whole row be tinted in a few PATCHes (one per run) instead of 15."""
+    runs = []
+    start = 0
+    cur = None
+    for i, hdr in enumerate(APPROVAL_HEADERS):
+        color = _USER_EDIT_FILL if hdr in _USER_EDITABLE_HEADERS else _AI_LOCKED_FILL
+        if cur is None:
+            cur, start = color, i
+        elif color != cur:
+            runs.append((_col_letter(start), _col_letter(i - 1), cur))
+            cur, start = color, i
+    runs.append((_col_letter(start), _col_letter(len(APPROVAL_HEADERS) - 1), cur))
+    return runs
+
+
+def _apply_row_colors(excel_row: int) -> None:
+    """Tint one row by column ownership (gray = AI-managed, blue = approver-editable).
+    Overwrites any prior fill, so a recycled row position never keeps a stale color."""
+    wb = _wb_base(); h = _session_headers()
+    for c1, c2, color in _color_runs():
+        try:
+            httpx.patch(
+                f"{wb}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{c1}{excel_row}:{c2}{excel_row}')/format/fill",
+                headers=h, json={"color": color}, timeout=10.0,
+            ).raise_for_status()
+        except Exception as exc:  # noqa: BLE001
+            log.debug("row %d color run %s:%s failed (non-fatal): %s", excel_row, c1, c2, exc)
+
+
+def _format_new_row(table_row_index: int, ftf_link: str = "", order_id: str = "") -> None:
+    """Borders + currency + clickable Order-ID hyperlink + ownership colors on a new row."""
     excel_row = table_row_index + 2  # 0-based table index + header row + 1
     row_range = f"A{excel_row}:{_END_COL}{excel_row}"
     wb = _wb_base()
@@ -1234,8 +1291,8 @@ def _format_new_row(table_row_index: int, ftf_link: str = "") -> None:
         ).raise_for_status()
 
     # Currency format on BOTH amount columns: "Amount ($) by AI" and "Amount ($) by User"
-    amt_ai_letter   = chr(ord("A") + _COL_AMOUNT_AI)     # "F"
-    amt_user_letter = chr(ord("A") + _COL_AMOUNT_USER)   # "G"
+    amt_ai_letter   = _col_letter(_COL_AMOUNT_AI)     # "F"
+    amt_user_letter = _col_letter(_COL_AMOUNT_USER)   # "G"
     httpx.patch(
         f"{wb}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{amt_ai_letter}{excel_row}:{amt_user_letter}{excel_row}')/format",
         headers=h,
@@ -1243,16 +1300,18 @@ def _format_new_row(table_row_index: int, ftf_link: str = "") -> None:
         timeout=10.0,
     ).raise_for_status()
 
-    if ftf_link and ftf_link.startswith("http"):
-        ftf_letter = chr(ord("A") + _COL_FTF_LINK)       # "J"
+    # The Order ID cell IS the clickable link to the FTF order (link + ID in one cell, so
+    # they can never drift apart on sort/reorder — the bug the separate FTF Link col had).
+    if ftf_link and ftf_link.startswith("http") and order_id:
         httpx.patch(
-            f"{wb}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{ftf_letter}{excel_row}')",
+            f"{wb}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{_col_letter(_COL_ORDER_ID)}{excel_row}')",
             headers=h,
-            json={"formulas": [[f'=HYPERLINK("{ftf_link}","View Order")']]},
+            json={"formulas": [[f'=HYPERLINK("{ftf_link}","{order_id}")']]},
             timeout=10.0,
         ).raise_for_status()
 
-    log.debug("row %d formatted (borders + currency + hyperlink)", excel_row)
+    _apply_row_colors(excel_row)
+    log.debug("row %d formatted (borders + currency + order-id link + colors)", excel_row)
 
 
 def append_approval_row(
@@ -1290,22 +1349,21 @@ def append_approval_row(
 
     # Build the row by column index so it can never drift out of sync with APPROVAL_HEADERS.
     row = [""] * _COL_COUNT
-    row[_COL_ORDER_ID]     = str(order_id)
-    row[1]                 = str(order_status)   # Order Status — FTF stage status
-    row[2]                 = str(client_name)
-    row[3]                 = str(address)[:120]
-    row[_COL_SERVICE]      = str(service)
-    row[_COL_AMOUNT_AI]    = float(amount)
-    row[_COL_AMOUNT_USER]  = float(amount_user) if amount_user is not None else ""
-    row[_COL_FTF_LINK]     = str(ftf_link)
-    row[_COL_ACTION]       = ""                  # blank; user selects Approve/Reject/On-hold
-    row[_COL_NOTES]        = str(notes)          # pre-filled for escalations
-    row[12]                = posted_at           # Posted At
-    row[_COL_PROCESSED_AT] = ""                  # filled after pipeline processes decision
-    row[_COL_AI_LEARNING]  = str(ai_learning)
-    # Confidence / Escalate (indices computed for safety)
-    row[APPROVAL_HEADERS.index("Confidence")] = str(confidence)
-    row[APPROVAL_HEADERS.index("Escalate")]   = "Yes" if escalate else "No"
+    row[_COL_ORDER_ID]      = str(order_id)       # turned into a clickable HYPERLINK in _format_new_row
+    row[_COL_ORDER_STATUS]  = str(order_status)   # FTF stage status
+    row[_COL_CLIENT]        = str(client_name)
+    row[_COL_ADDRESS]       = str(address)[:120]
+    row[_COL_SERVICE]       = str(service)
+    row[_COL_AMOUNT_AI]     = float(amount)
+    row[_COL_AMOUNT_USER]   = float(amount_user) if amount_user is not None else ""
+    row[_COL_CONFIDENCE]    = str(confidence)
+    row[_COL_ESCALATE]      = "Yes" if escalate else "No"
+    row[_COL_ACTION]        = ""                  # blank; user selects Approve/Reject/On-hold
+    row[_COL_NOTES]         = str(notes)          # pre-filled for escalations
+    row[_COL_POSTED_AT]     = posted_at
+    row[_COL_PROCESSED_AT]  = ""                  # filled after pipeline processes decision
+    row[_COL_AI_LEARNING]   = str(ai_learning)
+    row[_COL_USER_LEARNING] = ""                  # approver fills this; AI reads it next run
     values = [row]
 
     r = httpx.post(
@@ -1317,14 +1375,17 @@ def append_approval_row(
     r.raise_for_status()
     log.info("excel row appended order_id=%s amount=%.2f status=%s", order_id, amount, order_status)
 
-    # Apply borders, currency format, hyperlink, and optional red highlight to the new row
+    # Apply borders, currency, the Order-ID hyperlink, ownership colors, and optional red flag.
     try:
         new_index = r.json().get("index")   # 0-based table row index
         if new_index is not None:
-            _format_new_row(new_index, ftf_link=ftf_link)
-            excel_row  = new_index + 2
-            row_range  = f"A{excel_row}:{_END_COL}{excel_row}"
+            # _format_new_row applies the per-column ownership tint (gray/blue), which also
+            # overwrites any stale fill a recycled row position might have inherited.
+            _format_new_row(new_index, ftf_link=ftf_link, order_id=str(order_id))
             if highlight_red:
+                # Red flag overrides the per-column tint for the whole row.
+                excel_row = new_index + 2
+                row_range = f"A{excel_row}:{_END_COL}{excel_row}"
                 httpx.patch(
                     f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{row_range}')/format/fill",
                     headers=_session_headers(),
@@ -1332,16 +1393,6 @@ def append_approval_row(
                     timeout=10.0,
                 ).raise_for_status()
                 log.info("row %d highlighted red (flagged order=%s)", excel_row, order_id)
-            else:
-                # ALWAYS clear the fill for a normal row. Graph row-deletes leave direct
-                # cell fills on the physical grid, so a recycled row position can inherit a
-                # stale red from a previously-deleted flagged order. Clearing makes the
-                # fill deterministic per row regardless of what was there before.
-                httpx.post(
-                    f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{row_range}')/format/fill/clear",
-                    headers=_session_headers(),
-                    timeout=10.0,
-                ).raise_for_status()
     except Exception as exc:
         log.warning("row formatting failed (non-fatal) order_id=%s: %s", order_id, exc)
 
@@ -1353,6 +1404,88 @@ _ACTION_NORMALIZE = {
     "on hold": "hold",
     "hold":    "hold",
 }
+
+
+def consume_user_learnings() -> dict:
+    """Fold operator notes typed in the 'Learning provided by user' column into the AI's
+    learning so they apply on the NEXT pricing run.
+
+    No hardcoding: each free-text note is stored in data/learned_rules.json as (a) an
+    order-override for that order and (b) a general 'user_guidance' entry — BOTH of which
+    _load_learned_rules() injects straight into the pricing prompt, so the model itself
+    reasons with the operator's feedback. The AI Learning cell is stamped so the operator
+    sees the note was absorbed. Idempotent per (order_id, note). Never raises.
+    """
+    summary = {"scanned": 0, "absorbed": 0}
+    rules_path = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "learned_rules.json")
+    )
+    try:
+        ensure_approval_sheet()
+        r = _graph_get_retry(
+            f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows",
+            headers=_headers(), timeout=15.0,
+        )
+        if r is None or r.status_code in _TRANSIENT_STATUS:
+            return summary
+        r.raise_for_status()
+        rows = r.json().get("value", [])
+
+        data = {}
+        if os.path.exists(rules_path):
+            with open(rules_path, encoding="utf-8") as f:
+                data = json.load(f)
+        overrides = data.setdefault("order_overrides", {})
+        guidance  = data.setdefault("user_guidance", [])
+        consumed  = set(data.setdefault("user_notes_consumed", []))
+
+        now = datetime.now(_EASTERN).strftime("%Y-%m-%d %H:%M %Z")
+        changed = False
+        for row in rows:
+            vals = row.get("values", [[]])[0]
+            if len(vals) < _COL_COUNT:
+                vals = list(vals) + [""] * (_COL_COUNT - len(vals))
+            summary["scanned"] += 1
+            note     = str(vals[_COL_USER_LEARNING]).strip()
+            order_id = str(vals[_COL_ORDER_ID]).strip()
+            if not note or not order_id:
+                continue
+            key = f"{order_id}:{hashlib.sha1(note.encode('utf-8')).hexdigest()[:12]}"
+            if key in consumed:
+                continue   # already absorbed this exact note
+            consumed.add(key)
+            changed = True
+            summary["absorbed"] += 1
+            client  = str(vals[_COL_CLIENT]).strip()
+            service = str(vals[_COL_SERVICE]).strip()
+            overrides.setdefault(order_id, []).append(f"[operator note {now}] {note}")
+            guidance.append({"order_id": order_id, "client": client, "service": service,
+                             "note": note, "observed_at": now})
+
+            # Stamp the AI Learning cell so the operator sees the note was absorbed.
+            row_index = row.get("index")
+            if row_index is not None:
+                excel_row = row_index + 2
+                prev  = str(vals[_COL_AI_LEARNING]).strip()
+                stamp = f"AI_LEARN_USER | {now} | absorbed operator note — will apply on next pricing run"
+                new_val = (prev + " || " + stamp) if prev else stamp
+                try:
+                    httpx.patch(
+                        f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{_col_letter(_COL_AI_LEARNING)}{excel_row}')",
+                        headers=_session_headers(), json={"values": [[new_val]]}, timeout=10.0,
+                    ).raise_for_status()
+                except Exception as exc:  # noqa: BLE001
+                    log.debug("consume_user_learnings: stamp row %s failed (non-fatal): %s", excel_row, exc)
+
+        if changed:
+            data["user_notes_consumed"] = sorted(consumed)
+            with open(rules_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, default=str)
+            log.info("consume_user_learnings: absorbed %d operator note(s)", summary["absorbed"])
+        return summary
+    except Exception as exc:  # noqa: BLE001
+        log.warning("consume_user_learnings failed (non-fatal): %s", exc)
+        return summary
 
 
 def get_pending_approvals() -> list[dict]:

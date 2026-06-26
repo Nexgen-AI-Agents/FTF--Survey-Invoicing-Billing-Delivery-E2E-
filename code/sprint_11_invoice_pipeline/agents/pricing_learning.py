@@ -150,7 +150,9 @@ def build_ai_learn_record(
         f"scored={'N' if negotiated else 'Y'} likely_driver=\"{driver}\"",
         f"observed_at={observed_at} source=human_invoice",
     ]
-    return "\n".join(lines)
+    # One line (pipe-separated) so the AI Learning cell never makes the row tall/distorted
+    # in the Approvals sheet.
+    return " | ".join(lines)
 
 
 def condo_ec_graduated(recent_examples: list[dict]) -> bool:

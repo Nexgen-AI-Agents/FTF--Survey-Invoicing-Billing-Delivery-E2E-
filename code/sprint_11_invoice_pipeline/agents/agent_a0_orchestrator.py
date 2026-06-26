@@ -21,7 +21,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
 from core.logger import get_logger
-from core.onedrive_excel_client import _close_session, sync_pricing_rules_to_json
+from core.onedrive_excel_client import _close_session, consume_user_learnings, sync_pricing_rules_to_json
 
 log = get_logger("agent_a0_orchestrator")
 
@@ -47,6 +47,14 @@ def run() -> dict:
         log.info("pricing rules synced: %d active rules", n)
     except Exception as exc:
         log.warning("pricing rules sync failed (non-fatal): %s", exc)
+
+    # Fold operator notes (Approvals "Learning provided by user" column) into the AI's
+    # learning BEFORE A3 prices, so anything the approver taught us applies this run.
+    try:
+        ul = consume_user_learnings()
+        log.info("user-learning consume: %s", ul)
+    except Exception as exc:
+        log.warning("consume_user_learnings failed (non-fatal): %s", exc)
 
     try:
         results["a1_flag_hunter"]     = {"new_queued": len(run_a1())}

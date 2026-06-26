@@ -142,6 +142,16 @@ def _load_learned_rules(order_id: str = "") -> str:
                     f"(learned from {len(scored)} human-invoiced orders)"
                 )
 
+        # Operator-provided guidance — free-text notes the approver typed in the
+        # "Learning provided by user" column of the Approvals sheet. The model factors
+        # these in directly (no hardcoded prices). Most recent first, capped.
+        for g in reversed(data.get("user_guidance", [])[-15:]):
+            if not isinstance(g, dict):
+                continue
+            who = g.get("client", "")
+            tag = f" (client: {who})" if who else ""
+            lines.append(f"  • [OPERATOR GUIDANCE{tag}] {g.get('note', '')}")
+
         return "\n".join(lines)
     except Exception:
         return ""
