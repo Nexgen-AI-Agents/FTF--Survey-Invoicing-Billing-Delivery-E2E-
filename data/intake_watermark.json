@@ -1,5 +1,5 @@
 {
-  "start_ng_id": 52360151,
-  "set_at": "2026-06-25T09:24:59.306948+00:00",
+  "start_ng_id": 52360807,
+  "set_at": "2026-06-26T16:45:54.521995+00:00",
   "note": "Only ng_orders with ng_id > start_ng_id are queued (process-from-today reset)."
 }
