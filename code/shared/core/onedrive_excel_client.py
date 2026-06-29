@@ -12,6 +12,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import time
 import urllib.parse
 from datetime import datetime, timezone
@@ -41,11 +42,11 @@ _cache: dict = {}
 
 # Guide tab — bump version string whenever guide content changes to force a re-write
 GUIDE_SHEET_NAME = "Pipeline Guide"
-_GUIDE_VERSION   = "v11"  # increment when guide content changes
+_GUIDE_VERSION   = "v12"  # increment when guide content changes
 
 # How-To tab — plain-language step-by-step guide for end users
 HOWTO_SHEET_NAME = "How to use Invoicing agent"
-_HOWTO_VERSION   = "v4"   # increment when how-to content changes
+_HOWTO_VERSION   = "v5"   # increment when how-to content changes
 
 # Pricing Rules tab — user-editable table of override prices
 PRICING_RULES_SHEET_NAME  = "Pricing Rules"
@@ -60,37 +61,44 @@ _PR_COL_COUNT = len(PRICING_RULES_HEADERS)   # 8
 # 2026-06-26: dropped "FTF Link" (the Order ID cell is now the clickable link, so the
 # link can never drift from its row); added "Learning provided by user" (approver writes
 # feedback here → the AI folds it into its learning on the next run).
+# 2026-06-26: split the single "Service / Breakdown" into TWO columns — "Service /
+# Breakdown by AI" (E, locked AI baseline) and "Service / Breakdown by User" (G, the
+# editable copy that is the SOURCE OF TRUTH for invoicing + learning). "Amount ($) by
+# User" (H) is now AUTO-COMPUTED from the user breakdown's total (no longer typed).
 APPROVAL_HEADERS = [
-    "Order ID", "Order Status", "Client Name", "Property Address", "Service / Breakdown",
-    "Amount ($) by AI", "Amount ($) by User", "Confidence", "Escalate",
+    "Order ID", "Order Status", "Client Name", "Property Address",
+    "Service / Breakdown by AI", "Amount ($) by AI",
+    "Service / Breakdown by User", "Amount ($) by User",
+    "Confidence", "Escalate",
     "Action", "Notes", "Posted At", "Processed At", "AI Learning", "Learning provided by user",
 ]
-_COL_COUNT        = len(APPROVAL_HEADERS)   # 15
-_END_COL          = chr(ord("A") + _COL_COUNT - 1)   # "O"
+_COL_COUNT        = len(APPROVAL_HEADERS)   # 16
+_END_COL          = chr(ord("A") + _COL_COUNT - 1)   # "P"
 
 # All column indices are DERIVED from APPROVAL_HEADERS (never hardcoded) so the schema
 # can change without silently breaking absolute-index arithmetic across this module.
-_COL_ORDER_ID      = APPROVAL_HEADERS.index("Order ID")                   # 0  (A)
-_COL_ORDER_STATUS  = APPROVAL_HEADERS.index("Order Status")               # 1  (B)
-_COL_CLIENT        = APPROVAL_HEADERS.index("Client Name")                # 2  (C)
-_COL_ADDRESS       = APPROVAL_HEADERS.index("Property Address")           # 3  (D)
-_COL_SERVICE       = APPROVAL_HEADERS.index("Service / Breakdown")        # 4  (E)
-_COL_AMOUNT_AI     = APPROVAL_HEADERS.index("Amount ($) by AI")           # 5  (F)  AI's proposed price — LOCKED (preserved for AI-vs-user learning)
-_COL_AMOUNT_USER   = APPROVAL_HEADERS.index("Amount ($) by User")         # 6  (G)  approver's price override — EDITABLE (blank = accept AI's price)
-_COL_CONFIDENCE    = APPROVAL_HEADERS.index("Confidence")                 # 7  (H)
-_COL_ESCALATE      = APPROVAL_HEADERS.index("Escalate")                   # 8  (I)
-_COL_ACTION        = APPROVAL_HEADERS.index("Action")                     # 9  (J)  dropdown: Approve / Reject / On-hold
-_COL_NOTES         = APPROVAL_HEADERS.index("Notes")                      # 10 (K)
-_COL_POSTED_AT     = APPROVAL_HEADERS.index("Posted At")                  # 11 (L)
-_COL_PROCESSED_AT  = APPROVAL_HEADERS.index("Processed At")               # 12 (M)
-_COL_AI_LEARNING   = APPROVAL_HEADERS.index("AI Learning")                # 13 (N)  AI's per-order learning record (AI-filled)
-_COL_USER_LEARNING = APPROVAL_HEADERS.index("Learning provided by user")  # 14 (O)  approver feedback → AI learns next run
+_COL_ORDER_ID      = APPROVAL_HEADERS.index("Order ID")                    # 0  (A)
+_COL_ORDER_STATUS  = APPROVAL_HEADERS.index("Order Status")                # 1  (B)
+_COL_CLIENT        = APPROVAL_HEADERS.index("Client Name")                 # 2  (C)
+_COL_ADDRESS       = APPROVAL_HEADERS.index("Property Address")            # 3  (D)
+_COL_SERVICE_AI    = APPROVAL_HEADERS.index("Service / Breakdown by AI")   # 4  (E)  AI's proposed breakdown — LOCKED baseline (for AI-vs-user learning)
+_COL_AMOUNT_AI     = APPROVAL_HEADERS.index("Amount ($) by AI")            # 5  (F)  AI's proposed total — LOCKED
+_COL_SERVICE_USER  = APPROVAL_HEADERS.index("Service / Breakdown by User") # 6  (G)  approver's breakdown — EDITABLE, SOURCE OF TRUTH for invoice
+_COL_AMOUNT_USER   = APPROVAL_HEADERS.index("Amount ($) by User")          # 7  (H)  total of col G — AUTO-COMPUTED (not typed)
+_COL_CONFIDENCE    = APPROVAL_HEADERS.index("Confidence")                  # 8  (I)
+_COL_ESCALATE      = APPROVAL_HEADERS.index("Escalate")                    # 9  (J)
+_COL_ACTION        = APPROVAL_HEADERS.index("Action")                      # 10 (K)  dropdown: Approve / Reject / On-hold
+_COL_NOTES         = APPROVAL_HEADERS.index("Notes")                       # 11 (L)
+_COL_POSTED_AT     = APPROVAL_HEADERS.index("Posted At")                   # 12 (M)
+_COL_PROCESSED_AT  = APPROVAL_HEADERS.index("Processed At")                # 13 (N)
+_COL_AI_LEARNING   = APPROVAL_HEADERS.index("AI Learning")                 # 14 (O)  AI's per-order learning record (AI-filled)
+_COL_USER_LEARNING = APPROVAL_HEADERS.index("Learning provided by user")   # 15 (P)  approver feedback → AI learns next run
 
 # Cell-fill ownership: approver-editable columns are tinted blue ("edit here"); every
 # other column is AI-managed and tinted gray ("locked — don't edit by hand"). Applied
 # per-row so a recycled row position can never inherit a stale fill.
 _USER_EDITABLE_HEADERS = {
-    "Service / Breakdown", "Amount ($) by User", "Action", "Notes", "Learning provided by user",
+    "Service / Breakdown by User", "Action", "Notes", "Learning provided by user",
 }
 _AI_LOCKED_FILL = "#D9D9D9"   # gray  — AI-managed / read-only
 _USER_EDIT_FILL = "#DDEBF7"   # blue  — approver edits here
@@ -824,34 +832,35 @@ def ensure_guide_sheet() -> None:
             ["Version", stamp],
             ["", ""],
             ["── COLUMN REFERENCE (Approvals tab) ──", ""],
-            ["COLOR KEY",         "GRAY columns are AI-managed — please do NOT edit them. BLUE columns are yours: Service / Breakdown, Amount ($) by User, Action, Notes, Learning provided by user."],
+            ["COLOR KEY",         "GRAY columns are AI-managed — please do NOT edit them. BLUE columns are yours: Service / Breakdown by User, Action, Notes, Learning provided by user."],
             ["Order ID",          "Unique FTF order number — CLICK IT to open this order in FieldToFinish. (gray / AI-managed)"],
             ["Order Status",      "Current FTF status (In Progress, Complete, Field, etc.). (gray / AI-managed)"],
             ["Client Name",       "Client or title company who placed the order. (gray / AI-managed)"],
             ["Property Address",  "Survey site address — the property to be surveyed. (gray / AI-managed)"],
-            ["Service / Breakdown", "BLUE / editable. AI-priced services with amounts, e.g. 'Boundary Survey: $475.00 | Elevation Cert: $150.00'. Edit an amount here to change that service's price. Pipe (|) separates services."],
-            ["Amount ($) by AI",  "GRAY / locked. The AI's proposed total — shown for reference and so the AI can learn from your changes. To override, use 'Amount ($) by User' (next column). Do NOT edit this cell."],
-            ["Amount ($) by User","BLUE / editable — YOUR price. Leave BLANK to accept the AI's amount. To override, type your total here (or fix one service in 'Service / Breakdown'), then set Action = Approve. For MANUAL PRICING rows: type the correct amount here."],
+            ["Service / Breakdown by AI", "GRAY / locked. The AI's proposed services + prices, e.g. 'Boundary Survey: $475.00 | Elevation Cert: $150.00'. Reference only — do NOT edit. The AI keeps this to learn from your changes."],
+            ["Amount ($) by AI",  "GRAY / locked. The AI's proposed total. Reference only — do NOT edit."],
+            ["Service / Breakdown by User", "BLUE / editable — THIS is what gets invoiced. Starts as a copy of the AI breakdown. To change a price or service, edit the amount(s) here, e.g. 'Boundary Survey: $500.00 | Elevation Cert: $150.00'. Keep the 'Name: $amount' format; pipe (|) separates services. Then set Action = Approve."],
+            ["Amount ($) by User","GRAY / AUTO-CALCULATED. The total of 'Service / Breakdown by User' — refreshed automatically every run. Do NOT type here; change the breakdown instead."],
             ["Confidence",        "HIGH = very likely correct. MEDIUM = reasonable. LOW = limited data. N/A = condo or manual pricing. (gray)"],
             ["Escalate",          "Yes = AI flagged an unusual order; Robert or Ryan should review before approving. (gray)"],
             ["Action",            "BLUE / YOUR DECISION — Approve / Reject / On-hold. Leave blank to defer. Pipeline checks every few minutes."],
-            ["Notes",             "BLUE / editable. Pre-filled by the pipeline with the reason for escalation or the required action — read before acting."],
+            ["Notes",             "BLUE / editable. The AI may pre-fill the reason for escalation/required action — read it. Anything YOU add here is also read by the AI as learning for this order/client."],
             ["Posted At",         "Date/time the pipeline posted this row (Eastern Time). (gray)"],
             ["Processed At",      "Auto-filled when the pipeline processes your decision. Once filled = complete. (gray)"],
             ["AI Learning",       "Gray / AI-managed (read-only). The AI's one-line learning note for this order — what it priced vs. what was actually charged, and its takeaway."],
             ["Learning provided by user", "BLUE / YOURS. Type anything you want the AI to learn for this order or client (e.g. 'this client is always $1,800 for a boundary'). The AI reads it on its next run and folds it into its pricing learning."],
             ["", ""],
             ["── ACTION GUIDE ──", ""],
-            ["Approve",           "Pipeline creates a real FTF invoice and emails client. CANNOT be undone from pipeline."],
-            ["Reject",            "No invoice created. No email sent. Manually clear ng_invoice_needed=1 flag in FTF if order should not re-appear."],
-            ["On-hold",           "Pipeline pauses this order. Change to Approve or Reject when ready."],
+            ["Approve",           "Pipeline creates a real FTF invoice from 'Service / Breakdown by User' and emails the client. CANNOT be undone from pipeline."],
+            ["Reject",            "No invoice created. No email sent. The AI LEARNS from it — add a reason in Notes if you can (optional). Manually clear ng_invoice_needed=1 in FTF if the order should not re-appear."],
+            ["On-hold",           "Pipeline pauses this order (no invoice/email). The AI learns from it. Change to Approve or Reject when ready."],
             ["(leave blank)",     "Pipeline ignores this row every 30-min cycle until you select an action."],
             ["", ""],
             ["── NOTES FIELD GUIDE ──", ""],
             ["CONDO ORDER —",             "Cannot survey. Row is AUTO-REJECTED. Contact client — arrange refund or redirect to interior measurement."],
             ["⛔ CANCELED —",             "Order canceled in FTF. No invoice needed. Flagged red, not priced. Set Action = Reject to clear."],
             ["⚠️ DELIVERED —",            "Order already delivered. Flagged red, not auto-priced. Verify if an invoice is still needed; enter amount manually if so."],
-            ["MANUAL PRICING REQUIRED —", "AI could not price. Enter correct amount in 'Amount ($) by User' cell, then set Action = Approve."],
+            ["MANUAL PRICING REQUIRED —", "AI could not price. Type the service + amount in 'Service / Breakdown by User' as 'Survey: $X' (e.g. 'Boundary Survey: $500.00'); the total fills in automatically. Then set Action = Approve."],
             ["ESCALATE —",               "Unusual order (large lot, commercial, FEMA zone, duplicate). Get Robert or Ryan to review."],
             ["(empty notes)",             "Standard order. AI is confident. Review amount and service, then approve if correct."],
             ["", ""],
@@ -974,14 +983,14 @@ def ensure_howto_sheet() -> None:
             ["", ""],
             ["── THE 30-SECOND VERSION ──", ""],
             ["1.", "Open the 'Approvals' tab."],
-            ["2.", "Read each row: Client, Property, Service / Breakdown, and Amount ($) by AI."],
-            ["3.", "If the amount looks right, set the 'Action' column to Approve."],
+            ["2.", "Read each row: Client, Property, and Service / Breakdown by User (this is what gets billed)."],
+            ["3.", "If the breakdown looks right, set the 'Action' column to Approve."],
             ["4.", "Within ~30 minutes the agent invoices the customer and emails them. Done."],
             ["", ""],
             ["── YOUR DAILY WORKFLOW (step by step) ──", ""],
             ["Step 1 — Open Approvals", "Go to the 'Approvals' tab. Each row is one order waiting for your decision."],
-            ["Step 2 — Review the order", "Check Client Name, Property Address, Service / Breakdown and Amount ($) by AI. Click the Order ID to open the order in FieldToFinish if you need more detail."],
-            ["Step 3 — Check the price", "If Amount ($) by AI is correct, leave it. If it is wrong, see 'FIXING A PRICE' below."],
+            ["Step 2 — Review the order", "Check Client Name, Property Address and Service / Breakdown by User (the AI's own breakdown sits in the 'by AI' column for reference). Click the Order ID to open the order in FieldToFinish if you need more detail."],
+            ["Step 3 — Check the price", "If the breakdown looks right, leave it. To change it, see 'FIXING A PRICE' below. 'Amount ($) by User' totals your breakdown automatically — you never type it."],
             ["Step 4 — Read the Notes", "The Notes column tells you if anything needs attention (manual pricing, escalation, condo, canceled, delivered)."],
             ["Step 5 — Decide", "Set the 'Action' column to Approve, Reject, or On-hold. Leave blank to skip for now."],
             ["Step 6 — Wait ~30 min", "The agent runs every 30 minutes. It picks up your decision and acts on it. 'Processed At' fills in when it is done."],
@@ -993,20 +1002,21 @@ def ensure_howto_sheet() -> None:
             ["(leave blank)", "The agent ignores the row until you choose an action."],
             ["", ""],
             ["── HOW TO READ A ROW (key columns) ──", ""],
-            ["Service / Breakdown", "What is being billed and the price of each part, e.g. 'Boundary Survey: $475.00 | Elevation Cert: $275.00'. Edit a number here to change that one service's price."],
-            ["Amount ($) by AI", "The total the AI proposes — LOCKED (gray). Don't edit it; to change the total, enter your price in 'Amount ($) by User'."],
-            ["Amount ($) by User", "YOUR price (blue / editable). Leave blank to accept the AI's amount, or type your total here to override. The AI keeps its own number in the column to the left and learns from the difference."],
+            ["Service / Breakdown by AI", "GRAY / locked. The AI's proposed services + prices, e.g. 'Boundary Survey: $475.00 | Elevation Cert: $275.00'. Reference only — don't edit. The AI keeps it to learn from your changes."],
+            ["Amount ($) by AI", "GRAY / locked. The total the AI proposes. Reference only — don't edit."],
+            ["Service / Breakdown by User", "BLUE / editable — THIS is what gets invoiced. Starts as a copy of the AI breakdown; change a number to reprice that service, e.g. 'Boundary Survey: $500.00 | Elevation Cert: $275.00'. Keep the 'Name: $amount' format (| between services)."],
+            ["Amount ($) by User", "GRAY / AUTO-CALCULATED. The total of your breakdown — fills in automatically every run. Don't type here; edit the breakdown instead."],
             ["AI Learning", "Gray / read-only. The AI's one-line note on what it learned from this order (its price vs. the real one). You don't act on this."],
             ["Learning provided by user", "BLUE / yours to fill. Type anything you want the AI to learn for this order or client — it reads your note on the next run and folds it into its pricing learning. No coding needed."],
-            ["COLOR KEY", "Gray cells = AI-managed, please don't edit. Blue cells = yours: Service / Breakdown, Amount ($) by User, Action, Notes, Learning provided by user."],
+            ["COLOR KEY", "Gray cells = AI-managed, please don't edit. Blue cells = yours: Service / Breakdown by User, Action, Notes, Learning provided by user."],
             ["Confidence", "HIGH / MEDIUM / LOW — how sure the AI is about the price. LOW means double-check it."],
             ["Escalate", "Yes = unusual order; have Robert or Ryan look before approving."],
             ["Notes", "Plain-language reason or instruction from the agent. Always read this."],
             ["", ""],
             ["── WORKED EXAMPLE (a dummy order) ──", ""],
-            ["1. The row appears", "Order 1000299001 | Sunshine Title | 123 Palm Ave, Naples FL | Service: 'Boundary Survey: $475.00 | Elevation Cert: $275.00' | Amount by AI: $750.00 | Confidence: HIGH | Action: (blank)"],
-            ["2. You review it", "The service and the $750.00 total look correct for a boundary survey + elevation certificate in Naples."],
-            ["3. (Optional) fix price", "Say you agreed $700 with this client. Type 700 in the 'Amount ($) by User' cell — the agent splits it across the services for you and keeps its own $750 for learning."],
+            ["1. The row appears", "Order 1000299001 | Sunshine Title | 123 Palm Ave, Naples FL | Service / Breakdown by User: 'Boundary Survey: $475.00 | Elevation Cert: $275.00' | Amount by User: $750.00 | Confidence: HIGH | Action: (blank)"],
+            ["2. You review it", "The services and the $750.00 total look correct for a boundary survey + elevation certificate in Naples."],
+            ["3. (Optional) fix price", "Say you agreed $700 with this client. Edit 'Service / Breakdown by User' to 'Boundary Survey: $425.00 | Elevation Cert: $275.00' — 'Amount ($) by User' updates to $700 automatically; the AI keeps its own $750 baseline and learns the difference."],
             ["4. You approve", "Set the Action cell to 'Approve'."],
             ["5. What happens next", "Within ~30 min the agent creates the invoice in FTF, emails it to Sunshine Title's address on file, and fills in 'Processed At'."],
             ["6. Result", "Sunshine Title receives a $700 invoice by email. You did nothing except review and click Approve."],
@@ -1018,14 +1028,14 @@ def ensure_howto_sheet() -> None:
             ["Processed At", "Fills in automatically — that is your confirmation it is done."],
             ["", ""],
             ["── SPECIAL ROWS YOU MIGHT SEE ──", ""],
-            ["MANUAL PRICING REQUIRED", "The AI could not set a price. Type the correct amount in 'Amount ($) by User', then Approve."],
+            ["MANUAL PRICING REQUIRED", "The AI could not set a price. Type the service + amount in 'Service / Breakdown by User' as 'Survey: $X' (e.g. 'Boundary Survey: $500.00'); the total fills in automatically. Then Approve."],
             ["CONDO — Cannot Survey", "A condo / airspace unit. Auto-rejected. Contact the client; do not approve."],
             ["⛔ CANCELED (red row)", "Order was canceled in FTF. No invoice needed. Set Action = Reject to clear it."],
             ["⚠️ DELIVERED (red row)", "Order already delivered. Not auto-priced. Only invoice if one is genuinely still owed — enter the amount and Approve."],
             ["ESCALATE", "Unusual order. Get Robert or Ryan to review before approving."],
             ["", ""],
             ["── FIXING A PRICE / TEACHING THE AI ──", ""],
-            ["One-off change", "Enter your price in 'Amount ($) by User' (for the total) or edit Service / Breakdown (for one service) on the row, then Approve."],
+            ["One-off change", "Edit the amount(s) in 'Service / Breakdown by User' on the row (e.g. 'Boundary Survey: $700.00'); 'Amount ($) by User' totals it automatically. Then Approve."],
             ["Permanent rule", "Use the 'Pricing Rules' tab to set a fixed price for a client, county, or service — so the AI gets it right next time. No coding needed."],
             ["Example rule", "Service=Boundary Survey | County=Collier | Client=Sunshine Title | Price=700 | Priority=1 | Status=Active"],
             ["", ""],
@@ -1320,15 +1330,18 @@ def _format_new_row(table_row_index: int, ftf_link: str = "", order_id: str = ""
             timeout=10.0,
         ).raise_for_status()
 
-    # Currency format on BOTH amount columns: "Amount ($) by AI" and "Amount ($) by User"
-    amt_ai_letter   = _col_letter(_COL_AMOUNT_AI)     # "F"
-    amt_user_letter = _col_letter(_COL_AMOUNT_USER)   # "G"
-    httpx.patch(
-        f"{wb}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{amt_ai_letter}{excel_row}:{amt_user_letter}{excel_row}')/format",
-        headers=h,
-        json={"numberFormat": [["$#,##0.00", "$#,##0.00"]]},
-        timeout=10.0,
-    ).raise_for_status()
+    # Currency format on BOTH amount columns: "Amount ($) by AI" (F) and "Amount ($) by
+    # User" (H). They are NOT adjacent anymore — "Service / Breakdown by User" (G, text)
+    # sits between them — so format each cell separately (a single F:H range would also
+    # number-format the text breakdown in G).
+    for amt_idx in (_COL_AMOUNT_AI, _COL_AMOUNT_USER):
+        amt_letter = _col_letter(amt_idx)             # "F" / "H"
+        httpx.patch(
+            f"{wb}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{amt_letter}{excel_row}')/format",
+            headers=h,
+            json={"numberFormat": [["$#,##0.00"]]},
+            timeout=10.0,
+        ).raise_for_status()
 
     # Order ID stays a PLAIN VALUE — NEVER a =HYPERLINK() formula. Excel treats a formula
     # inside a table column as a "calculated column" and auto-propagates ONE row's formula
@@ -1349,6 +1362,32 @@ def _format_new_row(table_row_index: int, ftf_link: str = "", order_id: str = ""
     log.debug("row %d formatted (borders + currency + plain order-id value + colors)", excel_row)
 
 
+def _record_ai_prefilled_note(order_id: str, notes: str) -> None:
+    """Remember the Notes text the AI pre-fills on a row (escalation/condo/etc.), so
+    consume_user_learnings() can tell AI-written Notes from operator-written ones and NEVER
+    learn from the AI's own words. Stored in learned_rules.json['ai_prefilled_notes']. Non-fatal.
+    """
+    note = (notes or "").strip()
+    if not order_id or not note:
+        return
+    path = os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "learned_rules.json")
+    )
+    try:
+        data = {}
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+        prefills = data.setdefault("ai_prefilled_notes", {})
+        if prefills.get(order_id) == note:
+            return   # already recorded
+        prefills[order_id] = note
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, default=str)
+    except Exception as exc:  # noqa: BLE001
+        log.debug("record ai_prefilled_note failed order=%s (non-fatal): %s", order_id, exc)
+
+
 def append_approval_row(
     order_id:     str,
     client_name:  str,
@@ -1364,14 +1403,18 @@ def append_approval_row(
     highlight_red: bool = False,
     amount_user:  Optional[float] = None,
     ai_learning:  str = "",
+    service_user: Optional[str] = None,
 ) -> None:
     """Append a new row to the approval table. Action column is blank — user picks from dropdown.
 
-    amount        → "Amount ($) by AI": the AI's proposed price — LOCKED (gray), preserved
-                    for AI-vs-approver learning.
-    amount_user   → "Amount ($) by User": the approver's price override — EDITABLE (blue).
-                    Left blank (None) for normal new orders (blank = accept the AI's price);
-                    pre-filled only for already-invoiced learning rows.
+    service       → written to BOTH "Service / Breakdown by AI" (E, locked baseline) AND
+                    "Service / Breakdown by User" (G, editable copy). G starts identical to
+                    E; the approver edits G to change services/prices — G is the source of
+                    truth for the invoice.
+    amount        → "Amount ($) by AI" (F): the AI's proposed total — LOCKED (gray).
+    amount_user   → "Amount ($) by User" (H): total of col G — AUTO-COMPUTED (gray), not
+                    typed. Seeded to the AI total at creation (G == E), then recomputed from
+                    G each run. Pass a value only for already-invoiced learning rows.
     ai_learning   → "AI Learning": the AI's per-order learning record (AI-filled).
 
     highlight_red=True fills the entire row with red (#FF4444) to flag critical issues
@@ -1379,6 +1422,7 @@ def append_approval_row(
     The red fill is overridden once the user picks an Action value (conditional formatting wins).
     """
     ensure_approval_sheet()
+    _record_ai_prefilled_note(order_id, notes)   # so the AI never learns from its own pre-filled Notes
 
     if not posted_at:
         posted_at = datetime.now(_EASTERN).strftime("%Y-%m-%d %H:%M %Z")
@@ -1389,9 +1433,15 @@ def append_approval_row(
     row[_COL_ORDER_STATUS]  = str(order_status)   # FTF stage status
     row[_COL_CLIENT]        = str(client_name)
     row[_COL_ADDRESS]       = str(address)[:120]
-    row[_COL_SERVICE]       = str(service)
-    row[_COL_AMOUNT_AI]     = float(amount)
-    row[_COL_AMOUNT_USER]   = float(amount_user) if amount_user is not None else ""
+    row[_COL_SERVICE_AI]    = str(service)        # E — AI's locked breakdown baseline
+    row[_COL_AMOUNT_AI]     = float(amount)       # F — AI's locked total
+    # G — editable copy of E by default (source of truth). Callers may pass service_user to
+    # seed G differently (e.g. learning rows set it to the real human breakdown so col H,
+    # which auto-sums G, stays equal to the human amount).
+    row[_COL_SERVICE_USER]  = str(service_user) if service_user is not None else str(service)
+    # H — total of G; auto-computed. Seed to AI total (G==E at creation), or the explicit
+    # amount_user for already-invoiced learning rows.
+    row[_COL_AMOUNT_USER]   = float(amount_user) if amount_user is not None else float(amount)
     row[_COL_CONFIDENCE]    = str(confidence)
     row[_COL_ESCALATE]      = "Yes" if escalate else "No"
     row[_COL_ACTION]        = ""                  # blank; user selects Approve/Reject/On-hold
@@ -1443,14 +1493,16 @@ _ACTION_NORMALIZE = {
 
 
 def consume_user_learnings() -> dict:
-    """Fold operator notes typed in the 'Learning provided by user' column into the AI's
-    learning so they apply on the NEXT pricing run.
+    """Fold operator free-text into the AI's learning so it applies on the NEXT pricing run.
 
-    No hardcoding: each free-text note is stored in data/learned_rules.json as (a) an
+    Reads TWO user columns: "Learning provided by user" (P, always operator-written) and
+    "Notes" (L, operator-written only when it differs from the AI's own pre-filled escalation
+    text — tracked in learned_rules.json['ai_prefilled_notes'] so the AI never learns from
+    its own words). Each absorbed note is stored in data/learned_rules.json as (a) an
     order-override for that order and (b) a general 'user_guidance' entry — BOTH of which
     _load_learned_rules() injects straight into the pricing prompt, so the model itself
     reasons with the operator's feedback. The AI Learning cell is stamped so the operator
-    sees the note was absorbed. Idempotent per (order_id, note). Never raises.
+    sees the feedback was absorbed. Idempotent per (order_id, source, note). Never raises.
     """
     summary = {"scanned": 0, "absorbed": 0}
     rules_path = os.path.normpath(
@@ -1471,9 +1523,10 @@ def consume_user_learnings() -> dict:
         if os.path.exists(rules_path):
             with open(rules_path, encoding="utf-8") as f:
                 data = json.load(f)
-        overrides = data.setdefault("order_overrides", {})
-        guidance  = data.setdefault("user_guidance", [])
-        consumed  = set(data.setdefault("user_notes_consumed", []))
+        overrides    = data.setdefault("order_overrides", {})
+        guidance     = data.setdefault("user_guidance", [])
+        consumed     = set(data.setdefault("user_notes_consumed", []))
+        ai_prefills  = data.get("ai_prefilled_notes", {})   # {order_id: AI's pre-filled Notes text}
 
         now = datetime.now(_EASTERN).strftime("%Y-%m-%d %H:%M %Z")
         changed = False
@@ -1482,36 +1535,53 @@ def consume_user_learnings() -> dict:
             if len(vals) < _COL_COUNT:
                 vals = list(vals) + [""] * (_COL_COUNT - len(vals))
             summary["scanned"] += 1
-            note     = str(vals[_COL_USER_LEARNING]).strip()
             order_id = str(vals[_COL_ORDER_ID]).strip()
-            if not note or not order_id:
+            if not order_id:
                 continue
-            key = f"{order_id}:{hashlib.sha1(note.encode('utf-8')).hexdigest()[:12]}"
-            if key in consumed:
-                continue   # already absorbed this exact note
-            consumed.add(key)
-            changed = True
-            summary["absorbed"] += 1
             client  = str(vals[_COL_CLIENT]).strip()
-            service = str(vals[_COL_SERVICE]).strip()
-            overrides.setdefault(order_id, []).append(f"[operator note {now}] {note}")
-            guidance.append({"order_id": order_id, "client": client, "service": service,
-                             "note": note, "observed_at": now})
+            service = str(vals[_COL_SERVICE_AI]).strip()   # AI baseline service name
 
-            # Stamp the AI Learning cell so the operator sees the note was absorbed.
-            row_index = row.get("index")
-            if row_index is not None:
-                excel_row = row_index + 2
-                prev  = str(vals[_COL_AI_LEARNING]).strip()
-                stamp = f"AI_LEARN_USER | {now} | absorbed operator note — will apply on next pricing run"
-                new_val = (prev + " || " + stamp) if prev else stamp
-                try:
-                    httpx.patch(
-                        f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{_col_letter(_COL_AI_LEARNING)}{excel_row}')",
-                        headers=_session_headers(), json={"values": [[new_val]]}, timeout=10.0,
-                    ).raise_for_status()
-                except Exception as exc:  # noqa: BLE001
-                    log.debug("consume_user_learnings: stamp row %s failed (non-fatal): %s", excel_row, exc)
+            # Candidate learning text from the two user columns. "Learning provided by
+            # user" (P) is always operator-written. "Notes" (L) is operator-written ONLY
+            # when it differs from the AI's pre-filled text (else it's the AI's own words).
+            candidates = []
+            p_note = str(vals[_COL_USER_LEARNING]).strip()
+            if p_note:
+                candidates.append(("learning", p_note))
+            l_note     = str(vals[_COL_NOTES]).strip()
+            ai_prefill = str(ai_prefills.get(order_id, "")).strip()
+            if l_note and l_note != ai_prefill:
+                candidates.append(("notes", l_note))
+
+            absorbed_here = False
+            for src, text in candidates:
+                key = f"{order_id}:{src}:{hashlib.sha1(text.encode('utf-8')).hexdigest()[:12]}"
+                if key in consumed:
+                    continue   # already absorbed this exact note
+                consumed.add(key)
+                changed = True
+                absorbed_here = True
+                summary["absorbed"] += 1
+                tag = "operator note" if src == "learning" else "operator note (Notes)"
+                overrides.setdefault(order_id, []).append(f"[{tag} {now}] {text}")
+                guidance.append({"order_id": order_id, "client": client, "service": service,
+                                 "note": text, "source": src, "observed_at": now})
+
+            # Stamp the AI Learning cell once if anything was absorbed for this row.
+            if absorbed_here:
+                row_index = row.get("index")
+                if row_index is not None:
+                    excel_row = row_index + 2
+                    prev  = str(vals[_COL_AI_LEARNING]).strip()
+                    stamp = f"AI_LEARN_USER | {now} | absorbed operator feedback — applies next pricing run"
+                    new_val = (prev + " || " + stamp) if prev else stamp
+                    try:
+                        httpx.patch(
+                            f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{_col_letter(_COL_AI_LEARNING)}{excel_row}')",
+                            headers=_session_headers(), json={"values": [[new_val]]}, timeout=10.0,
+                        ).raise_for_status()
+                    except Exception as exc:  # noqa: BLE001
+                        log.debug("consume_user_learnings: stamp row %s failed (non-fatal): %s", excel_row, exc)
 
         if changed:
             data["user_notes_consumed"] = sorted(consumed)
@@ -1553,15 +1623,16 @@ def get_pending_approvals() -> list[dict]:
         if len(vals) < _COL_COUNT:
             vals = list(vals) + [""] * (_COL_COUNT - len(vals))
 
-        order_id       = str(vals[_COL_ORDER_ID]).strip()
-        action_raw     = str(vals[_COL_ACTION]).strip()
-        processed_at   = str(vals[_COL_PROCESSED_AT]).strip()
-        notes          = str(vals[_COL_NOTES]).strip()
-        amt_ai_cell    = str(vals[_COL_AMOUNT_AI]).strip()    # Amount ($) by AI — locked AI proposal
-        amt_user_cell  = str(vals[_COL_AMOUNT_USER]).strip()  # Amount ($) by User — approver's override (blue/editable)
-        # Effective price to invoice: the approver's override if they typed one, else the AI's proposal.
-        amount_cell    = amt_user_cell if amt_user_cell else amt_ai_cell
-        breakdown_cell = str(vals[_COL_SERVICE]).strip()      # Service / Breakdown
+        order_id        = str(vals[_COL_ORDER_ID]).strip()
+        action_raw      = str(vals[_COL_ACTION]).strip()
+        processed_at    = str(vals[_COL_PROCESSED_AT]).strip()
+        notes           = str(vals[_COL_NOTES]).strip()
+        # SOURCE OF TRUTH = the user breakdown (G) + its auto-computed total (H). The AI
+        # baseline (E breakdown / F total) is read only so A4 can learn the AI-vs-user gap.
+        amount_cell     = str(vals[_COL_AMOUNT_USER]).strip()   # H — Amount ($) by User (auto-computed total)
+        breakdown_cell  = str(vals[_COL_SERVICE_USER]).strip()  # G — Service / Breakdown by User (editable)
+        breakdown_ai_cell = str(vals[_COL_SERVICE_AI]).strip()  # E — Service / Breakdown by AI (baseline, for learning)
+        learning_user   = str(vals[_COL_USER_LEARNING]).strip() # P — Learning provided by user (plain English)
 
         if not order_id or not action_raw or processed_at:
             continue   # blank action or already processed
@@ -1571,11 +1642,13 @@ def get_pending_approvals() -> list[dict]:
             continue   # unrecognised value in Action column
 
         results.append({
-            "order_id":      order_id,
-            "action":        action_norm,
-            "notes":         notes,
-            "amount_cell":   amount_cell,
+            "order_id":       order_id,
+            "action":         action_norm,
+            "notes":          notes,
+            "amount_cell":    amount_cell,
             "breakdown_cell": breakdown_cell,
+            "breakdown_ai_cell": breakdown_ai_cell,
+            "learning_user":  learning_user,
         })
 
     log.info("get_pending_approvals: %d pending decisions found", len(results))
@@ -1656,12 +1729,12 @@ def update_approval_notes(order_id: str, note: str, mark_processed: bool = True)
 
 
 def sync_approval_amounts(order_id: str, new_total: float, new_breakdown_str: str) -> None:
-    """Write the reconciled breakdown (col E) and the FINAL invoiced total (col G,
-    "Amount ($) by User") back to Excel after A4 reconciliation.
+    """Write the reconciled USER breakdown (col G, "Service / Breakdown by User") and its
+    FINAL invoiced total (col H, "Amount ($) by User") back to Excel after A4 reconciliation.
 
-    The AI's original proposal in col F ("Amount ($) by AI") is left UNTOUCHED so the
-    AI-vs-approver gap stays visible for learning. Col G records what was actually
-    invoiced — whether the approver entered an override or accepted the AI's price.
+    The AI baseline — col E ("Service / Breakdown by AI") and col F ("Amount ($) by AI") —
+    is left UNTOUCHED so the AI-vs-approver gap stays visible for learning. Cols G/H record
+    what was actually invoiced.
     """
     base = _wb_base()
     h    = _session_headers()
@@ -1677,10 +1750,10 @@ def sync_approval_amounts(order_id: str, new_total: float, new_breakdown_str: st
         if len(vals) >= 1 and str(vals[0]) == str(order_id):
             idx       = row["index"]
             excel_row = idx + 2   # 0-based table index + header + 1
-            svc_letter  = _col_letter(_COL_SERVICE)      # "E"  Service / Breakdown
-            user_letter = _col_letter(_COL_AMOUNT_USER)  # "G"  Amount ($) by User
-            # E and G are NOT adjacent (F = locked AI proposal sits between) → two PATCHes,
-            # so col F is never overwritten.
+            svc_letter  = _col_letter(_COL_SERVICE_USER)  # "G"  Service / Breakdown by User
+            user_letter = _col_letter(_COL_AMOUNT_USER)   # "H"  Amount ($) by User
+            # G and H ARE adjacent, but patch separately (G is text, H is a number) to keep
+            # each cell's type/format clean. E/F (AI baseline) are never touched.
             httpx.patch(
                 f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{svc_letter}{excel_row}')",
                 headers=h, json={"values": [[new_breakdown_str]]}, timeout=15.0,
@@ -1690,9 +1763,83 @@ def sync_approval_amounts(order_id: str, new_total: float, new_breakdown_str: st
                 headers=h, json={"values": [[new_total]]}, timeout=15.0,
             ).raise_for_status()
             log.info(
-                "sync_approval_amounts: order=%s total=%.2f → col G (Amount by User); breakdown → col E; col F (AI) preserved",
+                "sync_approval_amounts: order=%s total=%.2f → col H (Amount by User); breakdown → col G; E/F (AI) preserved",
                 order_id, new_total,
             )
             return
 
     log.warning("sync_approval_amounts: order_id=%s not found in Excel", order_id)
+
+
+# Parse a "Name: $amount | Name: $amount" user breakdown (same pattern A4 uses).
+_USER_BREAKDOWN_RE = re.compile(r'([^|$:]+?):\s*\$\s*([\d,]+(?:\.\d{1,2})?)\s*(?:\||$)')
+
+
+def _sum_breakdown(s: str):
+    """Sum the $amounts in a 'Name: $amt | Name: $amt' breakdown string.
+
+    Returns the float total, or None when the string has NO priced items (blank, a bare
+    service name, or unparseable) — callers MUST treat None as 'leave the total alone'.
+    """
+    items = _USER_BREAKDOWN_RE.findall(s or "")
+    if not items:
+        return None
+    try:
+        return round(sum(float(amt.replace(",", "")) for _, amt in items), 2)
+    except (TypeError, ValueError):
+        return None
+
+
+def recompute_user_amounts() -> dict:
+    """Refresh "Amount ($) by User" (H) = sum of "Service / Breakdown by User" (G) for
+    every data row, on every pipeline run — so the approver always sees the live total of
+    their edited breakdown (BEFORE and AFTER approval).
+
+    Idempotent: writes a cell only when the total actually changed (> $0.005). Rows whose G
+    has no priced items (blank / bare service name / garbled) are SKIPPED so H is never
+    clobbered. Single-cell Graph range PATCH only — no openpyxl/session/upload, so no sheet
+    rebuild and no 423-lock risk. Never raises; returns {scanned, updated}.
+    """
+    summary = {"scanned": 0, "updated": 0}
+    try:
+        ensure_approval_sheet()
+        base = _wb_base()
+        h    = _headers()
+        r = _graph_get_retry(
+            f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows",
+            headers=h, timeout=15.0,
+        )
+        if r is None or r.status_code in _TRANSIENT_STATUS:
+            log.warning("recompute_user_amounts: rows read unavailable (status %s) — skip this cycle",
+                        getattr(r, "status_code", "n/a"))
+            return summary
+        r.raise_for_status()
+
+        user_letter = _col_letter(_COL_AMOUNT_USER)   # "H"
+        for row in r.json().get("value", []):
+            vals = row.get("values", [[]])[0]
+            if len(vals) < _COL_COUNT:
+                vals = list(vals) + [""] * (_COL_COUNT - len(vals))
+            order_id = str(vals[_COL_ORDER_ID]).strip()
+            if not order_id:
+                continue
+            summary["scanned"] += 1
+            new_h = _sum_breakdown(str(vals[_COL_SERVICE_USER]))
+            if new_h is None:
+                continue   # no priced items in G → never overwrite H
+            try:
+                cur_h = float(str(vals[_COL_AMOUNT_USER]).replace(",", "").replace("$", "") or 0)
+            except (TypeError, ValueError):
+                cur_h = 0.0
+            if abs(new_h - cur_h) <= 0.005:
+                continue   # already in sync
+            excel_row = row["index"] + 2
+            httpx.patch(
+                f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{user_letter}{excel_row}')",
+                headers=h, json={"values": [[new_h]]}, timeout=15.0,
+            ).raise_for_status()
+            summary["updated"] += 1
+        log.info("recompute_user_amounts: scanned=%d updated=%d", summary["scanned"], summary["updated"])
+    except Exception as exc:
+        log.warning("recompute_user_amounts failed (non-fatal): %s", exc)
+    return summary

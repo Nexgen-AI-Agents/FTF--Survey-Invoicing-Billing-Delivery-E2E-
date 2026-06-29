@@ -25,7 +25,9 @@ from core.logger import get_logger
 log = get_logger("fix_unknown_rows")
 
 _GRAPH = "https://graph.microsoft.com/v1.0"
-_COL_COUNT = 13
+# Derive from the canonical schema so row writes aren't truncated when the Approvals layout
+# changes (16 cols after the 15→16 split, not 13).
+from core.onedrive_excel_client import _COL_COUNT
 
 _STATE_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "data", "pipeline_state.json")
 

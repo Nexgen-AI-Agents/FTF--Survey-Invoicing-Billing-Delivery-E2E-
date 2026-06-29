@@ -12,7 +12,9 @@ from config.settings import (
 )
 
 _GRAPH = "https://graph.microsoft.com/v1.0"
-_COL_PROCESSED_AT = 12
+# Derive from the canonical schema so it tracks the Approvals layout (Processed At is N=13
+# after the 15→16 col split, not M=12).
+from core.onedrive_excel_client import _COL_PROCESSED_AT
 
 
 def get_token():

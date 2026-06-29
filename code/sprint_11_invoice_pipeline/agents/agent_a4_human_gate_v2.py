@@ -17,6 +17,7 @@ Status transitions:
   invoice_draft_posted → on_hold           (hold)
 """
 
+import hashlib
 import json
 import os
 import re
@@ -316,26 +317,34 @@ def _apply_total_override(draft: dict, new_total: float, service_name: str = "Su
 
 
 def _apply_breakdown_override(draft: dict, parsed_breakdown: list) -> dict:
-    """User edited individual service amounts in the breakdown cell. Apply per-service amounts."""
-    draft    = json.loads(json.dumps(draft))  # deep copy
-    services = draft.get("services", [])
+    """The user breakdown (col G) is the SOURCE OF TRUTH — rebuild the draft's services
+    from it. Each parsed 'Name: $amount' becomes a service line; where the name matches an
+    existing draft service we keep its description (so A5's invoice line keeps context),
+    otherwise it's a brand-new line. Total = sum of the user breakdown (so it always equals
+    col H). Supports the user editing amounts, renaming, adding, or removing services.
+    """
+    draft = json.loads(json.dumps(draft))  # deep copy
+    old_by_name = {(s.get("name") or "").strip().lower(): s for s in draft.get("services", [])}
 
-    # Build name→amount from what the user typed
-    user_prices = {item["name"].lower(): item["amount"] for item in parsed_breakdown}
-
-    for svc in services:
-        key = (svc.get("name") or "").lower()
-        if key in user_prices:
-            svc["amount"] = user_prices[key]
-        else:
-            # Substring match — e.g. "boundary" matches "Boundary Survey"
-            for k, v in user_prices.items():
-                if k in key or key in k:
-                    svc["amount"] = v
+    new_services = []
+    for item in parsed_breakdown:
+        name = item["name"]
+        amt  = round(float(item["amount"]), 2)
+        key  = name.lower()
+        match = old_by_name.get(key)
+        if not match:  # substring match — "boundary" ↔ "Boundary Survey"
+            for k, s in old_by_name.items():
+                if k and (k in key or key in k):
+                    match = s
                     break
+        new_services.append({
+            "name":        name,
+            "description": (match or {}).get("description", ""),
+            "amount":      amt,
+        })
 
-    draft["total_amount"] = round(sum(s.get("amount", 0) for s in services), 2)
-    draft["services"]     = services
+    draft["services"]     = new_services
+    draft["total_amount"] = round(sum(s["amount"] for s in new_services), 2)
     return draft
 
 
@@ -352,6 +361,97 @@ def _build_breakdown_str_from_draft(services: list) -> str:
     return " | ".join(p for p in parts if p)
 
 
+def _county_client_from_row(db_row: dict):
+    """Best-effort (county, client) for an order from its state row / data_sources packet."""
+    raw_sources = db_row.get("data_sources")
+    ds = json.loads(raw_sources) if isinstance(raw_sources, str) else (raw_sources or {})
+    packet = ds.get("packet") or {}
+    pc = packet.get("property_county")
+    county = (pc.get("value", "") if isinstance(pc, dict) else (pc or "")) or ""
+    client = db_row.get("client_name", "") or ""
+    return str(county), str(client)
+
+
+def _record_breakdown_corrections(order_id: str, db_row: dict, ai_amounts: dict, final_services: list) -> None:
+    """Learn from per-service price corrections: AI baseline (col E, captured BEFORE the
+    override) vs the user's final amount (col G). Appends to learned_rules.json
+    ['breakdown_corrections']; A3 surfaces these in the pricing prompt. Idempotent per
+    (order_id, service, user_amount). Never raises.
+    """
+    changed = []
+    for svc in final_services:
+        name = (svc.get("name") or "").strip()
+        if not name:
+            continue
+        user_amt = round(float(svc.get("amount", 0) or 0), 2)
+        ai_amt = ai_amounts.get(name.lower())
+        if ai_amt is None:  # substring match against the AI baseline
+            for k, v in ai_amounts.items():
+                if k and (k in name.lower() or name.lower() in k):
+                    ai_amt = v
+                    break
+        if ai_amt is None or abs(user_amt - float(ai_amt)) <= 0.01:
+            continue
+        changed.append({"service": name, "ai_amount": round(float(ai_amt), 2), "user_amount": user_amt})
+    if not changed:
+        return
+    county, client = _county_client_from_row(db_row)
+    now = datetime.now(timezone.utc).isoformat()
+    try:
+        data = {}
+        if os.path.exists(_RULES_FILE):
+            with open(_RULES_FILE) as f:
+                data = json.load(f)
+        bucket   = data.setdefault("breakdown_corrections", [])
+        consumed = set(data.setdefault("breakdown_corrections_consumed", []))
+        added = False
+        for c in changed:
+            key = f"{order_id}:{c['service'].lower()}:{c['user_amount']}"
+            if key in consumed:
+                continue
+            consumed.add(key)
+            bucket.append({**c, "order_id": order_id, "client": client, "county": county, "observed_at": now})
+            added = True
+        if added:
+            data["breakdown_corrections_consumed"] = sorted(consumed)
+            with open(_RULES_FILE, "w") as f:
+                json.dump(data, f, indent=2, default=str)
+            log.info("recorded %d breakdown correction(s) for order=%s", len(changed), order_id)
+    except Exception as exc:
+        log.warning("record breakdown corrections failed order=%s (non-fatal): %s", order_id, exc)
+
+
+def _record_decision_learning(order_id: str, db_row: dict, decision: str, reason_text: str) -> None:
+    """Record a Reject / On-hold decision as a learning signal (even with no reason given),
+    so A3 can reason with 'this kind of order was rejected/held before'. Appends to
+    learned_rules.json ['decision_signals']. Idempotent per (order_id, decision, reason).
+    Never raises.
+    """
+    county, client = _county_client_from_row(db_row)
+    service = db_row.get("service_type", "") or ""
+    reason  = (reason_text or "").strip() or "(no reason given)"
+    now = datetime.now(timezone.utc).isoformat()
+    try:
+        data = {}
+        if os.path.exists(_RULES_FILE):
+            with open(_RULES_FILE) as f:
+                data = json.load(f)
+        bucket   = data.setdefault("decision_signals", [])
+        consumed = set(data.setdefault("decision_signals_consumed", []))
+        key = f"{order_id}:{decision}:{hashlib.sha1(reason.encode('utf-8')).hexdigest()[:12]}"
+        if key in consumed:
+            return
+        consumed.add(key)
+        bucket.append({"order_id": order_id, "client": client, "service": service,
+                       "county": county, "decision": decision, "reason": reason, "observed_at": now})
+        data["decision_signals_consumed"] = sorted(consumed)
+        with open(_RULES_FILE, "w") as f:
+            json.dump(data, f, indent=2, default=str)
+        log.info("recorded decision signal order=%s decision=%s reason=%r", order_id, decision, reason[:60])
+    except Exception as exc:
+        log.warning("record decision signal failed order=%s (non-fatal): %s", order_id, exc)
+
+
 def process_dispatch_input() -> dict:
     """Handle a single order from GitHub Actions workflow_dispatch inputs.
 
@@ -361,8 +461,9 @@ def process_dispatch_input() -> dict:
     order_id       = os.getenv("INPUT_ORDER_ID",  "").strip()
     action         = os.getenv("INPUT_ACTION",    "").strip().lower()
     notes          = os.getenv("INPUT_NOTES",     "").strip()
-    excel_amount   = os.getenv("INPUT_AMOUNT",    "").strip()
-    excel_breakdown= os.getenv("INPUT_BREAKDOWN", "").strip()
+    excel_amount   = os.getenv("INPUT_AMOUNT",    "").strip()    # col H — Amount ($) by User (auto-computed)
+    excel_breakdown= os.getenv("INPUT_BREAKDOWN", "").strip()    # col G — Service / Breakdown by User (source of truth)
+    user_learning  = os.getenv("INPUT_USER_LEARNING", "").strip()  # col P — Learning provided by user
 
     if not order_id or not action:
         log.warning("workflow_dispatch: INPUT_ORDER_ID or INPUT_ACTION not set")
@@ -481,67 +582,43 @@ def process_dispatch_input() -> dict:
             log.info("dispatch: order=%s canceled in FTF — approval skipped", order_id)
             return {"ok": True, "order_id": order_id, "action": "skipped_canceled"}
 
-        # ── Amount reconciliation: pick up any user edits to col E (breakdown) or col F (total) ──
+        # ── Reconcile from the USER breakdown (col G) — the SOURCE OF TRUTH ──────────
         raw_draft = db_row.get("invoice_draft")
         draft = json.loads(raw_draft) if isinstance(raw_draft, str) else (raw_draft or {})
-        orig_total = float(draft.get("total_amount", 0) or 0)
-
-        parsed_breakdown = _parse_breakdown_str(excel_breakdown)
-        orig_service_amounts = {
-            (s.get("name") or "").lower(): float(s.get("amount", 0))
+        # AI baseline (= col E), captured BEFORE the override, so we can learn the AI-vs-user gap.
+        ai_service_amounts = {
+            (s.get("name") or "").lower(): float(s.get("amount", 0) or 0)
             for s in draft.get("services", [])
         }
-        # Detect whether the user changed per-service amounts in the breakdown cell
-        amounts_changed = parsed_breakdown and any(
-            abs(item["amount"] - orig_service_amounts.get(item["name"].lower(), -1)) > 0.01
-            for item in parsed_breakdown
-        )
 
-        try:
-            excel_total = float(excel_amount.replace(",", "").replace("$", ""))
-        except (ValueError, TypeError):
-            excel_total = orig_total
-
-        total_changed = abs(excel_total - orig_total) > 0.01
-
-        if amounts_changed:
-            # User edited individual service amounts — use breakdown values, recalculate total
+        parsed_breakdown = _parse_breakdown_str(excel_breakdown)   # col G
+        if parsed_breakdown:
+            # The user breakdown drives the invoice; total = sum of col G (equals col H).
             draft = _apply_breakdown_override(draft, parsed_breakdown)
-            log.info(
-                "dispatch: order=%s breakdown-level price edit applied, new total=%.2f",
-                order_id, draft["total_amount"],
-            )
-        elif total_changed:
-            # User edited total only — distribute proportionally (synthesize a service
-            # line from the order's service type if the draft has none, e.g. pricing_needed)
-            draft = _apply_total_override(draft, excel_total, service_name=db_row.get("service_type", "Survey"))
-            log.info(
-                "dispatch: order=%s total-only price edit applied %.2f→%.2f",
-                order_id, orig_total, excel_total,
-            )
-
-        # Write reconciled values back to Excel so both columns stay in sync
-        if amounts_changed or total_changed:
-            new_breakdown = _build_breakdown_str_from_draft(draft.get("services", []))
+            log.info("dispatch: order=%s invoicing from user breakdown (col G), total=%.2f",
+                     order_id, draft["total_amount"])
+        else:
+            # No priced items in col G (bare service name / blank) — manual-pricing / condo
+            # path. Fall back to the auto-computed user total (col H) if the user gave one.
             try:
-                from core.onedrive_excel_client import sync_approval_amounts
-                sync_approval_amounts(order_id, draft["total_amount"], new_breakdown)
-            except Exception as exc:
-                log.warning("sync_approval_amounts failed order=%s (non-fatal): %s", order_id, exc)
-            # Persist the updated draft
-            save_order_state(order_id, invoice_draft=json.dumps(draft, default=str))
-            # Save a learned price rule when user explicitly changed the amount
-            service_type = db_row.get("service_type", "")
-            raw_sources = db_row.get("data_sources")
-            ds = json.loads(raw_sources) if isinstance(raw_sources, str) else (raw_sources or {})
-            county = (ds.get("packet") or {}).get("property_county", {}).get("value", "")
-            _save_learned_price(
-                service_type=service_type,
-                county=county,
-                amount=draft["total_amount"],
-                learned_from="excel_edit",
-                order_id=order_id,
-            )
+                excel_total = float(excel_amount.replace(",", "").replace("$", ""))
+            except (ValueError, TypeError):
+                excel_total = 0.0
+            if excel_total > 0:
+                draft = _apply_total_override(draft, excel_total, service_name=db_row.get("service_type", "Survey"))
+                log.info("dispatch: order=%s manual total from col H applied=%.2f", order_id, excel_total)
+
+        # Write the reconciled breakdown → col G and total → col H, and persist the draft.
+        new_breakdown = _build_breakdown_str_from_draft(draft.get("services", []))
+        try:
+            from core.onedrive_excel_client import sync_approval_amounts
+            sync_approval_amounts(order_id, float(draft.get("total_amount", 0) or 0), new_breakdown)
+        except Exception as exc:
+            log.warning("sync_approval_amounts failed order=%s (non-fatal): %s", order_id, exc)
+        save_order_state(order_id, invoice_draft=json.dumps(draft, default=str))
+
+        # Learn from the AI-vs-user gap, per service (col E baseline vs col G user breakdown).
+        _record_breakdown_corrections(order_id, db_row, ai_service_amounts, draft.get("services", []))
 
         # Guard: a draft with no priced services can't be finalized — A5 would raise on every
         # run and the order would be SILENTLY stranded at invoice_approved (looking "processed").
@@ -550,8 +627,8 @@ def process_dispatch_input() -> dict:
         _final_total = float(draft.get("total_amount", 0) or 0)
         if not _final_services or _final_total <= 0:
             note = (
-                "Cannot approve — no amount entered. Type the invoice amount in the Amount "
-                "column (or per-service in Service / Breakdown), then set Action = Approve again."
+                "Cannot approve — no amount entered. Enter the service + price in "
+                "'Service / Breakdown by User' as 'Survey: $X', then set Action = Approve again."
             )
             log.warning("dispatch: order=%s approved with no amount — not advancing; asked for price", order_id)
             try:
@@ -586,6 +663,10 @@ def process_dispatch_input() -> dict:
             return {"ok": True, "order_id": order_id, "action": "ignored",
                     "reason": f"order already {current_status}"}
 
+        # Reason for the reject/hold = Notes (L) + Learning provided by user (P), if any.
+        # No invoice / no email is sent on reject or hold — we only LEARN from the decision
+        # (even when the operator gives no reason at all).
+        reason_text = "; ".join(t for t in (notes, user_learning) if t)
         if action == "reject":
             save_order_state(order_id, status="invoice_rejected")
             log_decision(AGENT_NAME, "invoice_rejected", order_id=order_id,
@@ -598,6 +679,7 @@ def process_dispatch_input() -> dict:
                          reason=f"Held via OneDrive Excel: {notes}",
                          input_summary=f"notes={notes}", output_summary="status → on_hold")
             log.info("dispatch: held order=%s", order_id)
+        _record_decision_learning(order_id, db_row, action, reason_text)
 
     else:
         log.warning("dispatch: unknown action=%s for order=%s", action, order_id)

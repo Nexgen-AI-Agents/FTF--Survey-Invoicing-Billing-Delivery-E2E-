@@ -66,11 +66,12 @@ if __name__ == "__main__":
         action   = item["action"]   # approve / reject / hold
         notes    = item["notes"]
 
-        os.environ["INPUT_ORDER_ID"]  = order_id
-        os.environ["INPUT_ACTION"]    = action
-        os.environ["INPUT_NOTES"]     = notes
-        os.environ["INPUT_AMOUNT"]    = str(item.get("amount_cell", ""))
-        os.environ["INPUT_BREAKDOWN"] = str(item.get("breakdown_cell", ""))
+        os.environ["INPUT_ORDER_ID"]      = order_id
+        os.environ["INPUT_ACTION"]        = action
+        os.environ["INPUT_NOTES"]         = notes
+        os.environ["INPUT_AMOUNT"]        = str(item.get("amount_cell", ""))      # col H (auto-computed total)
+        os.environ["INPUT_BREAKDOWN"]     = str(item.get("breakdown_cell", ""))   # col G (user breakdown — source of truth)
+        os.environ["INPUT_USER_LEARNING"] = str(item.get("learning_user", ""))    # col P (plain-English learning)
 
         try:
             r = process_dispatch_input()

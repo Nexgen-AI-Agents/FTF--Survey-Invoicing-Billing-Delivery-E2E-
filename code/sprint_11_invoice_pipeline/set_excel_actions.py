@@ -20,13 +20,14 @@ from config.settings import (
     ONEDRIVE_SHEET_NAME, ONEDRIVE_TABLE_NAME,
 )
 from core.logger import get_logger
+# Derive column indices from the canonical schema so this helper never drifts when the
+# Approvals layout changes (e.g. the 15→16 col split: Action moved J→K, Processed At M→N).
+from core.onedrive_excel_client import _COL_ACTION, _COL_PROCESSED_AT, _COL_COUNT
 
 log = get_logger("set_excel_actions")
 
 _GRAPH     = "https://graph.microsoft.com/v1.0"
 _TOKEN_URL = f"https://login.microsoftonline.com/{AZURE_TENANT_ID}/oauth2/v2.0/token"
-_COL_ACTION = 9   # column J (0-indexed)
-_COL_COUNT  = 13
 
 
 def _get_token() -> str:
@@ -77,7 +78,7 @@ def set_actions(actions: dict[str, str]) -> None:
 
         action_val = actions[order_id]
         current_action = str(vals[_COL_ACTION]).strip() if len(vals) > _COL_ACTION else ""
-        processed_at   = str(vals[12]).strip() if len(vals) > 12 else ""
+        processed_at   = str(vals[_COL_PROCESSED_AT]).strip() if len(vals) > _COL_PROCESSED_AT else ""
 
         if processed_at:
             log.info("order=%s already processed — skipping", order_id)

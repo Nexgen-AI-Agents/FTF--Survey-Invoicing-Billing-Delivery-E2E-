@@ -142,8 +142,8 @@ def _load_learned_rules(order_id: str = "") -> str:
                     f"(learned from {len(scored)} human-invoiced orders)"
                 )
 
-        # Operator-provided guidance — free-text notes the approver typed in the
-        # "Learning provided by user" column of the Approvals sheet. The model factors
+        # Operator-provided guidance — free-text notes the approver typed in the "Learning
+        # provided by user" (and "Notes") columns of the Approvals sheet. The model factors
         # these in directly (no hardcoded prices). Most recent first, capped.
         for g in reversed(data.get("user_guidance", [])[-15:]):
             if not isinstance(g, dict):
@@ -151,6 +151,33 @@ def _load_learned_rules(order_id: str = "") -> str:
             who = g.get("client", "")
             tag = f" (client: {who})" if who else ""
             lines.append(f"  • [OPERATOR GUIDANCE{tag}] {g.get('note', '')}")
+
+        # Per-service price corrections — where the approver edited "Service / Breakdown by
+        # User" away from the AI's own breakdown. Strong signal for what this service/client
+        # should actually cost. Most recent first, capped.
+        for c in reversed(data.get("breakdown_corrections", [])[-15:]):
+            if not isinstance(c, dict):
+                continue
+            who = c.get("client", "")
+            cty = c.get("county", "")
+            ctx = " ".join(p for p in [f"(client: {who})" if who else "", f"[{cty}]" if cty else ""] if p)
+            lines.append(
+                f"  • [USER PRICE CORRECTION{(' ' + ctx) if ctx else ''}] "
+                f"{c.get('service', '')}: AI ${float(c.get('ai_amount', 0) or 0):.0f} → "
+                f"user ${float(c.get('user_amount', 0) or 0):.0f}"
+            )
+
+        # Reject / On-hold decisions — orders the approver chose NOT to invoice, with the
+        # reason if they gave one. Helps the AI flag/avoid similar mistakes. Recent, capped.
+        for d in reversed(data.get("decision_signals", [])[-12:]):
+            if not isinstance(d, dict):
+                continue
+            who = d.get("client", "")
+            tag = f" (client: {who})" if who else ""
+            lines.append(
+                f"  • [DECISION SIGNAL{tag}] order was {d.get('decision', '')} — "
+                f"{d.get('service', '')}: {d.get('reason', '')}"
+            )
 
         return "\n".join(lines)
     except Exception:
@@ -552,6 +579,12 @@ def _emit_learning_row(order_id, packet, data_sources, order_details, live, link
     client_name = packet.get("client_name", {}).get("value") or company_info.get("company_name") or db_row.get("client_name", "")
     address     = packet.get("property_address", {}).get("value") or order_details.get("ng_property_address") or ""
     svc_str     = _build_breakdown_str(ai_services) or service_type or "Survey"
+    # G (user breakdown) for a learning row = the REAL human amount as a single line, so col H
+    # (which auto-sums G every run) stays equal to human_amt instead of being recomputed to
+    # the AI shadow price. E (svc_str) keeps the AI breakdown baseline. Strip ':$|' from the
+    # label so the 'Name: $amt' format always parses back to exactly human_amt.
+    _su_lbl = (service_type or "Survey").replace(":", " ").replace("$", " ").replace("|", " ").strip() or "Survey"
+    svc_user_str = f"{_su_lbl}: ${float(human_amt):.2f}"
     note        = ("Already invoiced in FTF — LEARNING row (no new invoice). "
                    "AI compared its price to the actual amount and recorded what it learned.")
     try:
@@ -562,6 +595,7 @@ def _emit_learning_row(order_id, packet, data_sources, order_details, live, link
             service      = svc_str,
             amount       = ai_price,            # Amount ($) by AI — the AI's shadow price
             amount_user  = human_amt,           # Amount ($) by User — the real human amount
+            service_user = svc_user_str,        # Service / Breakdown by User — human amount line
             ai_learning  = learn_note,          # AI Learning — structured record
             confidence   = "N/A",
             escalate     = False,

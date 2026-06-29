@@ -20,13 +20,13 @@ from config.settings import (
     ONEDRIVE_SHARE_URL, ONEDRIVE_SHEET_NAME, ONEDRIVE_TABLE_NAME,
 )
 from core.logger import get_logger
+# Derive column indices from the canonical schema so this helper never drifts when the
+# Approvals layout changes (15→16 col split: Action J→K, Processed At M→N).
+from core.onedrive_excel_client import _COL_ACTION, _COL_PROCESSED_AT, _COL_COUNT
 
 log = get_logger("cleanup_stale_excel_rows")
 
 _GRAPH = "https://graph.microsoft.com/v1.0"
-_COL_ACTION       = 9
-_COL_PROCESSED_AT = 12
-_COL_COUNT        = 13
 
 
 def _get_token() -> str:

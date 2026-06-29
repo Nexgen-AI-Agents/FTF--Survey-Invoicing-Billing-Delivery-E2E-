@@ -21,7 +21,9 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
 from core.logger import get_logger
-from core.onedrive_excel_client import _close_session, consume_user_learnings, sync_pricing_rules_to_json
+from core.onedrive_excel_client import (
+    _close_session, consume_user_learnings, recompute_user_amounts, sync_pricing_rules_to_json,
+)
 
 log = get_logger("agent_a0_orchestrator")
 
@@ -55,6 +57,15 @@ def run() -> dict:
         log.info("user-learning consume: %s", ul)
     except Exception as exc:
         log.warning("consume_user_learnings failed (non-fatal): %s", exc)
+
+    # Refresh "Amount ($) by User" (col H) = total of the user's edited breakdown (col G),
+    # for every row, so the approver always sees the live total of their edits (before AND
+    # after approval). Idempotent; single-cell PATCH only.
+    try:
+        ra = recompute_user_amounts()
+        log.info("recompute user amounts: %s", ra)
+    except Exception as exc:
+        log.warning("recompute_user_amounts failed (non-fatal): %s", exc)
 
     try:
         results["a1_flag_hunter"]     = {"new_queued": len(run_a1())}
