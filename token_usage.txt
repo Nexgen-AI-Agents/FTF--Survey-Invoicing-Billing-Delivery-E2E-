@@ -171,7 +171,22 @@ MODEL: claude-opus-4-8 (1M context)
                                                     └─────────────────────────────────┘
 
 ================================================================================
-CUMULATIVE PROJECT TOTAL (as of 2026-06-26)
+DATE: 2026-06-29 (Monday)
+MODEL: claude-opus-4-8 (1M context)
+================================================================================
+
+  SESSION: Verify schema-split deploy + fix AI columns rendering blue (must be gray)
+
+  [~17:00 ET] | claude-opus-4-8 | Confirm schema-split deploy: md5 of 5 pipeline files on server == git HEAD (664a938b) | In: ~25,000 | Out: ~3,000 | Total: ~28,000
+  [~17:10 ET] | claude-opus-4-8 | Root-cause all-blue Approvals tab (default TableStyleMedium2); add idempotent _neutralize_table_and_color_header (gray=AI, blue=user); deploy + self-heal live sheet + verify + commit (e25f0b3c) | In: ~35,000 | Out: ~9,000 | Total: ~44,000
+
+                                                    ┌─────────────────────────────────┐
+                                         DAILY TOTAL │  ~72,000 tokens (est.)          │
+                                         MODEL       │  claude-opus-4-8 (1M context)  │
+                                                    └─────────────────────────────────┘
+
+================================================================================
+CUMULATIVE PROJECT TOTAL (as of 2026-06-29)
 ================================================================================
 
   Date          Model                   Tokens (est.)
@@ -183,8 +198,9 @@ CUMULATIVE PROJECT TOTAL (as of 2026-06-26)
   2026-06-18    claude-opus-4-8        ~142,000
   2026-06-24    claude-opus-4-8        ~115,000
   2026-06-26    claude-opus-4-8      ~1,711,000
+  2026-06-29    claude-opus-4-8         ~72,000
   ──────────────────────────────────────────────────────
-  PROJECT TOTAL                       ~2,758,200 tokens
+  PROJECT TOTAL                       ~2,830,200 tokens
 
 ================================================================================
 HOW TO MAINTAIN THIS FILE
