@@ -182,9 +182,9 @@ CUMULATIVE PROJECT TOTAL (as of 2026-06-26)
   2026-06-16    claude-opus-4-8        ~428,500
   2026-06-18    claude-opus-4-8        ~142,000
   2026-06-24    claude-opus-4-8        ~115,000
-  2026-06-26    claude-opus-4-8      ~1,281,000
+  2026-06-26    claude-opus-4-8      ~1,711,000
   ──────────────────────────────────────────────────────
-  PROJECT TOTAL                       ~2,328,200 tokens
+  PROJECT TOTAL                       ~2,758,200 tokens
 
 ================================================================================
 HOW TO MAINTAIN THIS FILE
@@ -224,3 +224,8 @@ To switch models: use /model command in Claude Code
 [18:00 ET] | claude-opus-4-8[1m] | Single source of truth: found dual deployment (server cron vs GitHub Actions), confirmed 3 pipeline workflows already disabled, mapped all 9 workflows | In: ~22,000 | Out: ~4,000 | Total: ~26,000
 [18:30 ET] | claude-opus-4-8[1m] | AR Follow-Up clarified (internal Teams alerts only — corrected my flag); paused Monthly Statements auto-send (remove monthly cron); commit bbd4ce1c | In: ~14,000 | Out: ~3,000 | Total: ~17,000
    SESSION-3 SUBTOTAL ~229,000  (In ~196,000 | Out ~33,000)
+
+[19:30 ET] | claude-opus-4-8[1m] | PLAN (plan-mode): split Service/Breakdown into AI + User cols; 3 Explore agents + 1 Plan agent + clarifying Qs (colors/Notes/recompute timing) | In: ~205,000 | Out: ~16,000 | Total: ~221,000
+[20:30 ET] | claude-opus-4-8[1m] | IMPLEMENT: 16-col schema split (E=AI / G=User SoT, H auto-computed); recompute_user_amounts; A4 reconcile-from-G; reject/hold + G-vs-E + Notes learning; guide v12/howto v5; fixed 4 hardcoded-index utilities | In: ~120,000 | Out: ~16,000 | Total: ~136,000
+[21:15 ET] | claude-opus-4-8[1m] | QA + deploy: 21/21 logic tests; senior-QA agent review + fixes; deploy 9 files; live sheet rebuilt to 16 cols (verified); commit 664a938b | In: ~92,000 | Out: ~7,000 | Total: ~99,000
+   SESSION-3 SUBTOTAL (rev) ~685,000  (In ~613,000 | Out ~72,000)
