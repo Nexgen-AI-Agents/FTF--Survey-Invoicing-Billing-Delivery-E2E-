@@ -103,6 +103,11 @@ _USER_EDITABLE_HEADERS = {
 _AI_LOCKED_FILL = "#D9D9D9"   # gray  — AI-managed / read-only
 _USER_EDIT_FILL = "#DDEBF7"   # blue  — approver edits here
 
+# Neutral table style so Excel's default blue banded style ("TableStyleMedium2") does NOT
+# paint every column blue. With banding off, the per-column ownership fills (gray = AI,
+# blue = approver) are what the eye sees — including on the header row.
+_APPROVAL_TABLE_STYLE = "TableStyleLight1"
+
 # Row fill colors for Action dropdown choices (light palette, Excel-compatible hex)
 _ACTION_COLORS = {
     "Approve": "#C6EFCE",
@@ -284,10 +289,13 @@ def _setup_full_sheet_via_openpyxl() -> None:
 
     ws = wb.create_sheet(ONEDRIVE_SHEET_NAME)
 
-    # ── Headers ───────────────────────────────────────────────────────────────
+    # ── Headers (tinted by ownership: gray = AI-managed, blue = approver-editable) ──
+    _ai_hdr_fill   = PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid")
+    _user_hdr_fill = PatternFill(start_color="DDEBF7", end_color="DDEBF7", fill_type="solid")
     for col_idx, header in enumerate(APPROVAL_HEADERS, 1):
         cell = ws.cell(row=1, column=col_idx, value=header)
         cell.font = Font(bold=True)
+        cell.fill = _user_hdr_fill if header in _USER_EDITABLE_HEADERS else _ai_hdr_fill
 
     # ── NO Excel Table here ───────────────────────────────────────────────────
     # A header-only openpyxl table (zero data rows) makes Microsoft Graph reject the
@@ -364,6 +372,63 @@ def _ensure_approval_table_via_api() -> None:
         log.info("ApprovalTable created via Graph API")
     except Exception as exc:
         log.warning("_ensure_approval_table_via_api failed (non-fatal): %s", exc)
+
+    _neutralize_table_and_color_header()
+
+
+def _neutralize_table_and_color_header() -> None:
+    """Make AI columns visibly GRAY and approver columns BLUE on the Approvals tab.
+
+    Excel's default table style ("TableStyleMedium2") paints the whole table blue, which
+    hides the per-column ownership tint. This switches the table to a neutral style with
+    banding OFF, then tints the header row by ownership (gray = AI-managed, blue = editable).
+    Data rows are tinted per-row by _apply_row_colors() as they are appended.
+
+    Idempotent and self-healing: a GET-guard skips the work once the style is already
+    neutral, so it is cheap to call on every pipeline run. Uses plain (non-session) headers
+    and never raises — formatting must never break the pipeline.
+    """
+    base = _wb_base()
+    h    = _headers()
+    try:
+        r = _graph_get_retry(
+            f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}",
+            headers=h, timeout=15.0,
+        )
+        if r is None or not r.is_success:
+            return
+        tbl = r.json()
+        already_neutral = (
+            tbl.get("style") == _APPROVAL_TABLE_STYLE
+            and tbl.get("showBandedRows") is False
+        )
+        if already_neutral:
+            return   # nothing to do — already gray/blue
+
+        tid = tbl.get("id")
+        if tid:
+            httpx.patch(
+                f"{base}/tables/{tid}", headers=h,
+                json={
+                    "style": _APPROVAL_TABLE_STYLE,
+                    "showBandedRows": False,
+                    "showBandedColumns": False,
+                },
+                timeout=15.0,
+            )
+        # Tint the header row by ownership (gray AI / blue approver). Manual cell fills
+        # override the table style, so the ownership colors win regardless of the style.
+        for c1, c2, color in _color_runs():
+            try:
+                httpx.patch(
+                    f"{base}/worksheets/{ONEDRIVE_SHEET_NAME}/range(address='{c1}1:{c2}1')/format/fill",
+                    headers=h, json={"color": color}, timeout=10.0,
+                )
+            except Exception as exc:
+                log.debug("header color run %s:%s failed (non-fatal): %s", c1, c2, exc)
+        log.info("_neutralize_table_and_color_header: table style neutralized + header tinted by ownership")
+    except Exception as exc:
+        log.debug("_neutralize_table_and_color_header failed (non-fatal): %s", exc)
 
 
 def ensure_pricing_rules_sheet() -> None:
@@ -668,6 +733,9 @@ def ensure_approval_sheet() -> None:
     ensure_howto_sheet()
     # Self-heal the Action-column dropdown (validation can be stripped by row deletes)
     ensure_action_dropdown()
+    # Self-heal column ownership colors: gray = AI-managed, blue = approver-editable
+    # (neutralizes Excel's default all-blue table style; idempotent GET-guard)
+    _neutralize_table_and_color_header()
 
 
 def ensure_action_dropdown() -> bool:
