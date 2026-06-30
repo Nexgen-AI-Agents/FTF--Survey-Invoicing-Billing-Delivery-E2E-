@@ -643,7 +643,7 @@ def process_dispatch_input() -> dict:
         save_order_state(order_id, status="invoice_approved", approved_by="prateek")
         log_decision(AGENT_NAME, "invoice_approved", order_id=order_id,
                      reason="Approved via OneDrive Excel / Power Automate",
-                     input_summary=f"notes={notes} amounts_changed={amounts_changed} total_changed={total_changed}",
+                     input_summary=f"notes={notes} breakdown={new_breakdown} total={_final_total:.2f}",
                      output_summary="status → invoice_approved")
         log.info("dispatch: approved order=%s", order_id)
 

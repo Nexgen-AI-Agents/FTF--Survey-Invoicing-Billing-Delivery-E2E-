@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FTF Invoice Pipeline — Client Architecture v6</title>
+  <style>
+    :root {
+      --orange: #f97316;
+      --purple: #8b5cf6;
+      --blue:   #3b82f6;
+      --green:  #16a34a;
+      --red:    #dc2626;
+      --amber:  #d97706;
+      --slate:  #64748b;
+      --bg:     #f1f5f9;
+      --card:   #ffffff;
+      --grayfill: #d9d9d9;
+      --bluefill: #ddebf7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: #1e293b;
+      padding: 40px 20px;
+      min-width: 860px;
+    }
+    .page { max-width: 1000px; margin: 0 auto; }
+
+    .header { text-align: center; margin-bottom: 14px; }
+    .header h1 { font-size: 30px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+    .header .sub { color: var(--slate); margin-top: 6px; font-size: 15px; }
+    .cron-badge {
+      display: inline-block; background: #e0f2fe; color: #0369a1;
+      padding: 5px 14px; border-radius: 20px; font-size: 13px;
+      font-weight: 700; margin-top: 14px;
+    }
+
+    /* Plain-language intro */
+    .eli5 { background:#fffbeb; border:2px solid #fde68a; border-radius:14px; padding:16px 20px; margin:18px 0 30px; }
+    .eli5 .t { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#b45309; margin-bottom:6px; }
+    .eli5 p { font-size:14px; color:#7c2d12; line-height:1.6; }
+
+    .flow { display: flex; flex-direction: column; }
+    .row  { display: flex; align-items: flex-start; gap: 16px; }
+    .spacer { width: 200px; flex-shrink: 0; }
+    .side   { width: 200px; flex-shrink: 0; }
+
+    .step {
+      flex: 1; background: var(--card); border-radius: 14px;
+      padding: 20px 22px; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      border-left: 5px solid var(--slate);
+    }
+    .step-num  { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--slate); margin-bottom: 4px; }
+    .step-title { font-size: 17px; font-weight: 800; margin-bottom: 7px; }
+    .step-desc  { font-size: 13.5px; color: #475569; line-height: 1.55; }
+    .plain { font-size:12.5px; color:#0369a1; background:#f0f9ff; border-radius:6px; padding:6px 9px; margin-top:9px; }
+    .badges { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px; }
+    .badge { font-size: 11px; background: #f1f5f9; color: #475569; padding: 3px 9px; border-radius: 5px; font-weight: 700; }
+
+    .orange { border-left-color: var(--orange); } .orange .step-title { color: var(--orange); }
+    .purple { border-left-color: var(--purple); } .purple .step-title { color: var(--purple); }
+    .blue   { border-left-color: var(--blue);   } .blue   .step-title { color: var(--blue);   }
+    .green  { border-left-color: var(--green);  } .green  .step-title { color: var(--green);  }
+
+    .connector { display: flex; align-items: center; margin: 6px 0; }
+    .connector-spacer { width: 200px; flex-shrink: 0; }
+    .connector-line { flex: 1; display: flex; flex-direction: column; align-items: center; }
+    .vline { width: 2px; height: 20px; background: #cbd5e1; }
+    .arrow-head { width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 10px solid #cbd5e1; }
+    .connector-side { width: 200px; flex-shrink: 0; }
+
+    .side-card {
+      background: var(--card); border-radius: 10px; padding: 12px 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07); font-size: 13px; margin-top: 4px;
+    }
+    .side-card .slabel { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .src-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f1f5f9; font-size: 12.5px; }
+    .src-item:last-child { border-bottom: none; }
+
+    /* Excel mini-sheet */
+    .sheet { width:100%; border-collapse:collapse; font-size:10.5px; margin-top:6px; }
+    .sheet th, .sheet td { border:1px solid #cbd5e1; padding:4px 5px; text-align:left; }
+    .sheet th { font-weight:800; }
+    .g { background:var(--grayfill); }
+    .b { background:var(--bluefill); }
+
+    .branches { flex: 1; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .branch { border-radius: 10px; padding: 13px 14px; border: 2px solid; }
+    .branch .blabel { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+    .branch .bdesc  { font-size: 12.5px; color: #475569; line-height: 1.4; }
+    .branch-hold   { border-color: var(--amber); background: #fffbeb; } .branch-hold   .blabel { color: var(--amber); }
+    .branch-reject { border-color: var(--red);   background: #fef2f2; } .branch-reject .blabel { color: var(--red);   }
+    .branch-app    { border-color: var(--green); background: #f0fdf4; } .branch-app    .blabel { color: var(--green); }
+
+    .loop-box { flex: 1; border: 2px dashed #94a3b8; border-radius: 12px; padding: 14px; text-align: center; color: var(--slate); font-size: 14px; font-weight: 700; background: #f8fafc; }
+
+    .legend { margin-top: 34px; background: var(--card); border-radius: 14px; padding: 18px 22px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+    .legend h3 { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--slate); margin-bottom: 12px; }
+    .legend-items { display: flex; flex-wrap: wrap; gap: 14px 24px; }
+    .legend-item  { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .legend-dot   { width: 13px; height: 13px; border-radius: 4px; flex-shrink: 0; border:1px solid #cbd5e1; }
+
+    .footer { text-align: center; margin-top: 28px; color: #94a3b8; font-size: 12px; line-height: 1.8; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>FTF Invoice Pipeline</h1>
+    <div class="sub">How NexGen turns a finished survey into an emailed invoice — automatically, with one human OK</div>
+    <div class="cron-badge">&#9201;&nbsp; Runs by itself every 30 minutes &nbsp;|&nbsp; on the NexGen server</div>
+  </div>
+
+  <!-- Plain-language intro (the simple version) -->
+  <div class="eli5">
+    <div class="t">In one breath</div>
+    <p>
+      A helper robot wakes up every 30 minutes, finds survey orders that are ready to bill,
+      works out a fair price, and writes each one as a row in a shared <b>Excel sheet</b>.
+      A person at NexGen looks at the row, fixes anything in the <b>blue</b> boxes if needed,
+      and picks <b>Approve</b>, <b>Reject</b>, or <b>On&#8209;hold</b>. Only when a human clicks
+      <b>Approve</b> does the robot create the real invoice and email it to the client &mdash;
+      and it can <b>never</b> send the same invoice twice.
+    </p>
+  </div>
+
+  <div class="flow">
+
+    <!-- STEP 1 -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="step orange">
+        <div class="step-num">Step 1 &mdash; Find work</div>
+        <div class="step-title">Look for orders that need an invoice</div>
+        <div class="step-desc">
+          Every 30 minutes the robot checks FTF (the survey system) for orders marked with the
+          <strong>$ &ldquo;needs&nbsp;invoice&rdquo;</strong> flag. It only looks at <em>new</em> ones it hasn&rsquo;t seen before.
+        </div>
+        <div class="plain">Like checking your mailbox for new letters &mdash; only opening the ones you haven&rsquo;t read yet.</div>
+        <div class="badges"><span class="badge">FTF order system</span></div>
+      </div>
+      <div class="side"></div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <!-- STEP 2 -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="step purple">
+        <div class="step-num">Step 2 &mdash; Gather details</div>
+        <div class="step-title">Collect the order facts</div>
+        <div class="step-desc">
+          For each order it gathers <strong>who the client is</strong>, the <strong>property address</strong>,
+          and <strong>which survey services</strong> were done &mdash; everything an invoice needs.
+        </div>
+        <div class="plain">Like filling in a form before you can write a bill.</div>
+      </div>
+      <div class="side">
+        <div class="side-card">
+          <div class="slabel" style="color:var(--purple)">It collects</div>
+          <div class="src-item"><span>&#128100;</span><span>Client name</span></div>
+          <div class="src-item"><span>&#128205;</span><span>Property address</span></div>
+          <div class="src-item"><span>&#128221;</span><span>Services performed</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <!-- STEP 3 -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="step purple">
+        <div class="step-num">Step 3 &mdash; Work out the price</div>
+        <div class="step-title">Price the invoice fairly</div>
+        <div class="step-desc">
+          The robot suggests a price using the <strong>last 2 years of real invoices</strong> for similar jobs in
+          the same area, plus <strong>everything it has learned</strong> from past human corrections and any fixed
+          <strong>Pricing Rules</strong> the team set.
+        </div>
+        <div class="plain">Like pricing a lemonade stand by remembering what people happily paid before.</div>
+        <div class="badges">
+          <span class="badge">Past invoices (2 yrs)</span>
+          <span class="badge">Learned rules</span>
+          <span class="badge">Pricing Rules tab</span>
+        </div>
+      </div>
+      <div class="side">
+        <div class="side-card">
+          <div class="slabel" style="color:var(--purple)">Price comes from</div>
+          <div class="src-item"><span>&#128220;</span><span>Similar past jobs</span></div>
+          <div class="src-item"><span>&#129504;</span><span>What it learned</span></div>
+          <div class="src-item"><span>&#128221;</span><span>Fixed client rates</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <!-- STEP 4 -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="step blue">
+        <div class="step-num">Step 4 &mdash; Write it on the sheet</div>
+        <div class="step-title">Add a row to the Excel &ldquo;Approvals&rdquo; sheet</div>
+        <div class="step-desc">
+          Each order becomes one row in a shared Excel file (on OneDrive). <strong>Gray boxes are the robot&rsquo;s</strong>
+          (please don&rsquo;t edit). <strong>Blue boxes are yours</strong> to change. The <em>Amount&nbsp;by&nbsp;User</em> adds itself up
+          automatically from your breakdown &mdash; you never type a total.
+        </div>
+        <table class="sheet">
+          <tr>
+            <th class="g">Order ID</th><th class="g">Client</th>
+            <th class="g">Service&nbsp;by&nbsp;AI</th><th class="g">$ by&nbsp;AI</th>
+            <th class="b">Service&nbsp;by&nbsp;User</th><th class="g">$ by&nbsp;User</th>
+            <th class="b">Action</th><th class="b">Notes</th><th class="b">Learning</th>
+          </tr>
+          <tr>
+            <td class="g">1013-204</td><td class="g">Sunshine Title</td>
+            <td class="g">Boundary: $475</td><td class="g">$475.00</td>
+            <td class="b">Boundary: $500</td><td class="g">$500.00</td>
+            <td class="b">Approve &#9662;</td><td class="b"></td><td class="b"></td>
+          </tr>
+        </table>
+        <div class="plain">Gray = the robot did it &nbsp;&bull;&nbsp; Blue = your turn to check / edit.</div>
+        <div class="badges"><span class="badge">Excel on OneDrive</span><span class="badge">Microsoft 365</span></div>
+      </div>
+      <div class="side">
+        <div class="side-card">
+          <div class="slabel" style="color:var(--blue)">You edit only</div>
+          <div class="src-item"><span>&#128221;</span><span>Service&nbsp;/&nbsp;Breakdown&nbsp;by&nbsp;User</span></div>
+          <div class="src-item"><span>&#9989;</span><span>Action (dropdown)</span></div>
+          <div class="src-item"><span>&#128172;</span><span>Notes</span></div>
+          <div class="src-item"><span>&#129504;</span><span>Learning provided by user</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <!-- STEP 5: human decision -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="branches">
+        <div class="branch branch-app">
+          <div class="blabel">&#9679; Approve</div>
+          <div class="bdesc">Robot creates the real invoice in FTF and emails it to the client. <b>Only path that sends anything.</b></div>
+        </div>
+        <div class="branch branch-reject">
+          <div class="blabel">&#9679; Reject</div>
+          <div class="bdesc">Nothing is sent. The robot <b>learns why</b> (from your note) so it does better next time.</div>
+        </div>
+        <div class="branch branch-hold">
+          <div class="blabel">&#9679; On&#8209;hold</div>
+          <div class="bdesc">Paused. Nothing is sent. Come back and choose Approve or Reject later.</div>
+        </div>
+      </div>
+      <div class="side">
+        <div class="side-card">
+          <div class="slabel" style="color:var(--blue)">Human gate</div>
+          <div class="src-item"><span>&#128272;</span><span>No email before Approve</span></div>
+          <div class="src-item"><span>&#128101;</span><span>Robert &middot; Ryan &middot; Prateek</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <!-- STEP 6 -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="step green">
+        <div class="step-num">Step 6 &mdash; Send (Approve only)</div>
+        <div class="step-title">Create the invoice &amp; email the client</div>
+        <div class="step-desc">
+          The robot makes the invoice in FTF and FTF emails it to the client with the PDF attached.
+          It uses <strong>your</strong> blue breakdown, not its own guess.
+        </div>
+        <div class="plain"><b>Sends exactly once.</b> If the website is down mid&#8209;way, it safely tries again later &mdash; it will never email the same invoice twice.</div>
+        <div class="badges"><span class="badge">FTF invoice</span><span class="badge">Email to client</span><span class="badge">Exactly&#8209;once</span></div>
+      </div>
+      <div class="side"></div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <!-- STEP 7 -->
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="step purple">
+        <div class="step-num">Step 7 &mdash; Learn</div>
+        <div class="step-title">Get smarter for next time</div>
+        <div class="step-desc">
+          The robot remembers how you changed the breakdown, what you wrote in Notes / Learning,
+          and whether you approved or rejected &mdash; so its <strong>next</strong> prices are closer to what you want.
+        </div>
+        <div class="plain">Like a new teammate who remembers your feedback and needs less correcting each week.</div>
+      </div>
+      <div class="side"></div>
+    </div>
+
+    <div class="connector"><div class="connector-spacer"></div><div class="connector-line"><div class="vline"></div><div class="arrow-head"></div></div><div class="connector-side"></div></div>
+
+    <div class="row">
+      <div class="spacer"></div>
+      <div class="loop-box">&#8635;&nbsp;&nbsp;Then it loops &mdash; back to Step 1 on the next 30&#8209;minute run</div>
+      <div class="side"></div>
+    </div>
+
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <h3>Legend</h3>
+    <div class="legend-items">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div><span>Find work (scan FTF)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div><span>Robot thinking (gather / price / learn)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div><span>Excel Approvals sheet (human checks here)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div><span>Send (only after Approve)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--grayfill)"></div><span>Gray = robot-filled (locked)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--bluefill)"></div><span>Blue = you edit</span></div>
+    </div>
+  </div>
+
+  <!-- Safety note -->
+  <div style="margin-top:20px;background:#f0fdf4;border:2px solid #bbf7d0;border-radius:14px;padding:16px 20px;">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#15803d;margin-bottom:8px;">The two big safety promises</div>
+    <div style="font-size:13px;color:#14532d;line-height:1.7;">
+      <b>1. A human is always the gate.</b> No invoice is created and no email is sent until a person clicks <b>Approve</b> on the sheet.<br>
+      <b>2. Never twice.</b> If FTF or the internet hiccups while making or sending an invoice, the robot picks up safely on the next run &mdash; an invoice is created at most once and a client is emailed at most once. If it&rsquo;s ever unsure whether an email went out, it pauses that one for a person to confirm instead of risking a duplicate.
+    </div>
+  </div>
+
+  <div class="footer">
+    <div>NexGen Enterprises &nbsp;&middot;&nbsp; FTF Invoice Pipeline &mdash; Client Architecture v6</div>
+    <div>Approvers: Robert &nbsp;&middot;&nbsp; Ryan &nbsp;&middot;&nbsp; Prateek &nbsp;&middot;&nbsp; Review happens in the Excel &ldquo;Approvals&rdquo; sheet</div>
+  </div>
+
+</div>
+</body>
+</html>
