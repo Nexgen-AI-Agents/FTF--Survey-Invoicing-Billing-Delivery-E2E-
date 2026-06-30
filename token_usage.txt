@@ -186,7 +186,23 @@ MODEL: claude-opus-4-8 (1M context)
                                                     └─────────────────────────────────┘
 
 ================================================================================
-CUMULATIVE PROJECT TOTAL (as of 2026-06-29)
+DATE: 2026-06-30 (Tuesday)
+MODEL: claude-opus-4-8 (1M context)
+================================================================================
+
+  SESSION: Exactly-once invoice send — no duplicate invoice/email on FTF downtime/retry
+
+  [~16:30 ET] | claude-opus-4-8 | Plan-mode research: 3 Explore agents map A5/A6 failure handling, watcher Processed-At flow, FTF delivered-flag + state-store reliability | In: ~30,000 | Out: ~6,000 | Total: ~36,000 (+~143,000 subagent)
+  [~16:50 ET] | claude-opus-4-8 | Implement A6 exactly-once: tombstone-before-POST, PreDelivery/DeliveryAttempted errors, _send_lock, in-run retry, resolve_stuck_send.py, daily-report backlog, offline QA 30/30 | In: ~45,000 | Out: ~18,000 | Total: ~63,000
+  [~17:00 ET] | claude-opus-4-8 | 2 senior-QA review passes (round1 found BLOCKER --retry double-email + flock-only concurrency; fixed all); round2 clean; deploy 7 files + md5 verify + server QA pass; commit dd940e0d | In: ~40,000 | Out: ~12,000 | Total: ~52,000 (+~114,000 subagent)
+
+                                                    ┌─────────────────────────────────┐
+                                         DAILY TOTAL │  ~408,000 tokens (est.)         │
+                                         MODEL       │  claude-opus-4-8 (1M context)  │
+                                                    └─────────────────────────────────┘
+
+================================================================================
+CUMULATIVE PROJECT TOTAL (as of 2026-06-30)
 ================================================================================
 
   Date          Model                   Tokens (est.)
@@ -199,8 +215,9 @@ CUMULATIVE PROJECT TOTAL (as of 2026-06-29)
   2026-06-24    claude-opus-4-8        ~115,000
   2026-06-26    claude-opus-4-8      ~1,711,000
   2026-06-29    claude-opus-4-8         ~72,000
+  2026-06-30    claude-opus-4-8        ~408,000
   ──────────────────────────────────────────────────────
-  PROJECT TOTAL                       ~2,830,200 tokens
+  PROJECT TOTAL                       ~3,238,200 tokens
 
 ================================================================================
 HOW TO MAINTAIN THIS FILE
