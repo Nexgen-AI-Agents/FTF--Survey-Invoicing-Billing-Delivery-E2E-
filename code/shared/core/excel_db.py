@@ -25,6 +25,7 @@ _STATE_COLS = [
     "modification_count", "invoice_id", "data_collected_at", "draft_posted_at",
     "invoice_created_at", "processed_reply_ids", "approved_by", "sent_at",
     "pay_link", "estimate_amount", "deferred_until", "created_at", "updated_at",
+    "send_attempted_at",
 ]
 
 _LEARNINGS_COLS = [

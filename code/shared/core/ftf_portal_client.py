@@ -24,6 +24,7 @@ deliver_invoice subject convention (order/sendgridsend.py line 195):
 """
 
 import re
+from typing import Callable, Optional
 
 import httpx
 
@@ -33,7 +34,7 @@ from config.settings import (
     FTF_PORTAL_PASS,
     FTF_PORTAL_USER,
 )
-from core.exceptions import AgentError
+from core.exceptions import AgentError, DeliveryAttemptedError, PreDeliveryError
 from core.logger import get_logger
 
 log = get_logger("ftf_portal_client")
@@ -138,6 +139,7 @@ def deliver_invoice_as_nesa(
     property_address: str = "",
     subject: str = "",
     message: str = "",
+    on_before_deliver: Optional[Callable[[], None]] = None,
 ) -> dict:
     """Generate invoice PDF and deliver it via the FTF portal authenticated as nesa.
 
@@ -150,6 +152,14 @@ def deliver_invoice_as_nesa(
     We pass mail_subject="Your Invoice is ready to review" + address=property_address
     so the final subject is "Your Invoice is ready to review ({property_address})".
 
+    Exactly-once send contract (FTF has NO "already sent" flag, so the caller relies
+    on WHERE we failed):
+      * login / PDF generation failure  → raise PreDeliveryError      (nothing sent; safe to retry)
+      * deliver POST attempted + failed → raise DeliveryAttemptedError (outcome unknown; do NOT retry)
+    `on_before_deliver`, if given, is invoked AFTER PDF generation and IMMEDIATELY
+    BEFORE the irreversible deliver POST — the caller uses it to persist a durable
+    "sending" marker so a crash anywhere at/after the POST can never resend.
+
     Returns: {"sent": True, "to": <recipient>, "pdf": <path>}
     """
     recipient = EMAIL_OVERRIDE_ALL or client_email
@@ -158,28 +168,56 @@ def deliver_invoice_as_nesa(
                     order_id, client_email, EMAIL_OVERRIDE_ALL)
 
     if not recipient:
-        raise AgentError(f"deliver_invoice_as_nesa: no recipient for order {order_id}")
+        # No recipient = nothing was sent; safe to retry once the email is known.
+        raise PreDeliveryError(f"deliver_invoice_as_nesa: no recipient for order {order_id}")
 
-    client = _login()
+    # ── Pre-delivery: login + PDF. Any failure here means NOTHING was sent. ──────
     try:
-        pdf_path = _generate_pdf(client, order_id)
+        client = _login()
+    except Exception as exc:
+        raise PreDeliveryError(f"portal login failed for order {order_id}: {exc}") from exc
+
+    try:
+        try:
+            pdf_path = _generate_pdf(client, order_id)
+        except Exception as exc:
+            raise PreDeliveryError(f"PDF generation failed for order {order_id}: {exc}") from exc
+
+        # Durable "about to send" marker — set right before the irreversible POST so
+        # that a crash/timeout at or after the POST can never trigger a second send.
+        if on_before_deliver is not None:
+            try:
+                on_before_deliver()
+            except Exception as exc:
+                # Could not persist the marker → do NOT send (an unguarded send could
+                # be resent on the next run). Nothing has gone out yet → safe to retry.
+                raise PreDeliveryError(
+                    f"on_before_deliver hook failed for order {order_id} — not sending: {exc}"
+                ) from exc
 
         # mail_subject must NOT include address — FTF appends f" ({address})" automatically
         mail_subject = subject or "Your Invoice is ready to review"
         message = message or _DEFAULT_MSG
 
-        r = client.post(
-            f"{FTF_PORTAL_BASE_URL}/order/deliver_invoice",
-            data={
-                "order":        str(order_id),
-                "invoice":      pdf_path,
-                "address":      property_address,   # FTF appends this to subject
-                "email":        recipient,
-                "mail_subject": mail_subject,
-                "message":      message,
-            },
-        )
-        r.raise_for_status()
+        # ── The irreversible send. Any failure from here on is AMBIGUOUS. ────────
+        try:
+            r = client.post(
+                f"{FTF_PORTAL_BASE_URL}/order/deliver_invoice",
+                data={
+                    "order":        str(order_id),
+                    "invoice":      pdf_path,
+                    "address":      property_address,   # FTF appends this to subject
+                    "email":        recipient,
+                    "mail_subject": mail_subject,
+                    "message":      message,
+                },
+            )
+            r.raise_for_status()
+        except Exception as exc:
+            raise DeliveryAttemptedError(
+                f"deliver POST failed for order {order_id} — email may or may not have been sent; "
+                f"NOT retrying automatically: {exc}"
+            ) from exc
 
         log.info("invoice delivered via portal as %s order=%s to=%s pdf=%s",
                  FTF_PORTAL_USER, order_id, recipient, pdf_path)

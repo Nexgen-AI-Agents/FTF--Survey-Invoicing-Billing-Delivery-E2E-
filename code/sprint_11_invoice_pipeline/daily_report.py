@@ -82,6 +82,30 @@ def _gather_state() -> dict:
     }
 
 
+def _gather_stuck_sends() -> dict:
+    """Orders the pipeline cannot complete on its own — read from the state store.
+
+    'needs_send_confirmation' = a delivery was ATTEMPTED but its outcome is unknown
+    (status invoice_sending): the AI will NOT auto-resend it (to avoid a duplicate
+    email); a human must confirm in FTF and run scripts/resolve_stuck_send.py.
+    The waiting_* counts are orders A5/A6 are still retrying (FTF likely down)."""
+    try:
+        from core.excel_db import get_orders_by_status
+        sending   = get_orders_by_status("invoice_sending")
+        approved  = get_orders_by_status("invoice_approved")
+        finalized = get_orders_by_status("invoice_finalized")
+    except Exception as exc:
+        log.warning("daily_report: stuck-send gather failed (%s)", exc)
+        return {}
+    ids = lambda rows: [str(r.get("order_id")) for r in rows][:6]
+    return {
+        "needs_send_confirmation_count": len(sending),
+        "needs_send_confirmation": ids(sending),
+        "waiting_to_create_count": len(approved),   # A5 not yet created (retrying)
+        "waiting_to_send_count": len(finalized),     # A6 not yet sent (retrying)
+    }
+
+
 def _gather_learnings() -> dict:
     """Pull the AI's actual learning signals so it can summarise them itself (no hardcoding)."""
     try:
@@ -104,9 +128,12 @@ def _gather_learnings() -> dict:
     return {"learned_prices": learned[:8], "operator_notes_recent": operator_notes}
 
 
-def _build_body_html(state: dict, learn: dict) -> str:
+def _build_body_html(state: dict, learn: dict, backlog: dict) -> str:
     """Claude writes the report from the live data. Falls back to a plain summary on error."""
-    payload = json.dumps({"sheet_state": state, "ai_learnings": learn}, indent=2, default=str)
+    payload = json.dumps(
+        {"sheet_state": state, "pipeline_backlog": backlog, "ai_learnings": learn},
+        indent=2, default=str,
+    )
     system = (
         "You are the AI Invoicing Agent for NexGen Surveying. Write a SHORT morning report for "
         "the survey team about the invoice Approvals sheet. Be precise and action-first. Output "
@@ -114,6 +141,9 @@ def _build_body_html(state: dict, learn: dict) -> str:
         "fences). Exactly two sections, each led by a bold header: "
         "(1) 'What to do today' — tell them exactly what to act on, with the counts and a few "
         "example order numbers; if nothing is pending, say so plainly and reassuringly. "
+        "If pipeline_backlog.needs_send_confirmation_count > 0, call it out FIRST and clearly: "
+        "those invoices were sent-attempted but delivery is UNCONFIRMED — a human must verify in "
+        "FTF and will not be auto-resent. "
         "(2) 'What I learned' — state, in your own words, YOUR takeaways from the learned prices "
         "and operator notes; if there is little yet, say you are still learning. "
         "The *_count fields are the true totals; the matching lists hold only a few example orders. "
@@ -127,8 +157,14 @@ def _build_body_html(state: dict, learn: dict) -> str:
             return html
     except Exception as exc:
         log.warning("daily_report: LLM write failed (%s) — using plain fallback", exc)
+    confirm_n = backlog.get("needs_send_confirmation_count", 0)
+    confirm_html = (
+        f"<p>&#9888; <b>{confirm_n} invoice(s) need send confirmation</b> — delivery was attempted "
+        f"but unconfirmed; verify in FTF (they will NOT be auto-resent).</p>" if confirm_n else ""
+    )
     return (
         "<p><b>What to do today</b></p>"
+        + confirm_html +
         f"<p>{state['awaiting_total']} order(s) awaiting your review — "
         f"{state['ready_to_approve_count']} ready to approve, "
         f"{state['need_manual_price_count']} need a price, "
@@ -140,8 +176,9 @@ def _build_body_html(state: dict, learn: dict) -> str:
 
 def build_message() -> str:
     state = _gather_state()
+    backlog = _gather_stuck_sends()
     learn = _gather_learnings()
-    body = _build_body_html(state, learn)
+    body = _build_body_html(state, learn, backlog)
     header = "<p><b>&#129302; AI Invoicing Agent &mdash; Daily Report</b></p>"
     link = (f"<p>&#128203; <b>Approvals sheet:</b> "
             f"<a href=\"{ONEDRIVE_SHARE_URL}\">open FTF-Invoicing Agent.xlsx</a> "
