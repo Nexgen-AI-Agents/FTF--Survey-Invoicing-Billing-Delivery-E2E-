@@ -68,6 +68,61 @@ from core.onedrive_excel_client import (
 AGENT_NAME = "agent_a3_invoice_compiler"
 log = get_logger(AGENT_NAME)
 
+# Regrid parcel viewer (the "App regrid" the client asked to link). A parcel/folio number
+# gives the most precise result; when it's missing we fall back to an address search so the
+# column is never blank. Kept as a module constant so the base URL is easy to change later.
+_REGRID_BASE = "https://app.regrid.com/search"
+
+
+# ── Property-context columns (Property Size / Map Link / FEMA Zone / Service Type) ────────
+
+def _regrid_link(parcel: str, address: str, county: str) -> str:
+    """Build a clickable Regrid search URL — by parcel/folio when known, else by address.
+
+    Returns "" only when we have neither a parcel nor an address to search on.
+    """
+    import urllib.parse
+    parcel = str(parcel or "").strip()
+    address = str(address or "").strip()
+    county = str(county or "").strip()
+    if parcel:
+        query = f"{parcel} {county}".strip()
+    elif address:
+        query = address
+    else:
+        return ""
+    return f"{_REGRID_BASE}?query={urllib.parse.quote(query)}"
+
+
+def _property_attrs(order_details: dict, data_sources: dict, address: str,
+                    county: str, service_type: str) -> dict:
+    """Assemble the four property-context values written to the approval sheet.
+
+    Sources: FTF order fields (ng_size / ng_flood) first, then A2's county appraiser data
+    (lot_size / parcel_id) as a fallback. All values are best-effort strings — a blank is
+    fine (the column just shows empty). Never raises.
+    """
+    appraiser = (data_sources or {}).get("appraiser_data") or {}
+    lot_size = (
+        order_details.get("ng_size")
+        or appraiser.get("lot_size")
+        or ""
+    )
+    fema_zone = (
+        order_details.get("ng_flood")
+        or order_details.get("ng_flood_zone")
+        or ""
+    )
+    fema_zone = str(fema_zone).split("\n")[0].strip()
+    parcel = appraiser.get("parcel_id") or order_details.get("ng_folio_mls_number") or ""
+    return {
+        "property_size": str(lot_size).strip(),
+        "map_link":      _regrid_link(parcel, address, county),
+        "fema_zone":     fema_zone,
+        "service_type":  str(service_type or "").strip(),
+    }
+
+
 # ── Pre-flight validation ─────────────────────────────────────────────────────
 
 def _detect_condo(order_details: dict) -> Optional[str]:
@@ -587,12 +642,14 @@ def _emit_learning_row(order_id, packet, data_sources, order_details, live, link
     svc_user_str = f"{_su_lbl}: ${float(human_amt):.2f}"
     note        = ("Already invoiced in FTF — LEARNING row (no new invoice). "
                    "AI compared its price to the actual amount and recorded what it learned.")
+    attrs = _property_attrs(order_details, data_sources, address, county_val, service_type)
     try:
         append_approval_row(
             order_id     = order_id,
             client_name  = client_name,
             address      = address,
             service      = svc_str,
+            **attrs,
             amount       = ai_price,            # Amount ($) by AI — the AI's shadow price
             amount_user  = human_amt,           # Amount ($) by User — the real human amount
             service_user = svc_user_str,        # Service / Breakdown by User — human amount line
@@ -703,6 +760,10 @@ def compile_for_order(order_id: str) -> dict:
             estimate_amount=0.0,
             draft_posted_at=datetime.now(timezone.utc).isoformat(),
         )
+        _flag_attrs = _property_attrs(
+            order_details, data_sources, _flag_addr,
+            order_details.get("ng_property_county") or "", _flag_svc,
+        )
         try:
             append_approval_row(
                 order_id     = order_id,
@@ -716,6 +777,7 @@ def compile_for_order(order_id: str) -> dict:
                 order_status = _ftf_status_desc,
                 notes        = _flag_notes,
                 highlight_red= True,
+                **_flag_attrs,
             )
             log.info("order=%s %s — flagged, no pricing", order_id, _flag_status)
         except Exception as exc:
@@ -774,6 +836,10 @@ def compile_for_order(order_id: str) -> dict:
             "survey is not possible on a condo/airspace unit. Arrange refund or redirect "
             "to an appropriate service (e.g. interior unit measurement)."
         )
+        _condo_attrs = _property_attrs(
+            order_details, data_sources, _condo_addr,
+            order_details.get("ng_property_county") or "", service_type,
+        )
         try:
             append_approval_row(
                 order_id     = order_id,
@@ -786,6 +852,7 @@ def compile_for_order(order_id: str) -> dict:
                 ftf_link     = link,
                 order_status = _condo_ftf_status,   # real FTF status, not "Condo Rejected"
                 notes        = _condo_notes,
+                **_condo_attrs,
             )
             log.info("order=%s condo written to Excel, auto-rejecting", order_id)
             auto_reject_condo_row(order_id)         # immediately set Action=Reject + Processed At
@@ -890,6 +957,8 @@ def compile_for_order(order_id: str) -> dict:
                 f"MANUAL PRICING REQUIRED — {_pn_reason}. "
                 "Enter the correct amount in the Amount column, then set Action = Approve."
             )
+        _pn_attrs = _property_attrs(order_details, data_sources, _pn_addr, county_val,
+                                    service_type or _pn_svc)
         try:
             append_approval_row(
                 order_id      = order_id,
@@ -903,6 +972,7 @@ def compile_for_order(order_id: str) -> dict:
                 order_status  = _pn_ftf_status,
                 notes         = _pn_notes,
                 highlight_red = _pn_is_delivered,
+                **_pn_attrs,
             )
             log.info("order=%s pricing_needed written to Excel for manual pricing", order_id)
         except Exception as exc:
@@ -927,6 +997,7 @@ def compile_for_order(order_id: str) -> dict:
         escalation_note = ""
     ftf_order_status = str(order_details.get("ng_status_desc") or "")
 
+    attrs = _property_attrs(order_details, data_sources, address, county_val, service_type)
     excel_write_ok = False
     try:
         append_approval_row(
@@ -941,6 +1012,7 @@ def compile_for_order(order_id: str) -> dict:
             order_status = ftf_order_status,
             posted_at    = posted_at,
             notes        = escalation_note,
+            **attrs,
         )
         excel_write_ok = True
     except Exception as exc:

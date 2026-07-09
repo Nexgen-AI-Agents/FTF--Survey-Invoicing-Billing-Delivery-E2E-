@@ -42,11 +42,11 @@ _cache: dict = {}
 
 # Guide tab — bump version string whenever guide content changes to force a re-write
 GUIDE_SHEET_NAME = "Pipeline Guide"
-_GUIDE_VERSION   = "v12"  # increment when guide content changes
+_GUIDE_VERSION   = "v13"  # increment when guide content changes
 
 # How-To tab — plain-language step-by-step guide for end users
 HOWTO_SHEET_NAME = "How to use Invoicing agent"
-_HOWTO_VERSION   = "v5"   # increment when how-to content changes
+_HOWTO_VERSION   = "v6"   # increment when how-to content changes
 
 # Pricing Rules tab — user-editable table of override prices
 PRICING_RULES_SHEET_NAME  = "Pricing Rules"
@@ -65,34 +65,46 @@ _PR_COL_COUNT = len(PRICING_RULES_HEADERS)   # 8
 # Breakdown by AI" (E, locked AI baseline) and "Service / Breakdown by User" (G, the
 # editable copy that is the SOURCE OF TRUTH for invoicing + learning). "Amount ($) by
 # User" (H) is now AUTO-COMPUTED from the user breakdown's total (no longer typed).
+# 2026-07-09: added four property-context columns right after "Property Address" at Robert's
+# request — "Property Size", "Map Link" (clickable Regrid parcel link), "FEMA Zone" and
+# "Service Type". All four are AI-managed (gray) reference fields populated by A3 from the
+# FTF order + county appraiser data. They sit BEFORE the Service/Amount columns so every
+# _COL_* index below is DERIVED (never hardcoded) and shifts automatically. Order ID (0),
+# Order Status (1), Client Name (2) and Property Address (3) keep their positions, so the
+# helper scripts that read those fixed indices are unaffected.
 APPROVAL_HEADERS = [
     "Order ID", "Order Status", "Client Name", "Property Address",
+    "Property Size", "Map Link", "FEMA Zone", "Service Type",
     "Service / Breakdown by AI", "Amount ($) by AI",
     "Service / Breakdown by User", "Amount ($) by User",
     "Confidence", "Escalate",
     "Action", "Notes", "Posted At", "Processed At", "AI Learning", "Learning provided by user",
 ]
-_COL_COUNT        = len(APPROVAL_HEADERS)   # 16
-_END_COL          = chr(ord("A") + _COL_COUNT - 1)   # "P"
+_COL_COUNT        = len(APPROVAL_HEADERS)   # 20
+_END_COL          = chr(ord("A") + _COL_COUNT - 1)   # "T"
 
 # All column indices are DERIVED from APPROVAL_HEADERS (never hardcoded) so the schema
 # can change without silently breaking absolute-index arithmetic across this module.
 _COL_ORDER_ID      = APPROVAL_HEADERS.index("Order ID")                    # 0  (A)
 _COL_ORDER_STATUS  = APPROVAL_HEADERS.index("Order Status")                # 1  (B)
-_COL_CLIENT        = APPROVAL_HEADERS.index("Client Name")                 # 2  (C)
+_COL_CLIENT        = APPROVAL_HEADERS.index("Client Name")                 # 2  (C)  title company / one-off client
 _COL_ADDRESS       = APPROVAL_HEADERS.index("Property Address")            # 3  (D)
-_COL_SERVICE_AI    = APPROVAL_HEADERS.index("Service / Breakdown by AI")   # 4  (E)  AI's proposed breakdown — LOCKED baseline (for AI-vs-user learning)
-_COL_AMOUNT_AI     = APPROVAL_HEADERS.index("Amount ($) by AI")            # 5  (F)  AI's proposed total — LOCKED
-_COL_SERVICE_USER  = APPROVAL_HEADERS.index("Service / Breakdown by User") # 6  (G)  approver's breakdown — EDITABLE, SOURCE OF TRUTH for invoice
-_COL_AMOUNT_USER   = APPROVAL_HEADERS.index("Amount ($) by User")          # 7  (H)  total of col G — AUTO-COMPUTED (not typed)
-_COL_CONFIDENCE    = APPROVAL_HEADERS.index("Confidence")                  # 8  (I)
-_COL_ESCALATE      = APPROVAL_HEADERS.index("Escalate")                    # 9  (J)
-_COL_ACTION        = APPROVAL_HEADERS.index("Action")                      # 10 (K)  dropdown: Approve / Reject / On-hold
-_COL_NOTES         = APPROVAL_HEADERS.index("Notes")                       # 11 (L)
-_COL_POSTED_AT     = APPROVAL_HEADERS.index("Posted At")                   # 12 (M)
-_COL_PROCESSED_AT  = APPROVAL_HEADERS.index("Processed At")                # 13 (N)
-_COL_AI_LEARNING   = APPROVAL_HEADERS.index("AI Learning")                 # 14 (O)  AI's per-order learning record (AI-filled)
-_COL_USER_LEARNING = APPROVAL_HEADERS.index("Learning provided by user")   # 15 (P)  approver feedback → AI learns next run
+_COL_PROPERTY_SIZE = APPROVAL_HEADERS.index("Property Size")               # 4  (E)  lot size (acres / sq ft) — AI-managed
+_COL_MAP_LINK      = APPROVAL_HEADERS.index("Map Link")                    # 5  (F)  clickable Regrid parcel/address link — AI-managed
+_COL_FEMA_ZONE     = APPROVAL_HEADERS.index("FEMA Zone")                   # 6  (G)  FEMA flood zone — AI-managed
+_COL_SERVICE_TYPE  = APPROVAL_HEADERS.index("Service Type")                # 7  (H)  requested service type — AI-managed
+_COL_SERVICE_AI    = APPROVAL_HEADERS.index("Service / Breakdown by AI")   # 8  (I)  AI's proposed breakdown — LOCKED baseline (for AI-vs-user learning)
+_COL_AMOUNT_AI     = APPROVAL_HEADERS.index("Amount ($) by AI")            # 9  (J)  AI's proposed total — LOCKED
+_COL_SERVICE_USER  = APPROVAL_HEADERS.index("Service / Breakdown by User") # 10 (K)  approver's breakdown — EDITABLE, SOURCE OF TRUTH for invoice
+_COL_AMOUNT_USER   = APPROVAL_HEADERS.index("Amount ($) by User")          # 11 (L)  total of user breakdown — AUTO-COMPUTED (not typed)
+_COL_CONFIDENCE    = APPROVAL_HEADERS.index("Confidence")                  # 12 (M)
+_COL_ESCALATE      = APPROVAL_HEADERS.index("Escalate")                    # 13 (N)
+_COL_ACTION        = APPROVAL_HEADERS.index("Action")                      # 14 (O)  dropdown: Approve / Reject / On-hold
+_COL_NOTES         = APPROVAL_HEADERS.index("Notes")                       # 15 (P)
+_COL_POSTED_AT     = APPROVAL_HEADERS.index("Posted At")                   # 16 (Q)
+_COL_PROCESSED_AT  = APPROVAL_HEADERS.index("Processed At")                # 17 (R)
+_COL_AI_LEARNING   = APPROVAL_HEADERS.index("AI Learning")                 # 18 (S)  AI's per-order learning record (AI-filled)
+_COL_USER_LEARNING = APPROVAL_HEADERS.index("Learning provided by user")   # 19 (T)  approver feedback → AI learns next run
 
 # Cell-fill ownership: approver-editable columns are tinted blue ("edit here"); every
 # other column is AI-managed and tinted gray ("locked — don't edit by hand"). Applied
@@ -822,17 +834,29 @@ def ensure_action_dropdown() -> bool:
         # propagates. Set per row only when missing/stale so the upload stays idempotent.
         link_font = Font(color="0563C1", underline="single")
         oid_col   = _COL_ORDER_ID + 1   # openpyxl is 1-based
+        map_col   = _COL_MAP_LINK + 1   # Map Link column — made clickable the same way
         for rr in range(2, ws.max_row + 1):
             cell = ws.cell(row=rr, column=oid_col)
             oid  = str(cell.value or "").strip()
-            if not oid or oid.startswith("="):
-                continue   # blank row, or a stale formula we deliberately leave alone
-            want = f"{FTF_ORDER_URL}/?order={oid}"
-            cur  = cell.hyperlink.target if cell.hyperlink else None
-            if cur != want:
-                cell.hyperlink = want
-                cell.font      = link_font
-                changed = True
+            if oid and not oid.startswith("="):
+                want = f"{FTF_ORDER_URL}/?order={oid}"
+                cur  = cell.hyperlink.target if cell.hyperlink else None
+                if cur != want:
+                    cell.hyperlink = want
+                    cell.font      = link_font
+                    changed = True
+
+            # Map Link (col F): the cell value IS the target URL — set a native hyperlink so
+            # it is clickable. Same native-link approach as Order ID (never a formula, so it
+            # can't propagate across the table column). Blank/non-URL cells are left alone.
+            mcell = ws.cell(row=rr, column=map_col)
+            murl  = str(mcell.value or "").strip()
+            if murl.lower().startswith("http"):
+                mcur = mcell.hyperlink.target if mcell.hyperlink else None
+                if mcur != murl:
+                    mcell.hyperlink = murl
+                    mcell.font      = link_font
+                    changed = True
 
         if not changed:
             log.debug("ensure_action_dropdown: dropdown + Order ID links already current — skip upload")
@@ -903,8 +927,12 @@ def ensure_guide_sheet() -> None:
             ["COLOR KEY",         "GRAY columns are AI-managed — please do NOT edit them. BLUE columns are yours: Service / Breakdown by User, Action, Notes, Learning provided by user."],
             ["Order ID",          "Unique FTF order number — CLICK IT to open this order in FieldToFinish. (gray / AI-managed)"],
             ["Order Status",      "Current FTF status (In Progress, Complete, Field, etc.). (gray / AI-managed)"],
-            ["Client Name",       "Client or title company who placed the order. (gray / AI-managed)"],
+            ["Client Name",       "Client or title company who placed the order (title company / one-off client). (gray / AI-managed)"],
             ["Property Address",  "Survey site address — the property to be surveyed. (gray / AI-managed)"],
+            ["Property Size",     "Lot size of the property (acres or sq ft) from the FTF order / county appraiser. Reference only. (gray / AI-managed)"],
+            ["Map Link",          "CLICKABLE link to the parcel on Regrid (app.regrid.com) — opens the property map/parcel. Uses the parcel number when known, otherwise an address search. Reference only. (gray / AI-managed)"],
+            ["FEMA Zone",         "FEMA flood zone for the property (e.g. X, AE, VE). Drives elevation-certificate scope/pricing. Reference only. (gray / AI-managed)"],
+            ["Service Type",      "The survey service requested on the order (e.g. Boundary Survey, Elevation Certificate). Reference only. (gray / AI-managed)"],
             ["Service / Breakdown by AI", "GRAY / locked. The AI's proposed services + prices, e.g. 'Boundary Survey: $475.00 | Elevation Cert: $150.00'. Reference only — do NOT edit. The AI keeps this to learn from your changes."],
             ["Amount ($) by AI",  "GRAY / locked. The AI's proposed total. Reference only — do NOT edit."],
             ["Service / Breakdown by User", "BLUE / editable — THIS is what gets invoiced. Starts as a copy of the AI breakdown. To change a price or service, edit the amount(s) here, e.g. 'Boundary Survey: $500.00 | Elevation Cert: $150.00'. Keep the 'Name: $amount' format; pipe (|) separates services. Then set Action = Approve."],
@@ -1057,7 +1085,7 @@ def ensure_howto_sheet() -> None:
             ["", ""],
             ["── YOUR DAILY WORKFLOW (step by step) ──", ""],
             ["Step 1 — Open Approvals", "Go to the 'Approvals' tab. Each row is one order waiting for your decision."],
-            ["Step 2 — Review the order", "Check Client Name, Property Address and Service / Breakdown by User (the AI's own breakdown sits in the 'by AI' column for reference). Click the Order ID to open the order in FieldToFinish if you need more detail."],
+            ["Step 2 — Review the order", "Check Client Name, Property Address and Service / Breakdown by User (the AI's own breakdown sits in the 'by AI' column for reference). Four reference columns help you proof-read the quote: Property Size (lot size), Map Link (click to open the parcel on Regrid), FEMA Zone (flood zone), and Service Type. Click the Order ID to open the order in FieldToFinish if you need more detail."],
             ["Step 3 — Check the price", "If the breakdown looks right, leave it. To change it, see 'FIXING A PRICE' below. 'Amount ($) by User' totals your breakdown automatically — you never type it."],
             ["Step 4 — Read the Notes", "The Notes column tells you if anything needs attention (manual pricing, escalation, condo, canceled, delivered)."],
             ["Step 5 — Decide", "Set the 'Action' column to Approve, Reject, or On-hold. Leave blank to skip for now."],
@@ -1472,6 +1500,10 @@ def append_approval_row(
     amount_user:  Optional[float] = None,
     ai_learning:  str = "",
     service_user: Optional[str] = None,
+    property_size: str = "",
+    map_link:     str = "",
+    fema_zone:    str = "",
+    service_type: str = "",
 ) -> None:
     """Append a new row to the approval table. Action column is blank — user picks from dropdown.
 
@@ -1501,7 +1533,15 @@ def append_approval_row(
     row[_COL_ORDER_STATUS]  = str(order_status)   # FTF stage status
     row[_COL_CLIENT]        = str(client_name)
     row[_COL_ADDRESS]       = str(address)[:120]
-    row[_COL_SERVICE_AI]    = str(service)        # E — AI's locked breakdown baseline
+    # Property-context reference columns (AI-managed / gray). Map Link is written as the raw
+    # URL here; ensure_action_dropdown() turns it into a clickable native hyperlink on every
+    # cycle (a =HYPERLINK() formula can't be used — Excel auto-propagates formulas across a
+    # whole table column, the same trap the Order ID link avoids).
+    row[_COL_PROPERTY_SIZE] = str(property_size or "")
+    row[_COL_MAP_LINK]      = str(map_link or "")
+    row[_COL_FEMA_ZONE]     = str(fema_zone or "")
+    row[_COL_SERVICE_TYPE]  = str(service_type or "")
+    row[_COL_SERVICE_AI]    = str(service)        # AI's locked breakdown baseline
     row[_COL_AMOUNT_AI]     = float(amount)       # F — AI's locked total
     # G — editable copy of E by default (source of truth). Callers may pass service_user to
     # seed G differently (e.g. learning rows set it to the real human breakdown so col H,
