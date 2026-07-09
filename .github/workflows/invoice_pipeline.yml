@@ -60,6 +60,12 @@ jobs:
       A2_MAX_PER_RUN:             "10"   # A2: data-collector throughput, matched to the 10/run sheet-fill cap
       A1_MAX_NEW_PER_RUN:         "10"   # A1: up to 10 fresh (ng_id > watermark) orders queued per run
       DEPLOY_ENV:                 ${{ secrets.DEPLOY_ENV }}
+      # Prod server used as an SSH jump host to reach the FTF RDS MySQL. GitHub-hosted
+      # runner IPs are ephemeral and not on the RDS security group; this server has a
+      # STATIC IP that IS allowed, so every run tunnels DB traffic through it.
+      # NOTE: add SERVER_HOST and SERVER_USER as repo Actions secrets (values in .env).
+      SERVER_HOST:                ${{ secrets.SERVER_HOST }}
+      SERVER_USER:                ${{ secrets.SERVER_USER }}
 
     steps:
       - uses: actions/checkout@v4
@@ -71,6 +77,34 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Open SSH tunnel to FTF RDS (via prod server)
+        run: |
+          set -e
+          # Skip gracefully until SERVER_HOST/SERVER_USER secrets are configured — the
+          # pipeline then just no-ops on DB reads (A0 swallows the error) instead of failing
+          # the whole run and firing a failure alert every 30 min.
+          if [ -z "${SERVER_HOST}" ] || [ -z "${SERVER_USER}" ]; then
+            echo "SERVER_HOST/SERVER_USER not set — skipping DB tunnel. Add them as repo secrets to activate."
+            exit 0
+          fi
+          # Build an OpenSSH key from the committed PuTTY .ppk (unencrypted ssh-rsa).
+          python scripts/ppk_to_openssh.py Prod-Server-Key.ppk "$HOME/prodkey"
+          mkdir -p "$HOME/.ssh"
+          # Background tunnel: runner 127.0.0.1:3306 -> RDS:3306 through the prod server.
+          # -f daemonizes; the tunnel persists into the "Run invoice pipeline" step on the
+          # same runner VM. ExitOnForwardFailure makes ssh fail loudly if the port can't bind.
+          ssh -i "$HOME/prodkey" -f -N \
+            -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ConnectTimeout=20 \
+            -L 3306:${MYSQL_HOST}:3306 ${SERVER_USER}@${SERVER_HOST}
+          # Wait (max ~20s) for the forwarded port to accept connections.
+          for i in $(seq 1 20); do
+            if (exec 3<>/dev/tcp/127.0.0.1/3306) 2>/dev/null; then exec 3>&- 3<&-; echo "tunnel up"; exit 0; fi
+            sleep 1
+          done
+          echo "ERROR: DB tunnel did not come up (prod server may not allow SSH from this runner IP)" >&2
+          exit 1
 
       - name: Connectivity check
         run: |
@@ -93,6 +127,10 @@ jobs:
             "${FTF_API_BASE_URL}/health" || echo "curl failed: $?"
 
       - name: Run invoice pipeline
+        env:
+          # Reach MySQL through the SSH tunnel opened above (overrides the job-level RDS
+          # host, which the tunnel forwards to). Port stays the job-level MYSQL_PORT (3306).
+          MYSQL_HOST: "127.0.0.1"
         run: |
           cd code/sprint_11_invoice_pipeline
           python -m agents.agent_a0_orchestrator
