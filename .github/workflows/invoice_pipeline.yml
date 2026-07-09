@@ -1,7 +1,12 @@
 name: Invoice Pipeline (Sprint 11)
 
 on:
-  workflow_dispatch:  # triggered by Power Automate every 30 min
+  workflow_dispatch:  # manual / Power Automate dispatch
+  schedule:
+    # Every 30 min — GitHub-native cadence (independent of Power Automate). Each run
+    # processes up to 10 fresh orders (A1/A2/A3 caps in env below). GitHub cron is
+    # best-effort and only fires while the workflow is enabled on the default branch.
+    - cron: "*/30 * * * *"
 
 permissions:
   contents: write
