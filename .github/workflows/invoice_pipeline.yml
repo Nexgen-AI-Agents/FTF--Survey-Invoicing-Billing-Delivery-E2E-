@@ -63,9 +63,11 @@ jobs:
       # Prod server used as an SSH jump host to reach the FTF RDS MySQL. GitHub-hosted
       # runner IPs are ephemeral and not on the RDS security group; this server has a
       # STATIC IP that IS allowed, so every run tunnels DB traffic through it.
-      # NOTE: add SERVER_HOST and SERVER_USER as repo Actions secrets (values in .env).
+      # Configured as repo Actions secrets (never committed — the .ppk is gitignored).
+      # SERVER_SSH_KEY is the OpenSSH-format private key for the prod server.
       SERVER_HOST:                ${{ secrets.SERVER_HOST }}
       SERVER_USER:                ${{ secrets.SERVER_USER }}
+      SERVER_SSH_KEY:             ${{ secrets.SERVER_SSH_KEY }}
 
     steps:
       - uses: actions/checkout@v4
@@ -84,13 +86,15 @@ jobs:
           # Skip gracefully until SERVER_HOST/SERVER_USER secrets are configured — the
           # pipeline then just no-ops on DB reads (A0 swallows the error) instead of failing
           # the whole run and firing a failure alert every 30 min.
-          if [ -z "${SERVER_HOST}" ] || [ -z "${SERVER_USER}" ]; then
-            echo "SERVER_HOST/SERVER_USER not set — skipping DB tunnel. Add them as repo secrets to activate."
+          if [ -z "${SERVER_HOST}" ] || [ -z "${SERVER_USER}" ] || [ -z "${SERVER_SSH_KEY}" ]; then
+            echo "SERVER_* secrets not set — skipping DB tunnel. Add SERVER_HOST/SERVER_USER/SERVER_SSH_KEY to activate."
             exit 0
           fi
-          # Build an OpenSSH key from the committed PuTTY .ppk (unencrypted ssh-rsa).
-          python scripts/ppk_to_openssh.py Prod-Server-Key.ppk "$HOME/prodkey"
+          # Materialize the OpenSSH private key from the secret (the .ppk is gitignored,
+          # never committed). Written to a 0600 file for the ssh client.
           mkdir -p "$HOME/.ssh"
+          printf '%s\n' "${SERVER_SSH_KEY}" > "$HOME/prodkey"
+          chmod 600 "$HOME/prodkey"
           # Background tunnel: runner 127.0.0.1:3306 -> RDS:3306 through the prod server.
           # -f daemonizes; the tunnel persists into the "Run invoice pipeline" step on the
           # same runner VM. ExitOnForwardFailure makes ssh fail loudly if the port can't bind.
