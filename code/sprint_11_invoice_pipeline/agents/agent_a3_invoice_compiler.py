@@ -123,6 +123,23 @@ def _property_attrs(order_details: dict, data_sources: dict, address: str,
     }
 
 
+def _display_client_name(company_info: dict, packet: dict, db_row: Optional[dict] = None) -> str:
+    """Value for the sheet's "Client Name" column.
+
+    Per Robert (2026-07-09): show the "Ordered By" COMPANY — the 1st box in FTF, e.g. a
+    title company or property-management firm (ng_company_name) — NOT the contact person
+    (2nd box, ng_client_name). Falls back to the contact person only when there is no
+    company on the order (individual/direct homeowner orders) so the cell is never blank.
+    """
+    db_row = db_row or {}
+    return (
+        (company_info or {}).get("company_name")
+        or (packet or {}).get("client_name", {}).get("value")
+        or db_row.get("client_name", "")
+        or ""
+    )
+
+
 # ── Pre-flight validation ─────────────────────────────────────────────────────
 
 def _detect_condo(order_details: dict) -> Optional[str]:
@@ -631,7 +648,7 @@ def _emit_learning_row(order_id, packet, data_sources, order_details, live, link
     except Exception as exc:
         log.warning("record_observation failed order=%s: %s", order_id, exc)
 
-    client_name = packet.get("client_name", {}).get("value") or company_info.get("company_name") or db_row.get("client_name", "")
+    client_name = _display_client_name(company_info, packet, db_row)
     address     = packet.get("property_address", {}).get("value") or order_details.get("ng_property_address") or ""
     svc_str     = _build_breakdown_str(ai_services) or service_type or "Survey"
     # G (user breakdown) for a learning row = the REAL human amount as a single line, so col H
@@ -690,6 +707,10 @@ def compile_for_order(order_id: str) -> dict:
 
     # ── 1. Fetch live order + company data from MySQL ─────────────────────────
     order_details = get_order_details(order_id)
+    # Company ("Ordered By" 1st box) resolved up-front so EVERY posting branch below
+    # (canceled/delivered, condo, pricing-needed, priced) shows the company as Client Name.
+    company_id    = int(order_details.get("ng_company_id") or 0)
+    company_info  = get_company_info(company_id) if company_id else {}
 
     # Guard: order may have been canceled in FTF after A1 queued it — never post to Excel.
     if int(order_details.get("ng_status") or 1) == 0:
@@ -731,11 +752,7 @@ def compile_for_order(order_id: str) -> dict:
     _ftf_status_desc = str(order_details.get("ng_status_desc") or "").strip()
     if _ftf_status_desc.lower() in ("canceled", "cancelled", "delivered"):
         _is_delivered = _ftf_status_desc.lower() == "delivered"
-        _flag_client = (
-            packet.get("client_name", {}).get("value")
-            or order_details.get("ng_client_name")
-            or db_row.get("client_name", "")
-        )
+        _flag_client = _display_client_name(company_info, packet, db_row)
         _flag_addr = (
             packet.get("property_address", {}).get("value")
             or order_details.get("ng_property_address", "")
@@ -784,8 +801,6 @@ def compile_for_order(order_id: str) -> dict:
             log.warning("flag write failed order=%s: %s (non-fatal)", order_id, exc)
         return {}
 
-    company_id    = int(order_details.get("ng_company_id") or 0)
-    company_info  = get_company_info(company_id) if company_id else {}
     tier          = _classify_client_tier(company_info)
 
     # ── 2. Pre-flight validation ──────────────────────────────────────────────
@@ -824,7 +839,7 @@ def compile_for_order(order_id: str) -> dict:
         )
         # Write to Excel so the team sees it and can action it — without this, condos
         # are invisible and the client is left waiting with no response.
-        _condo_client    = packet.get("client_name", {}).get("value") or db_row.get("client_name", "")
+        _condo_client    = _display_client_name(company_info, packet, db_row)
         _condo_addr      = (
             packet.get("property_address", {}).get("value")
             or order_details.get("ng_property_address", "")
@@ -935,7 +950,7 @@ def compile_for_order(order_id: str) -> dict:
         )
         # Write to Excel so human can see and manually set the price.
         # Without this, pricing_needed orders are invisible to the team.
-        _pn_client  = packet.get("client_name", {}).get("value") or db_row.get("client_name", "")
+        _pn_client  = _display_client_name(company_info, packet, db_row)
         _pn_addr    = (
             packet.get("property_address", {}).get("value")
             or order_details.get("ng_property_address", "")
@@ -981,7 +996,7 @@ def compile_for_order(order_id: str) -> dict:
         return ai_result
 
     # ── 5. Write row to OneDrive approval spreadsheet ─────────────────────────
-    client_name   = packet.get("client_name", {}).get("value") or company_info.get("company_name") or ""
+    client_name   = _display_client_name(company_info, packet, db_row)
     address       = packet.get("property_address", {}).get("value") or order_details.get("ng_property_address") or ""
     svc_breakdown = _build_breakdown_str(ai_result.get("services", []))
     posted_at     = datetime.now(_EASTERN).strftime("%Y-%m-%d %H:%M %Z")
