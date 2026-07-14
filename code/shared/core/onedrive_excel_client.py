@@ -42,11 +42,11 @@ _cache: dict = {}
 
 # Guide tab — bump version string whenever guide content changes to force a re-write
 GUIDE_SHEET_NAME = "Pipeline Guide"
-_GUIDE_VERSION   = "v13"  # increment when guide content changes
+_GUIDE_VERSION   = "v14"  # increment when guide content changes
 
 # How-To tab — plain-language step-by-step guide for end users
 HOWTO_SHEET_NAME = "How to use Invoicing agent"
-_HOWTO_VERSION   = "v6"   # increment when how-to content changes
+_HOWTO_VERSION   = "v7"   # increment when how-to content changes
 
 # Pricing Rules tab — user-editable table of override prices
 PRICING_RULES_SHEET_NAME  = "Pricing Rules"
@@ -935,7 +935,7 @@ def ensure_guide_sheet() -> None:
             ["Service Type",      "The survey service requested on the order (e.g. Boundary Survey, Elevation Certificate). Reference only. (gray / AI-managed)"],
             ["Service / Breakdown by AI", "GRAY / locked. The AI's proposed services + prices, e.g. 'Boundary Survey: $475.00 | Elevation Cert: $150.00'. Reference only — do NOT edit. The AI keeps this to learn from your changes."],
             ["Amount ($) by AI",  "GRAY / locked. The AI's proposed total. Reference only — do NOT edit."],
-            ["Service / Breakdown by User", "BLUE / editable — THIS is what gets invoiced. Starts as a copy of the AI breakdown. To change a price or service, edit the amount(s) here, e.g. 'Boundary Survey: $500.00 | Elevation Cert: $150.00'. Keep the 'Name: $amount' format; pipe (|) separates services. Then set Action = Approve."],
+            ["Service / Breakdown by User", "BLUE / editable — THIS is what gets invoiced (name AND price). Starts as a copy of the AI breakdown. To change, rename, add or remove a service, edit this cell using the STANDARD FORMAT (see the 'SERVICE ENTRY STANDARD' section below), then set Action = Approve. The invoice is regenerated from exactly what you type here — the service name you enter is the name that prints on the client invoice."],
             ["Amount ($) by User","GRAY / AUTO-CALCULATED. The total of 'Service / Breakdown by User' — refreshed automatically every run. Do NOT type here; change the breakdown instead."],
             ["Confidence",        "HIGH = very likely correct. MEDIUM = reasonable. LOW = limited data. N/A = condo or manual pricing. (gray)"],
             ["Escalate",          "Yes = AI flagged an unusual order; Robert or Ryan should review before approving. (gray)"],
@@ -944,7 +944,19 @@ def ensure_guide_sheet() -> None:
             ["Posted At",         "Date/time the pipeline posted this row (Eastern Time). (gray)"],
             ["Processed At",      "Auto-filled when the pipeline processes your decision. Once filled = complete. (gray)"],
             ["AI Learning",       "Gray / AI-managed (read-only). The AI's one-line learning note for this order — what it priced vs. what was actually charged, and its takeaway."],
-            ["Learning provided by user", "BLUE / YOURS. Type anything you want the AI to learn for this order or client (e.g. 'this client is always $1,800 for a boundary'). The AI reads it on its next run and folds it into its pricing learning."],
+            ["Learning provided by user", "BLUE / YOURS. Type anything you want the AI to learn for this order or client (e.g. 'this client is always $1,800 for a boundary'). The AI RE-CHECKS this column every run: whenever you add or change the text it learns it against THIS order and applies the same logic to SIMILAR future orders (same client / service / county)."],
+            ["", ""],
+            ["── SERVICE ENTRY STANDARD (Service / Breakdown by User) ──", ""],
+            ["The rule",          "Type each service as  'Service Name: $Amount'  and separate multiple services with a pipe ' | '. Whatever you type here is EXACTLY what gets invoiced — both the service NAME and the amount print on the client invoice."],
+            ["Format",            "Service Name: $Amount  |  Service Name: $Amount"],
+            ["One service",       "Boundary Survey: $500.00"],
+            ["Two services",      "Boundary Survey: $500.00 | Elevation Certificate: $150.00"],
+            ["Rename a service",  "Just change the text before the colon, e.g. 'Boundary & Topographic Survey: $650.00'. That new name is what appears on the invoice."],
+            ["Change a price",    "Edit the number after the $, e.g. 'Boundary Survey: $525.00'. 'Amount ($) by User' re-totals automatically."],
+            ["Add a service",     "Add ' | New Service: $Amount' to the end of the line."],
+            ["Remove a service",  "Delete that 'Name: $Amount' segment (and its surrounding ' | '). The removed line will not appear on the invoice."],
+            ["Then",              "Set Action = Approve. The invoice is generated from this cell — your changes (names, prices, added/removed lines) all carry through."],
+            ["Rules to keep",     "Always include the '$' and a colon between name and amount. Use a plain number (525 or 525.00), no letters. One space each side of the pipe ' | '."],
             ["", ""],
             ["── ACTION GUIDE ──", ""],
             ["Approve",           "Pipeline creates a real FTF invoice from 'Service / Breakdown by User' and emails the client. CANNOT be undone from pipeline."],
@@ -1103,7 +1115,7 @@ def ensure_howto_sheet() -> None:
             ["Service / Breakdown by User", "BLUE / editable — THIS is what gets invoiced. Starts as a copy of the AI breakdown; change a number to reprice that service, e.g. 'Boundary Survey: $500.00 | Elevation Cert: $275.00'. Keep the 'Name: $amount' format (| between services)."],
             ["Amount ($) by User", "GRAY / AUTO-CALCULATED. The total of your breakdown — fills in automatically every run. Don't type here; edit the breakdown instead."],
             ["AI Learning", "Gray / read-only. The AI's one-line note on what it learned from this order (its price vs. the real one). You don't act on this."],
-            ["Learning provided by user", "BLUE / yours to fill. Type anything you want the AI to learn for this order or client — it reads your note on the next run and folds it into its pricing learning. No coding needed."],
+            ["Learning provided by user", "BLUE / yours to fill. Type anything you want the AI to learn for this order or client — it re-checks this column every run, learns any new/changed note against this order, and applies the same logic to similar future orders. No coding needed."],
             ["COLOR KEY", "Gray cells = AI-managed, please don't edit. Blue cells = yours: Service / Breakdown by User, Action, Notes, Learning provided by user."],
             ["Confidence", "HIGH / MEDIUM / LOW — how sure the AI is about the price. LOW means double-check it."],
             ["Escalate", "Yes = unusual order; have Robert or Ryan look before approving."],
@@ -1129,6 +1141,13 @@ def ensure_howto_sheet() -> None:
             ["⛔ CANCELED (red row)", "Order was canceled in FTF. No invoice needed. Set Action = Reject to clear it."],
             ["⚠️ DELIVERED (red row)", "Order already delivered. Not auto-priced. Only invoice if one is genuinely still owed — enter the amount and Approve."],
             ["ESCALATE", "Unusual order. Get Robert or Ryan to review before approving."],
+            ["", ""],
+            ["── SERVICE ENTRY STANDARD (how to type services) ──", ""],
+            ["Format", "Type each service in 'Service / Breakdown by User' as  'Service Name: $Amount'  and separate services with ' | '.  Example: 'Boundary Survey: $500.00 | Elevation Certificate: $150.00'."],
+            ["Why it matters", "The invoice is built from EXACTLY what you type — the service NAME you enter is the name that prints on the client's invoice, and the amount is what they are billed. If you rename, add, remove or reprice a service here and Approve, the invoice comes out with your changed values."],
+            ["Rename", "Change the words before the colon — e.g. 'Boundary & Topographic Survey: $650.00'. The new name prints on the invoice."],
+            ["Add / remove", "Add ' | New Service: $Amount' to add a line; delete a 'Name: $Amount' segment to remove one."],
+            ["Keep it valid", "Always keep the colon and the '$', use a plain number (e.g. 500 or 500.00), and one space each side of the pipe ' | '. Then set Action = Approve."],
             ["", ""],
             ["── FIXING A PRICE / TEACHING THE AI ──", ""],
             ["One-off change", "Edit the amount(s) in 'Service / Breakdown by User' on the row (e.g. 'Boundary Survey: $700.00'); 'Amount ($) by User' totals it automatically. Then Approve."],

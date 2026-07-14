@@ -529,6 +529,13 @@ Return ONLY valid JSON (no markdown, no explanation outside JSON):
     if learned_block:
         inject += (
             "── FIELD USER RULES (from human feedback — apply as instructed) ────\n"
+            "These are things the operator TAUGHT the AI by typing in the 'Learning provided\n"
+            "by user' column of the Approvals sheet. Treat them as binding:\n"
+            "  • An [ORDER OVERRIDE — THIS ORDER ONLY] applies to THIS order — follow it exactly.\n"
+            "  • [OPERATOR GUIDANCE] / [USER PRICE CORRECTION] entries were taught on OTHER\n"
+            "    orders — apply the SAME logic to any SIMILAR order here (same client, same/\n"
+            "    related service, or neighbouring county). Explain in pricing_reasoning which\n"
+            "    operator lesson you applied.\n"
             f"{learned_block}\n\n"
         )
     if inject:

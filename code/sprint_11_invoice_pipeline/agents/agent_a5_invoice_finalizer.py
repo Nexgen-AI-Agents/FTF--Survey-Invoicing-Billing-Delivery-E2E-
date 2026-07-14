@@ -84,15 +84,23 @@ def finalize_order(order_id: str) -> dict:
     if not services or total <= 0:
         raise AgentError(f"finalize_order: invalid draft — no services or zero total for order {order_id}")
 
-    # Build FTF invoice services payload
-    ftf_services = [
-        {
-            "name":        svc.get("name", "Survey Service"),
-            "description": svc.get("description", ""),
+    # Build FTF invoice services payload.
+    # IMPORTANT: FTF's POST /invoices renders each line item's `description` field as the
+    # invoice line LABEL (per the FTF API doc: line_items = [{"description","amount"}]). It
+    # does NOT display `name`. So the label MUST carry the service name the operator approved
+    # in col G ("Service / Breakdown by User"). When the operator edits/renames/adds a service
+    # there, the draft's `description` is blank — without this fallback the invoice line would
+    # show no service name. Order: user-approved name → AI description → generic label.
+    ftf_services = []
+    for svc in services:
+        _name  = (svc.get("name") or "").strip()
+        _desc  = (svc.get("description") or "").strip()
+        label  = _name or _desc or "Survey Service"
+        ftf_services.append({
+            "name":        _name or "Survey Service",
+            "description": label,
             "amount":      float(svc.get("amount", 0)),
-        }
-        for svc in services
-    ]
+        })
 
     # Dry-run: prove the path without touching FTF. Log the exact would-be payload and stop
     # BEFORE any write or state change, so the order stays invoice_approved (re-runnable).
