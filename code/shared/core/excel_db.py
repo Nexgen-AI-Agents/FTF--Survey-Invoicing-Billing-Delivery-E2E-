@@ -184,6 +184,18 @@ def get_orders_by_status(status: str) -> list[dict]:
     return [r for r in rows if str(r.get("status", "")) == status]
 
 
+def get_all_orders() -> list[dict]:
+    """Return every order row from the pipeline_state sheet as dicts (no filtering).
+
+    Used by the daily report to build the activity/audit view. Columns are the
+    _STATE_COLS (order_id, status, client_name, service_type, estimate_amount,
+    invoice_id, approved_by, and the *_at timestamps).
+    """
+    wb = _load_workbook()
+    _init_sheets(wb)
+    return _sheet_to_dicts(wb["pipeline_state"])
+
+
 def get_orders_awaiting_invoice_approval() -> list[dict]:
     wb = _load_workbook()
     _init_sheets(wb)

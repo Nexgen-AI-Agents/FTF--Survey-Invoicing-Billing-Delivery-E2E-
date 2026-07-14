@@ -42,11 +42,11 @@ _cache: dict = {}
 
 # Guide tab — bump version string whenever guide content changes to force a re-write
 GUIDE_SHEET_NAME = "Pipeline Guide"
-_GUIDE_VERSION   = "v14"  # increment when guide content changes
+_GUIDE_VERSION   = "v15"  # increment when guide content changes
 
 # How-To tab — plain-language step-by-step guide for end users
 HOWTO_SHEET_NAME = "How to use Invoicing agent"
-_HOWTO_VERSION   = "v7"   # increment when how-to content changes
+_HOWTO_VERSION   = "v8"   # increment when how-to content changes
 
 # Pricing Rules tab — user-editable table of override prices
 PRICING_RULES_SHEET_NAME  = "Pricing Rules"
@@ -996,7 +996,7 @@ def ensure_guide_sheet() -> None:
             ["details_missing",       "FTF has insufficient data. Update in FTF or handle manually."],
             ["permanently_excluded",  "Order will never be processed — canceled in FTF (ng_status=0), internal email, etc."],
             ["", ""],
-            ["── PIPELINE FLOW (prod server: intake every 30 min, approvals every ~5 min) ──", ""],
+            ["── PIPELINE FLOW (prod server: intake every 15 min, approvals every ~5 min) ──", ""],
             ["A1 — Flag Hunter",      "Scans FTF DB for orders with ng_invoice_needed=1. Queues new orders."],
             ["A2 — Data Collector",   "Collects FTF API, emails, county appraiser, aerial image. AI builds order packet."],
             ["A3 — Invoice Compiler", "Detects condos and flags Canceled/Delivered orders (no pricing). Checks Pricing Rules tab first, then AI pricing. Posts to this sheet."],
@@ -1004,6 +1004,12 @@ def ensure_guide_sheet() -> None:
             ["A5 — Invoice Finalizer","Creates the real FTF invoice via API."],
             ["A6 — Email Sender",     "Delivers the invoice email to the client via the FTF portal (sent as 'nesa'). LIVE — emails go to real customers."],
             ["A7 — Feedback Learner", "Learns from your decisions to improve future pricing."],
+            ["", ""],
+            ["── DAILY MONITORING REPORT (MS Teams) ──", ""],
+            ["What it is",  "An automatic status report posted to the 'AI - Invoicing Agent' Teams chat so you can monitor the agent without opening this sheet."],
+            ["When",        "TWICE a day, every day: 12:00 PM ET (Midday) and 7:00 PM ET (Evening)."],
+            ["What it shows", "What the agent DID since the last report and BY WHOM — orders ingested, priced & posted, approved/rejected/held, invoices created and sent, and any auto-flags (condo/canceled/delivered). Automated steps are credited to the AI agents (A1–A7); human decisions to the approver on record."],
+            ["Plus",        "A current pipeline snapshot (counts by status), what still needs your action, and what the AI has learned. Read-only — you act here on the Approvals tab, not in Teams."],
         ]
 
         end_row = len(rows)
@@ -1155,9 +1161,15 @@ def ensure_howto_sheet() -> None:
             ["Example rule", "Service=Boundary Survey | County=Collier | Client=Sunshine Title | Price=700 | Priority=1 | Status=Active"],
             ["", ""],
             ["── TIMING ──", ""],
-            ["How often", "The agent runs every 30 minutes, around the clock."],
-            ["How many", "Up to 10 new orders are added to the Approvals tab each run."],
-            ["Your decisions", "Picked up on the next run after you set the Action — usually within 30 minutes."],
+            ["How often", "The agent runs every 15 minutes, around the clock."],
+            ["How many", "It picks up every new flagged order each run and posts up to 30 new drafts to the Approvals tab per run."],
+            ["Your decisions", "Picked up on the next run after you set the Action — usually within 15 minutes."],
+            ["", ""],
+            ["── MONITORING REPORT (MS Teams) ──", ""],
+            ["What", "You get an automatic report in the 'AI - Invoicing Agent' Teams chat so you can see how the agent is doing without opening this sheet."],
+            ["When", "Twice a day, every day: 12 PM ET and 7 PM ET."],
+            ["Shows", "What was done since the last report and by whom — orders ingested, priced & posted, approved/rejected/held, invoices created and sent, plus any auto-flags. Automated steps are the AI agents (A1–A7); human decisions show the approver on record."],
+            ["Also", "A snapshot of every order by status, what still needs your action, and what the AI has learned. It is read-only — you still act here on the Approvals tab."],
             ["", ""],
             ["── GOLDEN RULES ──", ""],
             ["Approve = real email", "Approving sends a real invoice to a real customer. Only approve when the price is right."],

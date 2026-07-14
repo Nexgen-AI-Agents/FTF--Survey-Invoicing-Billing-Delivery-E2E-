@@ -1,18 +1,28 @@
-"""daily_report.py — morning report to the 'AI Invoicing Agent' Teams group chat.
+"""daily_report.py — twice-daily report to the 'AI Invoicing Agent' Teams group chat.
 
-Pulls LIVE state from the Approvals sheet + the AI's learning store, then asks Claude to
-WRITE the report itself (no hardcoded copy — the AI states, in its own words, what the team
-should do today and what it has learned). Posts the result to the group chat via Graph
-(Chat.ReadWrite.All). Run by cron at 06:00 ET. Never raises fatally.
+Runs 2×/day (12:00 PM and 7:00 PM ET, every day) so the team can MONITOR how the
+invoicing agent is working and what it has done. Pulls LIVE state from the Approvals
+sheet + the pipeline state store + the AI's learning store, then:
+  • builds a DETERMINISTIC activity/audit block — what orders were processed since the
+    last report and by whom (AI agents A1–A7 for automated steps; the on-record sheet
+    approver for human approve/reject/hold), plus a current pipeline snapshot; and
+  • asks Claude to WRITE the narrative (what to act on today + what it has learned).
+Posts the result to the group chat via a Power Automate HTTP flow. Never raises fatally.
+
+Which run is which is derived from the current Eastern hour (12 → Midday, else Evening);
+the window each report covers is "since the previous report" (Midday ≈ 17h back to the
+prior 7 PM; Evening ≈ 7h back to noon). Override with --label / --window-hours for testing.
 
 Usage:
-    python daily_report.py            # build + post to the chat
-    python daily_report.py --dry-run  # build + print only (no post)
+    python daily_report.py                                   # build + post (auto label/window)
+    python daily_report.py --dry-run                         # build + print only (no post)
+    python daily_report.py --dry-run --label "Evening (7 PM ET)" --window-hours 7
 """
 import json
 import os
 import re
 import sys
+from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "shared"))
 
@@ -32,6 +42,150 @@ log = get_logger("daily_report")
 _RULES_FILE = os.path.normpath(
     os.path.join(os.path.dirname(__file__), "..", "..", "data", "learned_rules.json")
 )
+
+# Full pipeline funnel (status -> friendly label), used for the current-state snapshot.
+_FUNNEL = [
+    ("invoice_needed",                "Queued (needs data)"),
+    ("data_collected",                "Data collected (awaiting pricing)"),
+    ("pricing_needed",                "Needs manual price"),
+    ("invoice_draft_posted",          "Draft posted (awaiting approval)"),
+    ("invoice_modification_requested", "Change requested"),
+    ("on_hold",                       "On hold"),
+    ("invoice_approved",              "Approved (creating invoice)"),
+    ("invoice_finalized",             "Invoice created (awaiting send)"),
+    ("invoice_sending",               "Send attempted (unconfirmed)"),
+    ("invoice_sent",                  "Invoice sent"),
+    ("invoice_rejected",              "Rejected"),
+    ("condo_rejected",                "Condo — rejected"),
+    ("delivered_flagged",             "Delivered — flagged"),
+    ("canceled_flagged",              "Canceled — flagged"),
+    ("details_missing",               "Details missing"),
+    ("already_invoiced",              "Already invoiced (skipped)"),
+    ("permanently_excluded",          "Permanently excluded"),
+]
+
+# Recent-activity buckets: current status -> label (what changed since the last report).
+_ACTIVITY_BUCKETS = [
+    ("invoice_needed",       "new orders ingested (A1)"),
+    ("data_collected",       "data collected (A2)"),
+    ("invoice_draft_posted", "priced & posted for approval (A3)"),
+    ("pricing_needed",       "flagged for manual pricing (A3)"),
+    ("invoice_approved",     "approved by a human"),
+    ("invoice_finalized",    "invoices created in FTF (A5)"),
+    ("invoice_sent",         "invoices sent to clients (A6)"),
+    ("invoice_rejected",     "rejected by a human"),
+    ("on_hold",              "put on hold by a human"),
+    ("condo_rejected",       "auto-flagged: condo"),
+    ("canceled_flagged",     "auto-flagged: canceled in FTF"),
+    ("delivered_flagged",    "auto-flagged: already delivered"),
+    ("details_missing",      "stalled: details missing"),
+]
+# Statuses that represent a HUMAN decision (for the "by whom" rollup).
+_HUMAN_STATUSES = {"invoice_approved", "invoice_finalized", "invoice_sent",
+                   "invoice_rejected", "on_hold"}
+
+
+def _parse_dt(s):
+    """Best-effort parse of an ISO timestamp -> aware UTC datetime, or None."""
+    if not s:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    except (ValueError, TypeError):
+        return None
+
+
+def _amt(o) -> float:
+    try:
+        return round(float(o.get("estimate_amount") or 0), 2)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _report_context(argv) -> dict:
+    """Derive the run label + look-back window. ET hour 12 => Midday, else Evening."""
+    label, window = None, None
+    for i, a in enumerate(argv):
+        if a == "--label" and i + 1 < len(argv):
+            label = argv[i + 1]
+        elif a == "--window-hours" and i + 1 < len(argv):
+            try:
+                window = float(argv[i + 1])
+            except ValueError:
+                pass
+    now_et = datetime.now(oc._EASTERN)
+    if label is None:
+        label = "Midday (12 PM ET)" if now_et.hour == 12 else "Evening (7 PM ET)"
+    if window is None:
+        # Midday covers the previous evening report onward (~17h); Evening covers noon (~7h).
+        window = 17.0 if now_et.hour == 12 else 7.0
+    return {"label": label, "window_hours": window,
+            "now_et_str": now_et.strftime("%a %b %-d, %-I:%M %p %Z") if os.name != "nt"
+            else now_et.strftime("%a %b %d, %I:%M %p %Z")}
+
+
+def _gather_activity(window_hours: float) -> dict:
+    """What the agent processed in the last `window_hours`, and by whom, + a full snapshot."""
+    try:
+        from core.excel_db import get_all_orders
+        orders = get_all_orders()
+    except Exception as exc:  # noqa: BLE001
+        log.warning("daily_report: activity gather failed (%s)", exc)
+        orders = []
+
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(hours=window_hours)
+    ts_fields = ("sent_at", "invoice_created_at", "draft_posted_at",
+                 "data_collected_at", "updated_at")
+
+    def last_activity(o):
+        best = None
+        for f in ts_fields:
+            dt = _parse_dt(o.get(f))
+            if dt and (best is None or dt > best):
+                best = dt
+        return best
+
+    # Current-state snapshot (all orders, by status).
+    snapshot = {}
+    for o in orders:
+        st = str(o.get("status") or "").strip() or "(none)"
+        snapshot[st] = snapshot.get(st, 0) + 1
+
+    # Orders whose latest activity falls within the window.
+    recent = [o for o in orders if (la := last_activity(o)) and la >= cutoff]
+
+    def ex(o):
+        return {"order": str(o.get("order_id") or "").strip(),
+                "client": str(o.get("client_name") or "").strip(),
+                "amount": _amt(o),
+                "invoice_id": str(o.get("invoice_id") or "").strip(),
+                "by": str(o.get("approved_by") or "").strip()}
+
+    activity_counts, activity_examples = {}, {}
+    for status, _label in _ACTIVITY_BUCKETS:
+        rows = [o for o in recent if str(o.get("status") or "") == status]
+        if rows:
+            activity_counts[status] = len(rows)
+            activity_examples[status] = [ex(o) for o in rows[:5]]
+
+    # "By whom" — human decisions grouped by the on-record approver.
+    by_whom = {}
+    for o in recent:
+        if str(o.get("status") or "") in _HUMAN_STATUSES:
+            who = str(o.get("approved_by") or "").strip() or "operator (sheet, unattributed)"
+            by_whom[who] = by_whom.get(who, 0) + 1
+
+    return {
+        "window_hours": window_hours,
+        "recent_total": len(recent),
+        "activity_counts": activity_counts,      # {status: n}
+        "activity_examples": activity_examples,  # {status: [ex,...]}
+        "by_whom": by_whom,                       # {approver: n}
+        "snapshot": snapshot,                     # {status: n} across ALL orders
+        "orders_total": len(orders),
+    }
 
 
 def _gather_state() -> dict:
@@ -128,15 +282,70 @@ def _gather_learnings() -> dict:
     return {"learned_prices": learned[:8], "operator_notes_recent": operator_notes}
 
 
-def _build_body_html(state: dict, learn: dict, backlog: dict) -> str:
-    """Claude writes the report from the live data. Falls back to a plain summary on error."""
+def _build_activity_html(activity: dict, label: str) -> str:
+    """DETERMINISTIC audit block — exact counts + who. Never LLM-written (no hallucinated numbers)."""
+    wh = activity.get("window_hours", 0)
+    bucket_label = dict(_ACTIVITY_BUCKETS)
+    lines = [f"<p><b>&#128202; What the agent did &mdash; {label}</b> "
+             f"<i>(last {int(round(wh))}h)</i></p>"]
+
+    counts = activity.get("activity_counts", {})
+    examples = activity.get("activity_examples", {})
+    if not counts:
+        lines.append("<p>No order activity in this window — the pipeline was idle or "
+                     "everything was already processed.</p>")
+    else:
+        items = []
+        for status, blabel in _ACTIVITY_BUCKETS:
+            n = counts.get(status)
+            if not n:
+                continue
+            ex = examples.get(status, [])
+            samples = ", ".join(
+                ("#" + e["order"] + (f" ({e['client']})" if e['client'] else ""))
+                for e in ex[:3] if e["order"]
+            )
+            more = f" +{n - 3} more" if n > 3 else ""
+            items.append(f"<li><b>{n}</b> {blabel}{(' — ' + samples + more) if samples else ''}</li>")
+        lines.append("<ul>" + "".join(items) + "</ul>")
+
+    # By whom
+    by = activity.get("by_whom", {})
+    if by:
+        who_str = "; ".join(f"{k}: <b>{v}</b>" for k, v in sorted(by.items(), key=lambda x: -x[1]))
+        lines.append(f"<p><b>By whom (human decisions):</b> {who_str}. "
+                     f"All automated steps (ingest, data collection, pricing, invoice creation, "
+                     f"send) were performed by the AI agents A1&ndash;A7.</p>")
+    else:
+        lines.append("<p><b>By whom:</b> no human decisions in this window — all activity was "
+                     "automated by the AI agents A1&ndash;A7.</p>")
+
+    # Current snapshot
+    snap = activity.get("snapshot", {})
+    snap_items = []
+    label_map = dict(_FUNNEL)
+    ordered = [s for s, _ in _FUNNEL if snap.get(s)] + \
+              [s for s in snap if s not in label_map and snap.get(s)]
+    for s in ordered:
+        snap_items.append(f"<li>{label_map.get(s, s)}: <b>{snap[s]}</b></li>")
+    if snap_items:
+        lines.append(f"<p><b>Current pipeline ({activity.get('orders_total', 0)} orders tracked):</b></p>"
+                     "<ul>" + "".join(snap_items) + "</ul>")
+    return "".join(lines)
+
+
+def _build_body_html(state: dict, learn: dict, backlog: dict, activity: dict) -> str:
+    """Claude writes the narrative from the live data. Falls back to a plain summary on error."""
     payload = json.dumps(
-        {"sheet_state": state, "pipeline_backlog": backlog, "ai_learnings": learn},
+        {"sheet_state": state, "pipeline_backlog": backlog, "ai_learnings": learn,
+         "activity_summary": {"counts": activity.get("activity_counts", {}),
+                              "by_whom": activity.get("by_whom", {}),
+                              "window_hours": activity.get("window_hours")}},
         indent=2, default=str,
     )
     system = (
-        "You are the AI Invoicing Agent for NexGen Surveying. Write a SHORT morning report for "
-        "the survey team about the invoice Approvals sheet. Be precise and action-first. Output "
+        "You are the AI Invoicing Agent for NexGen Surveying. Write a SHORT status update for "
+        "the survey team about the invoice pipeline. Be precise and action-first. Output "
         "CLEAN minimal HTML only (use <p>, <b>, <ul>, <li>; NO <html>/<head>, NO markdown, NO code "
         "fences). Exactly two sections, each led by a bold header: "
         "(1) 'What to do today' — tell them exactly what to act on, with the counts and a few "
@@ -147,6 +356,8 @@ def _build_body_html(state: dict, learn: dict, backlog: dict) -> str:
         "(2) 'What I learned' — state, in your own words, YOUR takeaways from the learned prices "
         "and operator notes; if there is little yet, say you are still learning. "
         "The *_count fields are the true totals; the matching lists hold only a few example orders. "
+        "The activity_summary shows what you did since the last report (it is already displayed "
+        "above your text, so do NOT repeat the per-status numbers — you may reference them briefly). "
         "Under 150 words total. Never invent numbers — use only the data provided."
     )
     try:
@@ -174,16 +385,20 @@ def _build_body_html(state: dict, learn: dict, backlog: dict) -> str:
     )
 
 
-def build_message() -> str:
+def build_message(context: dict | None = None) -> str:
+    context = context or _report_context([])
+    activity = _gather_activity(context["window_hours"])
     state = _gather_state()
     backlog = _gather_stuck_sends()
     learn = _gather_learnings()
-    body = _build_body_html(state, learn, backlog)
-    header = "<p><b>&#129302; AI Invoicing Agent &mdash; Daily Report</b></p>"
+    activity_html = _build_activity_html(activity, context["label"])
+    body = _build_body_html(state, learn, backlog, activity)
+    header = (f"<p><b>&#129302; AI Invoicing Agent &mdash; {context['label']} Report</b><br>"
+              f"<i>{context['now_et_str']}</i></p>")
     link = (f"<p>&#128203; <b>Approvals sheet:</b> "
             f"<a href=\"{ONEDRIVE_SHARE_URL}\">open FTF-Invoicing Agent.xlsx</a> "
             f"&mdash; edit the <b>blue</b> columns only; the <b>gray</b> ones are mine.</p>")
-    return header + link + body
+    return header + link + activity_html + body
 
 
 def post(html: str) -> int:
@@ -204,7 +419,8 @@ def post(html: str) -> int:
 
 def main(argv=None) -> None:
     argv = argv if argv is not None else sys.argv[1:]
-    html = build_message()
+    context = _report_context(argv)
+    html = build_message(context)
     if "--dry-run" in argv:
         print(html)
         return
