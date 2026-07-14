@@ -23,7 +23,7 @@ from agents.agent_a4_human_gate_v2     import process_dispatch_input
 from agents.agent_a5_invoice_finalizer import run as run_a5
 from agents.agent_a6_sender_v2         import run as run_a6
 from core.logger import get_logger
-from core.onedrive_excel_client        import get_pending_approvals, _close_session
+from core.onedrive_excel_client        import get_pending_approvals, get_current_approver, _close_session
 
 log = get_logger("run_excel_watcher")
 
@@ -60,6 +60,17 @@ if __name__ == "__main__":
 
     log.info("excel_watcher: %d pending decision(s) found", len(pending))
 
+    # Who is acting? Resolve the most recent HUMAN editor of the sheet from the Graph
+    # activities feed so each decision is attributed to the real person (not a hard-coded
+    # name). File-level signal — see get_current_approver() for the simultaneous-edit caveat.
+    try:
+        approver = get_current_approver()
+    except Exception as exc:
+        log.warning("excel_watcher: could not resolve approver (%s)", exc)
+        approver = ""
+    if approver:
+        log.info("excel_watcher: current human editor = %s", approver)
+
     # ── Step 2: A4 — process each decision ───────────────────────────────────
     for item in pending:
         order_id = item["order_id"]
@@ -72,6 +83,7 @@ if __name__ == "__main__":
         os.environ["INPUT_AMOUNT"]        = str(item.get("amount_cell", ""))      # col H (auto-computed total)
         os.environ["INPUT_BREAKDOWN"]     = str(item.get("breakdown_cell", ""))   # col G (user breakdown — source of truth)
         os.environ["INPUT_USER_LEARNING"] = str(item.get("learning_user", ""))    # col P (plain-English learning)
+        os.environ["INPUT_APPROVER"]      = approver                              # real human actor (activities feed)
 
         try:
             r = process_dispatch_input()

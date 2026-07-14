@@ -1733,6 +1733,66 @@ def consume_user_learnings() -> dict:
         return summary
 
 
+# Actor display names that are the pipeline/service writing to the file (NOT a human
+# approver). Our own Graph/openpyxl writes surface as one of these — filter them out so
+# only real people count as editors/approvers.
+_APP_ACTOR_NAMES = {
+    "sharepoint app", "microsoft graph", "onedrive", "system account",
+    "office 365", "sharepoint", "graph",
+}
+
+
+def get_recent_editors(top: int = 30) -> list[dict]:
+    """Return recent HUMAN editors of the Approvals workbook, newest first.
+
+    Reads the Graph driveItem activities feed and keeps only 'edit' actions by real
+    users (drops our own pipeline writes, which appear as 'SharePoint App' /
+    'Microsoft Graph'). Each entry: {"name", "email", "time"}. Never raises — returns
+    [] if the feed is unavailable. Read-only; writes nothing anywhere.
+    """
+    try:
+        item_id  = _get_item_id()
+        drive_id = _cache.get("od_drive_id")
+        if not drive_id:
+            return []
+        url = f"{_GRAPH}/drives/{drive_id}/items/{item_id}/activities?$top={int(top)}"
+        r = _graph_get_retry(url, headers=_headers(), timeout=15.0)
+        if r is None or not r.is_success:
+            return []
+        editors = []
+        for a in r.json().get("value", []):
+            action = a.get("action", {}) or {}
+            # only count real content edits (skip 'access'/comment/etc.)
+            if not (isinstance(action, dict) and ("edit" in action or "version" in action)):
+                continue
+            user = (a.get("actor", {}) or {}).get("user") or {}
+            name = (user.get("displayName") or "").strip()
+            if not name or name.lower() in _APP_ACTOR_NAMES:
+                continue
+            editors.append({
+                "name":  name,
+                "email": (user.get("email") or "").strip(),
+                "time":  (a.get("times", {}) or {}).get("recordedDateTime", ""),
+            })
+        return editors
+    except Exception as exc:  # noqa: BLE001
+        log.debug("get_recent_editors failed (non-fatal): %s", exc)
+        return []
+
+
+def get_current_approver() -> str:
+    """Best-effort display name of the person who most recently edited the sheet.
+
+    Used to attribute an approve/reject/hold decision to the actual human who made it
+    (instead of a hard-coded name), from the Graph activities feed. Returns "" if no
+    human edit is visible. NOTE: Graph exposes file-level edit actors, not per-cell — so
+    when two people edit within the same watcher window this resolves to the most recent
+    editor; it cannot perfectly split simultaneous approvals between users.
+    """
+    editors = get_recent_editors()
+    return editors[0]["name"] if editors else ""
+
+
 def get_pending_approvals() -> list[dict]:
     """Return rows where Action is set (Approve/Reject/On-hold) and Processed At is empty.
 

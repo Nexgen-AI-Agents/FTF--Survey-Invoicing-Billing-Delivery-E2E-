@@ -464,6 +464,7 @@ def process_dispatch_input() -> dict:
     excel_amount   = os.getenv("INPUT_AMOUNT",    "").strip()    # col H — Amount ($) by User (auto-computed)
     excel_breakdown= os.getenv("INPUT_BREAKDOWN", "").strip()    # col G — Service / Breakdown by User (source of truth)
     user_learning  = os.getenv("INPUT_USER_LEARNING", "").strip()  # col P — Learning provided by user
+    approver       = os.getenv("INPUT_APPROVER", "").strip() or "unknown"  # real human editor (Graph activities)
 
     if not order_id or not action:
         log.warning("workflow_dispatch: INPUT_ORDER_ID or INPUT_ACTION not set")
@@ -640,12 +641,12 @@ def process_dispatch_input() -> dict:
             # with an amount processes normally.
             return {"ok": False, "order_id": order_id, "action": "needs_amount"}
 
-        save_order_state(order_id, status="invoice_approved", approved_by="prateek")
+        save_order_state(order_id, status="invoice_approved", approved_by=approver)
         log_decision(AGENT_NAME, "invoice_approved", order_id=order_id,
-                     reason="Approved via OneDrive Excel / Power Automate",
-                     input_summary=f"notes={notes} breakdown={new_breakdown} total={_final_total:.2f}",
-                     output_summary="status → invoice_approved")
-        log.info("dispatch: approved order=%s", order_id)
+                     reason=f"Approved via OneDrive Excel by {approver}",
+                     input_summary=f"approver={approver} notes={notes} breakdown={new_breakdown} total={_final_total:.2f}",
+                     output_summary=f"status → invoice_approved (by {approver})")
+        log.info("dispatch: approved order=%s by=%s", order_id, approver)
 
     elif action in ("reject", "hold"):
         # Guard: never let a stray Excel reject/hold overwrite an order that already
@@ -668,17 +669,17 @@ def process_dispatch_input() -> dict:
         # (even when the operator gives no reason at all).
         reason_text = "; ".join(t for t in (notes, user_learning) if t)
         if action == "reject":
-            save_order_state(order_id, status="invoice_rejected")
+            save_order_state(order_id, status="invoice_rejected", approved_by=approver)
             log_decision(AGENT_NAME, "invoice_rejected", order_id=order_id,
-                         reason=f"Rejected via OneDrive Excel: {notes}",
-                         input_summary=f"notes={notes}", output_summary="status → invoice_rejected")
-            log.info("dispatch: rejected order=%s notes=%s", order_id, notes)
+                         reason=f"Rejected via OneDrive Excel by {approver}: {notes}",
+                         input_summary=f"approver={approver} notes={notes}", output_summary=f"status → invoice_rejected (by {approver})")
+            log.info("dispatch: rejected order=%s by=%s notes=%s", order_id, approver, notes)
         else:  # hold
-            save_order_state(order_id, status="on_hold")
+            save_order_state(order_id, status="on_hold", approved_by=approver)
             log_decision(AGENT_NAME, "invoice_on_hold", order_id=order_id,
-                         reason=f"Held via OneDrive Excel: {notes}",
-                         input_summary=f"notes={notes}", output_summary="status → on_hold")
-            log.info("dispatch: held order=%s", order_id)
+                         reason=f"Held via OneDrive Excel by {approver}: {notes}",
+                         input_summary=f"approver={approver} notes={notes}", output_summary=f"status → on_hold (by {approver})")
+            log.info("dispatch: held order=%s by=%s", order_id, approver)
         _record_decision_learning(order_id, db_row, action, reason_text)
 
     else:
