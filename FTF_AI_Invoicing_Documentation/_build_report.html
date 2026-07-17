@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>FTF AI Invoicing Agent — Client Documentation</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root { --ink:#1f2937; --muted:#6b7280; --accent:#0f766e; --line:#e5e7eb; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:var(--ink); line-height:1.5; margin:0; font-size:12.5px; }
+  .doc { padding:36px 44px; page-break-after:always; }
+  .doc:last-child { page-break-after:auto; }
+  h1 { color:var(--accent); font-size:22px; border-bottom:3px solid var(--accent); padding-bottom:6px; margin-top:0; }
+  h2 { color:#0b5c55; font-size:16px; margin-top:20px; border-bottom:1px solid var(--line); padding-bottom:3px; }
+  h3 { font-size:13.5px; margin-top:14px; }
+  table { border-collapse:collapse; width:100%; margin:10px 0; font-size:11.5px; }
+  th,td { border:1px solid var(--line); padding:5px 8px; text-align:left; vertical-align:top; }
+  th { background:#f0fdfa; color:#0b5c55; }
+  tr:nth-child(even) td { background:#fafafa; }
+  code { background:#f3f4f6; padding:1px 4px; border-radius:3px; font-size:11px; }
+  pre { background:#f8fafc; border:1px solid var(--line); padding:8px; border-radius:6px; overflow:auto; }
+  blockquote { border-left:4px solid #f59e0b; background:#fffbeb; margin:10px 0; padding:6px 12px; color:#78350f; }
+  .mermaid { text-align:center; margin:14px 0; }
+  .cover { display:flex; flex-direction:column; justify-content:center; align-items:center; height:92vh; text-align:center; page-break-after:always; }
+  .cover h1 { border:none; font-size:34px; color:var(--accent); }
+  .cover .sub { color:var(--muted); font-size:15px; margin-top:6px; }
+  .cover .box { margin-top:26px; border:1px solid var(--line); border-radius:10px; padding:18px 26px; }
+  hr { border:none; border-top:1px solid var(--line); margin:16px 0; }
+</style>
+</head>
+<body>
+<div class="cover">
+  <div style="font-size:44px">🤖</div>
+  <h1>FTF – Survey Invoicing &amp; Billing (E2E)</h1>
+  <div class="sub">AI Invoicing Agent — Client Documentation Package</div>
+  <div class="box">
+    <div><b>Client:</b> NexGen Surveying / FieldToFinish</div>
+    <div><b>Prepared by:</b> Tisko Tech</div>
+    <div><b>Version:</b> 1.0 &nbsp;·&nbsp; <b>Date:</b> 2026-07-16</div>
+    <div><b>Status:</b> Draft for review</div>
+  </div>
+</div>
+<div id="content"></div>
+
+<script>
+const FILES = [
+  "00_Project_Information/Document_Index.md",
+  "00_Project_Information/Project_Profile.md",
+  "00_Project_Information/Glossary.md",
+  "01_Client_Documents/01_Discovery/Business_Discovery_and_Requirements.md",
+  "01_Client_Documents/02_Planning/Proposal_Solution_and_SOW.md",
+  "01_Client_Documents/02_Planning/Project_Roadmap_and_Solution_Blueprint.md",
+  "01_Client_Documents/03_Project_Updates/Status_and_Milestone_Report.md",
+  "01_Client_Documents/04_Testing/UAT_and_Client_Acceptance.md",
+  "01_Client_Documents/05_Go_Live/Go_Live_Checklist_and_Handover.md",
+  "01_Client_Documents/06_Support/Support_and_Maintenance_Guide.md",
+  "01_Client_Documents/06_Support/Training_Guide_and_FAQ.md",
+  "01_Client_Documents/07_AI/AI_Solution_Guide.md",
+  "01_Client_Documents/07_AI/AI_Cost_Pricing_and_ROI.md",
+  "01_Client_Documents/08_Project_Closure/Closeout_and_Future_Roadmap.md"
+];
+async function build() {
+  mermaid.initialize({ startOnLoad:false, theme:"neutral", securityLevel:"loose" });
+  const root = document.getElementById("content");
+  for (const f of FILES) {
+    let md = "";
+    try { md = await (await fetch(f)).text(); } catch(e) { md = "# (could not load "+f+")"; }
+    const sec = document.createElement("div");
+    sec.className = "doc";
+    sec.innerHTML = marked.parse(md);
+    root.appendChild(sec);
+  }
+  // convert ```mermaid code blocks to <div class="mermaid">
+  document.querySelectorAll("code.language-mermaid").forEach(c => {
+    const div = document.createElement("div");
+    div.className = "mermaid";
+    div.textContent = c.textContent;
+    c.closest("pre").replaceWith(div);
+  });
+  await mermaid.run({ querySelector: ".mermaid" });
+  document.title = "READY";
+}
+build();
+</script>
+</body>
+</html>
