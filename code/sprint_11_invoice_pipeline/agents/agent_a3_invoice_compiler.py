@@ -68,30 +68,76 @@ from core.onedrive_excel_client import (
 AGENT_NAME = "agent_a3_invoice_compiler"
 log = get_logger(AGENT_NAME)
 
-# Regrid parcel viewer (the "App regrid" the client asked to link). A parcel/folio number
-# gives the most precise result; when it's missing we fall back to an address search so the
-# column is never blank. Kept as a module constant so the base URL is easy to change later.
-_REGRID_BASE = "https://app.regrid.com/search"
+# Regrid parcel viewer (the "App regrid" the client asked to link). The exact canonical
+# parcel URL (…/port-st-lucie/185262) ends in Regrid's INTERNAL integer id, which is only
+# obtainable via the Regrid API (needs a token we don't have). So instead we build a URL
+# SCOPED to the property's place path (/us/{state}/{county}/{city}) with the address as an
+# in-locality search query. That opens the correct county/city map on Regrid — one click to
+# the parcel — instead of the global /search page (the old behaviour that dumped users on a
+# blank search screen). We fall back to progressively broader scopes and finally to global
+# search so the cell is never blank. Base kept as a constant for easy change later.
+_REGRID_BASE = "https://app.regrid.com"
 
 
 # ── Property-context columns (Property Size / Map Link / FEMA Zone / Service Type) ────────
 
-def _regrid_link(parcel: str, address: str, county: str) -> str:
-    """Build a clickable Regrid search URL — by parcel/folio when known, else by address.
+def _regrid_slug(name: str) -> str:
+    """Lowercase Regrid place slug: drop periods, collapse non-alphanumerics to single '-'.
 
+    'St. Lucie' -> 'st-lucie'; 'Port St. Lucie' -> 'port-st-lucie'; 'Miami-Dade' -> 'miami-dade'.
+    """
+    import re
+    s = str(name or "").strip().lower().replace(".", "")
+    s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+    return s
+
+
+def _state_slug_from_address(address: str) -> str:
+    """Best-effort 2-letter state slug from a US address; default 'fl' (Florida operations)."""
+    import re
+    a = str(address or "").strip()
+    m = re.search(r",\s*([A-Za-z]{2})\s+\d{5}(?:-\d{4})?\s*$", a) or re.search(r",\s*([A-Za-z]{2})\s*$", a)
+    return m.group(1).lower() if m else "fl"
+
+
+def _city_from_address(address: str) -> str:
+    """Best-effort city = the comma-segment immediately before the 'ST zip' tail.
+
+    '185 SW Foo St, Port St. Lucie, FL 34953' -> 'Port St. Lucie'. Returns '' if unsure.
+    """
+    parts = [p.strip() for p in str(address or "").split(",") if p.strip()]
+    return parts[-2] if len(parts) >= 3 else ""
+
+
+def _regrid_link(parcel: str, address: str, county: str) -> str:
+    """Build a locality-scoped Regrid URL with the address (or parcel) as an in-place query.
+
+    Prefers /us/{state}/{county}/{city}?query=…; falls back to county-level, then Regrid's
+    global /search, so the cell is never blank when we have anything to search on.
     Returns "" only when we have neither a parcel nor an address to search on.
     """
     import urllib.parse
     parcel = str(parcel or "").strip()
     address = str(address or "").strip()
     county = str(county or "").strip()
-    if parcel:
-        query = f"{parcel} {county}".strip()
-    elif address:
-        query = address
-    else:
+
+    # Prefer the full address as the in-locality search term; fall back to the parcel/folio.
+    query = address or parcel
+    if not query:
         return ""
-    return f"{_REGRID_BASE}?query={urllib.parse.quote(query)}"
+    q = urllib.parse.quote(query)
+
+    state_slug  = _state_slug_from_address(address)
+    county_slug = _regrid_slug(county)
+    city_slug   = _regrid_slug(_city_from_address(address))
+
+    # Most specific place path we can build → opens that county/city map on Regrid.
+    if county_slug and city_slug:
+        return f"{_REGRID_BASE}/us/{state_slug}/{county_slug}/{city_slug}?query={q}"
+    if county_slug:
+        return f"{_REGRID_BASE}/us/{state_slug}/{county_slug}?query={q}"
+    # No county/city → keep it working with Regrid's global search rather than a blank cell.
+    return f"{_REGRID_BASE}/search?query={q}"
 
 
 def _property_attrs(order_details: dict, data_sources: dict, address: str,

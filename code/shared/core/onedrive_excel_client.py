@@ -42,11 +42,11 @@ _cache: dict = {}
 
 # Guide tab — bump version string whenever guide content changes to force a re-write
 GUIDE_SHEET_NAME = "Pipeline Guide"
-_GUIDE_VERSION   = "v15"  # increment when guide content changes
+_GUIDE_VERSION   = "v16"  # increment when guide content changes
 
 # How-To tab — plain-language step-by-step guide for end users
 HOWTO_SHEET_NAME = "How to use Invoicing agent"
-_HOWTO_VERSION   = "v8"   # increment when how-to content changes
+_HOWTO_VERSION   = "v9"   # increment when how-to content changes
 
 # Pricing Rules tab — user-editable table of override prices
 PRICING_RULES_SHEET_NAME  = "Pricing Rules"
@@ -962,7 +962,7 @@ def ensure_guide_sheet() -> None:
             ["Approve",           "Pipeline creates a real FTF invoice from 'Service / Breakdown by User' and emails the client. CANNOT be undone from pipeline."],
             ["Reject",            "No invoice created. No email sent. The AI LEARNS from it — add a reason in Notes if you can (optional). Manually clear ng_invoice_needed=1 in FTF if the order should not re-appear."],
             ["On-hold",           "Pipeline pauses this order (no invoice/email). The AI learns from it. Change to Approve or Reject when ready."],
-            ["(leave blank)",     "Pipeline ignores this row every 15-min cycle until you select an action."],
+            ["(leave blank)",     "Pipeline ignores this row every 5-min cycle until you select an action."],
             ["", ""],
             ["── NOTES FIELD GUIDE ──", ""],
             ["CONDO ORDER —",             "Cannot survey. Row is AUTO-REJECTED. Contact client — arrange refund or redirect to interior measurement."],
@@ -996,7 +996,7 @@ def ensure_guide_sheet() -> None:
             ["details_missing",       "FTF has insufficient data. Update in FTF or handle manually."],
             ["permanently_excluded",  "Order will never be processed — canceled in FTF (ng_status=0), internal email, etc."],
             ["", ""],
-            ["── PIPELINE FLOW (prod server: intake every 15 min, approvals every ~5 min) ──", ""],
+            ["── PIPELINE FLOW (prod server: intake every 5 min, approvals every ~5 min) ──", ""],
             ["A1 — Flag Hunter",      "Scans FTF DB for orders with ng_invoice_needed=1. Queues new orders."],
             ["A2 — Data Collector",   "Collects FTF API, emails, county appraiser, aerial image. AI builds order packet."],
             ["A3 — Invoice Compiler", "Detects condos and flags Canceled/Delivered orders (no pricing). Checks Pricing Rules tab first, then AI pricing. Posts to this sheet."],
@@ -1099,7 +1099,7 @@ def ensure_howto_sheet() -> None:
             ["1.", "Open the 'Approvals' tab."],
             ["2.", "Read each row: Client, Property, and Service / Breakdown by User (this is what gets billed)."],
             ["3.", "If the breakdown looks right, set the 'Action' column to Approve."],
-            ["4.", "Within ~15 minutes the agent invoices the customer and emails them. Done."],
+            ["4.", "Within ~5 minutes the agent invoices the customer and emails them. Done."],
             ["", ""],
             ["── YOUR DAILY WORKFLOW (step by step) ──", ""],
             ["Step 1 — Open Approvals", "Go to the 'Approvals' tab. Each row is one order waiting for your decision."],
@@ -1107,7 +1107,7 @@ def ensure_howto_sheet() -> None:
             ["Step 3 — Check the price", "If the breakdown looks right, leave it. To change it, see 'FIXING A PRICE' below. 'Amount ($) by User' totals your breakdown automatically — you never type it."],
             ["Step 4 — Read the Notes", "The Notes column tells you if anything needs attention (manual pricing, escalation, condo, canceled, delivered)."],
             ["Step 5 — Decide", "Set the 'Action' column to Approve, Reject, or On-hold. Leave blank to skip for now."],
-            ["Step 6 — Wait ~15 min", "The agent runs every 15 minutes. It picks up your decision and acts on it. 'Processed At' fills in when it is done."],
+            ["Step 6 — Wait ~5 min", "The agent runs every 5 minutes. It picks up your decision and acts on it. 'Processed At' fills in when it is done."],
             ["", ""],
             ["── THE 3 ACTIONS (Action column) ──", ""],
             ["Approve", "Creates a REAL invoice in FTF and emails it to the customer. This cannot be undone from here."],
@@ -1132,7 +1132,7 @@ def ensure_howto_sheet() -> None:
             ["2. You review it", "The services and the $750.00 total look correct for a boundary survey + elevation certificate in Naples."],
             ["3. (Optional) fix price", "Say you agreed $700 with this client. Edit 'Service / Breakdown by User' to 'Boundary Survey: $425.00 | Elevation Cert: $275.00' — 'Amount ($) by User' updates to $700 automatically; the AI keeps its own $750 baseline and learns the difference."],
             ["4. You approve", "Set the Action cell to 'Approve'."],
-            ["5. What happens next", "Within ~15 min the agent creates the invoice in FTF, emails it to Sunshine Title's address on file, and fills in 'Processed At'."],
+            ["5. What happens next", "Within ~5 min the agent creates the invoice in FTF, emails it to Sunshine Title's address on file, and fills in 'Processed At'."],
             ["6. Result", "Sunshine Title receives a $700 invoice by email. You did nothing except review and click Approve."],
             ["", ""],
             ["── WHAT HAPPENS AFTER YOU APPROVE ──", ""],
@@ -1161,9 +1161,9 @@ def ensure_howto_sheet() -> None:
             ["Example rule", "Service=Boundary Survey | County=Collier | Client=Sunshine Title | Price=700 | Priority=1 | Status=Active"],
             ["", ""],
             ["── TIMING ──", ""],
-            ["How often", "The agent runs every 15 minutes, around the clock."],
+            ["How often", "The agent runs every 5 minutes, around the clock."],
             ["How many", "It picks up every new flagged order each run and posts up to 30 new drafts to the Approvals tab per run."],
-            ["Your decisions", "Picked up on the next run after you set the Action — usually within 15 minutes."],
+            ["Your decisions", "Picked up on the next run after you set the Action — usually within 5 minutes."],
             ["", ""],
             ["── MONITORING REPORT (MS Teams) ──", ""],
             ["What", "You get an automatic report in the 'AI - Invoicing Agent' Teams chat so you can see how the agent is doing without opening this sheet."],
@@ -1405,6 +1405,58 @@ def _upload_workbook_bytes(data: bytes) -> None:
         log.info("workbook re-uploaded (%d bytes)", len(data))
         return
     raise AgentError("workbook upload failed: file locked after 3 retries (423)")
+
+
+def upload_backup_copy(data: bytes, name: str = "FTF-Invoicing Agent BACKUP.xlsx") -> str:
+    """Upload a full-workbook BACKUP copy next to the original in OneDrive; return its webUrl.
+
+    Writes a SEPARATE file (never the live workbook), so it can never touch, reorder, or
+    remove any order/row in the real sheet. Uploading to the same path each cycle keeps a
+    STABLE shareable URL while always refreshing the contents. The bytes passed in are the
+    exact download of the live workbook, so they already carry every tab (Approvals, Guide,
+    How-to, Pricing Rules) and are Graph-compatible as-is. Raises on failure; the caller
+    (backup_sheet.py) swallows errors so a backup hiccup never breaks the pipeline.
+    """
+    from urllib.parse import quote
+    item_id  = _get_item_id()
+    drive_id = _cache.get("od_drive_id")
+    headers  = {"Authorization": f"Bearer {_get_token()}"}
+    base = (
+        f"{_GRAPH}/drives/{drive_id}/items/{item_id}"
+        if drive_id else
+        f"{_GRAPH}/users/{ONEDRIVE_FILE_USER}/drive/items/{item_id}"
+    )
+    meta = httpx.get(base, headers=headers, timeout=30.0)
+    meta.raise_for_status()
+    parent    = meta.json().get("parentReference", {})
+    parent_id = parent.get("id")
+    drive_id  = drive_id or parent.get("driveId")
+    if not (parent_id and drive_id):
+        raise AgentError("backup upload: could not resolve OneDrive parent folder")
+    up = f"{_GRAPH}/drives/{drive_id}/items/{parent_id}:/{quote(name)}:/content"
+    r = httpx.put(up, headers={**headers, "Content-Type": "application/octet-stream"},
+                  content=data, timeout=120.0)
+    r.raise_for_status()
+    j = r.json()
+    web_url     = j.get("webUrl", "")
+    new_item_id = j.get("id")
+    # Best-effort: create an ORGANIZATION view link so teammates can open the backup
+    # directly (the raw webUrl would otherwise be owner-only). Falls back to webUrl.
+    try:
+        if new_item_id:
+            link = httpx.post(
+                f"{_GRAPH}/drives/{drive_id}/items/{new_item_id}/createLink",
+                headers={**headers, "Content-Type": "application/json"},
+                json={"type": "view", "scope": "organization"},
+                timeout=30.0,
+            )
+            if link.is_success:
+                shared = (link.json().get("link") or {}).get("webUrl")
+                if shared:
+                    return shared
+    except Exception as exc:
+        log.warning("backup sharing-link creation failed (using webUrl): %s", exc)
+    return web_url
 
 
 def _col_letter(idx: int) -> str:

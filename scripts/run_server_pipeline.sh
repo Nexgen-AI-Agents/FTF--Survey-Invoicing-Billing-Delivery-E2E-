@@ -2,13 +2,14 @@
 # FTF Invoice Pipeline — server-side cron runner (single-runner deployment).
 #
 # Runs the full A0 orchestrator (A1 intake -> A3 draft-to-sheet -> A4-A6
-# finalize/send) every 30 min on the prod server (FTF-NEAdmin-HA-01), which is
+# finalize/send) every 5 min on the prod server (FTF-NEAdmin-HA-01), which is
 # the ONLY host that can reach the private RDS. This replaces the GitHub Actions
 # invoice_pipeline / excel_approval_watcher / approval_poller workflows (disabled
 # at cutover) so there is exactly one runner and one state file — no duplicate
 # invoices or emails.
 #
-# - flock: only one run at a time; a 30-min tick is skipped if a run overruns.
+# - flock: only one run at a time; a 5-min tick is skipped if a run overruns
+#   (shared lock with the watcher, which also runs every 5 min).
 # - TZ pinned to Eastern so all timestamps + any time-of-day logic match the
 #   GitHub Actions behaviour this replaced. NOTE: A6 (sender v2) has NO send-time
 #   window guard -- an approved invoice is emailed immediately, any hour.
@@ -40,6 +41,8 @@ fi
     rc=$?
     # Refresh the local dashboard JSON from the just-updated state store.
     ( cd "$DEPLOY_DIR" && "$VENV_PY" scripts/export_pipeline_json.py ) || echo "$(date -Is) export_pipeline_json failed (non-fatal)"
+    # Back up the live OneDrive sheet after every cycle (read-only download → backups/).
+    ( cd "$DEPLOY_DIR" && "$VENV_PY" scripts/backup_sheet.py ) || echo "$(date -Is) sheet backup failed (non-fatal)"
     # Never fail silently: alert a human on a non-zero rc (CI used to do this on failure).
     if [ "$rc" -ne 0 ]; then
         echo "$(date -Is) PIPELINE FAILED rc=$rc -- sending alert"

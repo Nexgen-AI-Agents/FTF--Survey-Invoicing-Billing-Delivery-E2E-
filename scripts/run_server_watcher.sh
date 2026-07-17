@@ -35,6 +35,8 @@ fi
     cd "$SPRINT_DIR" || { echo "FATAL: cannot cd to $SPRINT_DIR"; exit 1; }
     "$VENV_PY" run_excel_watcher.py
     rc=$?
+    # Back up the live OneDrive sheet after every cycle (read-only download → backups/).
+    ( cd "$DEPLOY_DIR" && "$VENV_PY" scripts/backup_sheet.py ) || echo "$(date -Is) sheet backup failed (non-fatal)"
     if [ "$rc" -ne 0 ]; then
         echo "$(date -Is) WATCHER FAILED rc=$rc -- sending alert"
         "$VENV_PY" "$DEPLOY_DIR/scripts/notify_failure_email.py" --workflow "FTF Server Approval Watcher" --run-url "log $LOG_FILE on $(hostname)" || true
