@@ -13,6 +13,7 @@ Safe to run standalone:  python scripts/backup_sheet.py
 """
 import os
 import sys
+import time
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "code", "shared"))
@@ -24,7 +25,11 @@ log = get_logger("backup_sheet")
 
 REPO_ROOT   = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BACKUP_DIR  = os.path.join(REPO_ROOT, "backups")
-KEEP        = int(os.getenv("SHEET_BACKUP_KEEP", "48"))  # ~ latest 48 snapshots
+KEEP             = int(os.getenv("SHEET_BACKUP_KEEP", "2016"))            # rolling snapshots kept
+MIN_INTERVAL_MIN = int(os.getenv("SHEET_BACKUP_MIN_INTERVAL_MIN", "30"))  # do a real backup at most every N min
+# At 30-min cadence, KEEP=2016 ≈ 42 days of history. The wrappers still invoke this every
+# cycle, but the throttle below skips work unless MIN_INTERVAL_MIN has elapsed — this keeps
+# OneDrive version history + local snapshots from churning. Pass --force to override.
 
 
 def _prune(dir_path: str, keep: int) -> None:
@@ -40,8 +45,25 @@ def _prune(dir_path: str, keep: int) -> None:
             log.warning("could not remove old backup %s: %s", old, exc)
 
 
+def _recent_backup_within(dir_path: str, interval_min: int) -> bool:
+    """True if a snapshot was written less than interval_min ago (throttle guard)."""
+    if interval_min <= 0:
+        return False
+    snaps = [os.path.join(dir_path, f) for f in os.listdir(dir_path)
+             if f.startswith("Approvals_backup_") and f.endswith(".xlsx")]
+    if not snaps:
+        return False
+    newest = max(os.path.getmtime(p) for p in snaps)
+    return (time.time() - newest) < interval_min * 60
+
+
 def main() -> int:
+    force = "--force" in sys.argv[1:]
     os.makedirs(BACKUP_DIR, exist_ok=True)
+    if not force and _recent_backup_within(BACKUP_DIR, MIN_INTERVAL_MIN):
+        log.info("sheet backup throttled — last snapshot < %d min ago (use --force to override)",
+                 MIN_INTERVAL_MIN)
+        return 0
     try:
         data = _download_workbook_bytes()
     except Exception as exc:  # never fail the pipeline because a backup hiccuped
