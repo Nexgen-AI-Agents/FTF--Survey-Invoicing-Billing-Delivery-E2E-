@@ -115,6 +115,48 @@ def get_invoice_needed_orders(min_ng_id: int = 0) -> list[dict]:
     return results
 
 
+def get_business_metrics() -> dict:
+    """Business-level counts for the twice-daily Teams report (Ryan's EOD asks).
+
+      - active_not_invoiced : active orders flagged as needing an invoice but not yet
+                              invoiced  (ng_status != 0 AND ng_invoice_needed = 1)
+      - open_quotes         : active orders still in 'Quote' status, i.e. quotes not yet
+                              delivered / waiting on admin  (ng_status_desc = 'Quote')
+      - *_recent30          : the subset created in the last 30 days (more actionable than
+                              the full historical backlog).
+
+    READ-ONLY. Never raises — returns {} on any error so the report degrades gracefully.
+    Definitions are intentionally simple/explicit; adjust here once the team confirms the
+    exact scope they want (the report itself asks that question).
+    """
+    try:
+        conn = _connect()
+        try:
+            cutoff = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+            with conn.cursor() as c:
+                m: dict = {}
+                c.execute("SELECT COUNT(*) n FROM ng_orders "
+                          "WHERE ng_status != 0 AND ng_invoice_needed = 1")
+                m["active_not_invoiced"] = int(c.fetchone()["n"])
+                c.execute("SELECT COUNT(*) n FROM ng_orders "
+                          "WHERE ng_status != 0 AND ng_invoice_needed = 1 AND ng_timestamp >= %s",
+                          (cutoff,))
+                m["active_not_invoiced_recent30"] = int(c.fetchone()["n"])
+                c.execute("SELECT COUNT(*) n FROM ng_orders "
+                          "WHERE ng_status != 0 AND ng_status_desc = 'Quote'")
+                m["open_quotes"] = int(c.fetchone()["n"])
+                c.execute("SELECT COUNT(*) n FROM ng_orders "
+                          "WHERE ng_status != 0 AND ng_status_desc = 'Quote' AND ng_timestamp >= %s",
+                          (cutoff,))
+                m["open_quotes_recent30"] = int(c.fetchone()["n"])
+                return m
+        finally:
+            conn.close()
+    except Exception as exc:
+        logger.warning("get_business_metrics failed: %s", exc)
+        return {}
+
+
 def get_order_details(order_id: str) -> dict:
     """Fetch ng_orders fields needed by A3 for pre-flight validation and pricing."""
     conn = _connect()

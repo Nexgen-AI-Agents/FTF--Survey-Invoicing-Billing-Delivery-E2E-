@@ -116,7 +116,7 @@ def _report_context(argv) -> dict:
                 pass
     now_et = datetime.now(oc._EASTERN)
     if label is None:
-        label = "Midday (12 PM ET)" if now_et.hour == 12 else "Evening (7 PM ET)"
+        label = "Midday (12 PM ET)" if now_et.hour == 12 else "Evening / EOD (7 PM ET)"
     if window is None:
         # Midday covers the previous evening report onward (~17h); Evening covers noon (~7h).
         window = 17.0 if now_et.hour == 12 else 7.0
@@ -282,6 +282,64 @@ def _gather_learnings() -> dict:
     return {"learned_prices": learned[:8], "operator_notes_recent": operator_notes}
 
 
+def _gather_ftf_metrics() -> dict:
+    """Business-level counts straight from FTF (active-not-invoiced + open quotes)."""
+    try:
+        from core.ftf_mysql import get_business_metrics
+        return get_business_metrics()
+    except Exception as exc:  # noqa: BLE001
+        log.warning("daily_report: ftf business metrics failed (%s)", exc)
+        return {}
+
+
+def _build_metrics_html(m: dict) -> str:
+    """Deterministic 'Business snapshot' block — the headline counts the team asked for."""
+    if not m:
+        return ""
+    ani, ani_r = m.get("active_not_invoiced"), m.get("active_not_invoiced_recent30")
+    oq, oq_r = m.get("open_quotes"), m.get("open_quotes_recent30")
+    items = []
+    if ani is not None:
+        recent = f" <i>({ani_r} in the last 30 days)</i>" if ani_r is not None else ""
+        items.append(f"<li>&#128193; <b>{ani}</b> active order(s) <b>not yet invoiced</b>{recent} "
+                     f"&mdash; open files flagged as needing an invoice.</li>")
+    if oq is not None:
+        recent = f" <i>({oq_r} in the last 30 days)</i>" if oq_r is not None else ""
+        items.append(f"<li>&#128221; <b>{oq}</b> open <b>quote(s) not yet delivered</b>{recent} "
+                     f"&mdash; status is <i>Quote</i>, waiting on admin.</li>")
+    if not items:
+        return ""
+    return "<p><b>&#128200; Business snapshot (from FTF)</b></p><ul>" + "".join(items) + "</ul>"
+
+
+def _build_questions_html(state: dict, metrics: dict) -> str:
+    """A short list of questions for the team to answer next work day — helps train the AI.
+
+    Data-driven where possible (real pending items) + a standing learning prompt + a
+    scope-clarifier for the new EOD metrics (per Ryan: 'ask questions … to keep training it')."""
+    qs = []
+    mp = state.get("need_manual_price_count", 0)
+    if mp:
+        egs = ", ".join("#" + x["order"] for x in state.get("need_manual_price", [])[:3] if x.get("order"))
+        qs.append(f"<b>{mp}</b> order(s) need a manual price{(' (e.g. ' + egs + ')') if egs else ''} "
+                  f"&mdash; what should we bill?")
+    esc = state.get("escalated_for_review_count", 0)
+    if esc:
+        egs = ", ".join("#" + x["order"] for x in state.get("escalated_for_review", [])[:3] if x.get("order"))
+        qs.append(f"<b>{esc}</b> order(s) are escalated{(' (e.g. ' + egs + ')') if egs else ''} "
+                  f"&mdash; approve, adjust, or reject?")
+    qs.append("Any prices you corrected today I should learn? Add a note in the "
+              "<b>'Learning provided by user'</b> column and I'll apply it to similar orders.")
+    oq = metrics.get("open_quotes")
+    if oq:
+        qs.append(f"For these EOD numbers: should <b>'open quotes waiting on admin'</b> be all "
+                  f"{oq} open quotes, or only recent ones (e.g. last 30 days)? Confirm the scope you want.")
+    lis = "".join(f"<li>{q}</li>" for q in qs[:4])
+    return ("<p><b>&#10067; Questions for the team</b> "
+            "<i>(please reply in the chat next work day &mdash; it helps train me)</i></p>"
+            f"<ul>{lis}</ul>")
+
+
 def _build_activity_html(activity: dict, label: str) -> str:
     """DETERMINISTIC audit block — exact counts + who. Never LLM-written (no hallucinated numbers)."""
     wh = activity.get("window_hours", 0)
@@ -334,20 +392,23 @@ def _build_activity_html(activity: dict, label: str) -> str:
     return "".join(lines)
 
 
-def _build_body_html(state: dict, learn: dict, backlog: dict, activity: dict) -> str:
+def _build_body_html(state: dict, learn: dict, backlog: dict, activity: dict,
+                     metrics: dict | None = None) -> str:
     """Claude writes the narrative from the live data. Falls back to a plain summary on error."""
     payload = json.dumps(
         {"sheet_state": state, "pipeline_backlog": backlog, "ai_learnings": learn,
+         "business_metrics": metrics or {},
          "activity_summary": {"counts": activity.get("activity_counts", {}),
                               "by_whom": activity.get("by_whom", {}),
                               "window_hours": activity.get("window_hours")}},
         indent=2, default=str,
     )
     system = (
-        "You are the AI Invoicing Agent for NexGen Surveying. Write a SHORT status update for "
-        "the survey team about the invoice pipeline. Be precise and action-first. Output "
-        "CLEAN minimal HTML only (use <p>, <b>, <ul>, <li>; NO <html>/<head>, NO markdown, NO code "
-        "fences). Exactly two sections, each led by a bold header: "
+        "You are the AI Invoicing Agent for NexGen Surveying. Write a SHORT, CLEAR status update "
+        "for the survey team about the invoice pipeline (a midday or end-of-day report). Plain, "
+        "friendly, skimmable, action-first. Output CLEAN minimal HTML only (use <p>, <b>, <ul>, "
+        "<li>; NO <html>/<head>, NO markdown, NO code fences). Exactly two sections, each led by a "
+        "bold header: "
         "(1) 'What to do today' — tell them exactly what to act on, with the counts and a few "
         "example order numbers; if nothing is pending, say so plainly and reassuringly. "
         "If pipeline_backlog.needs_send_confirmation_count > 0, call it out FIRST and clearly: "
@@ -356,8 +417,9 @@ def _build_body_html(state: dict, learn: dict, backlog: dict, activity: dict) ->
         "(2) 'What I learned' — state, in your own words, YOUR takeaways from the learned prices "
         "and operator notes; if there is little yet, say you are still learning. "
         "The *_count fields are the true totals; the matching lists hold only a few example orders. "
-        "The activity_summary shows what you did since the last report (it is already displayed "
-        "above your text, so do NOT repeat the per-status numbers — you may reference them briefly). "
+        "business_metrics (active-not-invoiced, open quotes) and activity_summary are ALREADY shown "
+        "above your text — do NOT repeat their numbers; you may reference them in one short phrase. "
+        "Do NOT write your own questions section (one is added separately). "
         "Under 150 words total. Never invent numbers — use only the data provided."
     )
     try:
@@ -391,14 +453,18 @@ def build_message(context: dict | None = None) -> str:
     state = _gather_state()
     backlog = _gather_stuck_sends()
     learn = _gather_learnings()
+    metrics = _gather_ftf_metrics()
+    metrics_html = _build_metrics_html(metrics)
     activity_html = _build_activity_html(activity, context["label"])
-    body = _build_body_html(state, learn, backlog, activity)
+    body = _build_body_html(state, learn, backlog, activity, metrics)
+    questions_html = _build_questions_html(state, metrics)
     header = (f"<p><b>&#129302; AI Invoicing Agent &mdash; {context['label']} Report</b><br>"
               f"<i>{context['now_et_str']}</i></p>")
     link = (f"<p>&#128203; <b>Approvals sheet:</b> "
             f"<a href=\"{ONEDRIVE_SHARE_URL}\">open FTF-Invoicing Agent.xlsx</a> "
             f"&mdash; edit the <b>blue</b> columns only; the <b>gray</b> ones are mine.</p>")
-    return header + link + activity_html + body
+    # Order: headline business numbers -> what I did -> what to do / learned -> questions.
+    return header + link + metrics_html + activity_html + body + questions_html
 
 
 def post(html: str) -> int:
