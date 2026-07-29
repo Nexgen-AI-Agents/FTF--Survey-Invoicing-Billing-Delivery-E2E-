@@ -156,17 +156,22 @@ def send_for_order(order_id: str) -> dict:
 
         # Delivery confirmed. Promote the tombstone to the terminal sent state. If THIS save
         # fails, status stays invoice_sending → still no resend (just needs manual confirm).
+        # Persist the FTF Pay Now link (audit) only when present — never overwrite with a blank.
+        pay_link = result.get("pay_link") or ""
+        extra = {"pay_link": pay_link} if pay_link else {}
         save_order_state(
             order_id,
             status="invoice_sent",
             sent_at=datetime.now(timezone.utc).isoformat(),
+            **extra,
         )
 
         log_decision(
             AGENT_NAME,
             decision="invoice_sent",
             order_id=order_id,
-            reason=f"Invoice delivered via FTF portal as nesa to {result['to']} pdf={result['pdf']}",
+            reason=(f"Invoice delivered via FTF portal as nesa to {result['to']} pdf={result['pdf']} "
+                    f"pay_link={'present' if pay_link else 'missing'}"),
             input_summary=f"invoice_id={invoice_id}",
             output_summary=f"sent_to={result['to']}",
             model_used=None,

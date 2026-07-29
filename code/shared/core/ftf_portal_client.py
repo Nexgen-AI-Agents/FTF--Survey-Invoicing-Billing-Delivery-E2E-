@@ -33,6 +33,7 @@ from config.settings import (
     FTF_PORTAL_BASE_URL,
     FTF_PORTAL_PASS,
     FTF_PORTAL_USER,
+    FTF_SITE_BASE_URL,
 )
 from core.exceptions import AgentError, DeliveryAttemptedError, PreDeliveryError
 from core.logger import get_logger
@@ -133,6 +134,61 @@ def _generate_pdf(client: httpx.Client, order_id: str) -> str:
     return pdf_path
 
 
+# The Pay Now link is minted server-side by FTF (a Fernet token) and rendered into the order
+# page as `paynow?token=<token>`. We scrape FTF's own token — we do NOT mint it — and build the
+# same `/link/paynow?token=...` URL a human send uses. FTF appends the standard footer (PDF link,
+# hint, review) to whatever `message` we pass, but it does NOT inject the Pay Now line unless it's
+# in the message body — which is exactly why the AI's static message dropped it (see git history).
+_PAYNOW_RE = re.compile(r"paynow\?token=([A-Za-z0-9_\-]+={0,2})")
+
+
+def _scrape_delivery_extras(client: httpx.Client, order_id: str) -> dict:
+    """Read the order page to recover FTF's Pay Now link + purchaser name for the email body.
+
+    Read-only. Returns {"pay_link": str, "purchaser": str}; pay_link is "" if the token can't be
+    found (caller then falls back to the plain message rather than failing the send)."""
+    try:
+        r = client.get(f"{FTF_PORTAL_BASE_URL}/order/?order={order_id}", timeout=20.0)
+        r.raise_for_status()
+        html = r.text
+    except Exception as exc:
+        log.warning("pay-link scrape: could not load order page order=%s: %s", order_id, exc)
+        return {"pay_link": "", "purchaser": ""}
+
+    m = _PAYNOW_RE.search(html)
+    pay_link = f"{FTF_SITE_BASE_URL}/link/paynow?token={m.group(1)}" if m else ""
+    if not pay_link:
+        log.warning("pay-link scrape: no paynow token on order page order=%s — email will omit Pay Now",
+                    order_id)
+
+    pm = re.search(r'id=["\']{0,1}invoice_purchaser["\']{0,1}\s[^>]*value=["\'](.*?)["\']', html)
+    if not pm:
+        pm = re.search(r'value=["\'](.*?)["\']\s*[^>]*id=["\']{0,1}invoice_purchaser["\']{0,1}', html)
+    purchaser = pm.group(1) if pm else ""
+    return {"pay_link": pay_link, "purchaser": purchaser}
+
+
+def _build_invoice_message(pay_link: str, property_address: str, purchaser: str) -> str:
+    """Reproduce FTF's pre-filled delivery message body (greeting + delivery-for + Pay Now block).
+
+    FTF converts newlines to <br> and appends its own footer, so we only supply the top block.
+    The Pay Now anchor must be explicit HTML so MailerSend click-wraps it exactly like a human send."""
+    first = (purchaser or "").strip().split(" ")[0] if (purchaser or "").strip() else ""
+    greeting = f"Hello {first}," if first else "Hello,"
+    addr = (property_address or "").strip()
+    delivery = f" This delivery is for {addr}" if addr else ""
+    return (
+        f"{greeting}\n\n"
+        f"Thank you for your order from Nexgen! We are delighted to have the privilege of serving you."
+        f"{delivery}\n\n"
+        f"If the invoice has not yet been paid, please click below to make payment: "
+        f"<a href=\"{pay_link}\">Pay Now</a>\n\n"
+        f"If you have any questions regarding your order, please contact us by either replying to this "
+        f"email or by sending us a message through our website. We look forward to meeting all of your "
+        f"surveying needs with speed, accuracy, and excellence!"
+    )
+
+
 def deliver_invoice_as_nesa(
     order_id: str,
     client_email: str,
@@ -183,6 +239,22 @@ def deliver_invoice_as_nesa(
         except Exception as exc:
             raise PreDeliveryError(f"PDF generation failed for order {order_id}: {exc}") from exc
 
+        # mail_subject must NOT include address — FTF appends f" ({address})" automatically
+        mail_subject = subject or "Your Invoice is ready to review"
+
+        # Build the body BEFORE the tombstone/POST. When no explicit message was passed, recover
+        # FTF's own Pay Now link from the order page and reproduce FTF's message block so the AI
+        # email carries a working payment link (identical to a human send). A scrape miss falls
+        # back to the plain message — a missing link must never fail or delay the send.
+        pay_link = ""
+        if not message:
+            extras = _scrape_delivery_extras(client, order_id)
+            pay_link = extras["pay_link"]
+            message = (
+                _build_invoice_message(pay_link, property_address, extras["purchaser"])
+                if pay_link else _DEFAULT_MSG
+            )
+
         # Durable "about to send" marker — set right before the irreversible POST so
         # that a crash/timeout at or after the POST can never trigger a second send.
         if on_before_deliver is not None:
@@ -194,10 +266,6 @@ def deliver_invoice_as_nesa(
                 raise PreDeliveryError(
                     f"on_before_deliver hook failed for order {order_id} — not sending: {exc}"
                 ) from exc
-
-        # mail_subject must NOT include address — FTF appends f" ({address})" automatically
-        mail_subject = subject or "Your Invoice is ready to review"
-        message = message or _DEFAULT_MSG
 
         # ── The irreversible send. Any failure from here on is AMBIGUOUS. ────────
         try:
@@ -219,9 +287,9 @@ def deliver_invoice_as_nesa(
                 f"NOT retrying automatically: {exc}"
             ) from exc
 
-        log.info("invoice delivered via portal as %s order=%s to=%s pdf=%s",
-                 FTF_PORTAL_USER, order_id, recipient, pdf_path)
-        return {"sent": True, "to": recipient, "pdf": pdf_path}
+        log.info("invoice delivered via portal as %s order=%s to=%s pdf=%s pay_link=%s",
+                 FTF_PORTAL_USER, order_id, recipient, pdf_path, "yes" if pay_link else "no")
+        return {"sent": True, "to": recipient, "pdf": pdf_path, "pay_link": pay_link}
 
     finally:
         client.close()

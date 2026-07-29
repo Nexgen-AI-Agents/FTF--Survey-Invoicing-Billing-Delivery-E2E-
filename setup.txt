@@ -91,8 +91,10 @@ STEP 2 — GITHUB REPOSITORY SECRETS
   FTF_API_KEY              Your FTF API key from NexGen IT
   FTF_API_BASE_URL         https://stage.fieldtofinish.jobs/ftf-ai-api/v1
   FTF_ORDER_URL            https://stage.fieldtofinish.jobs/order
-  FTF_SITE_BASE_URL        https://stage.fieldtofinish.jobs
-  FTF_PAY_HASH_KEY         Fernet key — generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+  FTF_SITE_BASE_URL        https://stage.fieldtofinish.jobs  (used to build the Pay Now URL from FTF's scraped token)
+  FTF_PAY_HASH_KEY         UNUSED — the Pay Now link is NOT minted locally. FTF mints its own Fernet
+                           token and A6 scrapes it from the order page. A self-generated key would
+                           produce a link FTF's /link/paynow cannot decrypt. Leave blank.
   FTF_BOOKS_BASE_URL       https://stage.fieldtofinish.jobs
   FTF_BOOKS_USER           Your FTF Books login username
   FTF_BOOKS_PASSWORD       Your FTF Books login password
