@@ -302,24 +302,69 @@ def _gather_ftf_metrics() -> dict:
         return {}
 
 
+# ── Clean report helpers ──────────────────────────────────────────────────────
+# Simple, kid-friendly labels + emojis for the tables. Emojis as HTML entities so the
+# text survives any encoding on the way to Teams.
+_ACTIVITY_SIMPLE = {
+    "invoice_needed":       "&#127381; Found new orders",
+    "data_collected":       "&#128270; Collected details",
+    "invoice_draft_posted": "&#128181; Priced &amp; sent for your OK",
+    "pricing_needed":        "&#9995; Needs a price from you",
+    "invoice_approved":      "&#128077; Approved",
+    "invoice_finalized":     "&#129534; Invoice made",
+    "invoice_sent":          "&#128231; Invoice emailed",
+    "invoice_rejected":      "&#10060; Rejected",
+    "on_hold":               "&#9208; On hold",
+    "condo_rejected":        "&#127970; Skipped: condo",
+    "canceled_flagged":      "&#128683; Skipped: canceled",
+    "delivered_flagged":     "&#128230; Skipped: already delivered",
+    "details_missing":       "&#10067; Missing details",
+}
+_SNAPSHOT_SIMPLE = {
+    "invoice_needed":                 "Waiting for details",
+    "data_collected":                 "Ready to price",
+    "pricing_needed":                 "Needs a price",
+    "invoice_draft_posted":           "Waiting for your OK",
+    "invoice_modification_requested": "Change asked for",
+    "on_hold":                        "On hold",
+    "invoice_approved":               "Making the invoice",
+    "invoice_finalized":              "Ready to email",
+    "invoice_sending":                "Send unsure",
+    "invoice_sent":                   "Emailed &#9989;",
+    "invoice_rejected":               "Rejected",
+    "condo_rejected":                 "Condo (skipped)",
+    "delivered_flagged":              "Already delivered",
+    "canceled_flagged":               "Canceled",
+    "details_missing":                "Missing details",
+    "already_invoiced":               "Already billed",
+    "permanently_excluded":           "Left out on purpose",
+}
+
+
+def _table(headers: list, rows: list) -> str:
+    """Minimal HTML table (no CSS — Teams strips inline styles, keeps structure)."""
+    head = "".join(f'<th align="left">{h}</th>' for h in headers)
+    body = "".join("<tr>" + "".join(f"<td>{c}</td>" for c in r) + "</tr>" for r in rows)
+    return f'<table border="1" cellpadding="6" cellspacing="0"><tr>{head}</tr>{body}</table>'
+
+
 def _build_metrics_html(m: dict) -> str:
-    """Deterministic 'Business snapshot' block — the headline counts the team asked for."""
+    """Big Picture table — the whole-business headline counts."""
     if not m:
         return ""
     ani, ani_r = m.get("active_not_invoiced"), m.get("active_not_invoiced_recent30")
     oq, oq_r = m.get("open_quotes"), m.get("open_quotes_recent30")
-    items = []
+    rows = []
     if ani is not None:
-        recent = f" <i>({ani_r} in the last 30 days)</i>" if ani_r is not None else ""
-        items.append(f"<li>&#128193; <b>{ani}</b> active order(s) <b>not yet invoiced</b>{recent} "
-                     f"&mdash; open files flagged as needing an invoice.</li>")
+        note = f" <i>({ani_r} new in 30 days)</i>" if ani_r is not None else ""
+        rows.append([f"&#128193; Orders not billed yet{note}", f"<b>{ani}</b>"])
     if oq is not None:
-        recent = f" <i>({oq_r} in the last 30 days)</i>" if oq_r is not None else ""
-        items.append(f"<li>&#128221; <b>{oq}</b> open <b>quote(s) not yet delivered</b>{recent} "
-                     f"&mdash; status is <i>Quote</i>, waiting on admin.</li>")
-    if not items:
+        note = f" <i>({oq_r} new in 30 days)</i>" if oq_r is not None else ""
+        rows.append([f"&#128221; Quotes waiting to be sent{note}", f"<b>{oq}</b>"])
+    if not rows:
         return ""
-    return "<p><b>&#128200; Business snapshot (from FTF)</b></p><ul>" + "".join(items) + "</ul>"
+    return ("<p>&#128200; <b>Big Picture</b> <i>(whole business)</i></p>"
+            + _table(["What", "How many"], rows))
 
 
 def _build_questions_html(state: dict, metrics: dict) -> str:
@@ -331,51 +376,42 @@ def _build_questions_html(state: dict, metrics: dict) -> str:
     mp = state.get("need_manual_price_count", 0)
     if mp:
         egs = ", ".join("#" + x["order"] for x in state.get("need_manual_price", [])[:3] if x.get("order"))
-        qs.append(f"<b>{mp}</b> order(s) need a manual price{(' (e.g. ' + egs + ')') if egs else ''} "
-                  f"&mdash; what should we bill?")
+        qs.append(f"What price for the <b>{mp}</b> order(s) that need one?{(' e.g. ' + egs) if egs else ''}")
     esc = state.get("escalated_for_review_count", 0)
     if esc:
         egs = ", ".join("#" + x["order"] for x in state.get("escalated_for_review", [])[:3] if x.get("order"))
-        qs.append(f"<b>{esc}</b> order(s) are escalated{(' (e.g. ' + egs + ')') if egs else ''} "
-                  f"&mdash; approve, adjust, or reject?")
-    qs.append("Any prices you corrected today I should learn? Add a note in the "
-              "<b>'Learning provided by user'</b> column and I'll apply it to similar orders.")
+        qs.append(f"Approve, change, or reject the <b>{esc}</b> flagged order(s)?{(' e.g. ' + egs) if egs else ''}")
+    qs.append("Fixed a price today? Write it in the <b>'Learning provided by user'</b> column so I can learn.")
     oq = metrics.get("open_quotes")
     if oq:
-        qs.append(f"For these EOD numbers: should <b>'open quotes waiting on admin'</b> be all "
-                  f"{oq} open quotes, or only recent ones (e.g. last 30 days)? Confirm the scope you want.")
+        qs.append(f"Should <b>'quotes waiting'</b> mean all {oq}, or only the last 30 days?")
     lis = "".join(f"<li>{q}</li>" for q in qs[:4])
-    return ("<p><b>&#10067; Questions for the team</b> "
-            "<i>(please reply in the chat next work day &mdash; it helps train me)</i></p>"
+    return ("<p>&#10067; <b>Questions for you</b> "
+            "<i>(please reply in the chat)</i></p>"
             f"<ul>{lis}</ul>")
 
 
 def _build_activity_html(activity: dict, label: str) -> str:
-    """DETERMINISTIC audit block — exact counts + who. Never LLM-written (no hallucinated numbers)."""
-    wh = activity.get("window_hours", 0)
-    bucket_label = dict(_ACTIVITY_BUCKETS)
-    lines = [f"<p><b>&#128202; What the agent did &mdash; {label}</b> "
-             f"<i>(last {int(round(wh))}h)</i></p>"]
+    """DETERMINISTIC 'What I did' table + delivery line + who (no hallucinated numbers)."""
+    wh = int(round(activity.get("window_hours", 0)))
+    lines = [f"<p>&#9989; <b>What I did</b> <i>(last {wh} hours)</i></p>"]
 
     counts = activity.get("activity_counts", {})
     examples = activity.get("activity_examples", {})
     if not counts:
-        lines.append("<p>No order activity in this window — the pipeline was idle or "
-                     "everything was already processed.</p>")
+        lines.append("<p>&#128564; Nothing happened in this time.</p>")
     else:
-        items = []
-        for status, blabel in _ACTIVITY_BUCKETS:
+        rows = []
+        for status, _blabel in _ACTIVITY_BUCKETS:
             n = counts.get(status)
             if not n:
                 continue
             ex = examples.get(status, [])
-            samples = ", ".join(
-                ("#" + e["order"] + (f" ({e['client']})" if e['client'] else ""))
-                for e in ex[:3] if e["order"]
-            )
-            more = f" +{n - 3} more" if n > 3 else ""
-            items.append(f"<li><b>{n}</b> {blabel}{(' — ' + samples + more) if samples else ''}</li>")
-        lines.append("<ul>" + "".join(items) + "</ul>")
+            samples = ", ".join("#" + e["order"] for e in ex[:2] if e["order"])
+            more = f" +{n - 2} more" if n > 2 else ""
+            eg = (samples + more) if samples else "&mdash;"
+            rows.append([_ACTIVITY_SIMPLE.get(status, status), f"<b>{n}</b>", eg])
+        lines.append(_table(["What", "Count", "Examples"], rows))
 
     # Delivery health — invoices sent this window + Pay Now link coverage + $ delivered.
     sc = activity.get("sent_count", 0)
@@ -383,92 +419,89 @@ def _build_activity_html(activity: dict, label: str) -> str:
         swl = activity.get("sent_with_link", 0)
         amt = activity.get("sent_amount", 0.0)
         if swl == sc:
-            cover = f"all <b>{sc}</b> included a Pay Now payment link"
+            cover = "all had a <b>Pay Now</b> button &#9989;"
         elif swl == 0:
-            cover = f"<b>{sc}</b> sent, but <b>none</b> recorded a Pay Now link &mdash; worth a check"
+            cover = "&#9888; <b>none</b> had a Pay Now button"
         else:
-            cover = f"<b>{swl} of {sc}</b> included a Pay Now payment link"
-        lines.append(f"<p>&#128179; <b>Invoices delivered:</b> {cover} "
-                     f"(total ${amt:,.2f}).</p>")
+            cover = f"<b>{swl} of {sc}</b> had a Pay Now button"
+        lines.append(f"<p>&#128179; <b>Invoices emailed:</b> {sc} &mdash; {cover} "
+                     f"&middot; total <b>${amt:,.2f}</b></p>")
 
-    # By whom
+    # Who approved (human decisions) — simple line.
     by = activity.get("by_whom", {})
     if by:
-        who_str = "; ".join(f"{k}: <b>{v}</b>" for k, v in sorted(by.items(), key=lambda x: -x[1]))
-        lines.append(f"<p><b>By whom (human decisions):</b> {who_str}. "
-                     f"All automated steps (ingest, data collection, pricing, invoice creation, "
-                     f"send) were performed by the AI agents A1&ndash;A7.</p>")
-    else:
-        lines.append("<p><b>By whom:</b> no human decisions in this window — all activity was "
-                     "automated by the AI agents A1&ndash;A7.</p>")
-
-    # Current snapshot
-    snap = activity.get("snapshot", {})
-    snap_items = []
-    label_map = dict(_FUNNEL)
-    ordered = [s for s, _ in _FUNNEL if snap.get(s)] + \
-              [s for s in snap if s not in label_map and snap.get(s)]
-    for s in ordered:
-        snap_items.append(f"<li>{label_map.get(s, s)}: <b>{snap[s]}</b></li>")
-    if snap_items:
-        lines.append(f"<p><b>Current pipeline ({activity.get('orders_total', 0)} orders tracked):</b></p>"
-                     "<ul>" + "".join(snap_items) + "</ul>")
+        who = ", ".join(f"{k} (<b>{v}</b>)" for k, v in sorted(by.items(), key=lambda x: -x[1]))
+        lines.append(f"<p>&#128100; <b>Who approved:</b> {who}. <i>I did the automatic steps.</i></p>")
     return "".join(lines)
 
 
-def _build_body_html(state: dict, learn: dict, backlog: dict, activity: dict,
-                     metrics: dict | None = None) -> str:
-    """Claude writes the narrative from the live data. Falls back to a plain summary on error."""
-    payload = json.dumps(
-        {"sheet_state": state, "pipeline_backlog": backlog, "ai_learnings": learn,
-         "business_metrics": metrics or {},
-         "activity_summary": {"counts": activity.get("activity_counts", {}),
-                              "by_whom": activity.get("by_whom", {}),
-                              "window_hours": activity.get("window_hours")}},
-        indent=2, default=str,
-    )
-    system = (
-        "You are the AI Invoicing Agent for NexGen Surveying. Write a SHORT, CLEAR status update "
-        "for the survey team about the invoice pipeline (a midday or end-of-day report). Plain, "
-        "friendly, skimmable, action-first. Output CLEAN minimal HTML only (use <p>, <b>, <ul>, "
-        "<li>; NO <html>/<head>, NO markdown, NO code fences). Exactly two sections, each led by a "
-        "bold header: "
-        "(1) 'What to do today' — tell them exactly what to act on, with the counts and a few "
-        "example order numbers; if nothing is pending, say so plainly and reassuringly. "
-        "If pipeline_backlog.needs_send_confirmation_count > 0, call it out FIRST and clearly: "
-        "those invoices were sent-attempted but delivery is UNCONFIRMED — a human must verify in "
-        "FTF and will not be auto-resent. "
-        "(2) 'What I learned' — state, in your own words, YOUR takeaways from the learned prices "
-        "and operator notes; if there is little yet, say you are still learning. "
-        "The *_count fields are the true totals; the matching lists hold only a few example orders. "
-        "business_metrics (active-not-invoiced, open quotes) and activity_summary are ALREADY shown "
-        "above your text — do NOT repeat their numbers; you may reference them in one short phrase. "
-        "Do NOT write your own questions section (one is added separately). "
-        "Under 150 words total. Never invent numbers — use only the data provided."
-    )
-    try:
-        html = llm_call(model=HUMAN_GATE_MODEL, system=system, user=payload, max_tokens=500).strip()
-        if html.startswith("```"):
-            html = re.sub(r"^```[a-z]*\n?", "", html).rstrip("`").strip()
-        if html:
-            return html
-    except Exception as exc:
-        log.warning("daily_report: LLM write failed (%s) — using plain fallback", exc)
+def _build_snapshot_html(activity: dict) -> str:
+    """'Where all orders are now' table — the full pipeline at a glance."""
+    snap = activity.get("snapshot", {})
+    if not snap:
+        return ""
+    label_map = dict(_FUNNEL)
+    ordered = [s for s, _ in _FUNNEL if snap.get(s)] + \
+              [s for s in snap if s not in label_map and snap.get(s)]
+    rows = [[_SNAPSHOT_SIMPLE.get(s, label_map.get(s, s)), f"<b>{snap[s]}</b>"] for s in ordered]
+    return (f"<p>&#128449; <b>Where all orders are now</b> "
+            f"<i>({activity.get('orders_total', 0)} total)</i></p>"
+            + _table(["Stage", "Count"], rows))
+
+
+def _build_todo_html(state: dict, backlog: dict) -> str:
+    """DETERMINISTIC 'Please help with' table — exactly what a human needs to do."""
+    lines = ["<p>&#128587; <b>Please help with</b></p>"]
     confirm_n = backlog.get("needs_send_confirmation_count", 0)
-    confirm_html = (
-        f"<p>&#9888; <b>{confirm_n} invoice(s) need send confirmation</b> — delivery was attempted "
-        f"but unconfirmed; verify in FTF (they will NOT be auto-resent).</p>" if confirm_n else ""
+    if confirm_n:
+        lines.append(f"<p>&#9888; <b>{confirm_n} invoice(s) need a check</b> &mdash; we tried to send "
+                     f"but are not sure it worked. Please check in FTF.</p>")
+
+    def egs(key):
+        s = ", ".join("#" + x["order"] for x in state.get(key, [])[:3] if x.get("order"))
+        return s or "&mdash;"
+
+    rows = []
+    if state.get("ready_to_approve_count"):
+        rows.append(["&#128077; Approve ready invoices",
+                     f"<b>{state['ready_to_approve_count']}</b>", egs("ready_to_approve")])
+    if state.get("need_manual_price_count"):
+        rows.append(["&#9995; Set a price",
+                     f"<b>{state['need_manual_price_count']}</b>", egs("need_manual_price")])
+    if state.get("escalated_for_review_count"):
+        rows.append(["&#128269; Check flagged orders",
+                     f"<b>{state['escalated_for_review_count']}</b>", egs("escalated_for_review")])
+    if rows:
+        lines.append(_table(["Task", "How many", "Examples"], rows))
+    elif not confirm_n:
+        lines.append("<p>&#127881; <b>All caught up &mdash; nothing needs you right now.</b></p>")
+    return "".join(lines)
+
+
+def _build_learned_html(learn: dict) -> str:
+    """Short 'What I learned' bullets — kid-simple. LLM-written, safe plain fallback."""
+    prices = learn.get("learned_prices", [])
+    payload = json.dumps({"learned_prices": prices,
+                          "operator_notes_recent": learn.get("operator_notes_recent", [])}, default=str)
+    system = (
+        "You are the AI Invoicing Agent. From the data, write what you have learned as 2-3 VERY "
+        "SHORT bullets a 5th grader can understand. Simple words. Each bullet 12 words or fewer. "
+        "Output ONLY <li>...</li> items (NO <ul>, no other tags, no markdown, no code fences). "
+        "Use only the data given; do not invent numbers. If there is little to report, output one "
+        "<li> saying you are still learning."
     )
-    return (
-        "<p><b>What to do today</b></p>"
-        + confirm_html +
-        f"<p>{state['awaiting_total']} order(s) awaiting your review — "
-        f"{state['ready_to_approve_count']} ready to approve, "
-        f"{state['need_manual_price_count']} need a price, "
-        f"{state['escalated_for_review_count']} escalated for review.</p>"
-        "<p><b>What I learned</b></p>"
-        f"<p>{len(learn['learned_prices'])} learned price pattern(s) active so far.</p>"
-    )
+    inner = ""
+    try:
+        out = llm_call(model=HUMAN_GATE_MODEL, system=system, user=payload, max_tokens=200).strip()
+        out = re.sub(r"^```[a-z]*\n?", "", out).rstrip("`").strip()
+        inner = "".join(re.findall(r"<li>.*?</li>", out, re.S))
+    except Exception as exc:
+        log.warning("daily_report: learned bullets LLM failed (%s) — plain fallback", exc)
+    if not inner:
+        n = len(prices)
+        inner = (f"<li>I now know {n} price pattern(s) well.</li>" if n
+                 else "<li>Still learning &mdash; not enough data yet.</li>")
+    return "<p>&#128161; <b>What I learned</b></p><ul>" + inner + "</ul>"
 
 
 def build_message(context: dict | None = None) -> str:
@@ -478,17 +511,20 @@ def build_message(context: dict | None = None) -> str:
     backlog = _gather_stuck_sends()
     learn = _gather_learnings()
     metrics = _gather_ftf_metrics()
-    metrics_html = _build_metrics_html(metrics)
-    activity_html = _build_activity_html(activity, context["label"])
-    body = _build_body_html(state, learn, backlog, activity, metrics)
-    questions_html = _build_questions_html(state, metrics)
-    header = (f"<p><b>&#129302; AI Invoicing Agent &mdash; {context['label']} Report</b><br>"
-              f"<i>{context['now_et_str']}</i></p>")
+    header = (f"<p>&#129302; <b>AI Invoicing Agent</b> &mdash; <b>{context['label']}</b><br>"
+              f"&#128197; <i>{context['now_et_str']}</i></p>")
     link = (f"<p>&#128203; <b>Approvals sheet:</b> "
-            f"<a href=\"{ONEDRIVE_SHARE_URL}\">open FTF-Invoicing Agent.xlsx</a> "
-            f"&mdash; edit the <b>blue</b> columns only; the <b>gray</b> ones are mine.</p>")
-    # Order: headline business numbers -> what I did -> what to do / learned -> questions.
-    return header + link + metrics_html + activity_html + body + questions_html
+            f"<a href=\"{ONEDRIVE_SHARE_URL}\">open the sheet</a> "
+            f"&mdash; <i>please edit the blue columns only.</i></p>")
+    # Order: title -> sheet link -> big picture -> what I did -> where orders are ->
+    # what to do -> what I learned -> questions.
+    return (header + link
+            + _build_metrics_html(metrics)
+            + _build_activity_html(activity, context["label"])
+            + _build_snapshot_html(activity)
+            + _build_todo_html(state, backlog)
+            + _build_learned_html(learn)
+            + _build_questions_html(state, metrics))
 
 
 def post(html: str) -> int:
