@@ -177,6 +177,13 @@ def _gather_activity(window_hours: float) -> dict:
             who = str(o.get("approved_by") or "").strip() or "operator (sheet, unattributed)"
             by_whom[who] = by_whom.get(who, 0) + 1
 
+    # Delivery health: of the invoices SENT in this window, how many carry a Pay Now payment
+    # link (A6 records the FTF pay link on each send), plus the dollar value delivered.
+    sent_rows      = [o for o in recent if str(o.get("status") or "") == "invoice_sent"]
+    sent_count     = len(sent_rows)
+    sent_with_link = sum(1 for o in sent_rows if str(o.get("pay_link") or "").startswith("http"))
+    sent_amount    = round(sum(_amt(o) for o in sent_rows), 2)
+
     return {
         "window_hours": window_hours,
         "recent_total": len(recent),
@@ -185,6 +192,9 @@ def _gather_activity(window_hours: float) -> dict:
         "by_whom": by_whom,                       # {approver: n}
         "snapshot": snapshot,                     # {status: n} across ALL orders
         "orders_total": len(orders),
+        "sent_count": sent_count,
+        "sent_with_link": sent_with_link,
+        "sent_amount": sent_amount,
     }
 
 
@@ -366,6 +376,20 @@ def _build_activity_html(activity: dict, label: str) -> str:
             more = f" +{n - 3} more" if n > 3 else ""
             items.append(f"<li><b>{n}</b> {blabel}{(' — ' + samples + more) if samples else ''}</li>")
         lines.append("<ul>" + "".join(items) + "</ul>")
+
+    # Delivery health — invoices sent this window + Pay Now link coverage + $ delivered.
+    sc = activity.get("sent_count", 0)
+    if sc:
+        swl = activity.get("sent_with_link", 0)
+        amt = activity.get("sent_amount", 0.0)
+        if swl == sc:
+            cover = f"all <b>{sc}</b> included a Pay Now payment link"
+        elif swl == 0:
+            cover = f"<b>{sc}</b> sent, but <b>none</b> recorded a Pay Now link &mdash; worth a check"
+        else:
+            cover = f"<b>{swl} of {sc}</b> included a Pay Now payment link"
+        lines.append(f"<p>&#128179; <b>Invoices delivered:</b> {cover} "
+                     f"(total ${amt:,.2f}).</p>")
 
     # By whom
     by = activity.get("by_whom", {})
