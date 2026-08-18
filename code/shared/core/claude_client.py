@@ -158,8 +158,26 @@ def call_with_image(
         ) from exc
 
 
+def _extract_text(message) -> str:
+    """Join all text blocks, skipping thinking/other blocks.
+
+    With extended thinking on, message.content[0] can be a thinking block (which has no
+    .text) — so never index [0]; collect the text blocks explicitly. For a normal
+    response this returns exactly what content[0].text used to."""
+    return "".join(
+        b.text for b in message.content if getattr(b, "type", None) == "text"
+    )
+
+
 def call(model: str, system: str, user: str, max_tokens: int = 1024,
-         cache_system: bool = True) -> str:
+         cache_system: bool = True, thinking: bool = False,
+         effort: Optional[str] = None) -> str:
+    """Call Claude and return the text answer.
+
+    thinking=True enables extended (adaptive) thinking on Opus 4.x — the model reasons
+    before answering. Off by default so existing callers are unchanged. When thinking is
+    on, max_tokens is floored so the visible answer isn't starved by the reasoning budget.
+    NOTE: budget_tokens is NOT used — it is rejected (400) on Opus 4.8/4.7."""
     client = _get_client()
     last_exc: Optional[Exception] = None
 
@@ -168,17 +186,25 @@ def call(model: str, system: str, user: str, max_tokens: int = 1024,
     else:
         system_param = system
 
+    create_kwargs = dict(
+        model=model,
+        max_tokens=max(max_tokens, 4096) if thinking else max_tokens,
+        system=system_param,
+        messages=[{"role": "user", "content": user}],
+    )
+    if thinking:
+        create_kwargs["thinking"] = {"type": "adaptive"}
+        create_kwargs["output_config"] = {"effort": effort or "high"}
+
     for attempt in range(1, _MAX_RETRIES + 1):
         try:
-            message = client.messages.create(
-                model=model,
-                max_tokens=max_tokens,
-                system=system_param,
-                messages=[{"role": "user", "content": user}],
-            )
+            message = client.messages.create(**create_kwargs)
             if not message.content:
                 raise LLMUnavailableError("Claude returned empty content block")
-            return message.content[0].text
+            text = _extract_text(message)
+            if not text:
+                raise LLMUnavailableError("Claude returned no text block")
+            return text
 
         except anthropic.RateLimitError as exc:
             logger.warning("Claude rate limit hit (attempt %d/%d)", attempt, _MAX_RETRIES)

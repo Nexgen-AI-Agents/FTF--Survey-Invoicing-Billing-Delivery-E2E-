@@ -348,23 +348,27 @@ def _table(headers: list, rows: list) -> str:
     return f'<table border="1" cellpadding="6" cellspacing="0"><tr>{head}</tr>{body}</table>'
 
 
-def _build_metrics_html(m: dict) -> str:
-    """Big Picture table — the whole-business headline counts."""
-    if not m:
-        return ""
-    ani, ani_r = m.get("active_not_invoiced"), m.get("active_not_invoiced_recent30")
-    oq, oq_r = m.get("open_quotes"), m.get("open_quotes_recent30")
+def _build_numbers_html(m: dict, activity: dict) -> str:
+    """Compact 'Numbers' table — the few counts that matter (business + key pipeline stages).
+    Replaces the old big Business + full-pipeline tables to keep the report short."""
     rows = []
-    if ani is not None:
-        note = f" <i>({ani_r} new in 30 days)</i>" if ani_r is not None else ""
-        rows.append([f"&#128193; Orders not billed yet{note}", f"<b>{ani}</b>"])
-    if oq is not None:
-        note = f" <i>({oq_r} new in 30 days)</i>" if oq_r is not None else ""
-        rows.append([f"&#128221; Quotes waiting to be sent{note}", f"<b>{oq}</b>"])
+    if m:
+        ani = m.get("active_not_invoiced")
+        oq = m.get("open_quotes")
+        if ani is not None:
+            rows.append(["&#128193; Orders not billed yet", f"<b>{ani}</b>"])
+        if oq is not None:
+            rows.append(["&#128221; Quotes waiting to be sent", f"<b>{oq}</b>"])
+    snap = activity.get("snapshot", {}) or {}
+    if snap.get("invoice_draft_posted"):
+        rows.append(["&#9203; Waiting for your OK", f"<b>{snap['invoice_draft_posted']}</b>"])
+    if snap.get("pricing_needed"):
+        rows.append(["&#9995; Needs a price", f"<b>{snap['pricing_needed']}</b>"])
+    if snap.get("invoice_sent"):
+        rows.append(["&#128231; Emailed (all time)", f"<b>{snap['invoice_sent']}</b>"])
     if not rows:
         return ""
-    return ("<p>&#128200; <b>Big Picture</b> <i>(whole business)</i></p>"
-            + _table(["What", "How many"], rows))
+    return "<p>&#128202; <b>Numbers</b></p>" + _table(["What", "How many"], rows)
 
 
 def _build_questions_html(state: dict, metrics: dict) -> str:
@@ -385,7 +389,9 @@ def _build_questions_html(state: dict, metrics: dict) -> str:
     oq = metrics.get("open_quotes")
     if oq:
         qs.append(f"Should <b>'quotes waiting'</b> mean all {oq}, or only the last 30 days?")
-    lis = "".join(f"<li>{q}</li>" for q in qs[:4])
+    lis = "".join(f"<li>{q}</li>" for q in qs[:2])
+    if not lis:
+        return ""
     return ("<p>&#10067; <b>Questions for you</b> "
             "<i>(please reply in the chat)</i></p>"
             f"<ul>{lis}</ul>")
@@ -478,30 +484,42 @@ def _build_todo_html(state: dict, backlog: dict) -> str:
     return "".join(lines)
 
 
-def _build_learned_html(learn: dict) -> str:
-    """Short 'What I learned' bullets — kid-simple. LLM-written, safe plain fallback."""
+def _build_thinking_html(activity: dict, learn: dict, state: dict) -> str:
+    """'My thinking' — the AI reflects in its own words: what it noticed, what it learned,
+    what it is unsure about. Kid-simple bullets. LLM-written with extended thinking; safe
+    plain fallback so the report never breaks."""
     prices = learn.get("learned_prices", [])
-    payload = json.dumps({"learned_prices": prices,
-                          "operator_notes_recent": learn.get("operator_notes_recent", [])}, default=str)
+    payload = json.dumps({
+        "learned_prices": prices,
+        "operator_notes_recent": learn.get("operator_notes_recent", []),
+        "did_counts": activity.get("activity_counts", {}),
+        "emailed": activity.get("sent_count", 0),
+        "emailed_with_pay_link": activity.get("sent_with_link", 0),
+        "need_price": state.get("need_manual_price_count", 0),
+        "escalated": state.get("escalated_for_review_count", 0),
+    }, default=str)
     system = (
-        "You are the AI Invoicing Agent. From the data, write what you have learned as 2-3 VERY "
-        "SHORT bullets a 5th grader can understand. Simple words. Each bullet 12 words or fewer. "
-        "Output ONLY <li>...</li> items (NO <ul>, no other tags, no markdown, no code fences). "
-        "Use only the data given; do not invent numbers. If there is little to report, output one "
-        "<li> saying you are still learning."
+        "You are the AI Invoicing Agent. Look at your own data and REFLECT (think for yourself) "
+        "in 3 VERY SHORT bullets a 5th grader can understand: (1) what you notice, (2) what you "
+        "learned, (3) what you are unsure about or want to double-check. Simple words. Each bullet "
+        "12 words or fewer. Output ONLY <li>...</li> items (no <ul>, no other tags, no markdown, "
+        "no code fences). Use only the data given; never invent numbers."
     )
     inner = ""
     try:
-        out = llm_call(model=HUMAN_GATE_MODEL, system=system, user=payload, max_tokens=200).strip()
+        out = llm_call(model=HUMAN_GATE_MODEL, system=system, user=payload,
+                       max_tokens=600, thinking=True, effort="medium").strip()
         out = re.sub(r"^```[a-z]*\n?", "", out).rstrip("`").strip()
         inner = "".join(re.findall(r"<li>.*?</li>", out, re.S))
     except Exception as exc:
-        log.warning("daily_report: learned bullets LLM failed (%s) — plain fallback", exc)
+        log.warning("daily_report: thinking bullets LLM failed (%s) — plain fallback", exc)
     if not inner:
         n = len(prices)
-        inner = (f"<li>I now know {n} price pattern(s) well.</li>" if n
-                 else "<li>Still learning &mdash; not enough data yet.</li>")
-    return "<p>&#128161; <b>What I learned</b></p><ul>" + inner + "</ul>"
+        inner = ("<li>I emailed invoices and kept the pipeline moving.</li>"
+                 + (f"<li>I now know {n} price pattern(s) well.</li>" if n
+                    else "<li>Still learning &mdash; not enough data yet.</li>")
+                 + "<li>Please check the orders that need a price.</li>")
+    return "<p>&#129504; <b>My thinking</b></p><ul>" + inner + "</ul>"
 
 
 def build_message(context: dict | None = None) -> str:
@@ -511,20 +529,27 @@ def build_message(context: dict | None = None) -> str:
     backlog = _gather_stuck_sends()
     learn = _gather_learnings()
     metrics = _gather_ftf_metrics()
+    # One-line TL;DR so the whole report is understandable at a glance.
+    sent = activity.get("sent_count", 0)
+    amt = activity.get("sent_amount", 0.0)
+    need = (state.get("need_manual_price_count", 0)
+            + state.get("ready_to_approve_count", 0)
+            + state.get("escalated_for_review_count", 0))
+    tldr = (f"<p>&#128221; <b>In short:</b> emailed <b>{sent}</b> invoice(s) "
+            f"(<b>${amt:,.0f}</b>); <b>{need}</b> need your help.</p>")
     header = (f"<p>&#129302; <b>AI Invoicing Agent</b> &mdash; <b>{context['label']}</b><br>"
               f"&#128197; <i>{context['now_et_str']}</i></p>")
-    link = (f"<p>&#128203; <b>Approvals sheet:</b> "
-            f"<a href=\"{ONEDRIVE_SHARE_URL}\">open the sheet</a> "
-            f"&mdash; <i>please edit the blue columns only.</i></p>")
-    # Order: title -> sheet link -> big picture -> what I did -> where orders are ->
-    # what to do -> what I learned -> questions.
-    return (header + link
-            + _build_metrics_html(metrics)
-            + _build_activity_html(activity, context["label"])
-            + _build_snapshot_html(activity)
+    link = (f"<p>&#128203; <a href=\"{ONEDRIVE_SHARE_URL}\">Open the sheet</a> "
+            f"&mdash; <i>edit the blue columns only.</i></p>")
+    # Lean order: title -> TL;DR -> my thinking -> please help -> what I did -> numbers ->
+    # questions -> sheet link. (Big per-status table dropped to keep it short.)
+    return (header + tldr
+            + _build_thinking_html(activity, learn, state)
             + _build_todo_html(state, backlog)
-            + _build_learned_html(learn)
-            + _build_questions_html(state, metrics))
+            + _build_activity_html(activity, context["label"])
+            + _build_numbers_html(metrics, activity)
+            + _build_questions_html(state, metrics)
+            + link)
 
 
 def post(html: str) -> int:

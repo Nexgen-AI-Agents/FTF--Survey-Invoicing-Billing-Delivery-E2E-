@@ -183,6 +183,13 @@ if DEPLOY_ENV == "prod" and EMAIL_OVERRIDE_ALL:
 # Works in any environment (including prod). Clear it for real invoicing.
 INVOICE_DRY_RUN: bool = os.getenv("INVOICE_DRY_RUN", "").strip().lower() in ("1", "true", "yes", "on")
 
+# Estimator extended thinking — when truthy, the A3 pricing estimator uses adaptive
+# ("extended") thinking so it reasons/self-checks before pricing. OFF by default: prod
+# pricing behaviour is unchanged until a human explicitly turns it on ("go"). This is the
+# safety gate the team asked for — never enable on prod without an explicit go.
+ESTIMATOR_EXTENDED_THINKING: bool = os.getenv("ESTIMATOR_EXTENDED_THINKING", "").strip().lower() in ("1", "true", "yes", "on")
+ESTIMATOR_THINKING_EFFORT:   str  = os.getenv("ESTIMATOR_THINKING_EFFORT", "high").strip() or "high"
+
 # IMAP — email inbox for nesa@nexgenlogix.com
 IMAP_HOST:     str = os.getenv("IMAP_HOST", "outlook.office365.com")
 IMAP_PORT:     int = int(os.getenv("IMAP_PORT", "993"))

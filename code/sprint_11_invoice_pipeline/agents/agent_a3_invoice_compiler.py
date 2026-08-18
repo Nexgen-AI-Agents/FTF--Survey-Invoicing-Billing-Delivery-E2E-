@@ -49,6 +49,8 @@ from config.settings import (
     TOPO_REFERENCE,
     NEW_TITLE_YEAR_CUTOFF,
     NEW_TITLE_ORDER_CUTOFF,
+    ESTIMATOR_EXTENDED_THINKING,
+    ESTIMATOR_THINKING_EFFORT,
 )
 from core.claude_client import call as llm_call
 from core.excel_db import (
@@ -605,16 +607,28 @@ def _ai_compile_price(context: str) -> dict:
 
     for attempt in range(_MAX_PRICE_RETRIES + 1):
         try:
+            # Extended ("self") thinking is gated behind ESTIMATOR_EXTENDED_THINKING and OFF
+            # by default — prod pricing is unchanged until a human gives the go. When on, the
+            # estimator reasons/self-checks before pricing (adaptive thinking, Opus 4.x).
+            think_system = (
+                "You are a pricing expert for a Florida land surveying company. "
+                "You reason from real property data — aerial analysis, legal descriptions, "
+                "lot size, county, FEMA zone — to propose accurate invoice prices. "
+                "Your output is always valid JSON."
+            )
+            if ESTIMATOR_EXTENDED_THINKING:
+                think_system += (
+                    " Think it through step by step first: identify the service(s), the county "
+                    "rate, complexity factors, and FEMA zone; double-check your math and sanity-"
+                    "check the total against similar jobs before you answer. Then output ONLY the JSON."
+                )
             raw = llm_call(
                 model=HUMAN_GATE_MODEL,
-                system=(
-                    "You are a pricing expert for a Florida land surveying company. "
-                    "You reason from real property data — aerial analysis, legal descriptions, "
-                    "lot size, county, FEMA zone — to propose accurate invoice prices. "
-                    "Your output is always valid JSON."
-                ),
+                system=think_system,
                 user=context,
                 max_tokens=2000,
+                thinking=ESTIMATOR_EXTENDED_THINKING,
+                effort=ESTIMATOR_THINKING_EFFORT,
             ).strip()
 
             if raw.startswith("```"):
