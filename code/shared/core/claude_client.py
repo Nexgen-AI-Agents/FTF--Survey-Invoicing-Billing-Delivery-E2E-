@@ -186,9 +186,16 @@ def call(model: str, system: str, user: str, max_tokens: int = 1024,
     else:
         system_param = system
 
+    # Models that think by default (Opus 5 / Fable / Mythos / Sonnet 5) run adaptive thinking
+    # even when `thinking` is omitted — so floor max_tokens for them too, or a small budget
+    # would be spent on reasoning and starve the visible answer.
+    _think_by_default = model.startswith(("claude-opus-5", "claude-fable", "claude-mythos",
+                                          "claude-sonnet-5"))
+    thinking_active = thinking or _think_by_default
+
     create_kwargs = dict(
         model=model,
-        max_tokens=max(max_tokens, 4096) if thinking else max_tokens,
+        max_tokens=max(max_tokens, 4096) if thinking_active else max_tokens,
         system=system_param,
         messages=[{"role": "user", "content": user}],
     )

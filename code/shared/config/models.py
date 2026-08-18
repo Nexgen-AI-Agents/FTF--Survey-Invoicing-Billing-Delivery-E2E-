@@ -1,7 +1,7 @@
-# Model IDs verified 2026-07-29
+# Model IDs verified 2026-08-18
 CLAUDE_HAIKU  = "claude-haiku-4-5-20251001"
 CLAUDE_SONNET = "claude-sonnet-4-6"          # retained for reference / rollback
-CLAUDE_OPUS   = "claude-opus-4-8"            # latest Opus
+CLAUDE_OPUS   = "claude-opus-5"              # latest Opus (thinking on by default)
 
 # Haiku — simple/fast agents (no reasoning required)
 MONITOR_MODEL   = CLAUDE_HAIKU
