@@ -295,6 +295,29 @@ def _setup_full_sheet_via_openpyxl() -> None:
 
     wb = openpyxl.load_workbook(io.BytesIO(raw))
 
+    # ── HARD SAFETY GUARD: never destroy a populated Approvals sheet ──────────────
+    # The `del wb[...]` below wipes EVERY order row. That is only ever acceptable on a
+    # brand-new/empty sheet. On 2026-08-19 a stray keystroke in column U made Excel
+    # auto-extend ApprovalTable to 21 columns; ensure_approval_sheet() read that as a
+    # "schema mismatch" and armed this recreate every 5 minutes against a sheet holding
+    # 1,534 live orders. The only thing that prevented total loss was an unrelated 423
+    # file lock. A schema difference is NEVER worth deleting the operators' data, so
+    # refuse here — the last line of defence, independent of any caller's logic.
+    _old = wb[ONEDRIVE_SHEET_NAME] if ONEDRIVE_SHEET_NAME in wb.sheetnames else None
+    if _old is not None:
+        _data_rows = sum(
+            1 for _r in _old.iter_rows(min_row=2, min_col=1, max_col=1, values_only=True)
+            if str(_r[0] or "").strip()
+        )
+        if _data_rows:
+            log.error(
+                "_setup_full_sheet_via_openpyxl: REFUSING to recreate '%s' — it holds %d data "
+                "rows. Recreate is for an empty/missing sheet only; a schema difference must be "
+                "repaired in place, never by deleting live orders.",
+                ONEDRIVE_SHEET_NAME, _data_rows,
+            )
+            return
+
     # Remove stale Approvals sheet (clean slate on every schema change)
     if ONEDRIVE_SHEET_NAME in wb.sheetnames:
         del wb[ONEDRIVE_SHEET_NAME]
@@ -724,11 +747,26 @@ def ensure_approval_sheet() -> None:
             log.info("ensure_approval_sheet: table missing or unreadable (status %d) — will recreate", r_cols.status_code)
             needs_setup = True
         else:
-            actual_cols = len(r_cols.json().get("value", []))
-            if actual_cols != _COL_COUNT:
-                log.info(
-                    "ensure_approval_sheet: schema mismatch (%d cols vs expected %d) — will recreate",
-                    actual_cols, _COL_COUNT,
+            actual_names = [c.get("name", "") for c in r_cols.json().get("value", [])]
+            actual_cols  = len(actual_names)
+            if actual_cols == _COL_COUNT:
+                pass                                  # exact schema — nothing to do
+            elif actual_cols > _COL_COUNT and actual_names[:_COL_COUNT] == list(APPROVAL_HEADERS):
+                # Excel silently widens a table when anyone types in the cell just to its
+                # right (the new column gets the default name "Column1"). All 20 real
+                # columns are still present and in order, so the sheet is FINE — recreating
+                # it would delete every order row. Tolerate the extra columns;
+                # append_approval_row() pads its values to the table's true width.
+                log.warning(
+                    "ensure_approval_sheet: table has %d extra trailing column(s) %s — harmless, "
+                    "tolerating (new rows are padded to match). To restore the exact schema, "
+                    "resize the table in Excel (Table Design > Resize Table).",
+                    actual_cols - _COL_COUNT, actual_names[_COL_COUNT:],
+                )
+            else:
+                log.warning(
+                    "ensure_approval_sheet: schema mismatch (%d cols vs expected %d) — recreate "
+                    "is gated on the sheet being empty", actual_cols, _COL_COUNT,
                 )
                 needs_setup = True
 
@@ -1567,6 +1605,34 @@ def _record_ai_prefilled_note(order_id: str, notes: str) -> None:
         log.debug("record ai_prefilled_note failed order=%s (non-fatal): %s", order_id, exc)
 
 
+def _table_col_count() -> int:
+    """ApprovalTable's real column count (never below _COL_COUNT). Cached per process.
+
+    Exists because Graph's tables/rows/add demands an exact width match, while Excel can
+    widen the table behind our back. Read-only and failure-tolerant: on any error it falls
+    back to _COL_COUNT so an append is never blocked by this lookup itself.
+    """
+    n = _cache.get("table_col_count")
+    if n:
+        return int(n)
+    n = 0
+    try:
+        r = _graph_get_retry(
+            f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/columns",
+            headers=_headers(), timeout=15.0,
+        )
+        if r is not None and r.is_success:
+            n = len(r.json().get("value", []))
+    except Exception as exc:                       # noqa: BLE001 — advisory lookup only
+        log.warning("_table_col_count: lookup failed (%s) — assuming %d", exc, _COL_COUNT)
+    n = max(n, _COL_COUNT)
+    if n != _COL_COUNT:
+        log.info("_table_col_count: table is %d cols (schema is %d) — rows will be padded",
+                 n, _COL_COUNT)
+    _cache["table_col_count"] = n
+    return n
+
+
 def append_approval_row(
     order_id:     str,
     client_name:  str,
@@ -1641,7 +1707,11 @@ def append_approval_row(
     row[_COL_PROCESSED_AT]  = ""                  # filled after pipeline processes decision
     row[_COL_AI_LEARNING]   = str(ai_learning)
     row[_COL_USER_LEARNING] = ""                  # approver fills this; AI reads it next run
-    values = [row]
+    # Pad to the table's ACTUAL width. Graph rejects the WHOLE rows/add request with
+    # 400 Bad Request unless len(values[0]) == the table's column count, and Excel widens
+    # the table whenever someone types beside it. Without this pad, new orders silently
+    # stop reaching the sheet (cost: 12 orders invisible for ~90 min on 2026-08-19).
+    values = [row + [""] * max(0, _table_col_count() - _COL_COUNT)]
 
     r = httpx.post(
         f"{_wb_base()}/worksheets/{ONEDRIVE_SHEET_NAME}/tables/{ONEDRIVE_TABLE_NAME}/rows/add",

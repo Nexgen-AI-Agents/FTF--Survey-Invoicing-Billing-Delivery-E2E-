@@ -588,3 +588,70 @@ Implemented as `REPORT_MIN_ORDER_NUMBER` (prod .env = 1000288500), applied in
 `daily_report._below_report_cutoff` -> hides pre-cutoff orders from the "needs a price" /
 "flagged" question lists ONLY. Report-side; A1..A6 untouched; those orders stay billable on
 human approval; hidden count is always disclosed. Effect: 128 nags -> 1, 125 disclosed.
+
+## INCIDENT 2026-08-19 (16:xx ET) — new orders stopped reaching the Approvals sheet
+
+**Symptom (reported by Sumit):** "AI is not picking orders from FTF. It is stuck at 288592 but
+FTF fresh order is at 288606."
+
+**What was actually happening:** the pipeline never stopped. Cron fired every 5 min, A1 kept
+finding flagged orders, A2 collected them, A3 priced them. Only the *last step* failed — writing
+the row to the sheet:
+
+```
+ERROR [agent_a3_invoice_compiler] failed to write Excel row order=1000288593:
+  Client error '400 Bad Request' for .../tables/ApprovalTable/rows/add
+INFO  [agent_a3_invoice_compiler] invoice_compiler complete: {'posted': 1, 'errors': 0}
+```
+
+**Root cause:** someone typed in column **U**, just right of the table. Excel silently widened
+`ApprovalTable` to 21 columns, auto-naming the new one `Column1` (it was empty — purely
+accidental). Graph's `tables/rows/add` rejects the **entire** request unless the values array
+width matches the table's column count exactly, so every append 400'd. 8 orders sat priced but
+invisible for ~90 min.
+
+**The much worse thing this uncovered.** `ensure_approval_sheet()` treated any column-count
+difference as "schema mismatch — will recreate", and the recreate path
+(`_setup_full_sheet_via_openpyxl`) starts with `del wb["Approvals"]` — it **deletes every order
+row** and rebuilds the sheet header-only. That was firing every 5 minutes against a sheet holding
+1,534 live orders. The *only* reason production data still existed was an unrelated `423 Locked`
+because the team happened to have the file open in Excel. Closing Excel would have wiped the sheet.
+
+**Fixes (all in this commit):**
+1. `_setup_full_sheet_via_openpyxl` — hard guard: **refuse to recreate a sheet that holds data
+   rows**, whatever the caller thinks. Last line of defence, independent of any caller's logic.
+   Tested both ways: refuses on 1,534 rows, still sets up a genuinely empty sheet.
+2. `ensure_approval_sheet` — extra *trailing* columns are now tolerated with a warning (the 20
+   real headers are still present and in order, so the sheet is fine), instead of triggering a
+   recreate.
+3. `append_approval_row` — pads the row to the table's **actual** width via `_table_col_count()`,
+   so a stray keystroke beside the table can never stop orders again.
+4. `agent_a3_invoice_compiler` — the run summary said `posted: 1, errors: 0` **while the write was
+   failing**. Now returns `_excel_write_failed` and counts it under `errors` +
+   `excel_write_failed`. Silent mis-counting is why this went unnoticed for 90 minutes.
+
+**Lessons.**
+- A schema difference is never worth deleting the operators' data. Self-healing code needs a
+  "refuse to destroy" floor, not just a "make it match" goal.
+- Counters must tell the truth. A logged ERROR that still reports `errors: 0` is worse than no
+  log at all — it defeats every downstream alert.
+- `rows/add` is all-or-nothing on width. Never assume our schema constant equals the live table.
+- The sheet is shared with humans; assume they will click, type and drag next to the table.
+
+**Note on the sheet:** column U / `Column1` was left in place deliberately — no sheet edits were
+made. It is harmless now. Removing it is a human action (Table Design > Resize Table).
+
+## SAME DAY — every Claude vision call was silently running on GPT-4o
+
+`call_with_image()` still did `message.content[0].text`. On Opus 5 (thinking by default)
+`content[0]` is a `ThinkingBlock`, which has no `.text` → `AttributeError` → all 3 retries burned
+→ `"Claude exhausted — falling back to OpenAI gpt-4o"` on **every** aerial-image analysis since
+the Opus 5 switch (commit e8f92450). The text path `call()` had already been fixed via
+`_extract_text()`; this second path was missed.
+
+Fixed: `call_with_image` now uses `_extract_text()` and floors `max_tokens` for
+think-by-default models, same as `call()`. The model check is now one shared helper
+`_thinks_by_default()` so the two paths cannot drift apart again.
+
+**Lesson:** when a response-shape assumption changes, grep for *every* place that unpacks the
+response — `.content[0]` was the fingerprint, and one caller was left behind.

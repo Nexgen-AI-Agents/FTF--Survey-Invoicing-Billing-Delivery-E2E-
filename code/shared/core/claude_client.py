@@ -98,7 +98,9 @@ def call_with_image(
         try:
             message = client.messages.create(
                 model=model,
-                max_tokens=max_tokens,
+                # Floor the budget on think-by-default models, exactly as call() does —
+                # otherwise the reasoning spend starves the visible answer.
+                max_tokens=max(max_tokens, 4096) if _thinks_by_default(model) else max_tokens,
                 system=system,
                 messages=[
                     {
@@ -119,7 +121,14 @@ def call_with_image(
             )
             if not message.content:
                 raise LLMUnavailableError("Claude returned empty content block")
-            return message.content[0].text
+            # Use _extract_text, NEVER content[0].text: on Opus 5 content[0] is a
+            # ThinkingBlock, which has no .text. Indexing [0] here raised AttributeError
+            # on every aerial-image call, burned all 3 retries and silently demoted the
+            # whole vision path to the OpenAI gpt-4o fallback (2026-08-19).
+            text = _extract_text(message)
+            if not text:
+                raise LLMUnavailableError("Claude returned no text block")
+            return text
 
         except anthropic.RateLimitError as exc:
             logger.warning("Claude rate limit hit (attempt %d/%d)", attempt, _MAX_RETRIES)
@@ -158,6 +167,17 @@ def call_with_image(
         ) from exc
 
 
+def _thinks_by_default(model: str) -> bool:
+    """True for models that run adaptive thinking even when `thinking` is not passed.
+
+    Matters for two reasons: max_tokens must be floored (or the reasoning budget starves
+    the visible answer), and content[0] is a thinking block — see _extract_text.
+    """
+    return str(model or "").startswith(
+        ("claude-opus-5", "claude-fable", "claude-mythos", "claude-sonnet-5")
+    )
+
+
 def _extract_text(message) -> str:
     """Join all text blocks, skipping thinking/other blocks.
 
@@ -189,9 +209,7 @@ def call(model: str, system: str, user: str, max_tokens: int = 1024,
     # Models that think by default (Opus 5 / Fable / Mythos / Sonnet 5) run adaptive thinking
     # even when `thinking` is omitted — so floor max_tokens for them too, or a small budget
     # would be spent on reasoning and starve the visible answer.
-    _think_by_default = model.startswith(("claude-opus-5", "claude-fable", "claude-mythos",
-                                          "claude-sonnet-5"))
-    thinking_active = thinking or _think_by_default
+    thinking_active = thinking or _thinks_by_default(model)
 
     create_kwargs = dict(
         model=model,

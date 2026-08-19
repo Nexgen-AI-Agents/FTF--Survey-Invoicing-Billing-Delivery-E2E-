@@ -1098,9 +1098,14 @@ def compile_for_order(order_id: str) -> dict:
         )
         excel_write_ok = True
     except Exception as exc:
-        log.error("failed to write Excel row order=%s: %s — order stays data_collected for retry", order_id, exc)
+        log.error("failed to write Excel row order=%s: %s — order is INVISIBLE TO APPROVERS; "
+                  "stays data_collected for retry", order_id, exc)
 
     if not excel_write_ok:
+        # Flag it for the caller so the run summary counts this as an error instead of a
+        # post. Silent mis-counting is how 12 orders stayed invisible for ~90 min on
+        # 2026-08-19: the row append was 400-ing while A3 logged "posted=1 errors=0".
+        ai_result["_excel_write_failed"] = True
         return ai_result  # do NOT mark invoice_draft_posted — let next run retry
 
     # ── 6. Save state (only reached if Excel write succeeded) ─────────────────
@@ -1145,7 +1150,7 @@ def run() -> dict:
     regardless of what the pipeline state says.
     """
     orders  = get_orders_by_status("data_collected")[:INVOICE_BATCH_SIZE]
-    summary = {"processed": 0, "posted": 0, "skipped_excel": 0, "errors": 0}
+    summary = {"processed": 0, "posted": 0, "skipped_excel": 0, "excel_write_failed": 0, "errors": 0}
 
     # Dedup reads are STRICT: if the OneDrive read fails we must NOT treat the sheet as
     # empty (that would re-post orders already in it → duplicate rows). Abort the batch and
@@ -1178,8 +1183,14 @@ def run() -> dict:
             summary["processed"] += 1
             continue
         try:
-            compile_for_order(order_id)
-            summary["posted"] += 1
+            _res = compile_for_order(order_id)
+            if isinstance(_res, dict) and _res.get("_excel_write_failed"):
+                # Priced fine, but the row never reached the sheet — the order is invisible
+                # to the approvers. Count it as an error so the summary tells the truth.
+                summary["excel_write_failed"] += 1
+                summary["errors"] += 1
+            else:
+                summary["posted"] += 1
         except Exception as exc:
             log.error("invoice compile failed order=%s: %s", order_id, exc)
             summary["errors"] += 1
