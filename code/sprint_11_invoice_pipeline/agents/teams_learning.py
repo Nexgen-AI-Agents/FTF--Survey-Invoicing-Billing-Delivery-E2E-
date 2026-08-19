@@ -38,6 +38,7 @@ _RULES_FILE = os.path.normpath(
 _MAX_OPEN_QUESTIONS = 12      # questions stay answerable for a few report cycles
 _MAX_MSGS           = 25      # newest messages scanned per run
 _MAX_PROCESSED_IDS  = 500     # ring buffer for idempotency
+_MAX_CLARIFY_PER_Q  = 2       # hard cap: one question, at most two follow-ups, ever
 
 
 def _load() -> dict:
@@ -132,10 +133,20 @@ _INTERPRET_SYSTEM = (
     "\"needs_clarification\":true or false,"
     "\"clarification\":\"if unclear, or if acting on it could wrongly skip or mis-bill work, the "
     "ONE precise question you must ask before acting; else empty\"}]}\n\n"
-    "Rules: never invent numbers or order ids. If an instruction would make you SKIP, EXCLUDE, "
-    "REJECT or STOP billing anything, set needs_clarification true and ask for the exact scope "
-    "(which orders, which date range, which status) — skipping real work loses money, so a human "
-    "must confirm it. Ignore your own posted reports and pure chit-chat: return no item for them."
+    "Rules: never invent numbers or order ids.\n"
+    "ASK ONCE, THEN COMMIT. You are also given everything you have ALREADY learned and every "
+    "clarification you have ALREADY asked. Check both before setting needs_clarification. If the "
+    "point is already covered there, or the new answer states a concrete rule you can act on (a "
+    "specific order number, date, range or status), set needs_clarification FALSE and simply "
+    "record the learning. Re-asking something the team already answered wastes their time and "
+    "destroys their trust in you — treat that as a WORSE failure than acting on a slightly "
+    "imperfect rule.\n"
+    "Set needs_clarification true ONLY when an instruction would SKIP, EXCLUDE, REJECT or STOP "
+    "billing AND the concrete scope is genuinely missing from BOTH the answer and what you "
+    "already know. Then ask one specific question naming the single missing fact.\n"
+    "If they are simply restating or confirming what you already learned, return the item with "
+    "needs_clarification false and an empty learning — you already have it.\n"
+    "Ignore your own posted reports and pure chit-chat: return no item for them."
 )
 
 
@@ -165,8 +176,15 @@ def ingest_replies() -> dict:
         return result
 
     open_qs = [q for q in (data.get("open_questions") or []) if isinstance(q, dict)]
+    prior_learnings = [x for x in (data.get("teams_learnings") or []) if isinstance(x, dict)]
+    prior_clarifs   = [c for c in (data.get("pending_clarifications") or []) if isinstance(c, dict)]
+    # Without this context the model has amnesia every cycle and re-derives the same doubt,
+    # which is exactly how the team got asked the same thing five times on 2026-08-19.
     payload = json.dumps({
         "questions_i_asked": [{"qid": q.get("qid"), "text": q.get("text")} for q in open_qs],
+        "already_learned": [{"qid": x.get("qid"), "learning": x.get("learning")}
+                            for x in prior_learnings[-25:]],
+        "already_asked_clarifications": [c.get("clarification") for c in prior_clarifs[-15:]],
         "new_messages": [{"from": m["from"], "at": m["created"], "text": m["text"][:1500]}
                          for m in reversed(fresh)],   # oldest first for readability
     }, indent=2, default=str)
@@ -187,6 +205,19 @@ def ingest_replies() -> dict:
     q_by_key  = {(q.get("key") or _topic_key(q.get("text", ""))): q for q in open_qs}
     who       = ", ".join(sorted({m["from"] for m in fresh}))
 
+    # Deterministic anti-nag guards. The prompt asks the model to stop re-asking; these make
+    # sure it CANNOT, however it words the question. Both are cheap and both are needed:
+    # the topic key catches a re-worded duplicate, the per-question cap catches the drift
+    # ("what is the cutoff?" -> "confirm the cutoff?" -> "confirm permanently?") that got the
+    # team asked the same thing five times in three hours on 2026-08-19.
+    seen_learn = {_topic_key(x.get("learning", "")) for x in learnings if isinstance(x, dict)}
+    asked_keys = {_topic_key(c.get("clarification", "")) for c in clarifs if isinstance(c, dict)}
+    clar_count = {}
+    for c in clarifs:
+        if isinstance(c, dict):
+            k = (c.get("qid") or "").strip() or "_none"
+            clar_count[k] = clar_count.get(k, 0) + 1
+
     for it in items:
         if not isinstance(it, dict):
             continue
@@ -194,7 +225,11 @@ def ingest_replies() -> dict:
         question = (it.get("question") or (q_by_id.get(qid) or {}).get("text") or "").strip()
         answer   = (it.get("answer") or "").strip()
         learning = (it.get("learning") or "").strip()
+        if learning and _topic_key(learning) in seen_learn:
+            log.info("teams_learning: already know this, not re-learning: %s", learning[:70])
+            learning = ""            # a restatement, not new knowledge
         if learning:
+            seen_learn.add(_topic_key(learning))
             # The estimator's existing channel: A3 injects user_guidance as [OPERATOR GUIDANCE].
             note = learning + " (from the team in Teams chat"
             note += (", re: " + question[:90] + ")") if question else ")"
@@ -216,12 +251,21 @@ def ingest_replies() -> dict:
                 target["answered"] = True
                 target["answered_at"] = _now()
         if it.get("needs_clarification") and (it.get("clarification") or "").strip():
-            clarifs.append({
-                "qid": qid, "question": question, "answer": answer,
-                "clarification": it["clarification"].strip(),
-                "from": who, "at": _now(), "asked": False,
-            })
-            result["clarifications"] += 1
+            text = it["clarification"].strip()
+            bucket = qid or "_none"
+            if _topic_key(text) in asked_keys:
+                log.info("teams_learning: skipping already-asked clarification: %s", text[:70])
+            elif clar_count.get(bucket, 0) >= _MAX_CLARIFY_PER_Q:
+                log.warning("teams_learning: clarification cap hit for %s — acting on what the "
+                            "team already said instead of asking again: %s", bucket, text[:70])
+            else:
+                asked_keys.add(_topic_key(text))
+                clar_count[bucket] = clar_count.get(bucket, 0) + 1
+                clarifs.append({
+                    "qid": qid, "question": question, "answer": answer,
+                    "clarification": text, "from": who, "at": _now(), "asked": False,
+                })
+                result["clarifications"] += 1
         result["items"].append(it)
 
     processed.update(m["id"] for m in fresh)

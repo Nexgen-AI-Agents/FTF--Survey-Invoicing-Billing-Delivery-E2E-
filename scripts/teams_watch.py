@@ -52,14 +52,15 @@ def build_reply(learned: list, clarifs: list) -> str:
     parts = ["<p>&#129302; <b>AI Invoicing Agent</b> &mdash; <i>thanks, I read your message.</i></p>"]
 
     if learned:
-        rows = [[_esc(x.get("qid") or "&mdash;"),
+        # _esc() must not touch the entity itself, or "&mdash;" renders as literal text.
+        rows = [[_esc(x.get("qid")) or "&mdash;",
                  _clean(x.get("answer"), 90),
                  "<b>%s</b>" % _clean(x.get("learning"), 150)] for x in learned]
         parts.append("<p>&#127891; <b>What I learned</b> <i>(saved to memory)</i></p>")
         parts.append(_table(["Q", "You said", "So I will now"], rows))
 
     if clarifs:
-        rows = [[_esc(c.get("qid") or "&mdash;"),
+        rows = [[_esc(c.get("qid")) or "&mdash;",
                  _clean(c.get("question"), 80),
                  _clean(c.get("answer"), 80),
                  "<b>%s</b>" % _clean(c.get("clarification"), 220)] for c in clarifs]

@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "shared"))
 
 import httpx  # noqa: E402
 from config.models import HUMAN_GATE_MODEL  # noqa: E402
-from config.settings import ONEDRIVE_SHARE_URL  # noqa: E402
+from config.settings import ONEDRIVE_SHARE_URL, REPORT_MIN_ORDER_NUMBER  # noqa: E402
 from core import onedrive_excel_client as oc  # noqa: E402
 from core.claude_client import call as llm_call  # noqa: E402
 from core.logger import get_logger  # noqa: E402
@@ -198,6 +198,21 @@ def _gather_activity(window_hours: float) -> dict:
     }
 
 
+def _below_report_cutoff(order_id: str) -> bool:
+    """True if this order predates the team's report cutoff, so the report should not nag.
+
+    Report-side ONLY (this module is the report). Nothing here rejects, skips or un-bills an
+    order — A1..A6 are untouched and a human can still approve any of them. Asked for by the
+    team in the Teams chat on 2026-08-19: they want the daily list to hold only fresh work
+    they can answer, not the historical/test-phase backlog. Driven by
+    REPORT_MIN_ORDER_NUMBER (config, not hardcoded); 0 disables it entirely."""
+    cutoff = REPORT_MIN_ORDER_NUMBER
+    if not cutoff:
+        return False
+    digits = "".join(ch for ch in str(order_id or "") if ch.isdigit())
+    return bool(digits) and int(digits) < cutoff
+
+
 def _gather_state() -> dict:
     """Read the live Approvals table and bucket the rows the approver still has to act on."""
     base = oc._wb_base()
@@ -206,7 +221,7 @@ def _gather_state() -> dict:
         headers=oc._headers(), timeout=20.0,
     )
     rows = resp.json().get("value", []) if (resp is not None and resp.is_success) else []
-    ready, manual, escalated = [], [], []
+    ready, manual, escalated, hidden_old = [], [], [], []
     sent_total = 0
     for r in rows:
         v = r.get("values", [[]])[0]
@@ -228,9 +243,11 @@ def _gather_state() -> dict:
         if action:
             continue  # already decided, just awaiting the pipeline to process it
         if "MANUAL PRICING" in notes.upper() or amt <= 0:
-            manual.append({"order": oid, "client": client})
+            (hidden_old if _below_report_cutoff(oid) else manual).append(
+                {"order": oid, "client": client})
         elif esc:
-            escalated.append({"order": oid, "client": client, "why": notes[:140]})
+            (hidden_old if _below_report_cutoff(oid) else escalated).append(
+                {"order": oid, "client": client, "why": notes[:140]})
         else:
             ready.append({"order": oid, "client": client, "amount": round(amt, 2)})
     return {
@@ -243,6 +260,8 @@ def _gather_state() -> dict:
         "escalated_for_review": escalated[:6],
         "already_processed_total": sent_total,
         "total_rows_on_sheet": len(rows),
+        "hidden_below_cutoff": len(hidden_old),   # always disclosed, never a silent cap
+        "report_cutoff": REPORT_MIN_ORDER_NUMBER,
     }
 
 
@@ -420,9 +439,15 @@ def _build_questions_html(state: dict, metrics: dict, label: str = "",
         f"<li><b>Question {i+1}</b> <i>({r.get('qid')})</i>: {r.get('text')}</li>"
         for i, r in enumerate(registered)
     )
+    hidden = state.get("hidden_below_cutoff") or 0
+    note = ""
+    if hidden:
+        note = (f"<p><i>&#128065; Not counted above: <b>{hidden}</b> older order(s) below "
+                f"#{state.get('report_cutoff')}, hidden from this list as you asked. "
+                f"They are still on the sheet and can still be approved.</i></p>")
     return ("<p>&#10067; <b>Questions for you</b> "
             "<i>(reply in the chat &mdash; say which question number you are answering)</i></p>"
-            f"<ul>{lis}</ul>")
+            f"<ul>{lis}</ul>{note}")
 
 
 def _build_activity_html(activity: dict, label: str) -> str:

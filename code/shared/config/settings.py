@@ -190,6 +190,14 @@ INVOICE_DRY_RUN: bool = os.getenv("INVOICE_DRY_RUN", "").strip().lower() in ("1"
 ESTIMATOR_EXTENDED_THINKING: bool = os.getenv("ESTIMATOR_EXTENDED_THINKING", "").strip().lower() in ("1", "true", "yes", "on")
 ESTIMATOR_THINKING_EFFORT:   str  = os.getenv("ESTIMATOR_THINKING_EFFORT", "high").strip() or "high"
 
+# Report-only order cutoff. The team asked (Teams chat, 2026-08-19, Sumit) to stop being
+# nagged about the historical/test-phase backlog so the daily report shows only fresh work
+# they can answer each day. This hides pre-cutoff orders from the report's "needs a price"
+# and "flagged" lists ONLY -- it does NOT reject, skip or un-bill anything: the pipeline can
+# still price and send those orders if a human approves them. 0 = show everything.
+# The count hidden is always disclosed in the report, so nothing is silently dropped.
+REPORT_MIN_ORDER_NUMBER: int = int((os.getenv("REPORT_MIN_ORDER_NUMBER", "") or "0").strip() or 0)
+
 # ── Teams learning loop (READ-ONLY) ──────────────────────────────────────────
 # The agent posts its report via TEAMS_FLOW_URL (one-way). To LEARN from the team's
 # replies it reads that same chat with the app-only Graph token (Chat.Read.All).

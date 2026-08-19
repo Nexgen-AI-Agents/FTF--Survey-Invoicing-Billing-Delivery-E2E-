@@ -529,3 +529,62 @@ Ryan: *"Feed it the Florida standards for licensed surveyors. Create a persona o
 - Role-based: Jessica trains AR/refund rules; Robert trains pricing/logistics. Cross-domain requires both. Tracked: I-068, I-067, I-069.
 
 
+
+---
+
+## STANDING RULE - Miro board is a living artifact (2026-08-20)
+
+User: *"always update the miro board (same) if anything is updated here. always recheck"*
+
+- The board **FTF-AI invoicing estimator** (`uXjVHwLvWsU=`, Space *Land Solutions*
+  `3458764680746478006`) is the canonical diagram of this pipeline.
+- **Whenever pipeline behaviour changes** (an agent's logic, a cron schedule, a model, a
+  status, a guardrail, a new integration), UPDATE THE SAME BOARD in the same turn.
+  Do NOT create a second board - use `--rebuild-tech`.
+- Then **RECHECK**: re-read the board via API and confirm counts, no items outside the
+  frame, no overlapping boxes, client side intact, board still in the Space.
+- Tool: `python scripts/miro_build_estimator_board.py --rebuild-tech uXjVHwLvWsU=`
+  (`clear_tech` deletes only x<0 items, so the client frame is never touched).
+- Miro has **no** screenshot/preview API (`picture` is null; `/preview` and `/thumbnail`
+  are 404) and a headless browser cannot log in - so "recheck" means the geometry audit,
+  not an image.
+
+---
+
+## INCIDENT - the agent asked the team the same question 5 times (2026-08-19)
+
+Sumit: *"yeah it's asking repetitive questions Prateek. Should I stop replying to it?"*
+Prateek: *"stop repliying. I will modify."*  <- we burned a colleague's trust. Do not repeat.
+
+**What happened.** 17:08 -> 19:37, every 30-min watcher tick asked essentially the same
+clarification about the #1000288500 cutoff, re-worded. Sumit answered 5 times. 11
+clarifications and 13 contradictory guidance notes were written.
+
+**Root causes (all mine, in teams_learning.py):**
+1. `_INTERPRET_SYSTEM` ordered a clarification whenever an instruction would SKIP/EXCLUDE/
+   REJECT billing. Every answer Sumit gave was about exclusion -> guaranteed infinite loop.
+2. The interpreter payload contained only the open questions + new messages. It was NEVER
+   shown what it had already learned or already asked -> amnesia every cycle.
+3. `clarifs.append(...)` had no dedup and no cap.
+4. Topic-key dedup alone would NOT have caught it: the re-asks drifted in wording
+   ("what is the cutoff" -> "confirm the cutoff" -> "confirm permanently"). A per-question
+   CAP is the only reliable backstop. Keep both.
+
+**Fixes:** context (`already_learned`, `already_asked_clarifications`) in the payload;
+"ASK ONCE, THEN COMMIT" prompt rule that treats re-asking as worse than acting on an
+imperfect rule; topic-key dedup on learnings and clarifications; `_MAX_CLARIFY_PER_Q = 2`.
+
+**LESSON - generalise this.** A self-learning loop needs a *termination* condition as much
+as a learning condition. Any prompt of the form "if X, ask for confirmation" is an infinite
+loop when the answers are themselves about X. Always pair it with: what have I already
+asked, and what is my hard cap?
+
+**Also fixed:** `_esc("&mdash;")` double-escaped into literal "&mdash;" in the chat table.
+Escape the value, not your own entity: `_esc(v) or "&mdash;"`.
+
+**Report cutoff (what the team actually wanted).** Sumit: *"I am trying to teach it to ignore
+orders below 1000288500 in it's report so it can give fresh updates that I can answer daily"*.
+Implemented as `REPORT_MIN_ORDER_NUMBER` (prod .env = 1000288500), applied in
+`daily_report._below_report_cutoff` -> hides pre-cutoff orders from the "needs a price" /
+"flagged" question lists ONLY. Report-side; A1..A6 untouched; those orders stay billable on
+human approval; hidden count is always disclosed. Effect: 128 nags -> 1, 125 disclosed.
