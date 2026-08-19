@@ -218,6 +218,12 @@ EXCEPTIONS = [
               "<i>no land parcel to survey</i></p>", "gate hit"),
     ("watcher", "<p><b>&#9888; invoice_rejected<br>/ on_hold</b><br>"
                 "<i>nothing is sent</i></p>", "reject / hold"),
+    # Added after the 2026-08-19 outage: the row append is a real failure branch, not a
+    # detail. If it is ever silent again, orders exist but no human can see them.
+    ("excel", "<p><b>&#9888; row write fails</b><br>"
+              "order stays <b>data_collected</b><br>&rarr; retried next run, never lost<br>"
+              "<i>rows are padded to the table's real width;<br>"
+              "a populated sheet is NEVER recreated</i></p>", "400 / locked"),
 ]
 
 # feedback: (from, to, label) — dashed, this is the self-learning loop
