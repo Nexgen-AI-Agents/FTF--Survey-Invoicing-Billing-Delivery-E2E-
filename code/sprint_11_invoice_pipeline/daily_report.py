@@ -341,6 +341,10 @@ _SNAPSHOT_SIMPLE = {
 }
 
 
+_QUOTES = "\"'" + chr(0x201C) + chr(0x201D)   # straight + curly quotes (snippet tidy)
+_ELLIPSIS = chr(0x2026)
+
+
 def _table(headers: list, rows: list) -> str:
     """Minimal HTML table (no CSS — Teams strips inline styles, keeps structure)."""
     head = "".join(f'<th align="left">{h}</th>' for h in headers)
@@ -573,27 +577,24 @@ def _build_chat_learning_html(dry_run: bool = False) -> str:
 
     out = []
     if learned:
-        rows = []
-        for x in learned:
-            qid = x.get("qid") or ""
-            tag = f"{qid} &mdash; " if qid else ""
-            rows.append([f"{tag}{(x.get('answer') or '')[:80]}",
-                         f"<b>{(x.get('learning') or '')[:130]}</b>"])
+        def _tidyl(v, n):
+            x = str(v or "").strip().strip(_QUOTES).strip()
+            return (x[:n] + _ELLIPSIS) if len(x) > n else x
+        rows = [[x.get("qid") or "&mdash;", _tidyl(x.get("answer"), 90),
+                 "<b>%s</b>" % _tidyl(x.get("learning"), 150)] for x in learned]
         out.append("<p>&#127891; <b>What I learned from your answers</b> "
-                   "<i>(saved to memory)</i></p>" + _table(["You said", "So I will"], rows))
+                   "<i>(saved to memory)</i></p>"
+                   + _table(["Q", "You said", "So I will now"], rows))
     if clarifs:
-        items = []
-        for c in clarifs:
-            q = (c.get("question") or "").strip()
-            a = (c.get("answer") or "").strip()
-            ref = f"<i>About {c.get('qid') or 'your answer'}</i>"
-            if q:
-                ref += f" &mdash; &ldquo;{q[:90]}&rdquo;"
-            said = f"<br>You said: &ldquo;<i>{a[:110]}</i>&rdquo;" if a else ""
-            items.append(f"<li>{ref}{said}<br>&#128072; <b>{c.get('clarification')}</b></li>")
-        out.append("<p>&#129300; <b>Before I act, please confirm</b> "
-                   "<i>(I will not skip or change billing until you reply)</i></p>"
-                   "<ul>" + "".join(items) + "</ul>")
+        def _tidy(v, n):
+            x = str(v or "").strip().strip(_QUOTES).strip()
+            return (x[:n] + _ELLIPSIS) if len(x) > n else x
+        rows = [[c.get("qid") or "&mdash;", _tidy(c.get("question"), 80),
+                 _tidy(c.get("answer"), 80),
+                 "<b>%s</b>" % _tidy(c.get("clarification"), 220)] for c in clarifs]
+        out.append("<p>&nbsp;</p><p>&#129300; <b>Before I act, please confirm</b><br>"
+                   "<i>I will not skip or change any billing until you reply.</i></p>"
+                   + _table(["Q", "I asked", "You said", "&#128072; I need to know"], rows))
     return "".join(out)
 
 

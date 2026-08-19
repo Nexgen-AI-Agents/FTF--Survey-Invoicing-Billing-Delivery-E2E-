@@ -22,6 +22,7 @@ from config.settings import (
     ONEDRIVE_FILE_USER,
     TEAMS_CHAT_ID,
     TEAMS_CHAT_TOPIC,
+    TEAMS_SELF_NAMES,
 )
 from core.logger import get_logger
 from core.onedrive_excel_client import _get_token
@@ -102,16 +103,19 @@ def fetch_messages(limit: int = 25, chat_id: Optional[str] = None) -> list[dict]
             text = html_to_text((m.get("body") or {}).get("content", ""))
             if not text:
                 continue
+            sender = user.get("displayName") or app.get("displayName") or "unknown"
             out.append({
                 "id":      m.get("id"),
                 "created": m.get("createdDateTime"),
                 "edited":  m.get("lastModifiedDateTime"),
-                "from":    user.get("displayName") or app.get("displayName") or "unknown",
+                "from":    sender,
                 "from_id": user.get("id") or app.get("id") or "",
                 "text":    text,
-                # Our own report posts arrive via the Power Automate flow (an application
-                # identity, no user) — never learn from ourselves.
-                "is_bot":  bool(app) and not user,
+                # Never learn from ourselves. The Power Automate flow posts under a USER
+                # identity (e.g. "AI - Nexgen"), so an application check alone is not enough
+                # — match the configured self names too. Sender-only: a human reply that
+                # quotes our card must still count as team input.
+                "is_bot":  (bool(app) and not user) or sender.strip().lower() in TEAMS_SELF_NAMES,
             })
         return out
     except Exception as exc:

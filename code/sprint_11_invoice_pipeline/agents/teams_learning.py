@@ -124,7 +124,7 @@ _INTERPRET_SYSTEM = (
     "Return ONLY valid JSON of this shape:\n"
     "{\"items\":[{\"qid\":\"Q1, or empty if it answers no known question\","
     "\"question\":\"the question text you matched, or empty\","
-    "\"answer\":\"a short faithful quote or paraphrase of what they said\","
+    "\"answer\":\"a short faithful paraphrase of what they said, MAX 20 words, no quote marks\","
     "\"learning\":\"a durable instruction, in THEIR terms, that should guide future pricing or "
     "handling, written so a future run can apply it; empty if there is nothing to learn\","
     "\"scope\":\"pricing|queue|process|other\","

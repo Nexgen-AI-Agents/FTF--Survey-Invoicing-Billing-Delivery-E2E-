@@ -198,6 +198,15 @@ ESTIMATOR_THINKING_EFFORT:   str  = os.getenv("ESTIMATOR_THINKING_EFFORT", "high
 TEAMS_CHAT_ID:    str = os.getenv("TEAMS_CHAT_ID", "").strip()
 TEAMS_CHAT_TOPIC: str = os.getenv("TEAMS_CHAT_TOPIC", "AI - Invoicing Agent").strip()
 TEAMS_LEARNING_ENABLED: bool = os.getenv("TEAMS_LEARNING_ENABLED", "1").strip().lower() in ("1", "true", "yes", "on")
+# Display names the agent posts under (Power Automate posts as a USER identity, not an app,
+# so Graph reports no application sender). Messages from these senders are the agent's own
+# and must never be learned from. Matched on the SENDER only — never on message text,
+# because a human reply often quotes the agent's card.
+TEAMS_SELF_NAMES: set = {
+    n.strip().lower()
+    for n in os.getenv("TEAMS_SELF_NAMES", "AI - Nexgen,Nesa,AI-Nexgen").split(",")
+    if n.strip()
+}
 
 # IMAP — email inbox for nesa@nexgenlogix.com
 IMAP_HOST:     str = os.getenv("IMAP_HOST", "outlook.office365.com")
