@@ -190,6 +190,15 @@ INVOICE_DRY_RUN: bool = os.getenv("INVOICE_DRY_RUN", "").strip().lower() in ("1"
 ESTIMATOR_EXTENDED_THINKING: bool = os.getenv("ESTIMATOR_EXTENDED_THINKING", "").strip().lower() in ("1", "true", "yes", "on")
 ESTIMATOR_THINKING_EFFORT:   str  = os.getenv("ESTIMATOR_THINKING_EFFORT", "high").strip() or "high"
 
+# ── Teams learning loop (READ-ONLY) ──────────────────────────────────────────
+# The agent posts its report via TEAMS_FLOW_URL (one-way). To LEARN from the team's
+# replies it reads that same chat with the app-only Graph token (Chat.Read.All).
+# TEAMS_CHAT_ID is preferred; TEAMS_CHAT_TOPIC only matches chats the service account
+# is already a member of (no tenant-wide scanning). Empty chat id => loop disabled.
+TEAMS_CHAT_ID:    str = os.getenv("TEAMS_CHAT_ID", "").strip()
+TEAMS_CHAT_TOPIC: str = os.getenv("TEAMS_CHAT_TOPIC", "AI - Invoicing Agent").strip()
+TEAMS_LEARNING_ENABLED: bool = os.getenv("TEAMS_LEARNING_ENABLED", "1").strip().lower() in ("1", "true", "yes", "on")
+
 # IMAP — email inbox for nesa@nexgenlogix.com
 IMAP_HOST:     str = os.getenv("IMAP_HOST", "outlook.office365.com")
 IMAP_PORT:     int = int(os.getenv("IMAP_PORT", "993"))

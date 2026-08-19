@@ -371,7 +371,8 @@ def _build_numbers_html(m: dict, activity: dict) -> str:
     return "<p>&#128202; <b>Numbers</b></p>" + _table(["What", "How many"], rows)
 
 
-def _build_questions_html(state: dict, metrics: dict) -> str:
+def _build_questions_html(state: dict, metrics: dict, label: str = "",
+                          dry_run: bool = False) -> str:
     """A short list of questions for the team to answer next work day — helps train the AI.
 
     Data-driven where possible (real pending items) + a standing learning prompt + a
@@ -389,11 +390,34 @@ def _build_questions_html(state: dict, metrics: dict) -> str:
     oq = metrics.get("open_quotes")
     if oq:
         qs.append(f"Should <b>'quotes waiting'</b> mean all {oq}, or only the last 30 days?")
-    lis = "".join(f"<li>{q}</li>" for q in qs[:2])
-    if not lis:
+    # Register the questions in memory with stable ids so the team's chat answers can be
+    # matched back to the exact question they answer (they reply "Question1: ... Answer: ...").
+    # Drop questions the team has already answered — their answer is now in memory and any
+    # leftover ambiguity is asked as a targeted clarification instead of re-asking this.
+    try:
+        from agents.teams_learning import is_answered
+        qs = [q for q in qs if not is_answered(q)]
+    except Exception as exc:  # noqa: BLE001
+        log.warning("daily_report: answered-question filter failed (%s)", exc)
+    picked = qs[:2]
+    if not picked:
         return ""
+    registered = None
+    if not dry_run:
+        try:
+            from agents.teams_learning import record_open_questions
+            registered = record_open_questions(picked, label=label)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("daily_report: could not register questions (%s)", exc)
+    if not registered:
+        # Dry-run (or registration failure): preview ids without writing to memory.
+        registered = [{"qid": f"Q{i+1}", "text": t} for i, t in enumerate(picked)]
+    lis = "".join(
+        f"<li><b>Question {i+1}</b> <i>({r.get('qid')})</i>: {r.get('text')}</li>"
+        for i, r in enumerate(registered)
+    )
     return ("<p>&#10067; <b>Questions for you</b> "
-            "<i>(please reply in the chat)</i></p>"
+            "<i>(reply in the chat &mdash; say which question number you are answering)</i></p>"
             f"<ul>{lis}</ul>")
 
 
@@ -522,13 +546,67 @@ def _build_thinking_html(activity: dict, learn: dict, state: dict) -> str:
     return "<p>&#129504; <b>My thinking</b></p><ul>" + inner + "</ul>"
 
 
-def build_message(context: dict | None = None) -> str:
+def _ingest_chat_answers() -> dict:
+    """Read the team's new chat replies and learn from them. Never raises."""
+    try:
+        from agents.teams_learning import ingest_replies
+        return ingest_replies()
+    except Exception as exc:  # noqa: BLE001
+        log.warning("daily_report: chat ingest failed (%s)", exc)
+        return {"read": 0, "learned": 0, "clarifications": 0, "enabled": False}
+
+
+def _build_chat_learning_html(dry_run: bool = False) -> str:
+    """What I learned from your answers + any clarification I still need.
+
+    Every clarification names the exact question and quotes the answer it refers to, so
+    the team always knows WHICH question/answer the follow-up is about."""
+    try:
+        from agents.teams_learning import recent_learnings, take_pending_clarifications
+        learned = recent_learnings(limit=3)
+        # A dry-run preview must NOT consume clarifications — otherwise a test would
+        # "use up" a question the team never saw.
+        clarifs = take_pending_clarifications(limit=2, mark_asked=not dry_run)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("daily_report: chat learning render failed (%s)", exc)
+        return ""
+
+    out = []
+    if learned:
+        rows = []
+        for x in learned:
+            qid = x.get("qid") or ""
+            tag = f"{qid} &mdash; " if qid else ""
+            rows.append([f"{tag}{(x.get('answer') or '')[:80]}",
+                         f"<b>{(x.get('learning') or '')[:130]}</b>"])
+        out.append("<p>&#127891; <b>What I learned from your answers</b> "
+                   "<i>(saved to memory)</i></p>" + _table(["You said", "So I will"], rows))
+    if clarifs:
+        items = []
+        for c in clarifs:
+            q = (c.get("question") or "").strip()
+            a = (c.get("answer") or "").strip()
+            ref = f"<i>About {c.get('qid') or 'your answer'}</i>"
+            if q:
+                ref += f" &mdash; &ldquo;{q[:90]}&rdquo;"
+            said = f"<br>You said: &ldquo;<i>{a[:110]}</i>&rdquo;" if a else ""
+            items.append(f"<li>{ref}{said}<br>&#128072; <b>{c.get('clarification')}</b></li>")
+        out.append("<p>&#129300; <b>Before I act, please confirm</b> "
+                   "<i>(I will not skip or change billing until you reply)</i></p>"
+                   "<ul>" + "".join(items) + "</ul>")
+    return "".join(out)
+
+
+def build_message(context: dict | None = None, dry_run: bool = False) -> str:
     context = context or _report_context([])
     activity = _gather_activity(context["window_hours"])
     state = _gather_state()
     backlog = _gather_stuck_sends()
     learn = _gather_learnings()
     metrics = _gather_ftf_metrics()
+    # Learn from the team's chat answers BEFORE composing, so this report reflects them.
+    _ingest_chat_answers()
+    chat_learning_html = _build_chat_learning_html(dry_run=dry_run)
     # One-line TL;DR so the whole report is understandable at a glance.
     sent = activity.get("sent_count", 0)
     amt = activity.get("sent_amount", 0.0)
@@ -544,11 +622,12 @@ def build_message(context: dict | None = None) -> str:
     # Lean order: title -> TL;DR -> my thinking -> please help -> what I did -> numbers ->
     # questions -> sheet link. (Big per-status table dropped to keep it short.)
     return (header + tldr
+            + chat_learning_html
             + _build_thinking_html(activity, learn, state)
             + _build_todo_html(state, backlog)
             + _build_activity_html(activity, context["label"])
             + _build_numbers_html(metrics, activity)
-            + _build_questions_html(state, metrics)
+            + _build_questions_html(state, metrics, context["label"], dry_run=dry_run)
             + link)
 
 
@@ -571,8 +650,9 @@ def post(html: str) -> int:
 def main(argv=None) -> None:
     argv = argv if argv is not None else sys.argv[1:]
     context = _report_context(argv)
-    html = build_message(context)
-    if "--dry-run" in argv:
+    dry = "--dry-run" in argv
+    html = build_message(context, dry_run=dry)
+    if dry:
         print(html)
         return
     code = post(html)
