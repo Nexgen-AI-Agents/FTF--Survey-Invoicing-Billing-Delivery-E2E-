@@ -655,3 +655,69 @@ think-by-default models, same as `call()`. The model check is now one shared hel
 
 **Lesson:** when a response-shape assumption changes, grep for *every* place that unpacks the
 response — `.content[0]` was the fingerprint, and one caller was left behind.
+
+---
+
+## INCIDENT 2026-08-24 (17:0x ET) — approved quotes never went out (watcher starved by the pipeline)
+
+**Symptom (Prateek, Teams):** orders 288760–288764 had prices approved in the sheet but no quote
+sent, for ~1 hour.
+
+**Not the pipeline.** A1/A2/A3 were fine: all five were priced and their rows appended
+(16:05–16:26 EDT, $400–$774). What never ran was the **approval watcher**, i.e. A4→A5→A6.
+
+**Real cause — lock starvation.** The pipeline (`*/5`) and the watcher (`5,10,…,55`) share
+`.pipeline.lock`. They fire on the *same minute*, and the pipeline entry sits **first in the
+crontab**, so it wins the race every single time (logs: `pipeline run START 16:10:01` /
+`watcher SKIP 16:10:02`, over and over). The watcher used `flock -n` → it gave up instantly and
+skipped the whole 5–8 min pipeline run. Once every tick had work, the watcher never got in:
+**68 minutes, zero approvals actioned, nobody told.** 69 nominal watcher "runs" today, last real
+one 15:55.
+
+**Fixed** (`scripts/run_server_watcher.sh` → prod `/home/ubuntu/ftf-invoicing-watch.sh`):
+- `flock -n` → **`flock -w 240`**: wait for the lock instead of skipping. 240s < the 5-min tick,
+  so at most one waiter exists at a time — waiters cannot pile up. The two now alternate.
+- **Starvation alert**: `touch` a stamp on every real start; if a tick times out *and* no run has
+  started in 45 min, send the existing failure email (throttled to one per hour). A starved
+  watcher is otherwise completely invisible — same blind spot as 2026-08-19.
+
+**Recovery:** ran the watcher manually → all 6 pending decisions actioned; 288760 ($600), 288761
+($400), 288762 ($625), 288763 ($425), 288764 ($425) invoiced in FTF and delivered with
+`pay_link=yes`; 288759 recorded as rejected. Sheet: 1677 rows, 0 duplicates, all 6 stamped.
+
+**Lesson:** two cron jobs on the same lock and the same minute is not a race — it is a fixed
+priority order. `flock -n` on the *lower*-priority-by-accident job means it may never run at all.
+Also: a job that logs "SKIP" 101 times is not healthy, and nothing was counting that.
+
+### Same day — the learning loop was memorising the conversation, not the orders
+
+Prateek: *"ai should only know about the orders and its related details. it's repeating every
+single word what's spoken in the chat."* The interpreter was paraphrasing every message back as a
+durable rule. `user_guidance` — which **A3 injects into its pricing prompt as
+[OPERATOR GUIDANCE]** — had collected notes like *"When Prateek says to close the sheet, stop
+reading and writing to the master sheet and pause updates"* and *"Orders 1000288760 through
+1000288764 had approved prices with quotes not sent; keep them tracked as pending quote-send"*.
+
+Fixed in `teams_learning.py`:
+- Prompt now states **what may be learned** (a price, rate, discount, negotiated client rate,
+  service type/tier, how to handle a specific order/client, billing scope) and what may **never**
+  be (bug reports, status/list requests, transient state, anything about the agent's own
+  operation, messages aimed at another person, chit-chat).
+- Two deterministic backstops, because a prompt rule is not a guarantee:
+  `_SELF_OP` (refuses self-operation instructions — chat is **not** a control channel) and
+  `_TRANSIENT` (refuses time-bound state as a durable rule).
+- **Scope gate**: only `pricing`/`queue` learnings reach `user_guidance`; `process`/`other` are
+  remembered for the audit trail but stay out of the prompt that decides what a client is charged.
+- `scripts/purge_nonorder_learnings.py` cleaned the existing pollution: `user_guidance`
+  199→190 (9 of 10 chat notes dropped; the #1000288500 cutoff rule kept), `teams_learnings`
+  22→12. Backed up first; rules/order_overrides/observations untouched.
+
+**Lesson:** the first `_SELF_OP` I wrote used a 70-char window over loose words and flagged a
+*real* billing rule (*"…should be rejected/skipped … so they stop appearing as flagged in future
+runs"*). A filter that protects the pricing prompt can also silently delete the knowledge it
+exists to keep — so both regexes are now tested in **both** directions (18 fixtures, must-drop and
+must-keep) before deploying.
+
+**Not a defect (checked):** col-A hyperlinks were missing on rows 1639+. Cause is the known
+`423 Locked` — `ensure_action_dropdown` needs a whole-workbook upload and the team keeps the file
+open in Excel. It self-heals the moment the file closes: the 17:20:33 upload restored 1677 of 1678.

@@ -9,8 +9,8 @@
 # human approvals. Runs every 5 min via cron.
 #
 # Shares .pipeline.lock with run_server_pipeline.sh so A0 and the watcher never
-# run at the same time (both touch the state file + run A5/A6). flock -n => skip
-# this tick if the other is active; the next tick retries.
+# run at the same time (both touch the state file + run A5/A6). The watcher WAITS
+# for that lock (flock -w) rather than skipping the tick — see the comment below.
 set -uo pipefail
 
 export TZ="America/New_York"
@@ -24,11 +24,31 @@ LOCK_FILE="$DEPLOY_DIR/.pipeline.lock"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/watcher_$(date +%Y%m%d).log"
 
+STAMP_FILE="$DEPLOY_DIR/.watcher_last_run"
+ALERT_FILE="$DEPLOY_DIR/.watcher_starved_alert"
+[ -f "$STAMP_FILE" ] || touch "$STAMP_FILE"
+
 exec 9>"$LOCK_FILE"
-if ! flock -n 9; then
-    echo "$(date -Is) SKIP: A0 or prior watcher run still active" >> "$LOG_FILE"
+# WAIT for the lock instead of failing fast. Both crons fire on the same minute boundaries and
+# the pipeline entry sits first in the crontab, so it wins the race every single time; with
+# `flock -n` the watcher was then skipped for the entire pipeline run. On 2026-08-24 that starved
+# it for 68 min straight (last real run 15:55) while five human-approved orders sat undelivered.
+# 240s < the 5-min tick, so at most one waiter can exist at a time — waiters cannot pile up.
+if ! flock -w 240 9; then
+    echo "$(date -Is) SKIP: A0 or prior watcher run still active (waited 240s)" >> "$LOG_FILE"
+    # A starved watcher is invisible: approvals simply never get actioned and nobody is told.
+    # Page a human if no watcher run has actually STARTED in 45 min (max one alert per hour).
+    if [ -z "$(find "$STAMP_FILE" -newermt '45 minutes ago' 2>/dev/null)" ] \
+       && [ -z "$(find "$ALERT_FILE" -newermt '60 minutes ago' 2>/dev/null)" ]; then
+        echo "$(date -Is) STARVED: no watcher run in 45+ min — approvals are NOT being actioned" >> "$LOG_FILE"
+        touch "$ALERT_FILE"
+        "$VENV_PY" "$DEPLOY_DIR/scripts/notify_failure_email.py" \
+            --workflow "FTF Approval Watcher STARVED (no run in 45+ min)" \
+            --run-url "log $LOG_FILE on $(hostname)" || true
+    fi
     exit 0
 fi
+touch "$STAMP_FILE"
 
 {
     echo "===== $(date -Is) watcher run START ====="
