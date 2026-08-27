@@ -721,3 +721,56 @@ must-keep) before deploying.
 **Not a defect (checked):** col-A hyperlinks were missing on rows 1639+. Cause is the known
 `423 Locked` — `ensure_action_dropdown` needs a whole-workbook upload and the team keeps the file
 open in Excel. It self-heals the moment the file closes: the 17:20:33 upload restored 1677 of 1678.
+
+---
+
+## 2026-08-27 — the AI's invoice email had no amount and no "View Invoice" link
+
+**Report:** *"client is not receiving the invoices through emails just like before when it's
+getting approved from the excel sheet."*
+
+**Ruled out first (all measured, not assumed):** every approval was actioned (only 286745 stuck,
+known); FTF logged all 1,437 nesa emails as `delivered`; and **open rates matched humans exactly
+— nesa 29% vs human 30%** over 3 days, so the mail was genuinely landing in real inboxes. A
+systematic non-delivery was therefore ruled out before touching anything.
+
+**What was actually wrong.** Diffing an AI email against a human email for the *same* order
+(288880) showed the AI body was ~490 chars shorter and missing:
+- **`Invoice Amount: $3350.00`** — the email never stated a price
+- **`For more details, please find the invoice: View Invoice`** — no link to the PDF
+- the CITY,STATE,ZIP line
+- and the subject was wrong on Quote-stage orders: ours *"Your Quote is ready to review"* vs
+  FTF's *"Your NexGen Quote is Ready"*.
+
+Cause: `A6 → /order/deliver_invoice` passes `message=`, and FTF uses our text **verbatim** as the
+body. `_build_invoice_message()` hand-rebuilt only part of FTF's block. Same root cause as the
+Pay Now bug (23471565) — that fix restored one missing line and stopped there. A client opening
+it saw a delivery email with no price and nothing to click: "I didn't get the invoice."
+
+**Fixed** (`ftf_portal_client.py`): the order page already renders exactly what a human sends —
+`<input id="mail_subject">` and `<textarea id="deliver-message">` (HTML-escaped, contains the
+Pay Now token we were already scraping). `_scrape_delivery_extras()` now also returns FTF's
+pre-filled **subject, body and address**, and the send uses them **verbatim**. Preference order:
+FTF's pre-fill → the locally built block (Pay Now only) → `_DEFAULT_MSG`; `_prefill_usable()`
+requires both "Pay Now" and "View Invoice" before trusting a scrape, and every step degrades
+quietly so a scrape miss can never fail or delay a send.
+
+**Lesson:** don't reconstruct another system's template — take it. Twice now we shipped a partial
+copy of FTF's body and twice a client-visible piece went missing. The template lives on the
+order page; scraping it means an FTF wording change follows automatically.
+
+**Found, left for a human:** order 286745's FTF page pre-fills `dipat53889@aratrin.com` (a
+disposable address, at NexGen's own office address) while `ng_email` is empty — it is a test
+order. A6 has retried it ~1,900 times since 14 July. Deliberately did NOT add a
+"fall back to FTF's pre-filled recipient" rule: that would have started mailing an address
+nobody asked us to mail.
+
+### Same day — Teams is now one-way
+
+Prateek: *"stop learning from Sumit or anyone who posts on MS teams. Just keep sending the
+reports."* `TEAMS_LEARNING_ENABLED` now defaults to **0** (plus an explicit `.env` entry), and the
+`7,37` teams-watch cron entry is removed. The report no longer calls `_ingest_chat_answers()`,
+`_build_chat_learning_html()` or `_build_questions_html()` — it never asks the team anything.
+Report also simplified: dropped the "What I learned", "Questions for you" and "Numbers" blocks,
+leaving title → TL;DR → my thinking → please help with → what I did → sheet link. 3,998 → 2,083
+chars. The pipeline/watcher crons are untouched.

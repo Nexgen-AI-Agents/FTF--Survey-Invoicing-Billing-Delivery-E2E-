@@ -24,6 +24,7 @@ deliver_invoice subject convention (order/sendgridsend.py line 195):
 """
 
 import re
+from html import unescape as _unescape
 from typing import Callable, Optional
 
 import httpx
@@ -165,7 +166,37 @@ def _scrape_delivery_extras(client: httpx.Client, order_id: str) -> dict:
     if not pm:
         pm = re.search(r'value=["\'](.*?)["\']\s*[^>]*id=["\']{0,1}invoice_purchaser["\']{0,1}', html)
     purchaser = pm.group(1) if pm else ""
-    return {"pay_link": pay_link, "purchaser": purchaser}
+
+    # ── FTF's OWN pre-filled subject + message body ───────────────────────────────
+    # This is the single source of truth for what a delivery email looks like: the order page
+    # renders the exact subject and body a human sees in the Deliver modal and sends verbatim.
+    # Rebuilding it by hand is how the AI email silently lost content twice — first the Pay Now
+    # link, then (2026-08-27) the "Invoice Amount: $X" line and the "View Invoice" link, so the
+    # client received a delivery email that never stated a price or linked the invoice. Taking
+    # FTF's text verbatim also means a future FTF template change follows automatically.
+    sm = re.search(r'id=["\']mail_subject["\'][^>]*\svalue=["\'](.*?)["\']', html)
+    prefill_subject = _unescape(sm.group(1)).strip() if sm else ""
+    tm = re.search(r'<textarea[^>]+id=["\']deliver-message["\'][^>]*>(.*?)</textarea>', html, re.S)
+    prefill_message = _unescape(tm.group(1)).strip() if tm else ""
+    # FTF appends " ({address})" to the subject using the address it holds, in its own casing.
+    am = re.search(r'<input type=["\']hidden["\'] name=["\']address["\'] value=["\'](.*?)["\']', html)
+    prefill_address = _unescape(am.group(1)).strip() if am else ""
+    if not prefill_message:
+        log.warning("delivery prefill: no deliver-message textarea on order page order=%s — "
+                    "falling back to the locally built message", order_id)
+
+    return {"pay_link": pay_link, "purchaser": purchaser,
+            "subject": prefill_subject, "message": prefill_message, "address": prefill_address}
+
+
+# A pre-filled body is only usable if it still carries the parts that make the email worth
+# sending. If FTF ever changes the template beyond recognition we fall back rather than mail a
+# client something we cannot vouch for.
+_PREFILL_REQUIRED = ("Pay Now", "View Invoice")
+
+
+def _prefill_usable(message: str) -> bool:
+    return bool(message) and all(tok in message for tok in _PREFILL_REQUIRED)
 
 
 def _build_invoice_message(pay_link: str, property_address: str, purchaser: str) -> str:
@@ -242,18 +273,37 @@ def deliver_invoice_as_nesa(
         # mail_subject must NOT include address — FTF appends f" ({address})" automatically
         mail_subject = subject or "Your Invoice is ready to review"
 
-        # Build the body BEFORE the tombstone/POST. When no explicit message was passed, recover
-        # FTF's own Pay Now link from the order page and reproduce FTF's message block so the AI
-        # email carries a working payment link (identical to a human send). A scrape miss falls
-        # back to the plain message — a missing link must never fail or delay the send.
-        pay_link = ""
+        # Build the body BEFORE the tombstone/POST. When no explicit message was passed, take
+        # FTF's OWN pre-filled subject + body from the order page and send them verbatim, which
+        # is precisely what a human send does. Preference order:
+        #   1. FTF's pre-filled body  — identical to a human send; carries the amount, the
+        #      View Invoice link, the address block and the Pay Now link
+        #   2. locally built block    — Pay Now only (used if the template moved)
+        #   3. _DEFAULT_MSG           — no link at all (used if the page can't be read)
+        # A scrape miss must never fail or delay a send, so every step degrades quietly.
+        pay_link  = ""
+        addr_used = property_address
         if not message:
-            extras = _scrape_delivery_extras(client, order_id)
+            extras   = _scrape_delivery_extras(client, order_id)
             pay_link = extras["pay_link"]
-            message = (
-                _build_invoice_message(pay_link, property_address, extras["purchaser"])
-                if pay_link else _DEFAULT_MSG
-            )
+            if _prefill_usable(extras["message"]):
+                message = extras["message"]
+                # Use FTF's own subject/address too, so the delivered subject line matches a
+                # human send exactly ("Your NexGen Quote is Ready" on a Quote-stage order,
+                # "Your Invoice is ready to review" on an order-stage one).
+                if not subject and extras["subject"]:
+                    mail_subject = extras["subject"]
+                if extras["address"]:
+                    addr_used = extras["address"]
+                log.info("delivery body: using FTF's pre-filled message order=%s subject=%r "
+                         "(%d chars)", order_id, mail_subject, len(message))
+            else:
+                message = (
+                    _build_invoice_message(pay_link, property_address, extras["purchaser"])
+                    if pay_link else _DEFAULT_MSG
+                )
+                log.warning("delivery body: FTF pre-fill unusable for order=%s — sending the "
+                            "locally built message (pay_link=%s)", order_id, "yes" if pay_link else "no")
 
         # Durable "about to send" marker — set right before the irreversible POST so
         # that a crash/timeout at or after the POST can never trigger a second send.
@@ -274,7 +324,7 @@ def deliver_invoice_as_nesa(
                 data={
                     "order":        str(order_id),
                     "invoice":      pdf_path,
-                    "address":      property_address,   # FTF appends this to subject
+                    "address":      addr_used,          # FTF appends this to subject
                     "email":        recipient,
                     "mail_subject": mail_subject,
                     "message":      message,

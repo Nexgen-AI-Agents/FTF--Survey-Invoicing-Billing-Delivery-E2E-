@@ -629,10 +629,12 @@ def build_message(context: dict | None = None, dry_run: bool = False) -> str:
     state = _gather_state()
     backlog = _gather_stuck_sends()
     learn = _gather_learnings()
-    metrics = _gather_ftf_metrics()
-    # Learn from the team's chat answers BEFORE composing, so this report reflects them.
-    _ingest_chat_answers()
-    chat_learning_html = _build_chat_learning_html(dry_run=dry_run)
+    # _gather_ftf_metrics() is deliberately NOT called any more — it only fed the "Numbers"
+    # block, and skipping it also skips its MySQL round-trip on every report.
+    # NOTE (2026-08-27, Prateek): the agent no longer learns from the Teams chat and no longer
+    # asks the team questions there — it only reports. So the report no longer calls
+    # _ingest_chat_answers() / _build_chat_learning_html() / _build_questions_html(), and the
+    # "Numbers" block is gone too: the report is now just "what I did" + "what I need from you".
     # One-line TL;DR so the whole report is understandable at a glance.
     sent = activity.get("sent_count", 0)
     amt = activity.get("sent_amount", 0.0)
@@ -645,15 +647,11 @@ def build_message(context: dict | None = None, dry_run: bool = False) -> str:
               f"&#128197; <i>{context['now_et_str']}</i></p>")
     link = (f"<p>&#128203; <a href=\"{ONEDRIVE_SHARE_URL}\">Open the sheet</a> "
             f"&mdash; <i>edit the blue columns only.</i></p>")
-    # Lean order: title -> TL;DR -> my thinking -> please help -> what I did -> numbers ->
-    # questions -> sheet link. (Big per-status table dropped to keep it short.)
+    # Simple order: title -> TL;DR -> my thinking -> please help -> what I did -> sheet link.
     return (header + tldr
-            + chat_learning_html
             + _build_thinking_html(activity, learn, state)
             + _build_todo_html(state, backlog)
             + _build_activity_html(activity, context["label"])
-            + _build_numbers_html(metrics, activity)
-            + _build_questions_html(state, metrics, context["label"], dry_run=dry_run)
             + link)
 
 

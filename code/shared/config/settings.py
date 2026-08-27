@@ -205,7 +205,12 @@ REPORT_MIN_ORDER_NUMBER: int = int((os.getenv("REPORT_MIN_ORDER_NUMBER", "") or 
 # is already a member of (no tenant-wide scanning). Empty chat id => loop disabled.
 TEAMS_CHAT_ID:    str = os.getenv("TEAMS_CHAT_ID", "").strip()
 TEAMS_CHAT_TOPIC: str = os.getenv("TEAMS_CHAT_TOPIC", "AI - Invoicing Agent").strip()
-TEAMS_LEARNING_ENABLED: bool = os.getenv("TEAMS_LEARNING_ENABLED", "1").strip().lower() in ("1", "true", "yes", "on")
+# OFF by default since 2026-08-27 (Prateek): the agent must NOT learn from the Teams chat. It
+# was paraphrasing conversation back as durable pricing guidance ("stop reading and writing to
+# the master sheet", "these five orders are unsent"), which then reached A3's pricing prompt.
+# Teams is now a one-way channel: the agent posts reports and reads nothing back. Set
+# TEAMS_LEARNING_ENABLED=1 only if that decision is deliberately reversed.
+TEAMS_LEARNING_ENABLED: bool = os.getenv("TEAMS_LEARNING_ENABLED", "0").strip().lower() in ("1", "true", "yes", "on")
 # Display names the agent posts under (Power Automate posts as a USER identity, not an app,
 # so Graph reports no application sender). Messages from these senders are the agent's own
 # and must never be learned from. Matched on the SENDER only — never on message text,
