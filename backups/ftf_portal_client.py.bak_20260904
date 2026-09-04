@@ -199,34 +199,16 @@ def _prefill_usable(message: str) -> bool:
     return bool(message) and all(tok in message for tok in _PREFILL_REQUIRED)
 
 
-def _build_invoice_message(
-    pay_link: str,
-    property_address: str,
-    purchaser: str,
-    invoice_total: float = 0.0,
-    invoice_url: str = "",
-) -> str:
+def _build_invoice_message(pay_link: str, property_address: str, purchaser: str) -> str:
     """Reproduce FTF's pre-filled delivery message body (greeting + delivery-for + Pay Now block).
 
     FTF converts newlines to <br> and appends its own footer, so we only supply the top block.
-    The Pay Now anchor must be explicit HTML so MailerSend click-wraps it exactly like a human send.
-
-    The amount + "View Invoice" block is NOT optional dressing — without it the client receives a
-    quote/invoice email that never states a price and never links the document, which is exactly
-    what they reported on 2026-09-04 for orders 289283/289284 ("received the quote email, no quote
-    in order"). FTF only pre-fills that block once ng_orders.ng_due_amount is populated, which
-    lags invoice creation, so ~55% of AI sends fell back to this body and shipped without it. We
-    therefore build it from data we already own and trust:
-      * invoice_total — the total a human APPROVED on the sheet (more authoritative than FTF's
-        lagging ng_due_amount);
-      * invoice_url   — the deterministic repos/{order}/invoice/... path FTF itself links to.
-    Wording/order mirror FTF's template so the client cannot tell an AI send from a human one.
-    """
+    The Pay Now anchor must be explicit HTML so MailerSend click-wraps it exactly like a human send."""
     first = (purchaser or "").strip().split(" ")[0] if (purchaser or "").strip() else ""
     greeting = f"Hello {first}," if first else "Hello,"
     addr = (property_address or "").strip()
     delivery = f" This delivery is for {addr}" if addr else ""
-    msg = (
+    return (
         f"{greeting}\n\n"
         f"Thank you for your order from Nexgen! We are delighted to have the privilege of serving you."
         f"{delivery}\n\n"
@@ -236,15 +218,6 @@ def _build_invoice_message(
         f"email or by sending us a message through our website. We look forward to meeting all of your "
         f"surveying needs with speed, accuracy, and excellence!"
     )
-    if invoice_total and invoice_total > 0 and invoice_url:
-        msg += (
-            f" <strong>If you are having any problems opening the invoice attachment, please use "
-            f"this link:</strong>\n\n"
-            f"Invoice Amount: ${invoice_total:,.2f}\n\n"
-            f"For more details, please find the invoice: "
-            f"<a href=\"{invoice_url}\">View Invoice</a>"
-        )
-    return msg
 
 
 def deliver_invoice_as_nesa(
@@ -253,7 +226,6 @@ def deliver_invoice_as_nesa(
     property_address: str = "",
     subject: str = "",
     message: str = "",
-    invoice_total: float = 0.0,
     on_before_deliver: Optional[Callable[[], None]] = None,
 ) -> dict:
     """Generate invoice PDF and deliver it via the FTF portal authenticated as nesa.
@@ -311,42 +283,27 @@ def deliver_invoice_as_nesa(
         # A scrape miss must never fail or delay a send, so every step degrades quietly.
         pay_link  = ""
         addr_used = property_address
-        # The invoice PDF FTF just generated, at the URL FTF itself links to in the email.
-        invoice_url = f"{FTF_SITE_BASE_URL}/repos/{order_id}/{pdf_path}"
         if not message:
             extras   = _scrape_delivery_extras(client, order_id)
             pay_link = extras["pay_link"]
-            # Use FTF's own subject/address whenever we could read them, INDEPENDENTLY of whether
-            # the body is usable. They are scraped from separate, reliable inputs and they are what
-            # make the subject line match a human send exactly ("Your NexGen Quote is Ready" on a
-            # Quote-stage order, "Your Invoice is ready to review" on an order-stage one) and the
-            # address block carry FTF's own casing + CITY,STATE,ZIP.
-            if not subject and extras["subject"]:
-                mail_subject = extras["subject"]
-            if extras["address"]:
-                addr_used = extras["address"]
             if _prefill_usable(extras["message"]):
                 message = extras["message"]
+                # Use FTF's own subject/address too, so the delivered subject line matches a
+                # human send exactly ("Your NexGen Quote is Ready" on a Quote-stage order,
+                # "Your Invoice is ready to review" on an order-stage one).
+                if not subject and extras["subject"]:
+                    mail_subject = extras["subject"]
+                if extras["address"]:
+                    addr_used = extras["address"]
                 log.info("delivery body: using FTF's pre-filled message order=%s subject=%r "
                          "(%d chars)", order_id, mail_subject, len(message))
             else:
-                # property_address (ours) — NOT addr_used. FTF's hidden `address` field is the
-                # street line only ("111 GUNWALE RD"); it exists to be appended to the subject.
-                # Our own value carries street + city + state + zip, which is what belongs in
-                # the body's "This delivery is for" line.
                 message = (
-                    _build_invoice_message(pay_link, property_address, extras["purchaser"],
-                                           invoice_total, invoice_url)
+                    _build_invoice_message(pay_link, property_address, extras["purchaser"])
                     if pay_link else _DEFAULT_MSG
                 )
-                # A fallback body is only acceptable now because it carries the amount and the
-                # View Invoice link itself. If either is missing the client gets a priceless,
-                # link-less email — log it loudly so the post-send audit can flag the order.
-                complete = ("Invoice Amount" in message) and ("View Invoice" in message)
                 log.warning("delivery body: FTF pre-fill unusable for order=%s — sending the "
-                            "locally built message (pay_link=%s, amount+link=%s, total=%.2f)",
-                            order_id, "yes" if pay_link else "no",
-                            "yes" if complete else "NO", invoice_total or 0.0)
+                            "locally built message (pay_link=%s)", order_id, "yes" if pay_link else "no")
 
         # Durable "about to send" marker — set right before the irreversible POST so
         # that a crash/timeout at or after the POST can never trigger a second send.

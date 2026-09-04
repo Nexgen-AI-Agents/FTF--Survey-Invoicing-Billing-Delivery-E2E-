@@ -774,3 +774,45 @@ reports."* `TEAMS_LEARNING_ENABLED` now defaults to **0** (plus an explicit `.en
 Report also simplified: dropped the "What I learned", "Questions for you" and "Numbers" blocks,
 leaving title → TL;DR → my thinking → please help with → what I did → sheet link. 3,998 → 2,083
 chars. The pipeline/watcher crons are untouched.
+
+## 2026-09-04 — "Client received the quote email, no quote in order" (289283, 289284)
+
+Kim reported both orders in Teams. The pipeline had done everything right — priced, posted,
+Sumit approved at 17:14, invoices 365586/365585 created in FTF at 17:16, emails delivered at
+17:19. What went wrong was the *body*: it had the Pay Now link but **no "Invoice Amount: $X"
+line and no "View Invoice" link**, so the client got a quote email with no price and no
+document. Sumit re-sent both by hand the next morning (13:01, 13:09).
+
+**Real cause.** FTF pre-fills the delivery body on the order page and we send it verbatim (the
+2026-08-27 fix). But FTF only includes the amount + View Invoice block once
+`ng_orders.ng_due_amount` is populated, and that lags invoice creation by minutes-to-hours (it
+was still 0 at send time for order 289161 two days later). A6 scrapes ~3s after generating the
+PDF, so on **~55% of sends** `_prefill_usable()` was False and we fell back to
+`_build_invoice_message()` — which only ever produced the Pay Now block. Measured from
+`ng_email_delivered`: of 510 nesa emails since 08-20, **394 had no amount and no invoice link**
+(100% before 08-27, ~55% after).
+
+The 08-27 fix was right in direction and incomplete in fact: it made the *good* path perfect and
+left the fallback shipping a priceless email, and nothing measured which path actually ran.
+
+**Fixes.**
+1. `_build_invoice_message()` now builds the full block itself — `Invoice Amount: $X` from the
+   **human-approved total** (`invoice_draft.total_amount`, more authoritative than FTF's lagging
+   `ng_due_amount`) plus the deterministic `repos/{order}/invoice/...pdf` View Invoice link. A6
+   passes `invoice_total`. Both paths now always carry price + link.
+2. FTF's scraped **subject and address are now adopted even when the body is unusable** (they
+   come from separate, reliable inputs) so the fallback's subject matches a human send.
+3. `scripts/audit_sent_invoices.py` — post-send audit. Reads FTF's own `ng_email_delivered` and
+   flags any nesa email missing Pay Now / Invoice Amount / View Invoice. Wired into the watcher
+   (`--hours 2 --alert`), read-only, never re-sends, exit code ignored so it can't fail a good run.
+
+**Lessons.**
+- A 200 from the deliver endpoint is not proof the email was worth sending. Verify the artefact
+  that reached the client, not the call that produced it.
+- When a fallback path exists, measure how often it runs. This one ran on half of all sends for
+  eight days and the only signal was a WARNING nobody counted.
+- Don't build content out of a field another system populates asynchronously. Use the number the
+  human approved — we own it and it's correct at send time.
+- Near-miss during this fix: `invoice_draft` is a JSON *string* in the state store; my first
+  version called `.get()` on it, which would have crashed A6 on every order. A5 already had the
+  `json.loads if isinstance(str)` guard — copy the proven pattern instead of assuming the type.

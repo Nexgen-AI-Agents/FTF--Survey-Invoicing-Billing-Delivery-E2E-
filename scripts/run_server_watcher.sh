@@ -57,6 +57,14 @@ touch "$STAMP_FILE"
     rc=$?
     # Back up the live OneDrive sheet after every cycle (read-only download → backups/).
     ( cd "$DEPLOY_DIR" && "$VENV_PY" scripts/backup_sheet.py ) || echo "$(date -Is) sheet backup failed (non-fatal)"
+    # Verify what actually reached the client. A 200 from FTF's deliver endpoint is not proof the
+    # email was worth sending: on 2026-09-03 seventeen quotes went out with no price and no
+    # invoice link and nobody noticed until the client complained the next day. This reads FTF's
+    # own delivery log and pages if any nesa email in the last 2h is missing the amount or the
+    # link. It never re-sends and never touches the sheet, and its exit code is deliberately
+    # ignored so an audit problem can never mark a good watcher run as failed.
+    ( cd "$DEPLOY_DIR" && "$VENV_PY" scripts/audit_sent_invoices.py --hours 2 --alert ) \
+        || echo "$(date -Is) post-send audit reported incomplete emails (see errors above)"
     if [ "$rc" -ne 0 ]; then
         echo "$(date -Is) WATCHER FAILED rc=$rc -- sending alert"
         "$VENV_PY" "$DEPLOY_DIR/scripts/notify_failure_email.py" --workflow "FTF Server Approval Watcher" --run-url "log $LOG_FILE on $(hostname)" || true

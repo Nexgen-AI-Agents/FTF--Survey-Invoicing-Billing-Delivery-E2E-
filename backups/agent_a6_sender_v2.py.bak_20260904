@@ -14,7 +14,6 @@ Status flow: invoice_finalized → invoice_sent
 """
 
 import contextlib
-import json
 import os
 import sys
 from datetime import datetime, timezone
@@ -114,23 +113,6 @@ def send_for_order(order_id: str) -> dict:
         client_email    = fresh.get("customer_email", "")
         property_address = fresh.get("property_address", "")
 
-        # The total a HUMAN approved. Passed to the sender so the email always states a price and
-        # links the invoice even when FTF's own pre-filled body isn't ready yet (FTF only fills in
-        # "Invoice Amount"/"View Invoice" once ng_due_amount lands, which lags invoice creation).
-        # invoice_draft is stored as a JSON STRING in the Excel state store (A3 writes
-        # json.dumps) — same defensive parse A5 uses. Never let a bad/absent draft break a
-        # send that is otherwise ready: a missing amount degrades the email, an exception
-        # here would strand an approved order.
-        raw_draft = fresh.get("invoice_draft")
-        try:
-            draft = json.loads(raw_draft) if isinstance(raw_draft, str) else (raw_draft or {})
-            invoice_total = float(draft.get("total_amount") or 0.0)
-        except (TypeError, ValueError, AttributeError, json.JSONDecodeError):
-            invoice_total = 0.0
-        if invoice_total <= 0:
-            log.warning("send_for_order: order=%s has no approved total in invoice_draft — the "
-                        "email may go out without an amount line", order_id)
-
         def _mark_sending() -> None:
             """Durable 'about to send' tombstone, persisted immediately before the deliver
             POST. Once set, any crash/timeout at-or-after the POST leaves status=invoice_sending
@@ -150,7 +132,6 @@ def send_for_order(order_id: str) -> dict:
                     order_id=order_id,
                     client_email=client_email,
                     property_address=property_address,
-                    invoice_total=invoice_total,
                     on_before_deliver=_mark_sending,
                 )
                 break
